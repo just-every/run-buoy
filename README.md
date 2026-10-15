@@ -74,7 +74,7 @@ The dry run builds and validates without provider calls. Real deploy provisions 
 
 ## Development
 
-Package mode pins `@runeditrun/rer` **0.2.17**; [SOURCES.md](SOURCES.md) identifies the Base and sibling source. The app uses Base authentication, theme, document frames, import-kit and portability. The product's server-rendered forms work without client rendering.
+Package mode pins `@runeditrun/rer` **0.2.19**; [SOURCES.md](SOURCES.md) identifies the Base and sibling source. The app uses Base authentication, theme, document frames, import-kit and portability. The product's server-rendered forms work without client rendering.
 
 ```sh
 rer dev --stop
@@ -82,3 +82,9 @@ rer verify
 ```
 
 Verify builds once, typechecks, runs the public Worker/D1 flow tests, ordinary email-link sign-in and an installation export/restore journey. GitHub runs one Verify per push. Tests stay under the [200-test budget](test-budget.json). [ACCEPTANCE.md](ACCEPTANCE.md) is the release scope. Brand design, independent stranger acceptance and hosted qualification remain separate work.
+
+## Run site and owner guides
+
+`rer build --site` writes the public homepage, `/run`, `/docs` and seven owner guides to `dist/site`. Guides are compiled from [docs/](docs/index.md); edit those Markdown files to update the website. The installed `/` stays the Buoy Lobby. `rer dev` also prints `RER_SITE` for the local run-site preview.
+
+The run-site workflow remains disabled unless the release gate enables `RUN_SITE_DEPLOY`. No site deployment is part of a local build.

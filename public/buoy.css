@@ -1,67 +1,114 @@
-/* Product work uses Base's theme and frame, with room for real account records. */
-:root{--buoy-space:1.25rem;--buoy-danger:#942c2c;--buoy-danger-surface:#fff2f0;--buoy-line:var(--rer-border,#64748b)}
-*,*::before,*::after{box-sizing:border-box}
-html{scroll-padding-top:1rem}
-.rer-themed body{padding:24px;font-family:Outfit,'Outfit Fallback',Arial,sans-serif}
-.buoy-shell{width:100%;max-width:1200px;margin:0 auto}
-.rer-themed .buoy-shell main{max-width:none;margin:0;padding:32px;background:var(--rer-surface,#fff);box-shadow:none;border:1px solid var(--buoy-line);overflow-wrap:anywhere}
-.app-header{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.rer-themed .app-header p{margin:0 0 18px}
-.rer-themed .app-header .rer-brand{margin:0 0 18px;font-size:24px}
-.brand-link{text-decoration:none}
-.buoy-shell nav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 24px}
-.buoy-shell nav a{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1px solid transparent;border-radius:var(--rer-radius,12px);font-weight:500;text-decoration:none}
-.buoy-shell nav a[aria-current=page]{background:var(--rer-surface,#fff);border-color:var(--buoy-line);text-decoration:underline;text-underline-offset:4px}
-.rer-themed h1{margin-bottom:24px;font-size:34px}
-.rer-themed h2{font-size:23px;line-height:1.3;margin:0 0 16px;font-weight:600}
-.rer-themed h3{font-size:19px;line-height:1.4;margin:0 0 12px}
-.rer-themed a{text-underline-offset:3px}
-.rer-themed .panel{padding:24px 0;border-top:1px solid var(--buoy-line);min-width:0}
-.panel:last-child{padding-bottom:0}
-.rer-themed .panel p:last-child{margin-bottom:0}
-.account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.account-card{padding:20px;border:1px solid var(--buoy-line);border-radius:var(--rer-radius,12px);min-width:0}
-.card-heading{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px}
-.status{display:inline-block;padding:3px 10px;border:1px solid var(--buoy-line);border-radius:999px;font-size:14px;font-weight:600;line-height:1.5;color:var(--rer-text,#172033);background:var(--rer-page,#f3f5f8)}
-.status.at-risk{border-color:var(--buoy-danger);color:var(--buoy-danger);background:var(--buoy-danger-surface)}
-.status.healthy{border-color:var(--rer-link,#1f5f52)}
-.rer-themed dl{grid-template-columns:minmax(0,auto) minmax(0,1fr)}
-dd,dt{overflow-wrap:anywhere}
-.rer-themed ul,.rer-themed ol{padding-left:24px}
-li+li{margin-top:8px}
-.checklist{margin:0 0 20px}
-.record{padding:20px 0;border-top:1px solid var(--buoy-line);min-width:0}
-.record:first-of-type{border-top:0;padding-top:0}
-.record:last-of-type{padding-bottom:0}
-.record form{margin-top:20px}
-.form-grid,.evidence-grid{display:grid;gap:18px;grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
-.evidence-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-.form-grid>*{min-width:0}
-.rer-themed form{max-width:850px;margin-bottom:12px}
-.rer-themed fieldset{min-width:0;margin:0;padding:18px;border:1px solid var(--buoy-line);border-radius:var(--rer-radius,12px)}
-.rer-themed legend{padding:0 6px;font-weight:600}
-.rer-themed label.check{display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;font-weight:400}
-.rer-themed input:not([type=hidden]),.rer-themed select,.rer-themed textarea{max-width:100%;min-width:0;box-sizing:border-box;font:inherit;color:var(--rer-text,#172033);background:var(--rer-surface,#fff);border:1px solid var(--buoy-line);border-radius:6px;padding:10px 12px;min-height:46px;width:100%}
-.rer-themed input[type=checkbox]{width:20px;height:20px;min-height:20px;flex:none;padding:0;margin-top:3px}
-.rer-themed textarea{resize:vertical;line-height:1.5;min-height:110px}
-.rer-themed textarea[hidden]{display:none}
-.rer-themed button,.button{display:inline-flex;width:fit-content;max-width:100%;min-height:46px;align-items:center;justify-content:center;padding:10px 18px;border:1px solid transparent;border-radius:var(--rer-radius,12px);font:inherit;font-weight:600;line-height:1.5;text-align:center;white-space:normal;cursor:pointer;background:var(--rer-accent,var(--rer-brand-accent,var(--rer-text,#172033)));color:var(--rer-accent-text,var(--rer-brand-accent-text,#fff))}
-.rer-themed button.secondary{background:var(--rer-surface,#fff);color:var(--rer-link,#1f5f52);border-color:var(--buoy-line)}
-.rer-themed button.danger{background:var(--buoy-danger);color:#fff}
-.rer-themed button:hover{filter:brightness(.94)}
-.rer-themed button:disabled,.rer-themed input:disabled,.rer-themed textarea:disabled,.rer-themed select:disabled{opacity:.6;cursor:not-allowed}
-.rer-themed [aria-invalid=true]{border-color:var(--buoy-danger)}
-.rer-themed :focus-visible{outline:3px solid var(--rer-focus,#172033);outline-offset:3px}
-.notice{padding:16px 20px;border:1px solid var(--rer-link,#1f5f52);border-radius:var(--rer-radius,12px);margin:0 0 24px;background:var(--rer-page,#f3f5f8)}
-.notice.error{border-color:var(--buoy-danger);background:var(--buoy-danger-surface)}
-.notice.error h2,.error-text{color:var(--buoy-danger)}
-.notice p:last-child{margin-bottom:0}
-.rer-themed pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;padding:16px;background:var(--rer-page,#f3f5f8);border:1px solid var(--buoy-line);border-radius:6px;font:14px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}
-code{font:14px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}
-.rer-themed dialog{color:var(--rer-text,#172033);background:var(--rer-surface,#fff);border:1px solid var(--buoy-line);border-radius:var(--rer-radius,12px);padding:24px;max-width:min(720px,calc(100% - 32px));max-height:calc(100dvh - 48px);overflow:auto}
-dialog::backdrop{background:#102a2266}
-.details-button{margin:8px 0}
-footer{padding:20px 4px;font-size:14px}
-.rer-themed footer p{margin:0}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-@media(max-width:700px){.rer-themed body{padding:16px}.rer-themed .buoy-shell main{padding:20px}.rer-themed h1{font-size:28px}.account-grid,.form-grid,.evidence-grid{grid-template-columns:minmax(0,1fr)}.app-header{gap:0}.app-header>p{width:100%;font-size:14px}.buoy-shell nav{gap:4px;margin-bottom:16px}.buoy-shell nav a{padding:8px 11px}.account-card{padding:16px}.rer-themed fieldset{padding:14px}.rer-themed .panel{padding:20px 0}.rer-themed button{width:100%}.rer-themed .details-button{width:auto}.rer-themed dl{gap:8px 12px}dialog button{width:100%}}
+/* Product records use the shared theme; only layout and components live here. */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: 24px; }
+html.rer-themed body { display: block; align-content: start; padding: 0 36px 120px; }
+.buoy-shell { width: 100%; max-width: 1400px; margin: 0 auto; }
+.app-header { display: flex; align-items: center; justify-content: space-between; min-height: 80px; border-bottom: 1px solid var(--line); }
+.brand-link { text-decoration: none; }
+html.rer-themed .app-header .rer-brand { margin: 0; justify-content: flex-start; gap: 10px; font-size: 26px; }
+html.rer-themed .app-header .rer-brand::before { width: 28px; height: 28px; }
+html.rer-themed .operator { margin: 0; color: var(--ink); }
+.operator-initial { display: none; }
+.app-layout { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 40px; padding-top: 28px; }
+.app-nav { border-right: 1px solid var(--line); padding: 12px 20px 32px 0; }
+.app-nav a { position: relative; display: flex; align-items: center; gap: 18px; min-height: 60px; padding-left: 28px; color: var(--muted); text-decoration: none; }
+.app-nav svg { width: 22px; height: 22px; flex: none; }
+.app-nav a[aria-current=page] { font-weight: 500; color: var(--ink); }
+.app-nav a[aria-current=page]::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); position: absolute; left: 4px; }
+.app-nav a:hover { color: var(--ink); }
+html.rer-themed .buoy-shell main { max-width: none; padding: 0; margin: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; min-width: 0; }
+html.rer-themed .buoy-shell h1 { font: 500 56px/1.05 var(--font-heading); letter-spacing: -.02em; text-align: left; margin: 0 0 24px; }
+html.rer-themed .buoy-shell h2 { font: 500 32px/1.15 var(--font-heading); margin: 0 0 16px; letter-spacing: -.02em; }
+html.rer-themed .buoy-shell h3 { font: 500 22px/1.3 var(--font-heading); margin: 0 0 12px; }
+html.rer-themed .buoy-shell p { text-align: left; margin: 0 0 16px; }
+html.rer-themed .buoy-shell .panel { margin: 0 0 28px; min-width: 0; }
+.introduction, #create-account, #source-refresh, #prepare-playbook, #prepare-decision, #delete-account, #health, .backup-panel, .import-columns > .panel, #import-journal, .notice {
+  border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); padding: 24px; box-shadow: var(--shadow-card);
+}
+html.rer-themed .buoy-shell .introduction h2 { margin-bottom: 4px; }
+.introduction > a { display: inline-block; font-size: 14px; }
+.checklist { margin: 12px 0 16px; padding-left: 24px; color: var(--muted); font-size: 14px; }
+li + li { margin-top: 6px; }
+.account-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.account-card, .evidence-grid > div, .record { min-width: 0; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); padding: 22px; box-shadow: var(--shadow-card); }
+.account-card { display: flex; flex-direction: column; }
+.card-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+html.rer-themed .card-heading h3 { margin-bottom: 14px; }
+.status { display: inline-flex; align-items: center; min-height: 28px; width: fit-content; padding: 3px 12px; border-radius: var(--r-pill); background: var(--unknown-bg); color: var(--unknown-text); font: 500 14px/1.4 var(--font-body); }
+.status.at-risk { background: var(--risk-bg); color: var(--risk-text); }
+.status.healthy, .status.approved, .status.completed { background: var(--healthy-bg); color: var(--healthy-text); }
+html.rer-themed .buoy-shell dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 12px; margin: 0 0 18px; font-size: 16px; }
+html.rer-themed .buoy-shell dd { text-align: right; font-weight: 500; overflow-wrap: anywhere; }
+html.rer-themed .buoy-shell dt { min-width: 0; }
+#health { display: grid; grid-template-columns: max-content 1fr; gap: 12px 24px; align-items: center; }
+html.rer-themed .buoy-shell #health h2, html.rer-themed .buoy-shell #health p { margin: 0; }
+#health ul { grid-column: 1 / -1; }
+.account-card ul, #health ul { list-style: none; padding: 0; margin: 0 0 16px; color: var(--muted); }
+.account-card ul { border-top: 1px solid var(--line); padding-top: 14px; font-size: 14px; }
+.account-card li, #health li { position: relative; padding-left: 16px; }
+.account-card li::before, #health li::before { content: ''; width: 6px; height: 6px; border-radius: 50%; position: absolute; left: 0; top: .6em; background: var(--unknown-text); }
+.account-card:has(.at-risk) li::before, #health:has(.at-risk) li::before { background: var(--risk-text); }
+.account-card:has(.healthy) li::before { background: var(--healthy-text); }
+.account-card .details-button { align-self: flex-end; margin-top: auto; }
+.empty-state { display: grid; place-items: center; text-align: center; padding: 36px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); color: var(--muted); }
+.empty-state svg { width: 28px; height: 28px; margin-bottom: 12px; }
+html.rer-themed .empty-state p { margin: 0; text-align: center; }
+.form-grid, .evidence-grid, .import-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; min-width: 0; }
+.import-columns { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+.import-columns:not(:has(.import-review)) { grid-template-columns: 1fr; }
+.form-grid > *, .evidence-grid > * { min-width: 0; }
+.evidence-grid > div h3 { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+html.rer-themed .evidence-grid dl { font-size: 14px; }
+html.rer-themed .buoy-shell form { display: grid; gap: 18px; max-width: none; margin: 0; }
+html.rer-themed .buoy-shell fieldset { min-width: 0; margin: 0; padding: 20px; border: 1px solid var(--line); border-radius: var(--r-input); }
+html.rer-themed .buoy-shell legend { color: var(--ink); font-weight: 500; padding: 0 6px; }
+html.rer-themed .buoy-shell label { display: grid; gap: 8px; color: var(--muted); font-size: 14px; font-weight: 400; }
+html.rer-themed .buoy-shell label.check { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+html.rer-themed .buoy-shell input:not([type=hidden]), .buoy-shell select, .buoy-shell textarea { width: 100%; max-width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px; border: 1px solid var(--rer-border); border-radius: var(--r-input); color: var(--ink); background: var(--surface); font: 400 16px/1.4 var(--font-body); }
+html.rer-themed .buoy-shell input[type=checkbox] { width: 20px; height: 20px; min-height: 20px; flex: none; margin: 2px 0 0; }
+.buoy-shell textarea { resize: vertical; line-height: 1.5; }
+.buoy-shell textarea[hidden] { display: none; }
+#import-preview textarea { min-height: 320px; font: 14px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; }
+html.rer-themed .buoy-shell button { display: inline-flex; justify-content: center; align-items: center; width: fit-content; min-height: 48px; max-width: 100%; padding: 10px 28px; border: 1px solid transparent; border-radius: var(--r-pill); font: 500 16px/1.4 var(--font-body); cursor: pointer; background: var(--ink); color: var(--surface); }
+html.rer-themed .buoy-shell button.secondary { min-height: 36px; padding: 6px 24px; border-color: color-mix(in srgb, var(--ink) 70%, transparent); color: var(--ink); background: transparent; font-size: 14px; }
+html.rer-themed .buoy-shell button.danger { background: var(--danger); }
+html.rer-themed .buoy-shell #delete-account { border-color: var(--danger); box-shadow: none; }
+html.rer-themed button:hover { filter: brightness(1.15); }
+html.rer-themed :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+html.rer-themed button:disabled, html.rer-themed input:disabled { opacity: .6; cursor: not-allowed; }
+html.rer-themed [aria-invalid=true] { border-color: var(--danger); }
+.record { margin-bottom: 16px; }
+.record:last-child { margin-bottom: 0; }
+.record form { margin-top: 20px !important; }
+.back-link { font-size: 14px; }
+.notice { border-left: 3px solid var(--healthy-text); margin-bottom: 24px; }
+.notice.error { border-left-color: var(--danger); }
+.notice.error h2, .error-text { color: var(--danger); }
+html.rer-themed .buoy-shell pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; margin: 16px 0; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-input); font: 14px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.buoy-shell pre code { font-size: inherit; }
+code { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .875em; }
+html.rer-themed dialog { padding: 28px; max-width: min(720px, calc(100% - 40px)); max-height: calc(100dvh - 48px); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-card); }
+dialog::backdrop { background: rgb(30 36 40 / .35); }
+.app-footer { position: relative; margin: 28px 0 0 236px; padding: 20px 0; border-top: 1px solid var(--line); font-size: 14px; }
+html.rer-themed .app-footer p { margin: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 1100px) { .account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .evidence-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+  html.rer-themed body { padding: 0 20px 120px; }
+  .app-header { min-height: 64px; }
+  .operator-label { display: none; }
+  .operator-initial { display: grid; place-items: center; width: 40px; height: 40px; background: var(--unknown-bg); border-radius: 50%; }
+  .app-layout { display: block; padding: 0; }
+  .app-nav { display: flex; gap: 24px; border: 0; border-bottom: 1px solid var(--line); padding: 0; margin-bottom: 28px; overflow-x: auto; }
+  .app-nav a { flex: none; padding: 0; min-height: 48px; font-size: 14px; border-bottom: 2px solid transparent; }
+  .app-nav svg, .app-nav a[aria-current=page]::before { display: none; }
+  .app-nav a[aria-current=page] { border-bottom-color: var(--signal); }
+  html.rer-themed .buoy-shell h1 { font-size: 40px; margin-bottom: 20px; }
+  html.rer-themed .buoy-shell h2 { font-size: 26px; }
+  .account-grid, .form-grid, .evidence-grid, .import-columns { grid-template-columns: minmax(0, 1fr); }
+  .account-card, .evidence-grid > div, .record, .introduction, #create-account, #source-refresh, #prepare-playbook, #prepare-decision, #delete-account, #health, .backup-panel, .import-columns > .panel, #import-journal { padding: 20px; }
+  html.rer-themed .buoy-shell fieldset { padding: 16px; }
+  .account-card .details-button { align-self: flex-start; }
+  .app-footer { margin-left: 0; }
+  html.rer-themed .buoy-shell button { max-width: 100%; }
+}

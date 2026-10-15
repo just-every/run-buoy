@@ -6,4 +6,6 @@
 4. Move in documented account JSON through a dry run, reviewed apply and import journal; undo unchanged imports and refuse undo after dependent work.
 5. The owner can erase an account and its retained import copies, export the installation, and restore accounts, work, decisions and import custody into an empty installation with fresh sign-in.
 
-Not needed: brand/homepage design, live billing/support/mail/model calls, money movement, churn prediction, CRM/support-desk features, a docs or run site, a domain, or independent release review. A stranger acceptance pass and hosted provider qualification are separate release work.
+6. Build the public run site with `rer build --site`: the homepage leads to `/run`, and `/docs` serves the owner guides from repository Markdown. The installed `/` remains the Lobby. Setup, sign-in and product screens share the picked Buoy theme at desktop and phone widths.
+
+Not needed: live billing/support/mail/model calls, money movement, churn prediction, CRM/support-desk features, live run-site deployment, or independent release review. A stranger acceptance pass and hosted provider qualification are separate release work.

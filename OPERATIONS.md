@@ -1,6 +1,6 @@
 # Buoy operations
 
-Use the clone/run, backup and deploy instructions in README.md. RER 0.2.17 runs the edition adapter in scripts/installer/local.mjs; there is no vendored CLI. Node 22.20.0 and pnpm 10.12.4 remain pinned.
+Use the clone/run, backup and deploy instructions in README.md. RER 0.2.19 runs the edition adapter in scripts/installer/local.mjs; there is no vendored CLI. Node 22.20.0 and pnpm 10.12.4 remain pinned.
 
 Identifiers remain customer-success/buoy (project), buoy (edition), customer-success-buoy (Worker), foundation (declared local D1) and @customer-success/buoy (package). Hosting provisions through the Base owner-account deploy kit. No domain/run-site deployment is required in this release.
 

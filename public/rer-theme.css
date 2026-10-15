@@ -1,25 +1,85 @@
-/* This edition's declared theme. The installer, sign-in, confirmation, /setup
-   and development outbox read these --rer-* tokens; the app serves this file and its fonts.
-   Buttons keep the colour chosen at setup (src/branding.json primaryColor)
-   because no --rer-accent is declared here; declare --rer-accent and
-   --rer-accent-text together to fix them instead. */
-@font-face {
-  font-family: Outfit;
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/fonts/outfit/outfit-latin-wght-normal.woff2') format('woff2');
-}
+@import url('/fonts/fonts.css');
+
+/* Buoy's single palette, type and spacing source, shared by site, setup and app. */
 :root {
-  --rer-font-body: Outfit, Arial, sans-serif;
-  --rer-font-heading: Outfit, Arial, sans-serif;
-  --rer-page: #f4f6f5;
-  --rer-surface: #ffffff;
-  --rer-text: #1b2724;
-  --rer-muted: #4a5a55;
-  --rer-border: #6b7c76;
-  --rer-focus: #1b2724;
-  --rer-link: #1f5f52;
-  --rer-radius: 12px;
+  --paper: #FBFAF7;
+  --sky: #F3F0EC;
+  --surface: #FFFFFF;
+  --ink: #1E2428;
+  --muted: #5D6670;
+  --line: #E4E6E8;
+  --water-1: #DCDEE1;
+  --water-2: #B9C3CC;
+  --water-3: #9BAAB9;
+  --signal: #E15D0F;
+  --risk-bg: #FBE3D6; --risk-text: #A8420A;
+  --healthy-bg: #DDEEE5; --healthy-text: #2F6B52;
+  --unknown-bg: #E8EAEC; --unknown-text: #4B5561;
+  --danger: #A1281F;
+  --font-heading: 'Spectral', 'Spectral Fallback', Georgia, serif;
+  --font-body: 'Red Hat Text', 'Red Hat Text Fallback', system-ui, sans-serif;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px;
+  --s6: 32px; --s7: 48px; --s8: 72px; --s9: 112px;
+  --r-card: 12px; --r-input: 8px; --r-pill: 999px;
+  --shadow-card: 0 1px 2px rgb(30 36 40 / .06), 0 10px 28px rgb(30 36 40 / .08);
+  --rer-font-heading: var(--font-heading);
+  --rer-font-body: var(--font-body);
+  --rer-page: var(--paper);
+  --rer-surface: var(--surface);
+  --rer-text: var(--ink);
+  --rer-muted: var(--muted);
+  --rer-border: #C9CED3;
+  --rer-link: var(--ink);
+  --rer-focus: var(--ink);
+  --rer-radius: var(--r-card);
+  --rer-accent: var(--ink);
+  --rer-accent-text: var(--surface);
+  --rer-button-radius: var(--r-pill);
+  --rer-wordmark-weight: 500;
   --rer-logo: url('/brand/mark.svg');
 }
+
+/* Base's plain HTTP forms carry the same quiet card and floor as the app. */
+html.rer-themed body {
+  position: relative;
+  display: grid;
+  align-content: center;
+  min-height: 100dvh;
+  padding: 80px 20px 160px;
+  font: 400 16px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  isolation: isolate;
+}
+html.rer-themed body::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 120px;
+  z-index: -1;
+  background: url('/brand/band.svg') center bottom / cover no-repeat;
+  pointer-events: none;
+}
+html.rer-themed main {
+  width: 100%;
+  max-width: 480px;
+  padding: 48px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
+}
+html.rer-themed h1, html.rer-themed h2, html.rer-themed h3 { font-weight: 500; }
+html.rer-themed h1 { font-size: 40px; line-height: 1.1; text-align: center; margin-bottom: 28px; }
+html.rer-themed .rer-brand { justify-content: center; font: 500 28px/1 var(--font-heading); }
+html.rer-themed main > p { text-align: center; }
+html.rer-themed button { border-radius: var(--r-pill); font-weight: 500; }
+html.rer-themed label { font-weight: 400; color: var(--muted); font-size: 14px; }
+html.rer-themed input:not([type=checkbox]):not([type=hidden]) { min-height: 46px; border: 1px solid var(--rer-border); border-radius: var(--r-input); }
+html.rer-themed dl { row-gap: 16px; }
+html.rer-themed dd { overflow-wrap: anywhere; }
+html.rer-themed a { text-underline-offset: 4px; }
+@media (max-width: 600px) {
+  html.rer-themed body { padding: 64px 20px 160px; }
+  html.rer-themed main { padding: 28px 24px; }
+  html.rer-themed h1 { font-size: 32px; }
+}
+html.rer-themed .brand { justify-content: center; font: 500 28px/1 var(--font-heading); margin-bottom: 32px; }
+html.rer-themed input { background: var(--surface); color: var(--ink); }

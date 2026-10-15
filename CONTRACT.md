@@ -7,4 +7,7 @@
 - ERASE-001: Owner erasure atomically removes the account and its native/import custody; permanent target/source tombstones prevent replay in that installation. External copies are outside this boundary.
 - RESTORE-001: Local RER archives carry domain and import custody into an empty destination. New owner authentication is required; credentials/outbox/settings are excluded. Corrupt and populated restores fail.
 
+- SITE-001: The static run site contains the product homepage, `/run`, Markdown owner guides and a 404. It reads no installation data and links only public routes. Installed `/` keeps the shared Lobby. Run-site deployment stays gated off until its release gate.
+- STYLE-001: The site, auth, setup and product share self-hosted Spectral/Red Hat Text and the paper, ink and signal tokens. Real forms, role boundaries, checklist content and evidence remain available at desktop and phone widths.
+
 No external message sending, billing collection, analytics ingestion or prediction is implemented. A first-release candidate is not hosted-provider or independent release acceptance.
