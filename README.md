@@ -2,6 +2,8 @@
 
 Customer success and renewals for a small B2B software company. Keep confirmed renewal dates beside billing and support evidence, work an approved at-risk playbook, and record the renewal decision. MIT licensed; data lives in your own Cloudflare D1 database.
 
+The public website and owner guides are at [run-buoy.com](https://run-buoy.com).
+
 ## Run from a clone
 
 You need Git and npm. Install RER once, then launch:
