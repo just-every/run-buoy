@@ -1,0 +1,55 @@
+import { account } from './accounts'
+import { health } from './health'
+import { insist, text, date, object, stmt, guard, commit, id, now, requirePerson, type Actor } from './core'
+
+// Revision-bound drafts and guarded approval adapted from Orbit approval-repository
+// 38cef87571a413802dbaa7aa6afbab332d8cd778 and Nectar subscriptions
+// c76a60ccffa39cc1a207b52c152bda16d6d7b1df. No outbound effect exists in Buoy R1.
+export async function prepare(db: D1Database, actor: Actor, input: Record<string, unknown>) {
+ const accountId = text(input.accountId, 'Account', 100), current = await account(db, accountId)
+ const kind = input.kind, payload = object(input.payload)
+ insist(kind === 'playbook' || kind === 'renewal', 'Choose playbook or renewal.')
+ let normalized: Record<string, string>
+ if (kind === 'playbook') {
+  insist(health(current).status === 'at-risk', 'An at-risk signal is needed to prepare this playbook.', 409)
+  normalized = {title: text(payload.title, 'Playbook action', 500), dueDate: date(payload.dueDate, 'Due date')}
+ } else {
+  insist(['renewed','churned','deferred'].includes(String(payload.outcome)), 'Choose a renewal outcome.')
+  normalized = {outcome: String(payload.outcome), reason: text(payload.reason, 'Decision reason'), evidence: text(payload.evidence, 'Decision evidence')}
+ }
+ const proposalId = id(), at = now()
+ await commit(db, actor, accountId, `${kind}.prepared`, [
+  guard(db, 'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)', accountId, current.revision),
+  stmt(db, "INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,?,?,?,?,'prepared',?,?)", proposalId, accountId, kind, current.revision, JSON.stringify(current), JSON.stringify(normalized), `${actor.kind}:${actor.id}:${actor.displayName}`, at)])
+ return {id: proposalId, accountId, kind, payload: normalized, status: 'prepared'}
+}
+export async function approve(db: D1Database, actor: Actor, proposalId: string) {
+ requirePerson(actor)
+ const proposal = await stmt(db, 'SELECT * FROM buoy_proposals WHERE id=?', proposalId).first<Record<string, string>>()
+ insist(proposal, 'Proposal not found.', 404)
+ // Replay does not duplicate the effect or overwrite the original approver.
+ if (proposal.status === 'approved') return {id: proposalId, status: 'approved'}
+ const current = await account(db, proposal.account_id), payload = JSON.parse(proposal.payload)
+ insist(current.revision === proposal.account_revision, 'Evidence changed since preparation. Prepare a new proposal.', 409)
+ if (proposal.kind === 'playbook') insist(health(current).status === 'at-risk', 'This account no longer has an at-risk signal. Prepare from current evidence.', 409)
+ const at = now(), actorLabel = `person:${actor.id}:${actor.displayName}`, statements = [
+  guard(db, "EXISTS(SELECT 1 FROM buoy_proposals p JOIN buoy_accounts a ON a.id=p.account_id WHERE p.id=? AND p.status='prepared' AND a.revision=p.account_revision)", proposalId),
+  stmt(db, "UPDATE buoy_proposals SET status='approved',approved_by=?,approved_at=? WHERE id=?", actorLabel, at, proposalId)]
+ if (proposal.kind === 'playbook') statements.push(stmt(db, 'INSERT INTO buoy_tasks(id,account_id,proposal_id,title,due_date) VALUES(?,?,?,?,?)', id(), current.id, proposalId, payload.title, payload.dueDate))
+ else statements.push(stmt(db, 'INSERT INTO buoy_decisions(id,account_id,proposal_id,outcome,reason,evidence,renewal_date,recorded_by,recorded_at) VALUES(?,?,?,?,?,?,?,?,?)', id(), current.id, proposalId, payload.outcome, payload.reason, payload.evidence, current.renewalDate, actorLabel, at))
+ statements.push(stmt(db, 'UPDATE buoy_accounts SET revision=? WHERE id=?', id(), current.id))
+ await commit(db, actor, current.id, `${proposal.kind}.approved`, statements, true)
+ return {id: proposalId, status: 'approved'}
+}
+export async function completeTask(db: D1Database, actor: Actor, taskId: string, input: Record<string, unknown>) {
+ requirePerson(actor)
+ const task = await stmt(db, 'SELECT * FROM buoy_tasks WHERE id=?', taskId).first<Record<string, string>>()
+ insist(task, 'Task not found.', 404)
+ const evidence = text(input.evidence, 'Completion evidence')
+ insist(!task.completed_at, 'Task is already complete.', 409)
+ await commit(db, actor, task.account_id, 'playbook.completed', [
+  guard(db, 'EXISTS(SELECT 1 FROM buoy_tasks WHERE id=? AND completed_at IS NULL)', taskId),
+  stmt(db, 'UPDATE buoy_tasks SET completed_at=?,evidence=? WHERE id=?', now(), evidence, taskId),
+  stmt(db, 'UPDATE buoy_accounts SET revision=? WHERE id=?', id(), task.account_id)], true)
+ return {id: taskId, status: 'completed'}
+}

@@ -1,0 +1,13 @@
+{
+  "accounts": [
+    {
+      "id": "synthetic-orchard",
+      "name": "Synthetic Orchard Workshop",
+      "renewalDate": "2027-03-01",
+      "noticeDays": 60,
+      "renewalEvidence": "Synthetic contract ORC-2026 section 7; manual example only",
+      "billing": null,
+      "support": null
+    }
+  ]
+}

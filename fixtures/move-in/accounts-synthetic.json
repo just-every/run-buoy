@@ -1,0 +1,26 @@
+{
+  "accounts": [
+    {
+      "id": "synthetic-harbour",
+      "name": "Synthetic Harbour Studio",
+      "renewalDate": "2027-01-15",
+      "noticeDays": 30,
+      "renewalEvidence": "Synthetic contract HBR-2026 section 4; manual example only",
+      "billing": {
+        "observedAt": "2026-10-15",
+        "reference": "Synthetic Nectar export invoice HBR-1001; manual example only",
+        "currency": "AUD",
+        "totalMinor": 120000,
+        "creditsMinor": 10000,
+        "allocatedMinor": 30000,
+        "dueDate": "2026-10-01"
+      },
+      "support": {
+        "observedAt": "2026-10-15",
+        "reference": "Synthetic support export HBR-20261015; manual example only",
+        "openTickets": 3,
+        "urgentTickets": 1
+      }
+    }
+  ]
+}

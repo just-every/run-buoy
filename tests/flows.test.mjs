@@ -1,0 +1,96 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { startWorker } from './worker.mjs'
+
+const today=new Date().toISOString().slice(0,10)
+const account=(id='harbour')=>({id,name:'Harbour Software',renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Signed order form section 4, approved by customer',billing:{observedAt:today,reference:'Nectar invoice INV-1042',currency:'AUD',totalMinor:120000,creditsMinor:10000,allocatedMinor:20000,dueDate:'2026-01-01'},support:{observedAt:today,reference:'Support case CS-42',openTickets:3,urgentTickets:1}})
+test('Buoy public HTTP jobs and trust boundaries',async t=>{
+ const worker=await startWorker(), {request,cookie,signIn}=worker
+ const call=(path,method='GET',body,extra={})=>request('/api/buoy'+path,{method,body,cookie,...extra})
+ async function json(response,status=200){assert.equal(response.status,status,await response.clone().text());return response.json()}
+ let member,token,proposal,task
+ try {
+  await t.test('native sign-in, unauthenticated data refusal and CSRF',async()=>{
+   assert.equal((await request('/api/buoy/state')).status,401)
+   assert.equal((await call('/accounts','POST',account(),{headers:{origin:'https://other.invalid'}})).status,403)
+   assert.equal((await request('/__dev/outbox')).status,404)
+   const signedIn=await signIn('owner@example.test')
+   assert.equal((await request('/api/buoy/state',{cookie:signedIn})).status,200)
+  })
+  await t.test('billing evidence, renewal date and honest unknown health',async()=>{
+   await json(await call('/accounts','POST',account()),201)
+   const a=(await json(await call('/state'))).accounts[0]
+   assert.equal(a.health.status,'at-risk');assert.match(a.health.reasons.join(' '),/900\.00/)
+   assert.equal(a.noticeDate,'2027-03-01')
+   await json(await call('/accounts','POST',{...account('unknown'),billing:null,support:null}),201)
+   const unknown=(await json(await call('/state'))).accounts.find(a=>a.id==='unknown')
+   assert.equal(unknown.health.status,'unknown')
+   assert.equal((await call('/accounts','POST',{...account('bad-money'),billing:{...account().billing,creditsMinor:200000}})).status,400)
+   assert.equal((await call('/accounts','POST',{...account('bad-date'),renewalDate:'2027-02-30'})).status,400)
+  })
+  await t.test('members can prepare but cannot change accounts or approve',async()=>{
+   await json(await request('/auth/invite',{method:'POST',cookie,body:{email:'member@example.test',displayName:'CS colleague',role:'member'}}),202)
+   member=await signIn('member@example.test')
+   assert.equal((await call('/accounts','POST',account('denied'),{cookie:member})).status,403)
+   proposal=await json(await call('/proposals','POST',{accountId:'harbour',kind:'playbook',payload:{title:'Review incident with customer',dueDate:'2027-02-01'}},{cookie:member}),201)
+   assert.equal((await call(`/proposals/${proposal.id}/approve`,'POST',{}, {cookie:member})).status,403)
+  })
+  await t.test('approval is durable and idempotent, completed work needs evidence',async()=>{
+   await json(await call(`/proposals/${proposal.id}/approve`,'POST',{}))
+   await json(await call(`/proposals/${proposal.id}/approve`,'POST',{}))
+   const data=await json(await call('/state'));assert.equal(data.tasks.length,1);task=data.tasks[0]
+   assert.match(data.proposals[0].approvedBy,/person:/);assert.ok(data.proposals[0].approvedAt)
+   assert.equal((await call(`/tasks/${task.id}/complete`,'POST',{evidence:''})).status,400)
+   await json(await call(`/tasks/${task.id}/complete`,'POST',{evidence:'Customer meeting minutes 2027-01-15; incident resolved.'}))
+   assert.ok((await json(await call('/state'))).tasks[0].completedAt)
+  })
+  await t.test('agents prepare decisions, cannot approve; revoked tokens stop',async()=>{
+   token=await json(await call('/agent-tokens','POST',{label:'Renewal assistant'}),201)
+   const prepared=await json(await call('/commands','POST',{command:'renewal.prepare',input:{accountId:'harbour',payload:{outcome:'renewed',reason:'Customer accepted renewal',evidence:'Signed renewal order R-17'}}},{token:token.token}),201)
+   assert.equal((await call(`/proposals/${prepared.id}/approve`,'POST',{}, {token:token.token})).status,403)
+   await json(await call(`/proposals/${prepared.id}/approve`,'POST',{}))
+   const decisions=(await json(await call('/state'))).decisions
+   assert.equal(decisions.length,1);assert.equal(decisions[0].outcome,'renewed');assert.equal(decisions[0].evidence,'Signed renewal order R-17')
+   await json(await call(`/agent-tokens/${token.id}`,'DELETE'))
+   assert.equal((await call('/commands','POST',{command:'renewals.list'},{token:token.token})).status,401)
+  })
+  await t.test('a source refresh invalidates prepared approvals',async()=>{
+   const draft=await json(await call('/proposals','POST',{accountId:'harbour',kind:'renewal',payload:{outcome:'deferred',reason:'Awaiting signature',evidence:'Customer email E-8'}}),201)
+   const before=(await json(await call('/state'))).accounts.find(a=>a.id==='harbour')
+   await json(await call('/accounts/harbour','PUT',{...account(),renewalDate:'2027-04-30',revision:before.revision}))
+   assert.equal((await call(`/proposals/${draft.id}/approve`,'POST',{})).status,409)
+   assert.equal((await json(await call('/state'))).decisions[0].renewalDate,'2027-03-31','earlier decision evidence keeps original date')
+  })
+  let imported
+  await t.test('move-in dry run, review binding, idempotent apply and strict undo',async()=>{
+   const upload={accounts:[account('move-one')]}
+   const plan=await json(await call('/imports/preview','POST',upload))
+   assert.equal((await json(await call('/state'))).accounts.length,2)
+   assert.equal((await call('/imports/apply','POST',{...upload,fingerprint:'0'.repeat(64),operationKey:'import-one'})).status,409)
+   const input={...upload,fingerprint:plan.fingerprint,operationKey:'import-one'}
+   imported=await json(await call('/imports/apply','POST',input));assert.equal(imported.state,'completed')
+   const replay=await json(await call('/imports/apply','POST',input));assert.equal(replay.id,imported.id)
+   const undone=await json(await call(`/imports/${imported.id}/undo`,'POST',{}));assert.equal(undone.state,'undone')
+   assert.ok(!(await json(await call('/state'))).accounts.some(a=>a.id==='move-one'))
+  })
+  await t.test('undo preserves changed accounts and owner erasure redacts imported custody',async()=>{
+   const upload={accounts:[account('move-two')]}, plan=await json(await call('/imports/preview','POST',upload))
+   const job=await json(await call('/imports/apply','POST',{...upload,fingerprint:plan.fingerprint,operationKey:'import-two'}))
+   await json(await call('/proposals','POST',{accountId:'move-two',kind:'playbook',payload:{title:'Escalate support',dueDate:'2027-01-31'}}),201)
+   assert.equal((await call(`/imports/${job.id}/undo`,'POST',{})).status,409)
+   assert.equal((await call('/accounts/move-two','DELETE',{confirmation:'Harbour Software'},{cookie:member})).status,403)
+   await json(await call('/accounts/move-two','DELETE',{confirmation:'Harbour Software'}))
+   const state=await json(await call('/state'));assert.ok(!state.accounts.some(a=>a.id==='move-two'));assert.ok(!state.proposals.some(p=>p.accountId==='move-two'))
+   const history=await json(await call('/imports'));assert.ok(history.erasures.length)
+   const retained=JSON.stringify(await json(await call(`/imports/${job.id}`)))
+   assert.ok(!retained.includes('Harbour Software'));assert.ok(!retained.includes('INV-1042'))
+   assert.equal((await call('/accounts','POST',account('move-two'))).status,409)
+  })
+  await t.test('server-rendered work screens and unknown paths',async()=>{
+   for(const path of ['/app','/app/accounts/harbour','/app/imports','/app/backups']){
+    const response=await request(path,{cookie});assert.equal(response.status,200);assert.match(await response.text(),/Buoy/)
+   }
+   assert.equal((await request('/app/no-such-page',{cookie})).status,404)
+  })
+ }finally{await worker.close()}
+})
