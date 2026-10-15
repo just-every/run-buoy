@@ -1,3 +1,4 @@
+import { mailWorker } from './mail-runtime.mjs'
 import assert from 'node:assert/strict'
 import { spawn, execFileSync } from 'node:child_process'
 import { createServer } from 'node:net'
@@ -7,6 +8,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 export async function startWorker(options = {}) {
+ if (!options.keep) return mailWorker(options)
  const root = options.root ?? process.cwd()
  const socket = createServer(); await new Promise(resolve => socket.listen(0, '127.0.0.1', resolve))
  const port = socket.address().port; await new Promise(resolve => socket.close(resolve))
@@ -30,20 +32,6 @@ export async function startWorker(options = {}) {
   const cookie=boot.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
   assert.ok(cookie)
   await fetch(origin+'/setup',{method:'POST',redirect:'manual',headers:{origin,cookie,'content-type':'application/x-www-form-urlencoded'},body:'confirm=yes'})
-  async function signIn(email) {
-   assert.equal((await request('/auth/magic-link',{method:'POST',body:{email}})).status,202)
-   const listing=await(await request('/__dev/outbox',{headers:{'x-rer-dev-key':vars.RER_DEV_KEY}})).text()
-   const paths=[...listing.matchAll(/href="(\/__dev\/outbox\?message=[^"]+)"/g)].map(x=>x[1].replaceAll('&amp;','&'))
-   for(const path of paths){
-    const detail=await(await request(path,{headers:{'x-rer-dev-key':vars.RER_DEV_KEY}})).text()
-    if(!detail.includes(email))continue
-    const match=detail.match(/href="([^"]*\/auth\/confirm\?token=[^"]+)"/); if(!match)continue
-    const link=new URL(match[1].replaceAll('&amp;','&'),origin)
-    const response=await request('/auth/confirm',{method:'POST',body:{token:link.searchParams.get('token')}})
-    if(response.status===303)return response.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
-   }
-   throw Error('No usable sign-in message')
-  }
-  return {origin,directory,request,cookie,signIn,close}
+  return {origin,directory,request,cookie,close}
  } catch(error) {await close(); throw error}
 }
