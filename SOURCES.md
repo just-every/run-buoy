@@ -1,6 +1,6 @@
 # Source provenance
 
-Buoy was composed from committed [Base](https://github.com/runeditrun/base) main `fc0e1041efa55771142bbb57c4ab4743147e264d` using its foundation generator and edition assembler. `composition.lock.json` retains the original foundation inventory. Product files are edition-owned adaptations; that initial inventory is provenance, not a claim that edited files still match the template. CLI conversion used Base's package-mode exporter and pins the published RER 0.2.21.
+Buoy was composed from committed [Base](https://github.com/runeditrun/base) main `fc0e1041efa55771142bbb57c4ab4743147e264d` using its foundation generator and edition assembler. `composition.lock.json` retains the original foundation inventory. Product files are edition-owned adaptations; that initial inventory is provenance, not a claim that edited files still match the template. CLI conversion used Base's package-mode exporter and pins the published RER 0.2.22.
 
 Base runtime copies provide authentication, mail, dependency/owner claim, shared frames, fonts and theme. `src/modules/import-kit` is the unchanged production D1 dependency closure copied from the same Base revision; `src/buoy/imports` adapts its default-seed people example. Numbered migrations preserve the generated foundation schema and add Buoy and import custody.
 
@@ -13,6 +13,6 @@ Copied/adapted MIT sibling patterns:
 
 Run Coaster, Beam and Pier main README/OPERATIONS/package-mode examples informed the CLI and archive wiring. No sibling repository was modified. Support snapshot rules are Buoy's own implementation. Source retains the Run Edit Run MIT copyright; the self-hosted Spectral and Red Hat Text fonts retain their SIL Open Font Licenses.
 
-The exact published RER 0.2.21 package supplies bounded, nonblocking macOS listener ownership inspection. No local RER patches are applied.
+The exact published RER 0.2.22 package supplies bounded, nonblocking macOS listener ownership inspection. No local RER patches are applied.
 
-Demo adoption refreshes every vendored runtime module together from Base tag `rer-v0.2.21` (`756bf5a8544d792a51bb76f6e90a8ee5908a32a5`). `base-copies.json` is maintained with Base’s supported `record-base` and `refresh-base` commands and records the exact copied production bytes. Applied migrations remain unchanged; owner sign-in uses additive migration 0016. Buoy’s mail facade follows that tag’s demo/development suppression. The import-kit remains its production D1 dependency closure.
+Demo adoption refreshes every vendored runtime module together from Base tag `rer-v0.2.22` (`1ce15dd8cbb7c8cf2d83ebfde2b4a8a130ff9d74`). `base-copies.json` is maintained with Base’s supported `record-base` and `refresh-base` commands and records the exact copied production bytes. Applied migrations remain unchanged; owner sign-in uses additive migration 0016. Buoy’s mail facade follows that tag’s demo/development suppression. The import-kit remains its production D1 dependency closure.
