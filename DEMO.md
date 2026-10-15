@@ -7,8 +7,11 @@ owner. The title and nav read **Buoy Demo**, with no bar or outbox.
 
 `src/demo.ts` installs 24 accounts, current billing/support observations,
 prepared playbooks, approved open/completed tasks, and renewed/deferred/churned
-decisions. Dates are relative to the start. Stable IDs and conflict-safe inserts
-make the hook idempotent; it never fetches. The manual move-in fixture provides
+decisions. Dates are relative to the start. Stable account IDs and proposal lookups make the hook idempotent; it never
+fetches. Accounts, proposals, approvals and task completions go through Buoy’s
+domain functions, with their real validation, revisions and audit trail. Maya
+Patel owns the sample workspace at maya@harbourstudio.example. Harbour Studio
+shows completed and open work, an agreed renewal extension and a current draft. The manual move-in fixture provides
 the account shape; these expanded examples live only in demo state.
 
 The demo uses the unmodified published RER package and Base runtime modules

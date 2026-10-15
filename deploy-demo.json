@@ -4,6 +4,7 @@
   "name": "Buoy",
   "instanceType": "basic",
   "settings": {
-    "MAIL_FROM": "buoy@demo.invalid"
-  }
+    "MAIL_FROM": "buoy@harbourstudio.example"
+  },
+  "ownerEmail": "maya@harbourstudio.example"
 }

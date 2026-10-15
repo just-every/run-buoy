@@ -12,6 +12,10 @@ on:
         description: 'Remove that demo (rer deploy --demo --remove --yes) instead of deploying it'
         type: boolean
         default: false
+      observe:
+        description: 'Observe the test host for 25 minutes, publishing its quiet window after 15 minutes'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -81,3 +85,53 @@ jobs:
             sleep 15
           done
           ! curl --silent --show-error --doh-url "$doh" -D - -o /dev/null "https://$domain/" | grep -qi '^set-cookie:'
+  observe:
+    if: inputs.test_only && inputs.observe && !inputs.remove
+    needs: deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    environment: run-demo
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+      - name: Observe the test host
+        run: |
+          node scripts/demo-tail.mjs > demo-tail.log 2>&1 &
+          echo "$!" > demo-tail.pid
+          for _ in $(seq 1 60); do
+            if test -f demo-observation/tail.jsonl && grep -q 'tail-ready' demo-observation/tail.jsonl; then
+              sleep 900
+              kill -0 "$(cat demo-tail.pid)"
+              exit 0
+            fi
+            kill -0 "$(cat demo-tail.pid)" || { cat demo-tail.log; exit 1; }
+            sleep 1
+          done
+          exit 1
+        env:
+          CLOUDFLARE_ACCOUNT_ID: b20c0ca9cab0c2b70e13d7cf724b89bd
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: demo-quiet-window
+          path: demo-observation/tail.jsonl
+      - name: Keep observing the cohort
+        run: |
+          while kill -0 "$(cat demo-tail.pid)" 2>/dev/null; do
+            grep -q 'tail-removed' demo-observation/tail.jsonl && break
+            sleep 10
+          done
+          grep -q 'tail-removed' demo-observation/tail.jsonl
+      - name: Stop the owned observer
+        if: always()
+        run: |
+          test ! -f demo-tail.pid || kill -TERM "$(cat demo-tail.pid)" 2>/dev/null || true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: demo-observation
+          path: demo-observation/tail.jsonl
