@@ -1,6 +1,6 @@
 # Source provenance
 
-Buoy was composed from committed [Base](https://github.com/runeditrun/base) main `fc0e1041efa55771142bbb57c4ab4743147e264d` using its foundation generator and edition assembler. `composition.lock.json` retains the original foundation inventory. Product files are edition-owned adaptations; that initial inventory is provenance, not a claim that edited files still match the template. CLI conversion used Base's package-mode exporter and pins the published RER 0.2.15.
+Buoy was composed from committed [Base](https://github.com/runeditrun/base) main `fc0e1041efa55771142bbb57c4ab4743147e264d` using its foundation generator and edition assembler. `composition.lock.json` retains the original foundation inventory. Product files are edition-owned adaptations; that initial inventory is provenance, not a claim that edited files still match the template. CLI conversion used Base's package-mode exporter and pins the published RER 0.2.17.
 
 Base runtime copies provide authentication, mail, dependency/owner claim, shared frames, fonts and theme. `src/modules/import-kit` is the unchanged production D1 dependency closure copied from the same Base revision; `src/buoy/imports` adapts its default-seed people example. Numbered migrations preserve the generated foundation schema and add Buoy and import custody.
 
@@ -13,4 +13,4 @@ Copied/adapted MIT sibling patterns:
 
 Run Coaster, Beam and Pier main README/OPERATIONS/package-mode examples informed the CLI and archive wiring. No sibling repository was modified. Support snapshot rules are Buoy's own implementation. Source retains the Run Edit Run MIT copyright; the supplied Outfit fonts retain their font license.
 
-A narrow pnpm patch to RER 0.2.15 extends macOS listener ownership inspection from three to thirty seconds and reports a timeout explicitly. On a loaded shared Mac, the real owned Worker was healthy but lsof took fifteen seconds, so the unpatched CLI refused setup. The patch also teaches the package lock check to verify pnpm’s patch suffix against its declared path and SHA-256, before recognizing the exact registry version. The patch preserves ownership checks; no listener or setup validation is bypassed. Remove it when the published package includes the repair.
+The exact published RER 0.2.17 package supplies bounded, nonblocking macOS listener ownership inspection. No local RER patches are applied.

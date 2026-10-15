@@ -74,7 +74,7 @@ The dry run builds and validates without provider calls. Real deploy provisions 
 
 ## Development
 
-Package mode pins `@runeditrun/rer` **0.2.15**; [SOURCES.md](SOURCES.md) identifies the Base and sibling source. The app uses Base authentication, theme, document frames, import-kit and portability. The product's server-rendered forms work without client rendering.
+Package mode pins `@runeditrun/rer` **0.2.17**; [SOURCES.md](SOURCES.md) identifies the Base and sibling source. The app uses Base authentication, theme, document frames, import-kit and portability. The product's server-rendered forms work without client rendering.
 
 ```sh
 rer dev --stop
