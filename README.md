@@ -6,17 +6,13 @@ The public website and owner guides are at [run-buoy.com](https://run-buoy.com).
 
 ## Run from a clone
 
-You need Git and npm. Install RER once, then launch:
+You need Git and npm. One line clones Buoy, installs RER and launches it:
 
 ```sh
-git clone https://github.com/just-every/run-buoy.git
-cd run-buoy
-npx -y @runeditrun/rer cli install
-export PATH="$HOME/.local/bin:$PATH"
-rer dev
+npx -y @runeditrun/rer dev just-every/run-buoy
 ```
 
-`rer dev` installs the pinned dependencies, selects Node 22.20.0 and pnpm 10.12.4, migrates local D1 and prepares a local owner. Open the private `RER_OPEN` link it prints on this computer, confirm the owner at **Finish setup**, then open **Accounts**. No Cloudflare account or mail provider is needed locally. Keep the sign-in link private. A first run can take a few minutes; a queue wait prints its position.
+To start it again later, run `cd run-buoy && rer dev`. `rer dev` installs the pinned dependencies, selects Node 22.20.0 and pnpm 10.12.4, migrates local D1 and prepares a local owner. Open the private `RER_OPEN` link it prints on this computer, confirm the owner at **Finish setup**, then open **Accounts**. No Cloudflare account or mail provider is needed locally. Keep the sign-in link private. A first run can take a few minutes; a queue wait prints its position.
 
 To choose your own owner mailbox instead, run `rer install`, `rer setup --owner-email you@example.com`, then `rer dev`. For ordinary email-link sign-in, stop with `rer dev --stop`, start with `rer dev --login`, and follow the local outbox link printed by RER. Request your saved owner email at `/signin`, open its latest message in that outbox and confirm the sign-in. Local mail never leaves the computer.
 

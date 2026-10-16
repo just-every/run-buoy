@@ -7,14 +7,10 @@ Run Buoy on your computer, finish the owner setup, then add your first account. 
 You need Git and npm on macOS, Linux or Windows with WSL2. From your terminal:
 
 ```sh
-git clone https://github.com/just-every/run-buoy.git
-cd run-buoy
-npx -y @runeditrun/rer cli install
-export PATH="$HOME/.local/bin:$PATH"
-rer dev
+npx -y @runeditrun/rer dev just-every/run-buoy
 ```
 
-Install the `rer` command once per computer. `rer dev` installs the checkout’s locked dependencies, selects its declared Node and pnpm versions, prepares local data and creates a local owner. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
+That one line clones Buoy and installs the `rer` command if you do not have it; to start Buoy again later, run `cd run-buoy && rer dev`. `rer dev` installs the checkout’s locked dependencies, selects its declared Node and pnpm versions, prepares local data and creates a local owner. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
 
 Open the private **RER_OPEN** link printed in your terminal on this computer. It opens Buoy signed in as the owner. Keep the link private: it grants access to the local installation. **RER_READY** is the app address; **RER_SITE**, when printed, is this public information site.
 

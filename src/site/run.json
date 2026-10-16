@@ -1,7 +1,7 @@
 {
   "name": "Buoy",
   "repository": "https://github.com/just-every/run-buoy",
-  "clone": "git clone https://github.com/just-every/run-buoy.git",
+  "clone": "npx -y @runeditrun/rer dev just-every/run-buoy",
   "folder": "run-buoy",
   "requirements": "Needs Node 22 or later and pnpm 10.12.4, on macOS, Linux or Windows with WSL2.",
   "licence": "MIT",
