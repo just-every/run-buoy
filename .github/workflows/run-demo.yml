@@ -105,7 +105,7 @@ jobs:
           for _ in $(seq 1 60); do
             if test -f demo-observation/tail.jsonl && grep -q 'tail-ready' demo-observation/tail.jsonl; then
               sleep 900
-              kill -0 "$(cat demo-tail.pid)"
+              kill -0 "$(cat demo-tail.pid)" || { cat demo-tail.log; exit 1; }
               exit 0
             fi
             kill -0 "$(cat demo-tail.pid)" || { cat demo-tail.log; exit 1; }

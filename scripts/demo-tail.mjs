@@ -11,12 +11,16 @@ const headers = { authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`, '
 const directory = 'demo-observation';
 mkdirSync(directory, { recursive: true });
 const row = value => appendFileSync(`${directory}/tail.jsonl`, JSON.stringify(value) + '\n');
-const response = await fetch(base, { method: 'POST', headers, body: '{}' });
-const result = await response.json();
-if (!response.ok || !result.success) throw Error(`tail-create-${response.status}`);
-const tail = result.result;
-let socket, timer;
-try {
+async function open() {
+  const response = await fetch(base, { method: 'POST', headers, body: '{}' });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw Error(`tail-create-${response.status}`);
+  return result.result;
+}
+let tail, socket, timer, stopping = false, fail;
+const failure = new Promise((_, reject) => { fail = reject; });
+async function connect() {
+  tail = await open();
   socket = new WebSocket(tail.url, 'trace-v1');
   socket.binaryType = 'arraybuffer';
   const fields = ['event', 'correlation', 'at', 'elapsedMs', 'agent', 'network', 'error', 'status', 'heldId', 'releasedId'];
@@ -37,18 +41,30 @@ try {
     socket.addEventListener('open', resolve, { once: true });
     socket.addEventListener('error', () => reject(Error('tail-connect-failed')), { once: true });
   });
+  socket.addEventListener('close', async event => {
+    if (stopping) return;
+    row({ at: new Date().toISOString(), event: 'tail-reconnecting', code: event.code });
+    try {
+      await fetch(`${base}/${tail.id}`, { method: 'DELETE', headers });
+      await connect();
+    } catch { fail(Error('tail-reconnect-failed')); }
+  });
+  socket.addEventListener('error', () => { if (!stopping) fail(Error('tail-error')); });
   row({ at: new Date().toISOString(), event: 'tail-ready', worker });
+}
+try {
+  await connect();
   console.log('Test-host tail connected. Quiet-window artifact follows in 15 minutes.');
-  await new Promise((resolve, reject) => {
+  await Promise.race([failure, new Promise(resolve => {
     timer = setTimeout(resolve, 25 * 60 * 1000);
     process.once('SIGTERM', resolve);
     process.once('SIGINT', resolve);
-    socket.addEventListener('close', () => reject(Error('tail-disconnected')), { once: true });
-    socket.addEventListener('error', () => reject(Error('tail-error')), { once: true });
-  });
+  })]);
 } finally {
+  stopping = true;
   clearTimeout(timer);
   socket?.close();
+  if (!tail) throw Error('tail-not-created');
   const removed = await fetch(`${base}/${tail.id}`, { method: 'DELETE', headers });
   row({ at: new Date().toISOString(), event: 'tail-removed', status: removed.status });
   if (!removed.ok) throw Error(`tail-remove-${removed.status}`);
