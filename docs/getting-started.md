@@ -4,13 +4,16 @@ Run Buoy on your computer, finish the owner setup, then add your first account. 
 
 ## Get Buoy and start it
 
-You need Git and npm on macOS, Linux or Windows with WSL2. From your terminal:
+You need Git on macOS, Linux or Windows with WSL2. From your terminal:
 
 ```sh
-npx -y @runeditrun/rer dev just-every/run-buoy
+curl -fsSL https://runeditrun.com/install.sh | sh
+rer dev just-every/run-buoy
 ```
 
-That one line clones Buoy and installs the `rer` command if you do not have it; to start Buoy again later, run `cd run-buoy && rer dev`. `rer dev` installs the checkout’s locked dependencies, selects its declared Node and pnpm versions, prepares local data and creates a local owner. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
+The first line installs `rer` for you alone, with its own Node if you have none. It changes no shell settings: if it prints an `export PATH=…` line, run that line before the second. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` does both lines in one.
+
+The second line clones Buoy; to start Buoy again later, run `cd run-buoy && rer dev`. `rer dev` installs the checkout’s locked dependencies, selects its declared Node and pnpm versions, prepares local data and creates a local owner. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
 
 Open the private **RER_OPEN** link printed in your terminal on this computer. It opens Buoy signed in as the owner. Keep the link private: it grants access to the local installation. **RER_READY** is the app address; **RER_SITE**, when printed, is this public information site.
 
