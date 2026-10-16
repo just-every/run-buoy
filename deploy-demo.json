@@ -2,7 +2,6 @@
   "version": 1,
   "domain": "run-buoy.com",
   "name": "Buoy",
-  "instanceType": "basic",
   "settings": {
     "MAIL_FROM": "buoy@harbourstudio.example"
   },

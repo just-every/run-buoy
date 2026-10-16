@@ -2,6 +2,7 @@
 
 ## 2026-10-16
 
+- Moved the hosted demo to RER 0.2.30's native Worker Loader host: each visitor gets their own isolate and SQLite copy instead of a container. Refreshed every vendored Base copy from `rer-v0.2.30`, adopted Base's `run-demo.yml`, removed the container-era observer and `instanceType`, and stopped marking the header name twice now that Base's theme frame marks it.
 - Built the picked still-water Buoy homepage, with Run Buoy leading to the local-run instructions.
 - Added eight owner documentation pages compiled from repository Markdown and a disabled run-site deployment workflow for run-buoy.com.
 - Carried the shared paper, ink, Spectral and Red Hat Text theme through sign-in, setup, the installed Lobby and all product screens. Replaced the previous fonts, green palette and brand art.

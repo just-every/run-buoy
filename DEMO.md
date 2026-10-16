@@ -39,9 +39,12 @@ must use `demoEffect(real, providerSuccess)`; POST public reads use `fetchDemoRe
 `test_only=true` for the separate `demo.test.run-buoy.com` host with Cloudflare’s
 published always-passing test keys, and `test_only=true, remove=true` to delete
 it. Production dispatch uses the real Turnstile keys. Never automate the real
-widget. Each visitor gets an isolated container, signed owner claim, 60-minute
-maximum lifetime and 15-minute idle lifetime. `deploy-demo.json` carries only
-public container settings; no provider mail credential is needed.
+widget. Each visitor gets their own native Worker Loader isolate with its own
+SQLite copy of Buoy's D1 database, a signed owner claim, a 60-minute maximum
+lifetime and a 15-minute idle lifetime; expiry erases the copy. Test-host starts
+need the private `RER_DEMO_MEASUREMENT_TOKEN` from the same environment, sent as
+the `rer_demo_measure` cookie. `deploy-demo.json` carries only the domain, name,
+owner email and public settings; no provider mail credential is needed.
 
 The homepage’s demo CTA is admitted only after the production start page
 answers successfully. The run site stays static and cookie-free.
