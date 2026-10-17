@@ -24,7 +24,8 @@ It excludes native operators, sessions, agent credentials, outbox mail and priva
 Use a fresh clone of the same release commit, before starting `dev`. Put the private archive at the path you will import, then run from that fresh checkout:
 
 ```sh
-rer install
+npx -y @runeditrun/rer install just-every/run-buoy
+cd run-buoy
 rer import --input /path/to/buoy.rer --yes
 rer setup
 rer dev

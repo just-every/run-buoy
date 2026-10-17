@@ -7,13 +7,12 @@ Run Buoy on your computer, finish the owner setup, then add your first account. 
 You need Git on macOS, Linux or Windows with WSL2. From your terminal:
 
 ```sh
-curl -fsSL https://runeditrun.com/install.sh | sh
-rer dev just-every/run-buoy
+npx -y @runeditrun/rer dev just-every/run-buoy
 ```
 
-The first line installs `rer` for you alone, with its own Node if you have none. It changes no shell settings: if it prints an `export PATH=…` line, run that line before the second. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` does both lines in one.
+No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-buoy` brings its own Node and does the same.
 
-The second line clones Buoy; to start Buoy again later, run `cd run-buoy && rer dev`. `rer dev` installs the checkout’s locked dependencies, selects its declared Node and pnpm versions, prepares local data and creates a local owner. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
+The line clones Buoy; to start Buoy again later, run `cd run-buoy && rer dev`. `rer dev` installs the checkout’s locked dependencies, selects its declared Node and pnpm versions, prepares local data and creates a local owner. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
 
 Open the private **RER_OPEN** link printed in your terminal on this computer. It opens Buoy signed in as the owner. Keep the link private: it grants access to the local installation. **RER_READY** is the app address; **RER_SITE**, when printed, is this public information site.
 
@@ -25,10 +24,9 @@ An empty installation has no business records. Start with one real account and i
 
 ## Choose your owner mailbox
 
-For a fresh installation with your own mailbox, use the separate setup steps before starting:
+For a fresh installation with your own mailbox, run `npx -y @runeditrun/rer install just-every/run-buoy`, then the separate setup steps from the checkout before starting:
 
 ```sh
-rer install
 rer setup
 rer dev
 ```

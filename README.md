@@ -6,18 +6,17 @@ The public website and owner guides are at [run-buoy.com](https://run-buoy.com).
 
 ## Run from a clone
 
-You need Git. Two lines install RER, clone Buoy and launch it:
+You need Git. One line installs RER, clones Buoy and launches it:
 
 ```sh
-curl -fsSL https://runeditrun.com/install.sh | sh
-rer dev just-every/run-buoy
+npx -y @runeditrun/rer dev just-every/run-buoy
 ```
 
-The first line installs `rer` for you alone, with its own Node if you have none. It changes no shell settings: if it prints an `export PATH=…` line, run that line before the second. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` does both lines in one.
+No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-buoy` brings its own Node and does the same.
 
 To start it again later, run `cd run-buoy && rer dev`. `rer dev` installs the pinned dependencies, selects Node 22.20.0 and pnpm 10.12.4, migrates local D1 and prepares a local owner. Open the private `RER_OPEN` link it prints on this computer, confirm the owner at **Finish setup**, then open **Accounts**. No Cloudflare account or mail provider is needed locally. Keep the sign-in link private. A first run can take a few minutes; a queue wait prints its position.
 
-To choose your own owner mailbox instead, run `rer install`, `rer setup --owner-email you@example.com`, then `rer dev`. For ordinary email-link sign-in, stop with `rer dev --stop`, start with `rer dev --login`, and follow the local outbox link printed by RER. Request your saved owner email at `/signin`, open its latest message in that outbox and confirm the sign-in. Local mail never leaves the computer.
+To choose your own owner mailbox instead, run `npx -y @runeditrun/rer install just-every/run-buoy`, then `rer setup --owner-email you@example.com` and `rer dev` from the checkout. For ordinary email-link sign-in, stop with `rer dev --stop`, start with `rer dev --login`, and follow the local outbox link printed by RER. Request your saved owner email at `/signin`, open its latest message in that outbox and confirm the sign-in. Local mail never leaves the computer.
 
 Stop with `rer dev --stop`. Local data persists in `.wrangler/state`; private settings are in `.dev.vars`. Neither belongs in Git. Do not run build, backup or restore while serving.
 
@@ -49,7 +48,8 @@ Keep this archive private and record the release commit beside it. It includes d
 Restore into a fresh clone of the same commit (before running `dev`):
 
 ```sh
-rer install
+npx -y @runeditrun/rer install just-every/run-buoy
+cd run-buoy
 rer import --input /path/to/buoy.rer --yes
 rer setup --owner-email you@example.com
 rer dev
