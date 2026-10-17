@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "projectId": "just-every/run-buoy",
+  "name": "Buoy",
+  "sourceRepository": "https://github.com/just-every/run-buoy",
+  "license": "MIT"
+}
