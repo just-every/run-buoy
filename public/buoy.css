@@ -65,6 +65,8 @@ html.rer-themed .buoy-shell legend { color: var(--ink); font-weight: 500; paddin
 html.rer-themed .buoy-shell label { display: grid; gap: 8px; color: var(--muted); font-size: 14px; font-weight: 400; }
 html.rer-themed .buoy-shell label.check { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
 html.rer-themed .buoy-shell input:not([type=hidden]), .buoy-shell select, .buoy-shell textarea { width: 100%; max-width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px; border: 1px solid var(--rer-border); border-radius: var(--r-input); color: var(--ink); background: var(--surface); font: 400 16px/1.4 var(--font-body); }
+/* every single-choice select draws its chevron 14px in from the right border (two gradient strokes in the theme's muted ink: the theme CSP allows no data: images); multiple and size>1 lists keep their native look */
+.buoy-shell select:not([multiple]):not([size]), .buoy-shell select[size="1"]:not([multiple]) { -webkit-appearance: none; appearance: none; padding-inline-end: 40px; background-image: linear-gradient(to top right, transparent calc(50% - 1.1px), var(--rer-muted) calc(50% - .55px), var(--rer-muted) calc(50% + .55px), transparent calc(50% + 1.1px)), linear-gradient(to top left, transparent calc(50% - 1.1px), var(--rer-muted) calc(50% - .55px), var(--rer-muted) calc(50% + .55px), transparent calc(50% + 1.1px)); background-repeat: no-repeat; background-position: right 20px center, right 14px center; background-size: 6px 6px; }
 html.rer-themed .buoy-shell input[type=checkbox] { width: 20px; height: 20px; min-height: 20px; flex: none; margin: 2px 0 0; }
 .buoy-shell textarea { resize: vertical; line-height: 1.5; }
 .buoy-shell textarea[hidden] { display: none; }
