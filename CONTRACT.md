@@ -274,22 +274,22 @@ Agents act with GOVERN-001's scoped authority on the data named in each clause. 
 
 ## Status
 
-Judged from the code and tests at commit `4c6f2eec61a43bce557c29ad2a9e36cab5ff95ac` (17 October 2026). The code and tests are unchanged on the contract-target branch, which changes only CONTRACT.md and ACCEPTANCE.md. Done needs a cited test through a public door; a partial row names what ships in Evidence and what is missing in Gap. No status here is acceptance.
+Judged from the code and tests at commit `66ab1c0eeab84a690367365a19c63ecdfb442d88` (18 October 2026). The code and tests are unchanged on the contract-target branch, which changes only CONTRACT.md and ACCEPTANCE.md. Done needs a cited test through a public door; a partial row names what ships in Evidence and what is missing in Gap. No status here is acceptance.
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 6 | 2 | 0 | 8 |
-| Target and push further | 0 | 23 | 72 | 95 |
-| All | 6 | 25 | 72 | 103 |
+| Published | 4 | 4 | 0 | 8 |
+| Target and push further | 0 | 25 | 70 | 95 |
+| All | 4 | 29 | 70 | 103 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
-| `HTTP-001` | Authenticated product HTTP | published | done | `src/buoy/access.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs` (native sign-in, unauthenticated data refusal and CSRF; members can prepare but cannot change accounts or approve; agents prepare decisions, cannot approve) |  |
+| `HTTP-001` | Authenticated product HTTP | published | partial | `src/buoy/access.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs` (native sign-in, unauthenticated data refusal and CSRF; members can prepare but cannot change accounts or approve; agents prepare decisions, cannot approve) | Bearer-authenticated agent commands return before the write-origin check; cross-origin agent writes are not refused. |
 | `DATA-001` | Provenanced, validated observations | published | partial | `src/buoy/health.ts`; `src/buoy/imports/validation.ts`; `tests/flows.test.mjs` (billing evidence, renewal date and honest unknown health): manual and imported billing and support snapshots are validated, with visible missing and 30-day stale evidence | Connected sources, per-source staleness thresholds and non-USD currencies are absent. |
 | `APPROVAL-001` | Revision-bound human approval | published | done | `src/buoy/work.ts`; `tests/flows.test.mjs` (approval is durable and idempotent; a source refresh invalidates prepared approvals) |  |
 | `IMPORT-001` | Reviewed move-in custody | published | done | `src/buoy/imports/index.ts`; `tests/flows.test.mjs` (move-in dry run, review binding, idempotent apply and strict undo; undo preserves changed accounts) |  |
 | `ERASE-001` | Owner erasure with tombstones | published | done | `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs` (owner erasure redacts imported custody); `tests/portable.mjs` (restored tombstone) |  |
-| `RESTORE-001` | Portable installation archives | published | done | `tests/portable.mjs` |  |
+| `RESTORE-001` | Portable installation archives | published | partial | `scripts/installer/local.mjs`; `tests/portable.mjs`: local archives restore domain data, import custody and tombstones into an empty installation, exclude agent tokens and refuse damaged or populated restores | SCALE-001 archive volumes are unproven; usable installations remain capped at 500 accounts. |
 | `SITE-001` | Public run site | published | done | `src/site/run.json`; `docs/`; `tests/site.mjs` |  |
 | `STYLE-001` | One theme at every width | published | partial | `public/rer-theme.css`; `public/fonts/fonts.css`; `public/buoy.css`: shared tokens and self-hosted fonts ship | No test checks the screens at 1440 and 390 pixels. |
 | `ACCOUNT-001` | Account hierarchy, people and ownership | target | partial | `src/buoy/health.ts`; `src/buoy/accounts.ts`: flat accounts with name and renewal terms | Hierarchy, relationships, users, stakeholders, owners, tiers and custom fields are absent. |
@@ -307,7 +307,7 @@ Judged from the code and tests at commit `4c6f2eec61a43bce557c29ad2a9e36cab5ff95
 | `BILLING-001` | Stripe billing connector | target | missing |  | No Stripe connector. |
 | `BILLING-002` | Chargebee, Nectar and QuickBooks Online revenue sources | target | missing |  | No Chargebee, Nectar or QuickBooks Online connector. |
 | `BILLING-003` | Subscription financial model | target | partial | `src/buoy/health.ts`; `tests/flows.test.mjs` (billing evidence): an invoice snapshot's balance after credits and allocated payments drives overdue risk | ARR and MRR, products, seats, movement history and the reconciliation queue are absent. |
-| `BILLING-004` | Multi-currency subscriptions | target | missing |  | Money is USD-only integer cents; no native currencies, rate table or FX movement. |
+| `BILLING-004` | Multi-currency subscriptions | target | partial | `src/buoy/imports/validation.ts`; `src/buoy/ui/account.ts`; `tests/flows.test.mjs` (billing evidence): manual invoice snapshots preserve native AUD, CAD, EUR, GBP, NZD and USD amounts in integer minor units | Subscriptions, USD reporting conversion, rate tables, rate-edit audits and constant-currency FX movement are absent. |
 | `BILLING-005` | Salesforce and HubSpot revenue sources, including Salesforce CPQ | target | missing |  | No revenue from opportunity products, Contracts, CPQ subscriptions or HubSpot line items. |
 | `BILLING-006` | Zuora billing connector | target | missing |  | No Zuora connector. |
 | `BILLING-007` | Subscription and invoice feeds from a warehouse or file | target | missing |  | No warehouse or file billing feed. |
@@ -367,7 +367,7 @@ Judged from the code and tests at commit `4c6f2eec61a43bce557c29ad2a9e36cab5ff95
 | `MIGRATE-006` | Parallel run and delta re-import | target | missing |  | No delta re-import, conflict preview or cutover record. |
 | `MIGRATE-007` | Health history carried over | target | missing |  | No health history import. |
 | `MOBILE-001` | Mobile apps | target | partial | `src/buoy/ui/`; `public/buoy.css`: server-rendered screens are built for phone widths | Native apps, push and offline use are absent. |
-| `A11Y-001` | Accessibility | target | missing |  | No accessibility test exists. |
+| `A11Y-001` | Accessibility | target | partial | `src/buoy/ui/html.ts`; `src/buoy/ui/work.ts`; `public/buoy.css`: labelled native controls, text health labels and visible keyboard focus ship | No axe or keyboard-only acceptance pass establishes WCAG 2.2 AA; portal and native mobile screens are absent. |
 | `SCALE-001` | Scale for a growing book | target | missing |  | src/buoy/accounts.ts caps an installation at 500 accounts; no volume test. |
 | `AI-001` | Cited account summaries and questions | target | missing |  | No cited account questions or briefs. |
 | `AI-002` | Conversation and meeting summaries with proposed work | target | missing |  | No conversation summaries or proposed work. |
