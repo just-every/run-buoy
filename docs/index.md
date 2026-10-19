@@ -23,6 +23,7 @@ There is no preloaded business data. Enter your own confirmed terms and observat
 - [Agents](/docs/agents) — give an assistant a credential for listing and preparation.
 - [Move in](/docs/move-in) — review an account JSON upload, apply it and understand undo.
 - [Backup and restore](/docs/backups) — save domain records and restore an empty installation.
+- [Providers and data flows](/docs/providers) — every provider an installation talks to, what it receives and the terms that govern it.
 
 ## One installation, one team
 

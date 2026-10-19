@@ -9,8 +9,8 @@ The first-release candidate (items 1 to 8 as done or partial) remains the shippe
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 6 | 2 | 0 | 8 |
-| Target and push further | 1 | 25 | 69 | 95 |
-| All | 7 | 27 | 69 | 103 |
+| Target and push further | 2 | 25 | 68 | 95 |
+| All | 8 | 27 | 68 | 103 |
 
 HTTP-001 ships the fixed read/preparation scope described in CONTRACT.md; invalid bearer credentials are refused even when a valid session cookie accompanies them. RESTORE-001 remains partial because SCALE-001 archive volumes are unproven and installations remain capped at 500 accounts. A11Y-001 is partial: labeled native controls, text health labels and keyboard focus ship; the full WCAG pass, portal and native mobile screens remain outstanding. BILLING-004 is partial: native invoice snapshots in any ISO 4217 currency ship; subscriptions, USD conversion, rate tables, rate-edit audits and constant-currency FX movement remain required.
 
@@ -148,4 +148,4 @@ HTTP-001 ships the fixed read/preparation scope described in CONTRACT.md; invali
 100. **BOUNDARY-002 — Not the sales CRM, help desk, product analytics or marketing email platform** (`partial`). From a fresh installation, follow the owner guide's setup for Orbit, HappyToHelp, Mango, Salesforce, HubSpot, Zendesk, Intercom, Amplitude and Mixpanel against each product's sandbox or a test installation; each connection passes its CONNECT-001 test sync and puts at least one record on the right Buoy account, and the route list exposes no route that creates a new-business deal, a support queue, a product-analytics chart or a newsletter campaign.
 101. **BOUNDARY-003 — No guaranteed prediction** (`partial`). Read any health score, forecast and AI risk signal; each shows its inputs, missing sources and, for closed periods, its accuracy against actual outcomes.
 102. **BOUNDARY-004 — No bulk-mail network, consent bypass or autonomous commercial change** (`partial`). Attempt a journey send to a suppressed contact, a journey from an unverified domain and an agent discount; all three are refused with their reason and recorded.
-103. **BOUNDARY-005 — Certifications are the deployment's** (`missing`). The owner guides list each connector's data flows and the provider terms that govern them.
+103. **BOUNDARY-005 — Certifications are the deployment's** (`done`). The owner guides list each connector's data flows and the provider terms that govern them. The site check derives the providers from the code (the mail providers the installation accepts and the OpenID presets), then requires a section in the built guide for each, with when it is used, what it sends and receives, and a link to its terms.

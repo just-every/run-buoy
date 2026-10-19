@@ -250,7 +250,7 @@ The ROLE-001 role matrix ("own book" is the accounts a person owns; "team" is th
 
 - **BOUNDARY-004 — No bulk-mail network, consent bypass or autonomous commercial change.** Buoy sends one-to-one mail through the buyer's own Google or Microsoft mailboxes and one-to-many mail through the buyer's own SendGrid, Amazon SES or Postmark account on the buyer's authenticated domain (EMAIL-003), under their terms and US CAN-SPAM rules; it does not operate a sending network, buy lists or send to unsubscribed contacts, and no agent changes commercial terms. **Acceptance evidence:** Attempt a journey send to a suppressed contact, a journey from an unverified domain and an agent discount; all three are refused with their reason and recorded.
 
-- **BOUNDARY-005 — Certifications are the deployment's.** Buoy is self-hosted on the buyer's Cloudflare account. SOC 2 or similar attestations cover the buyer's deployment and are prepared with Evidence or their auditor; a provider's network, terms and data-processing agreements still apply to each connector. **Acceptance evidence:** The owner guides list each connector's data flows and the provider terms that govern them.
+- **BOUNDARY-005 — Certifications are the deployment's.** Buoy is self-hosted on the buyer's Cloudflare account. SOC 2 or similar attestations cover the buyer's deployment and are prepared with Evidence or their auditor; a provider's network, terms and data-processing agreements still apply to each connector. The providers guide (`docs/providers.md`) lists every provider an installation can talk to, with what each receives and returns and the terms and data-processing agreement that govern it. Today those providers are Cloudflare, the one sign-in mail provider the owner picks (Resend, SendGrid or Cloudflare Email) and the optional OpenID sign-in providers (Auth, Google, Microsoft, Okta or a company provider). The guide also says that no billing, CRM, support, usage, mailbox, calendar, chat, survey or model provider is connected yet. Each clause that adds a provider adds its section before it ships: CONNECT-001, CRM-001 to CRM-003, BILLING-001, BILLING-002, BILLING-005 to BILLING-007, SUPPORT-001 to SUPPORT-005, USAGE-001 to USAGE-004, PRODUCT-001, EMAIL-001, EMAIL-003, EMAIL-004, MEET-001, MEET-002, CHAT-001, SURVEY-001, INAPP-001, RENEW-003, RENEW-005, ROLE-002 and AI-004. **Acceptance evidence:** The owner guides list each connector's data flows and the provider terms that govern them. The site check derives the providers from the code (the mail providers the installation accepts and the OpenID presets), then requires a section in the built guide for each, with when it is used, what it sends and receives, and a link to its terms.
 
 ## Push further: agents that carry the job
 
@@ -281,8 +281,8 @@ Judged from the code and tests at commit `66ab1c0eeab84a690367365a19c63ecdfb442d
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 6 | 2 | 0 | 8 |
-| Target and push further | 1 | 25 | 69 | 95 |
-| All | 7 | 27 | 69 | 103 |
+| Target and push further | 2 | 25 | 68 | 95 |
+| All | 8 | 27 | 68 | 103 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -388,4 +388,4 @@ Judged from the code and tests at commit `66ab1c0eeab84a690367365a19c63ecdfb442d
 | `BOUNDARY-002` | Not the sales CRM, help desk, product analytics or marketing email platform | target | partial | `src/buoy/api.ts`: no route creates a deal, support queue, analytics chart or newsletter | The sibling and incumbent connectors and owner setup guides it relies on are missing. |
 | `BOUNDARY-003` | No guaranteed prediction | target | partial | `src/buoy/health.ts`; `src/buoy/ui/work.ts`: health shows its reasons and missing evidence, and the first-use text says it is not a churn prediction | Forecasts, accuracy against outcomes and AI signals do not exist yet. |
 | `BOUNDARY-004` | No bulk-mail network, consent bypass or autonomous commercial change | target | partial | `src/buoy/work.ts`; `tests/flows.test.mjs` (agents prepare decisions, cannot approve): no outbound message path exists and agents cannot approve | Suppression, domain verification and discount refusal arrive with EMAIL-002, EMAIL-003 and GOVERN-001. |
-| `BOUNDARY-005` | Certifications are the deployment's | target | missing |  | Owner guides do not yet list connector data flows. |
+| `BOUNDARY-005` | Certifications are the deployment's | target | done | `docs/providers.md`; `src/site/docs.ts`; `tests/site.mjs` (BOUNDARY-005 checks on the built providers guide): the guide states that attestations are the deployment's and lists Cloudflare, every accepted sign-in mail provider and every OpenID preset with when it is used, what it sends and receives and linked terms; a provider added to the code without a section fails the site check |  |
