@@ -7,7 +7,7 @@ import { localTime, taskTiming } from './settings'
 // manager and records a person's away period with a named cover (ct pattern 2).
 export const PRIORITIES = ['low', 'medium', 'high', 'urgent'], TYPES = ['risk', 'onboarding', 'adoption', 'renewal', 'expansion', 'general']
 const ACTIVE = "EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')"
-/** Who handles a task on a UTC calendar date: inside its owner's inclusive away
+/** Who handles a task on an installation calendar date: inside its owner's inclusive away
  * range, the named cover; otherwise the owner. Cover is computed, never copied, so
  * the task is back with its owner the day after the range ends. Binds the date twice. */
 export const HANDLER = 'COALESCE((SELECT w.cover_id FROM buoy_away w WHERE w.person_id=t.owner_id AND w.starts_on<=? AND w.ends_on>=?),t.owner_id)'
@@ -22,9 +22,21 @@ export async function assignAccount(db: D1Database, actor: Actor, accountId: str
  requirePerson(actor)
  insist(await stmt(db, 'SELECT 1 FROM buoy_accounts WHERE id=?', accountId).first(), 'Account not found.', 404)
  const ownerId = person(input.ownerId, 'Account owner')
+ const prior = await stmt(db, 'SELECT owner_id FROM buoy_account_owners WHERE account_id=?', accountId).first<{owner_id:string}>()
+ if (prior?.owner_id === ownerId) return {accountId, ownerId}
+ const capacitySql = "SELECT json_extract(value,'$.capacity') AS capacity FROM buoy_team_settings,json_each(document,'$.capacities') WHERE json_extract(value,'$.personId')=?"
+ const capacity = await stmt(db, capacitySql, ownerId).first<{capacity:number}>()
+ const target = capacity?.capacity ?? null
+ const count = (await stmt(db, 'SELECT count(*) AS n FROM buoy_account_owners WHERE owner_id=?', ownerId).first<{n:number}>())!.n
+ insist(target === null || count < target, 'This CSM is at or over their capacity target. Preview a rebalance or choose another CSM.', 409)
+ const note = input.note === undefined || input.note === '' ? (prior ? 'Account reassigned by hand.' : 'Assigned by hand.') : text(input.note, 'Handover note', 2000)
  await commit(db, actor, accountId, 'account.reassigned', [guard(db, ACTIVE, ownerId),
+  guard(db, '(SELECT owner_id FROM buoy_account_owners WHERE account_id=?) IS ?', accountId, prior?.owner_id ?? null),
+  guard(db, `NOT EXISTS(${capacitySql}) OR (SELECT count(*) FROM buoy_account_owners WHERE owner_id=?)<(${capacitySql})`, ownerId, ownerId, ownerId),
   stmt(db, 'UPDATE buoy_tasks SET owner_id=? WHERE account_id=? AND completed_at IS NULL AND owner_id=(SELECT owner_id FROM buoy_account_owners WHERE account_id=?)', ownerId, accountId, accountId),
-  stmt(db, 'INSERT INTO buoy_account_owners(account_id,owner_id,assigned_at) VALUES(?,?,?) ON CONFLICT(account_id) DO UPDATE SET owner_id=excluded.owner_id,assigned_at=excluded.assigned_at', accountId, ownerId, now())], true)
+  stmt(db, 'INSERT INTO buoy_handovers(id,account_id,from_id,to_id,note,actor_id,recorded_at) VALUES(?,?,?,?,?,?,?)', id(), accountId, prior?.owner_id ?? null, ownerId, note, actor.id, now()),
+  stmt(db, 'INSERT INTO buoy_account_owners(account_id,owner_id,assigned_at) VALUES(?,?,?) ON CONFLICT(account_id) DO UPDATE SET owner_id=excluded.owner_id,assigned_at=excluded.assigned_at', accountId, ownerId, now()),
+  stmt(db, 'UPDATE buoy_accounts SET revision=? WHERE id=?',id(),accountId)], true)
  return {accountId, ownerId}
 }
 export async function setManager(db: D1Database, actor: Actor, personId: string, input: Record<string, unknown>) {

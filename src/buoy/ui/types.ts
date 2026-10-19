@@ -6,6 +6,7 @@ export interface Support { observedAt: string; reference: string; openTickets: n
 export interface Account {
   id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string;
   billing: Billing | null; support: Support | null; revision: string; noticeDate: string; ownerId: string | null;
+  handovers?: {fromId:string|null;toId:string;note:string;actorId:string;recordedAt:string}[];
   health: { status: 'at-risk' | 'healthy' | 'unknown'; reasons: string[]; sentiment: Sentiment | null; evidence: Evidence[] };
   /** Today's band, then each later day before renewal on which today's evidence projects a new band. */
   outlook: { from: string; status: 'at-risk' | 'healthy' | 'unknown' }[];

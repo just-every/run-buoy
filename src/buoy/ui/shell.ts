@@ -29,7 +29,7 @@ export async function shell(page: ShellPage): Promise<Response> {
   }
   scriptHash ??= sha(browserScript);
   const styleHash = style ? ` 'sha256-${await sha(style)}'` : '';
-  const chips = [...views, ...(state && canManage(state) ? [['/app/audit', 'Audit'] as const] : [])].map(([href, label]) => `<a href="${href}"${current === href ? ' aria-current="page"' : ''}>${label}</a>`).join('');
+  const chips = [...views, ...(state && canManage(state) ? [['/app/team', 'Team'] as const, ['/app/audit', 'Audit'] as const] : [])].map(([href, label]) => `<a href="${href}"${current === href ? ' aria-current="page"' : ''}>${label}</a>`).join('');
   const who = state ? `${state.operator.displayName} · ${state.operator.role}` : '';
   const initials = state ? state.operator.displayName.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0].toUpperCase()).join('') : '';
   const operator = state ? `<p class="operator" title="${escape(who)}"><span class="operator-initials" aria-hidden="true">${escape(initials)}</span><span class="sr-only">Signed in as ${escape(who)}</span></p>` : '';

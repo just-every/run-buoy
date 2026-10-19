@@ -9,6 +9,7 @@ import { setStaleness, setTaskTiming } from './settings'
 import { assignAccount, setManager, setAway, tasksOn } from './tasks'
 import { auditRecord, auditIfChanged } from './audit-records'
 import { audit, refuse } from './audit'
+import { teamState, saveTeamSettings, previewAssignment, applyAssignment } from './team'
 import { inbox, setPreferences, markRead, mention } from './notify'
 import { flushNotifications } from './notify-mail'
 import * as imports from './imports/index'
@@ -37,6 +38,10 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.get('/api/buoy/team', async c => c.json(await teamState(c.env.DB,c.get('actor'))))
+buoyApi.put('/api/buoy/team/settings', async c => c.json(await saveTeamSettings(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
+buoyApi.post('/api/buoy/team/preview', async c => c.json(await previewAssignment(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
+buoyApi.post('/api/buoy/team/apply', async c => c.json(await applyAssignment(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
 buoyApi.get('/api/buoy/notifications', async c => c.json(await inbox(c.env.DB, c.get('actor'))))
 buoyApi.put('/api/buoy/notifications/preferences', async c => c.json(await setPreferences(c.env.DB, c.get('actor'), await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/notifications/:id/read', async c => {await jsonBody(c.req.raw); return c.json(await markRead(c.env.DB,c.get('actor'),c.req.param('id')))})

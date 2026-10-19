@@ -1,3 +1,5 @@
+import { mutateTeam } from './team-actions';
+import type { TeamPreview } from './team';
 import { accountBody } from './account-form';
 import type { Api, Fields, Job, Preview } from './types';
 
@@ -29,7 +31,7 @@ export function importAccounts(source: string): unknown[] {
   if (accounts.length < 1 || accounts.length > 50) throw new ApiError('An upload must contain between 1 and 50 accounts.');
   return accounts;
 }
-export interface MutationResult { redirect?: string; message?: string; preview?: Preview; saved?: string }
+export interface MutationResult { redirect?: string; message?: string; preview?: Preview; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -37,6 +39,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if (path === '/app/team') return mutateTeam(api,request,fields);
   if (path === '/app/notifications') {
     if (action === 'notification-preferences') {
       await send('/api/buoy/notifications/preferences', {frequency: fields.frequency, modes: {mention:fields.mention,assignment:fields.assignment,signal:fields.signal,approval:fields.approval}}, 'PUT');
@@ -94,7 +97,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
       return { redirect: path, message: 'Task completion recorded with evidence.', saved: `complete-${fields.id}` };
     }
     if (action === 'account-owner') {
-      await send(`${accountPath}/owner`, { ownerId: fields.ownerId }, 'PUT');
+      await send(`${accountPath}/owner`, { ownerId: fields.ownerId, ...(fields.note ? {note:fields.note} : {}) }, 'PUT');
       return { redirect: path, message: 'Account owner saved. Open tasks moved to them.', saved: 'account-owner' };
     }
     if (action === 'delete') {

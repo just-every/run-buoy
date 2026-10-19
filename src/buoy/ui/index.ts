@@ -6,6 +6,7 @@ import { escape, section } from './html';
 import { backupsPage, importsPage } from './imports';
 import { shell } from './shell';
 import { canManage, type Api, type Fields, type Job, type Preview, type State } from './types';
+import { teamPage, type TeamPage, type TeamPreview } from './team';
 import { notificationsPage, type InboxPage } from './notifications';
 import { workPage } from './work';
 
@@ -29,9 +30,9 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   let accountId: string | undefined;
   try { accountId = match ? decodeURIComponent(match[1]) : undefined; } catch { /* The shell below renders a 404. */ }
   const account = accountId ? state.accounts.find(item => item.id === accountId) : undefined;
-  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
-  if ((path === '/app/imports' || path === '/app/audit') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
-  let fields: Fields | undefined, error: string | undefined, preview: Preview | undefined, status = 200;
+  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && path !== '/app/team' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
+  if ((path === '/app/imports' || path === '/app/audit' || path === '/app/team') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
+  let fields: Fields | undefined, error: string | undefined, preview: Preview | undefined, teamPreview: TeamPreview | undefined, status = 200;
   if (request.method === 'POST') {
     try {
       if (Number(request.headers.get('content-length') ?? 0) > 1_048_576) throw new ApiError('This upload is too large. Submit at most 50 accounts in a smaller JSON snapshot.', 413);
@@ -39,7 +40,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
       fields = {};
       for (const [key, value] of data) { if (typeof value !== 'string') throw new ApiError('Paste account JSON as text. File upload fields are not supported.'); fields[key] = value; }
       const result = await mutate(api, request, path, fields, account?.id);
-      preview = result.preview;
+      preview = result.preview; teamPreview = result.teamPreview;
       if (result.redirect) {
         const target = new URL(result.redirect, request.url);
         target.searchParams.set('success', result.message ?? 'Change saved.');
@@ -56,7 +57,9 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   const open = url.searchParams.has('open') ? (url.searchParams.get('open') === 'none' ? null : url.searchParams.get('open')) : undefined;
   const today = new Date().toISOString().slice(0, 10);
   let title = 'Renewals', body: string, head: string | undefined, style: string | undefined;
-  if (path === '/app/notifications') {
+  if (path === '/app/team') {
+    title = 'Team'; body = teamPage(await apiCall<TeamPage>(api,request,'/api/buoy/team'),state,fields,teamPreview);
+  } else if (path === '/app/notifications') {
     title = 'Notifications'; body = notificationsPage(await apiCall<InboxPage>(api, request, '/api/buoy/notifications'), state, fields);
   } else if (path === '/app/audit') {
     title = 'Audit';
@@ -86,7 +89,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   }
   // Success messages are selected from known server outcomes, not arbitrary
   // text supplied in a link to this private page.
-  const messages = new Set(['Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import completed. The journal below records its result.', 'Import request recorded. Check its current state in the journal below.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
+  const messages = new Set(['Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import completed. The journal below records its result.', 'Import request recorded. Check its current state in the journal below.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
   const success = url.searchParams.get('success') ?? '';
   const response = await shell({ title, head, body, style, state, current: account ? '/app' : path, status, error, success: messages.has(success) ? success : undefined, backToAccounts: !!account });
   return request.method === 'HEAD' ? new Response(null, { status: response.status, headers: response.headers }) : response;

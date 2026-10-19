@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { teamJourney } from './team-journey.mjs'
 import { startWorker } from './worker.mjs'
 
 const today=new Date().toISOString().slice(0,10)
@@ -431,6 +432,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok(!(await read()).items.some(i=>i.accountId===a.id),'account erasure clears inbox content')
    assert.doesNotMatch(worker.mails.findLast(m=>m.subject==='Buoy weekly digest').text,/NOTIFY-001 inbox only/)
   })
+  await t.test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>teamJourney({call,json,request,cookie,member,signIn,account}))
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))

@@ -1,0 +1,65 @@
+// TEAM-001: 300 real account records through import, reviewed assignment and handover doors.
+import assert from 'node:assert/strict'
+export async function teamJourney({call,json,request,cookie,member,signIn,account}){
+ const owner=(await json(await call('/state'))).operator.id, csms=[]
+ for(const [name,email] of [['Maya Chen','maya'],['Owen Reed','owen'],['Priya Shah','priya'],['Sam Brooks','sam']]){
+  await json(await request('/auth/invite',{method:'POST',cookie,body:{email:email+'@example.test',displayName:name,role:'member'}}),202)
+  await signIn(email+'@example.test')
+ }
+ const operators=await json(await request('/auth/operators',{cookie}))
+ for(const name of ['Maya Chen','Owen Reed','Priya Shah','Sam Brooks'])csms.push(operators.find(p=>p.displayName===name).id)
+ const accounts=Array.from({length:300},(_,i)=>({...account(`team-${String(i).padStart(3,'0')}`),name:`TEAM-001 Customer ${String(i+1).padStart(3,'0')}`}))
+ for(let i=0;i<300;i+=50){
+  const batch=accounts.slice(i,i+50), preview=await json(await call('/imports/preview','POST',{accounts:batch}))
+  await json(await call('/imports/apply','POST',{accounts:batch,fingerprint:preview.fingerprint,operationKey:'TEAM-001-'+i}))
+ }
+ const settings={teams:[{id:'growth',name:'Growth CSMs',pod:'Commercial',personIds:csms},{id:'overflow',name:'Existing book',pod:'Leadership',personIds:[owner]}],capacities:[...csms.map(personId=>({personId,capacity:75})),{personId:owner,capacity:500}],rules:[{id:'cohort',name:'Commercial territory',teamId:'growth',territory:'Commercial'},{id:'rest',name:'Existing unassigned accounts',teamId:'overflow'}],territories:accounts.map(a=>({accountId:a.id,territory:'Commercial'}))}
+ assert.equal((await call('/team/settings','PUT',settings,{cookie:member})).status,403)
+ assert.equal((await call('/team/preview','POST',{mode:'rules'},{cookie:member})).status,403)
+ assert.equal((await call('/team/apply','POST',{mode:'rules',fingerprint:'0'.repeat(64)},{cookie:member})).status,403)
+ assert.equal((await request('/app/team',{cookie:member})).status,403)
+ await json(await call('/team/settings','PUT',settings))
+ const preview=await json(await call('/team/preview','POST',{mode:'rules'}))
+ assert.equal(preview.canApply,true);assert.equal(preview.moves.filter(m=>m.accountId.startsWith('team-')).length,300)
+ for(const personId of csms)assert.equal(preview.moves.filter(m=>m.toId===personId).length,75)
+ await json(await call('/team/apply','POST',{mode:'rules',fingerprint:preview.fingerprint}))
+ assert.equal((await call('/team/apply','POST',{mode:'rules',fingerprint:preview.fingerprint})).status,409,'stale replay cannot duplicate handovers')
+ let state=await json(await call('/state'))
+ for(const personId of csms)assert.equal(state.accounts.filter(a=>a.ownerId===personId).length,75)
+ const [fromId,toId]=csms, book=state.accounts.filter(a=>a.ownerId===fromId), first=book[0], open=[]
+ async function task(title,ownerId){const p=await json(await call('/proposals','POST',{accountId:first.id,kind:'playbook',payload:{title,dueDate:'2027-02-01',ownerId}}),201);await json(await call(`/proposals/${p.id}/approve`,'POST',{}));return (await json(await call('/state'))).tasks.find(t=>t.proposalId===p.id)}
+ open.push(await task('TEAM-001 handover customer workshop',fromId));open.push(await task('TEAM-001 handover adoption check-in',fromId))
+ const other=await task('TEAM-001 executive sponsor follow-up',owner), done=await task('TEAM-001 completed kickoff',fromId)
+ await json(await call(`/tasks/${done.id}/complete`,'POST',{outcome:'Kickoff completed',evidence:'Customer confirmed the workshop attendance.'}))
+ const input={mode:'handover',fromId,toId,note:'Maya hands the commercial book to Owen. Confirm rollout milestones and review each open risk with the customer.'}
+ const refused=await json(await call('/team/preview','POST',input));assert.equal(refused.canApply,false);assert.ok(refused.diagnostics.length)
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:refused.fingerprint})).status,409)
+ assert.equal((await call(`/accounts/${first.id}/owner`,'PUT',{ownerId:toId})).status,409,'manual transfer also respects capacity')
+ assert.equal((await call('/team/preview','POST',{...input,note:''})).status,400,'book handover needs a note')
+ settings.capacities.find(c=>c.personId===toId).capacity=150
+ await json(await call('/team/settings','PUT',settings))
+ const stale=await json(await call('/team/preview','POST',input))
+ settings.rules[0].name='Commercial territory assignment';await json(await call('/team/settings','PUT',settings))
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:stale.fingerprint})).status,409,'changing rules invalidates the reviewed plan')
+ const reviewed=await json(await call('/team/preview','POST',input));assert.equal(reviewed.moves.length,75);assert.equal(reviewed.moves.reduce((n,m)=>n+m.openTasks,0),2)
+ await json(await call('/team/apply','POST',{...input,fingerprint:reviewed.fingerprint}))
+ state=await json(await call('/state'))
+ assert.equal(state.accounts.filter(a=>a.ownerId===fromId).length,0);assert.equal(state.accounts.filter(a=>a.ownerId===toId).length,150)
+ for(const moved of book){const a=state.accounts.find(a=>a.id===moved.id);assert.equal(a.ownerId,toId);assert.ok(a.handovers.some(h=>h.note===input.note&&h.fromId===fromId&&h.toId===toId&&h.actorId===owner&&Date.parse(h.recordedAt)))}
+ for(const t of open)assert.equal(state.tasks.find(x=>x.id===t.id).ownerId,toId)
+ assert.equal(state.tasks.find(x=>x.id===other.id).ownerId,owner,'a separately owned task stays');assert.equal(state.tasks.find(x=>x.id===done.id).ownerId,fromId,'completed tasks stay')
+ assert.match(await (await request('/app/accounts/'+first.id,{cookie})).text(),/Maya hands the commercial book to Owen/)
+ settings.capacities.find(c=>c.personId===toId).capacity=100
+ await json(await call('/team/settings','PUT',settings))
+ assert.match(await (await request('/app/team',{cookie})).text(),/over target by 50/,'lowering capacity is allowed and the over-target book is visible')
+ const rebalance=await json(await call('/team/preview','POST',{mode:'rebalance'}));assert.equal(rebalance.canApply,true);assert.equal(rebalance.moves.length,50);assert.ok(rebalance.moves.every(m=>m.fromId===toId&&m.toId!==toId))
+ await json(await call('/team/apply','POST',{mode:'rebalance',fingerprint:rebalance.fingerprint}))
+ const final=await json(await call('/team'));assert.equal(final.books.find(b=>b.personId===toId).assigned,100)
+ assert.ok(final.teams.some(t=>t.name==='Growth CSMs'&&t.pod==='Commercial'&&t.personIds.length===4))
+ // No allocation is made to a CSM at target, even if they appear first in the rule.
+ assert.equal((await call(`/accounts/${first.id}/owner`,'PUT',{ownerId:toId})).status,409)
+ const handovers=(await json(await call('/state'))).accounts.find(a=>a.id===first.id).handovers
+ assert.ok(handovers.length>=2)
+ await json(await call('/accounts/'+first.id,'DELETE',{confirmation:first.name}))
+ assert.ok(!(await json(await call('/team'))).handovers.some(h=>h.accountId===first.id),'erasure removes notes with their account')
+}
