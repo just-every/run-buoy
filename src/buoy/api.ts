@@ -5,6 +5,7 @@ import { Problem, insist, text, date, object, requirePerson, stmt, type Actor } 
 import { saveAccount, account, state } from './accounts'
 import { prepare, approve, completeTask } from './work'
 import { recordSentiment, healthOn, today } from './sentiment'
+import { setStaleness } from './settings'
 import * as imports from './imports/index'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
@@ -30,6 +31,7 @@ buoyApi.post('/api/buoy/accounts', async c => c.json(await saveAccount(c.env.DB,
 buoyApi.put('/api/buoy/accounts/:id', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw), c.req.param('id'))))
 buoyApi.post('/api/buoy/accounts/:id/sentiment', async c => c.json(await recordSentiment(c.env.DB, c.get('actor'), c.req.param('id'), await jsonBody(c.req.raw)), 201))
 buoyApi.get('/api/buoy/accounts/:id/health', async c => c.json(await healthOn(c.env.DB, c.req.param('id'), date(c.req.query('on') ?? today(), 'Health date'))))
+buoyApi.put('/api/buoy/settings/staleness', async c => c.json(await setStaleness(c.env.DB, c.get('actor'), await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/proposals', async c => c.json(await prepare(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.post('/api/buoy/proposals/:id/approve', async c => {await jsonBody(c.req.raw); return c.json(await approve(c.env.DB, c.get('actor'), c.req.param('id')))})
 buoyApi.post('/api/buoy/tasks/:id/complete', async c => c.json(await completeTask(c.env.DB, c.get('actor'), c.req.param('id'), await jsonBody(c.req.raw))))

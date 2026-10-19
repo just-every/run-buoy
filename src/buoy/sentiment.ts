@@ -1,6 +1,7 @@
 import { insist, text, stmt, commit, id, now, type Actor } from './core'
 import { account } from './accounts'
 import { health, type Account, type Sentiment } from './health'
+import { staleness } from './settings'
 
 // HEALTH-002: a CSM's rating is a person's judgment with a reason and an end.
 // It counts through expires_on (a UTC calendar date) and is missing from the next day.
@@ -15,7 +16,7 @@ export async function latestSentiment(db: D1Database, accountId: string) {
  return await stmt(db, `${LATEST} AND s.account_id=?`, accountId).first<Sentiment>() ?? null
 }
 export async function accountHealth(db: D1Database, current: Account, on = today()) {
- return health(current, on, await latestSentiment(db, current.id))
+ return health(current, on, await latestSentiment(db, current.id), await staleness(db))
 }
 export async function recordSentiment(db: D1Database, actor: Actor, accountId: string, input: Record<string, unknown>) {
  insist(actor.kind === 'person', 'Sentiment is a person’s judgment. Agents cannot record it.', 403)
@@ -27,7 +28,7 @@ export async function recordSentiment(db: D1Database, actor: Actor, accountId: s
  const sentiment: Sentiment = {rating: input.rating as Sentiment['rating'], reason, recordedBy: `person:${actor.id}:${actor.displayName}`, recordedAt: at, expiresOn}
  await commit(db, actor, current.id, 'sentiment.recorded', [
   stmt(db, 'INSERT INTO buoy_sentiments(id,account_id,rating,reason,recorded_by,recorded_at,expires_on) VALUES(?,?,?,?,?,?,?)', id(), current.id, sentiment.rating, reason, sentiment.recordedBy, at, expiresOn)])
- return {accountId: current.id, sentiment, health: health(current, today(), sentiment)}
+ return {accountId: current.id, sentiment, health: health(current, today(), sentiment, await staleness(db))}
 }
 // Health on a later date projects today's evidence and judgments forward: what
 // will be stale or expired by then. It never changes data and never looks back.

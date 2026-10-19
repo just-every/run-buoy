@@ -118,5 +118,36 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.match(lapsed.reasons.join(' '),new RegExp(`CSM sentiment from CS colleague expired after ${expiresOn}; the sentiment measure is missing`))
    assert.equal((await call('/accounts/calm/health?on=2020-01-01')).status,400)
   })
+  await t.test('DATA-001 observations are validated in any ISO 4217 currency and staleness is set per source',async()=>{
+   const daysAgo=n=>new Date(Date.now()-n*86400000).toISOString().slice(0,10)
+   const refused=async(body,pattern)=>{const r=await call('/accounts','POST',body);assert.equal(r.status,400);assert.match((await r.json()).error,pattern)}
+   await refused({...account('neg'),billing:{...account().billing,totalMinor:-1}},/totalMinor must be a nonnegative whole number/)
+   await refused({...account('nodate'),billing:{...account().billing,observedAt:'2026-02-30'}},/observedAt must be a real date/)
+   await refused({...account('extra'),billing:{...account().billing,taxMinor:5}},/billing\.taxMinor is not supported/)
+   for(const currency of ['ABC','XAU','usd'])await refused({...account('cur'),billing:{...account().billing,currency}},/ISO 4217 currency code/)
+   const kwd={...account('kwd'),name:'Gulf Freight',billing:{...account().billing,currency:'KWD',totalMinor:1500,creditsMinor:0,allocatedMinor:0},support:{...account().support,urgentTickets:0}}
+   const jpy={...account('jpy'),name:'Osaka Works',billing:{...account().billing,currency:'JPY',totalMinor:120000,creditsMinor:0,allocatedMinor:0},support:{...account().support,urgentTickets:0}}
+   const stale={...account('stale'),name:'Quiet Mills',billing:{...account().billing,observedAt:daysAgo(45),allocatedMinor:110000},support:{...account().support,observedAt:daysAgo(45),urgentTickets:0}}
+   for(const a of [kwd,jpy,stale])await json(await call('/accounts','POST',a),201)
+   const accounts=async()=>Object.fromEntries((await json(await call('/state'))).accounts.map(a=>[a.id,a]))
+   let now=await accounts()
+   assert.match(now.kwd.health.reasons[0],/^KWD 1\.500 overdue in Nectar invoice INV-1042\.$/);assert.match(now.jpy.health.reasons[0],/^JPY 120000 overdue/)
+   assert.equal(now.stale.health.status,'unknown')
+   assert.deepEqual(now.stale.health.reasons.slice(0,2),['Billing evidence is older than 30 days.','Support evidence is older than 30 days.'])
+   assert.deepEqual(now.stale.health.evidence.map(e=>[e.kind,e.sourceSystem,e.staleAfterDays,e.stale]),[['billing','manual',30,true],['support','manual',30,true]])
+   assert.match(await (await request('/app/accounts/stale',{cookie})).text(),/<dt>Source system<\/dt><dd>Manual snapshot<\/dd><dt>Freshness<\/dt><dd><strong>Stale<\/strong>: older than 30 days/)
+   assert.equal((await call('/settings/staleness','PUT',{billingDays:60,supportDays:60},{cookie:member})).status,403)
+   assert.equal((await call('/settings/staleness','PUT',{billingDays:0,supportDays:60})).status,400)
+   await json(await call('/settings/staleness','PUT',{billingDays:60,supportDays:20}))
+   now=await accounts()
+   assert.deepEqual(now.stale.health.evidence.map(e=>[e.staleAfterDays,e.stale]),[[60,false],[20,true]])
+   assert.deepEqual(now.stale.health.reasons,['Support evidence is older than 20 days.'])
+   await json(await call('/settings/staleness','PUT',{billingDays:60,supportDays:60}))
+   assert.equal((await accounts()).stale.health.status,'healthy')
+   const before=(await accounts()).kwd, draft=await json(await call('/proposals','POST',{accountId:'kwd',kind:'renewal',payload:{outcome:'renewed',reason:'Paid',evidence:'Receipt R-9'}}),201)
+   await json(await call('/accounts/kwd','PUT',{...kwd,billing:{...kwd.billing,allocatedMinor:1500},revision:before.revision}))
+   assert.equal((await json(await call('/state'))).proposals.find(p=>p.id===draft.id).snapshot.billing.allocatedMinor,0,'earlier work keeps the earlier revision')
+   assert.equal((await call(`/proposals/${draft.id}/approve`,'POST',{})).status,409)
+  })
  }finally{await worker.close()}
 })
