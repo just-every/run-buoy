@@ -34,10 +34,21 @@ import closingStyle from './sections/closing.css?raw'
 const sections = [hero, account, health, alert, verify, playbook, quarter, portfolio, signals, onboarding, renewals, cutover, closing]
 const styles = [chrome, base, heroStyle, accountStyle, healthStyle, alertStyle, verifyStyle, playbookStyle, quarterStyle, portfolioStyle, signalsStyle, onboardingStyle, renewalsStyle, cutoverStyle, closingStyle]
 
-/** Separators, arrows and range dashes stay on the line of the word before them (no line starts with one), and a
- * dash-joined token (a time range, a score band, a money band) never breaks at its dash. Styles are left alone. */
+/** Dates ("Thu Mar 12, 2026", "Mon Oct 19"), times ("9:00 am CT"), durations ("39 days") and counts ("1 of 6") are
+ * single tokens: their spaces never break. */
+const tokens = [
+  /\b(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) )?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{1,2}(?:, \d{4})?\b/g,
+  /\b\d{1,2}(?::\d\d)? (?:am|pm)(?: (?:PT|CT|ET|MT))?\b/g,
+  /\b\d[\d,.]* (?:days?|weeks?|months?|hours?|minutes?|points?)\b/g,
+  /\b\d+ of \d+\b/g,
+]
+const keepTokens = (text: string) => tokens.reduce((out, pattern) => out.replace(pattern, token => token.replace(/ /g, '\u00a0')), text)
+
+/** Separators, arrows and range dashes stay on the line of the word before them (no line starts with one), a
+ * dash-joined token (a time range, a score band, a money band) never breaks at its dash, a check mark stays with the
+ * word before it, and dates, times, durations and counts never break inside. Styles are left alone. */
 export const keepSeparators = (html: string) => html.split(/(<style>[\s\S]*?<\/style>)/).map(part => part.startsWith('<style>') ? part
-  : part.replace(/>[^<]+</g, text => text.replace(/ ([·→–—])/g, '\u00a0$1').replace(/[^\s>]+–[^\s<]+/g, token => `<span class="nowrap">${token}</span>`)).replace(/ <span class="sep"/g, '\u00a0<span class="sep"')).join('')
+  : part.replace(/>[^<]+</g, text => keepTokens(text).replace(/ ([·→–—])/g, '\u00a0$1').replace(/[^\s>]+–[^\s<]+/g, token => `<span class="nowrap">${token}</span>`)).replace(/ <span class="(sep|tick)"/g, '\u00a0<span class="$1"')).join('')
 
 export function landingHtml(): string {
   return keepSeparators(siteHead({

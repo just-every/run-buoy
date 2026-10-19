@@ -34,7 +34,8 @@
 .docs-article li > p { margin-bottom: 8px; }
 .docs-article pre { max-width: 100%; overflow: auto; margin: 22px 0; padding: 20px 22px; border-radius: 14px; background: var(--buoy-code); color: var(--buoy-code-text); box-shadow: 0 20px 36px -26px rgba(20, 12, 60, 0.6); }
 .docs-article code { font-family: var(--buoy-font-mono); font-size: 0.86em; overflow-wrap: anywhere; }
-.docs-article :not(pre) > code { padding: 2px 6px; border-radius: 6px; background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); }
+.docs-article :not(pre) > code { padding: 2px 6px; border-radius: 6px; background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); overflow-wrap: normal; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.docs-article .code-run { white-space: nowrap; }
 .docs-article pre code { display: inline; font-size: 14.5px; line-height: 1.7; overflow-wrap: normal; white-space: pre; }
 .docs-article blockquote { margin: 22px 0; padding: 14px 18px; border-radius: 12px; background: var(--buoy-panel); color: #3d3f4b; }
 .docs-article table { width: 100%; margin: 22px 0; border-collapse: collapse; font-size: 15px; }

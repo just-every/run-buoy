@@ -55,6 +55,7 @@
   .measures .src { grid-column: 1 / -1; font-size: 14px; color: var(--buoy-muted); }
   .total { font-size: 15px; }
   .total b { font-size: 26px; display: block; margin-bottom: 6px; }
+  .total .lead-sep { display: none; }
   .margin-note { display: none; }
   .trend-card { padding: 18px 16px; }
   .history.phone-only { max-width: 520px; margin: 0 auto; }

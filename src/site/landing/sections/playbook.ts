@@ -13,7 +13,7 @@ export function playbook(): string {
   const body = `<article class="card playbook-card place" style="${at(63, 35, 558)}"><h3 class="card-title">Playbook: Champion change</h3><p class="card-sub">4 steps ${sep} started Mon Oct 5, 9:31 am ${sep} owner Jordan Hale</p>`
     + `<ol class="pb-steps">${steps.map(([what, detail]) => `<li><span class="check-disc">✓</span><p><b>${what}</b> ${sep} ${detail}</p></li>`).join('')}</ol>`
     + `<p class="outcome"><span class="check-disc">✓</span><span>Outcome reached ${sep} new sponsor engaged ${sep} <span class="green">Thu Oct 15</span></span></p></article>`
-    + copy('Playbook · Mon Oct 5 – Thu Oct 15', 'Champion gone.', 'New sponsor by Thursday.', "The champion-change playbook found who already worked with Tidewell, booked the intro and brought back the meeting's commitments.", at(760, 55, 715), 'eyebrow-right')
+    + copy('Playbook · Mon Oct 5 – Thu Oct 15', 'Champion gone.', 'New sponsor by Thursday.', "The champion-change playbook found who already worked with Tidewell, booked the intro and brought back the meeting's commitments.", at(760, 55, 715), 'eyebrow-right step')
     + `<article class="card people place" style="${at(452, 480, 558)}"><h3 class="card-title">Cascade Freight ${sep} stakeholders</h3><ul>`
     + `<li>${initials('DR', 'grey')}<p><span class="name"><s>Dana Ruiz</s> ${sep} Director of Transportation ${sep} Champion</span><span>departed Mon Oct 5 ${sep} Salesforce</span></p></li>`
     + `<li class="proposed">${initials('RT', 'plum')}<p><span class="name"><b>Rob Tanaka</b> ${sep} VP Operations</span><span>proposed sponsor ${sep} on 11 email threads and 2 meetings since June ${sep} cc'd on #48213</span></p></li>`

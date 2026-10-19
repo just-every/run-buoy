@@ -23,6 +23,9 @@ body.landing { margin: 0; color: var(--buoy-ink); font-family: var(--buoy-font);
 .l2 { display: inline-block; padding-bottom: 0.14em; margin-bottom: -0.14em; background: var(--buoy-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lede { margin-top: calc(16 * var(--u)); color: var(--buoy-body); font: 400 calc(24 * var(--u))/1.4 var(--buoy-font); text-wrap: pretty; }
 .copy.center { text-align: center; }
+/* Two headings with the longest gradient lines (03, 06) step down so each holds on two lines like the pick. */
+#health .copy.step h2 { font-size: calc(55 * var(--u)); }
+#playbook .copy.step h2 { font-size: calc(59 * var(--u)); }
 .copy.narrow-lede .lede { max-width: calc(740 * var(--u)); }
 .copy.center .lede { margin-inline: auto; max-width: calc(800 * var(--u)); }
 
@@ -83,6 +86,8 @@ body.landing { margin: 0; color: var(--buoy-ink); font-family: var(--buoy-font);
   .place { position: relative; left: auto; top: auto; width: auto; rotate: none; }
   .links, .spark, .desk-only { display: none !important; }
   .copy h2, .closing h2 { font-size: clamp(42px, 9.4vw, 64px); line-height: 0.98; margin-top: 14px; }
+  #health .copy.step h2 { font-size: clamp(42px, 9vw, 64px); }
+  #playbook .copy.step h2 { font-size: clamp(42px, 7.6vw, 58px); }
   .eyebrow { font-size: 13px; letter-spacing: 0.18em; line-height: 1.45; }
   .lede { font-size: 18px; margin-top: 14px; }
   .copy.center { text-align: left; }

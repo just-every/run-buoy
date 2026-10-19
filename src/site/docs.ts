@@ -28,6 +28,15 @@ const guides = [
 const escape = (value: string) => value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]!))
 const path = (slug: string) => slug ? `/docs/${slug}` : '/docs'
 
+/** Inline code never breaks inside a token or inside the command's head ("npx -y @runeditrun/rer dev"); it may wrap
+ * only before an argument: a repository or path (has a "/"), an option ("--owner-email"), an address or a <placeholder>. */
+const argument = (token: string) => /^(--|<)/.test(token) || (!token.startsWith('@') && /[/@]/.test(token))
+const inlineCode = (text: string) => {
+  const groups: string[][] = []
+  for (const token of text.split(/ +/)) groups.length && !argument(token) ? groups[groups.length - 1].push(token) : groups.push([token])
+  return `<code>${groups.map(group => `<span class="code-run">${group.map(escape).join(' ')}</span>`).join(' ')}</code>`
+}
+
 /** Repository Markdown is compiled into static pages; no app state or client JavaScript is included. */
 export function docsPages(): Array<{ path: string; html: string }> {
   return guides.map((guide, index) => {
@@ -38,6 +47,7 @@ export function docsPages(): Array<{ path: string; html: string }> {
       renderer: {
         // Documentation is checked-in prose, but raw HTML is displayed rather than executed.
         html({ text }) { return escape(text) },
+        codespan({ text }) { return inlineCode(text) },
         link({ href, title, tokens }) {
           const label = this.parser.parseInline(tokens)
           if (!/^(https:\/\/|\/(?!\/)|#)/i.test(href)) return label
