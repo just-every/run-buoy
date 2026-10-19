@@ -43,7 +43,9 @@
   --buoy-jordan: #08a8b0;
   --buoy-mark-ink: #0b0b1f;
   --buoy-gradient: linear-gradient(90deg, #83279d 0%, #7a33a8 20%, #5a5fb3 36%, #3384bc 50%, #1fa6c2 66%, #0db3b0 82%, #09b9ad 100%);
-  --buoy-chrome-gradient: linear-gradient(90deg, #8e2db8, #1fb5a8);
+  /* The active view chip and the Today pill carry white text across it: the turquoise end is deepened (#1fb5a8 to
+     #188d83) by the least that keeps every glyph at 4.5:1. */
+  --buoy-chrome-gradient: linear-gradient(90deg, #8e2db8, #188d83);
 
   /* States: always with a text label. */
   --buoy-red: #f4513f;
