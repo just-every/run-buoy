@@ -1,6 +1,7 @@
 import { operatorAuth, runtimeBindings, type Bindings } from '../auth.server'
 import { insist, id, text, object, stmt, requirePerson, type Actor } from './core'
 import { refuse } from './audit'
+import { auditIfChanged } from './audit-records'
 export async function digest(value: string) {
  return [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))].map(x => x.toString(16).padStart(2, '0')).join('')
 }
@@ -37,7 +38,9 @@ export async function mintAgent(db: D1Database, actor: Actor, input: Record<stri
  const label = text(input.label, 'Agent label', 100), tokenId = id()
  const bytes = crypto.getRandomValues(new Uint8Array(32)), token = [...bytes].map(v => v.toString(16).padStart(2,'0')).join('')
  const expiresAt = Date.now() + 7 * 86400000
- const result = await stmt(db, "INSERT INTO buoy_agent_tokens(id,token_hash,label,owner_id,owner_version,expires_at) SELECT ?,?,?,id,version,? FROM oa_operators WHERE id=? AND status='active' AND role='owner'", tokenId, await digest(token), label, expiresAt, actor.id).run()
+ // AUDIT-001: issuing a credential is recorded in the same transaction, without its label.
+ const [result] = await db.batch([stmt(db, "INSERT INTO buoy_agent_tokens(id,token_hash,label,owner_id,owner_version,expires_at) SELECT ?,?,?,id,version,? FROM oa_operators WHERE id=? AND status='active' AND role='owner'", tokenId, await digest(token), label, expiresAt, actor.id),
+  auditIfChanged(db, actor, 'agent.credential-issued', `agent:${tokenId}`, `expires ${new Date(expiresAt).toISOString()}`)])
  insist(result.meta.changes === 1, 'Owner authority changed.', 403)
  return {id: tokenId, token, expiresAt, commands: ['renewals.list','playbook.prepare','renewal.prepare']}
 }

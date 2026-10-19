@@ -6,7 +6,7 @@ import { saveAccount, account, state } from './accounts'
 import { prepare, approve, completeTask } from './work'
 import { recordSentiment, healthOn, today } from './sentiment'
 import { setStaleness } from './settings'
-import { auditRecord } from './audit-records'
+import { auditRecord, auditIfChanged } from './audit-records'
 import { audit, refuse } from './audit'
 import * as imports from './imports/index'
 
@@ -59,7 +59,9 @@ buoyApi.post('/api/buoy/imports/:id/undo', async c => {requirePerson(c.get('acto
 buoyApi.post('/api/buoy/agent-tokens', async c => c.json(await mintAgent(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.delete('/api/buoy/agent-tokens/:id', async c => {
  const actor = c.get('actor'); requirePerson(actor, true)
- await stmt(c.env.DB, 'UPDATE buoy_agent_tokens SET revoked_at=? WHERE id=?', Date.now(), c.req.param('id')).run()
+ // AUDIT-001: the first revocation is recorded in the same transaction; a repeat adds nothing.
+ await c.env.DB.batch([stmt(c.env.DB, 'UPDATE buoy_agent_tokens SET revoked_at=? WHERE id=? AND revoked_at IS NULL', Date.now(), c.req.param('id')),
+  auditIfChanged(c.env.DB, actor, 'agent.credential-revoked', `agent:${c.req.param('id')}`)])
  return c.json({status: 'revoked'})
 })
 buoyApi.get('/api/buoy/commands', c => c.json({commands: ['renewals.list','playbook.prepare','renewal.prepare'], approval: 'An active owner or admin reviews and approves in the app.'}))

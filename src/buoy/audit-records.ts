@@ -7,6 +7,12 @@ export function auditRecord(db: D1Database, actor: AuditActor, action: string, s
   .bind(crypto.randomUUID(), `${actor.kind}:${actor.id}`, action, subject, detail, new Date().toISOString())
 }
 
+// Recorded only when the statement just before it in the same batch changed one row.
+export function auditIfChanged(db: D1Database, actor: AuditActor, action: string, subject: string, detail = '') {
+ return db.prepare('INSERT INTO buoy_audit(id,actor,action,subject,detail,occurred_at) SELECT ?,?,?,?,?,? WHERE changes()=1')
+  .bind(crypto.randomUUID(), `${actor.kind}:${actor.id}`, action, subject, detail, new Date().toISOString())
+}
+
 export function accountAudit(db: D1Database, actor: AuditActor, accountId: string, action: string) {
  return [
   db.prepare('INSERT OR IGNORE INTO buoy_audit_subjects(account_id,subject) SELECT id,lower(hex(randomblob(16))) FROM buoy_accounts WHERE id=?').bind(accountId),

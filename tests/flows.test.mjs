@@ -267,6 +267,11 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
    assert.equal((await call('/commands','POST',{command:'renewals.list'},as)).status,401)
    assert.deepEqual(await read(),attempts,'a revoked credential cannot confer an audit actor identity')
+   await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
+   const owner=(await json(await call('/audit?action=auth.signed-in'))).entries.at(-1).actor
+   const custody=(await json(await call('/audit?subject=agent:'+agent.id))).entries.filter(e=>e.action.startsWith('agent.credential'))
+   assert.deepEqual(custody.map(e=>[e.action,e.actor]),[['agent.credential-revoked',owner],['agent.credential-issued',owner]],'AUDIT-001 issuing and the first revocation are recorded; a repeat adds nothing')
+   assert.match(custody[1].detail,/^expires \d{4}-\d{2}-\d{2}T/);assert.doesNotMatch(JSON.stringify(custody),/Portfolio/)
   })
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
