@@ -3,6 +3,7 @@ import { majorAmount } from './currencies'
 import { DEFAULT_STALENESS, type Staleness } from './settings'
 // Adapted from Nectar receivables.ts BALANCE_SQL at c76a60ccffa39cc1a207b52c152bda16d6d7b1df.
 // Only payments allocated to this invoice reduce the evidence balance.
+export const HEALTH_INTERPRETATION = 'Health describes recorded evidence; it is not a churn prediction or proof of causation.'
 export interface Account {
  id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string;
  billing: null | {observedAt: string; reference: string; currency: string; totalMinor: number; creditsMinor: number; allocatedMinor: number; dueDate: string};
@@ -43,7 +44,7 @@ export function health(account: Account, today = new Date().toISOString().slice(
  const evidenceRisk = reasons.length > 0
  if (judged && !judged.expired && judged.rating === 'red') reasons.push(judged.line)
  const notes = judged && (judged.expired || judged.rating !== 'red') ? [judged.line] : []
- return { status: reasons.length ? 'at-risk' : gaps.length ? 'unknown' : 'healthy', reasons: [...reasons, ...gaps, ...(!evidenceRisk && !gaps.length ? ['Current billing and support snapshots show no defined risk signal.'] : []), ...notes],
+ return { interpretation: HEALTH_INTERPRETATION, evaluatedOn: today, status: reasons.length ? 'at-risk' : gaps.length ? 'unknown' : 'healthy', reasons: [...reasons, ...gaps, ...(!evidenceRisk && !gaps.length ? ['Current billing and support snapshots show no defined risk signal.'] : []), ...notes],
   evidence, sentiment: judged && {rating: judged.rating, reason: judged.reason, by: judged.by, recordedAt: judged.recordedAt, expiresOn: judged.expiresOn, expired: judged.expired} }
 }
 // Adapted from Locket's confirmed-term deadline path. Calendar dates use UTC

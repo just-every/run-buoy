@@ -27,7 +27,7 @@ export function band(state: State, account: Account, sheet: Sheet, today: string
   const base = `/app/accounts/${pathId(account.id)}`, status = account.health.status;
   const timeline = pins(state, account, today).map(pin => `<li class="${pin.tone}"><time>${when(pin.at)}</time><span>${pin.text} <span class="tag">${escape(pin.tag)}</span></span></li>`).join('');
   const prepared = state.proposals.find(item => item.accountId === account.id && item.status === 'prepared' && item.accountRevision === account.revision);
-  const reasons = account.health.reasons.slice(0, 2).map(reason => `<li>${escape(reason)}</li>`).join('');
+  const reasons = account.health.reasons.map(reason => `<li>${escape(reason)}</li>`).join('');
   const finding = `<div class="rw-finding"><img src="/brand/mark.svg" alt="Buoy" width="44" height="44"><div><p><strong>${healthLabel(status)}</strong> · ${status === 'at-risk' ? 'what the evidence shows today' : status === 'unknown' ? 'evidence Buoy is missing today' : 'no risk signal today'}</p><ul>${reasons}</ul></div></div>`;
   let primary: string;
   if (prepared && canManage(state)) primary = `<p class="rw-proposal">${actorName(prepared.preparedBy)} prepared <b>${prepared.kind === 'playbook' ? escape(prepared.payload.title) : `Renewal decision: ${escape(prepared.payload.outcome)}`}</b>${prepared.payload.dueDate ? ` · due ${day(prepared.payload.dueDate)}` : ''}</p>` + form(`runway-approve-${prepared.id}`, base, hidden('action', 'approve') + hidden('id', prepared.id) + button(prepared.kind === 'playbook' ? 'Approve and create task' : 'Approve renewal decision'));
