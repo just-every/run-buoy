@@ -30,6 +30,9 @@ export const healthLabel = (status: string) => status === 'at-risk' ? 'At risk' 
 const glyph: Record<string, string> = { healthy: '✓', 'at-risk': '!', unknown: '?' };
 /** The health band as an always-labelled pill: a coloured disc, then the band's name. */
 export const pill = (status: string) => `<span class="pill ${escape(status)}"><i aria-hidden="true">${glyph[status] ?? '?'}</i>${healthLabel(status)}</span>`;
+/** A heavy title followed by "· fact" items. Each separator rides at the start of its own fact, in the gap before it,
+ * so a line never ends with "·"; the title line clips the one hanging past its left edge when a fact starts a line. */
+export const titleLine = (heading: string, facts: string[], strong: number[] = [], lead = '', tone = '') => `<div class="title-line${tone ? ` ${tone}` : ''}"><h1>${heading}</h1>${lead}${facts.map((fact, index) => `<span class="fact${strong.includes(index) ? ' strong' : ''}"><span class="dot" aria-hidden="true">·</span>${fact}</span>`).join('')}</div>`;
 export function field(name: string, label: string, value: unknown = '', type = 'text', required = true, extra = ''): string {
   return `<label>${escape(label)}<input name="${escape(name)}" type="${escape(type)}" value="${escape(value)}"${required ? ' required' : ''} ${extra}></label>`;
 }

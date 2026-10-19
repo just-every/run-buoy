@@ -1,11 +1,13 @@
 import { band } from './band';
-import { day, escape, money, pathId, pill } from './html';
+import { date, day, escape, healthLabel, money, pathId, pill } from './html';
 import type { Account, State } from './types';
 
-// The renewal runway: accounts as lanes on one time axis, each running to its
-// renewal flag with its health along the lane (solid to today, dashed ahead as
-// the evidence projects it). Positions are percentages of the axis, written as
-// one generated stylesheet the shell hashes into its CSP (no inline styles).
+// The renewal runway: accounts as lanes on one time axis, each a ribbon in the
+// band of its health today (the pill's band), solid to today and dashed ahead to
+// its renewal flag. A day ahead on which today's evidence turns stale or a judgment
+// expires is a small marker on the ribbon, never a recolouring of it. Positions are
+// percentages of the axis, written as one generated stylesheet the shell hashes
+// into its CSP (no inline styles).
 const DAY = 86_400_000;
 const ms = (value: string) => Date.parse(value.slice(0, 10));
 const iso = (time: number) => new Date(time).toISOString().slice(0, 10);
@@ -62,22 +64,40 @@ const tints = ['plum', 'teal', 'blue', 'green', 'amber'];
 const tint = (id: string) => tints[[...id].reduce((sum, character) => sum + character.charCodeAt(0), 0) % tints.length];
 const initials = (name: string) => name.split(/\s+/).filter(word => /^[A-Za-z0-9]/.test(word)).slice(0, 2).map(word => word[0].toUpperCase()).join('');
 
+const shift = (value: string, days: number) => iso(ms(value) + days * DAY);
+/** Each day ahead on which the lane's projected band changes (account.outlook), with what turns stale or expires
+ * that day: today's billing or support evidence passing its threshold, or the CSM judgment's last counted day. */
+function turns(account: Account): { at: string; reasons: string[]; status: string }[] {
+  const reasons = new Map<string, string[]>(), add = (at: string, reason: string) => reasons.set(at, [...reasons.get(at) ?? [], reason]);
+  for (const kind of ['billing', 'support'] as const) {
+    const observation = account[kind], days = account.health.evidence.find(item => item.kind === kind)?.staleAfterDays;
+    if (observation && days !== undefined) add(shift(observation.observedAt, days + 1), `${kind === 'billing' ? 'Billing' : 'Support'} evidence from ${date(observation.observedAt.slice(0, 10))} is older than ${days} days`);
+  }
+  const sentiment = account.health.sentiment;
+  if (sentiment && !sentiment.expired) add(shift(sentiment.expiresOn, 1), `CSM sentiment counted through ${date(sentiment.expiresOn)} expires`);
+  return account.outlook.slice(1).map(segment => ({ at: segment.from, status: segment.status, reasons: reasons.get(segment.from) ?? [] }));
+}
+
 function lane(account: Account, sheet: Sheet, axis: Axis, open: boolean, openHref: string): string {
-  const today = axis.today, href = `/app/accounts/${pathId(account.id)}`;
-  const seen = [account.billing?.observedAt, account.support?.observedAt].filter((value): value is string => !!value).map(value => value.slice(0, 10)).sort().at(-1);
-  const marks: string[] = [];
-  if (seen && account.renewalDate > axis.start) marks.push(`<i class="rw-seen ${account.health.status} ${sheet.place(later(seen, axis.start), today < account.renewalDate ? today : account.renewalDate)}"></i>`);
-  account.outlook.forEach((segment, index) => {
-    const to = account.outlook[index + 1]?.from ?? account.renewalDate;
-    if (to > today) marks.push(`<i class="rw-ahead ${segment.status} ${sheet.place(later(segment.from, today), to)}"></i>`);
-  });
+  const today = axis.today, href = `/app/accounts/${pathId(account.id)}`, status = account.health.status;
+  const marks: string[] = [], said: string[] = [];
+  if (account.renewalDate > axis.start) {
+    const past = today < account.renewalDate ? today : account.renewalDate;
+    if (past > axis.start) marks.push(`<i class="rw-ribbon past ${status}${past === account.renewalDate ? ' ends' : ''} ${sheet.place(axis.start, past)}" aria-hidden="true"></i>`);
+    if (account.renewalDate > today) marks.push(`<i class="rw-ribbon ahead ${status}${today <= axis.start ? ' starts' : ''} ${sheet.place(later(today, axis.start), account.renewalDate)}" aria-hidden="true"></i>`);
+  }
+  for (const turn of turns(account)) {
+    const text = `${day(turn.at)}: ${[...turn.reasons, `health would read ${healthLabel(turn.status)} until newer evidence is recorded`].join('; ')}.`;
+    said.push(text);
+    marks.push(`<span class="rw-turn ${sheet.place(turn.at)}" tabindex="0" role="note" aria-label="${escape(`${account.name}, ${text}`)}"><span class="rw-tip" aria-hidden="true"><b>${turn.reasons.some(reason => reason.includes('evidence')) ? 'Stale' : 'Expires'} ${day(turn.at)}</b> ${text.slice(text.indexOf(':') + 2)}</span></span>`);
+  }
   const inNotice = account.noticeDate < today && account.renewalDate >= today;
   const notice = sheet.place(account.noticeDate);
-  marks.push(`<i class="rw-notice ${notice}" aria-hidden="true"></i><span class="rw-days ${notice}">${inNotice ? 'In notice' : `${escape(account.noticeDays)}d notice`}</span>`);
+  marks.push(`<i class="rw-notice ${notice}" aria-hidden="true"></i><span class="rw-days ${notice}" aria-hidden="true">${inNotice ? 'In notice' : `${escape(account.noticeDays)}d notice`}</span>`);
   const flag = sheet.place(account.renewalDate);
-  marks.push(`<i class="rw-flag ${account.health.status} ${flag}" aria-hidden="true"></i><span class="rw-date ${flag}">${day(account.renewalDate)}</span>`);
-  const label = `${escape(account.name)}: renews ${day(account.renewalDate)}, notice ${day(account.noticeDate)}`;
-  return `<div class="rw-row"><div class="rw-who"><span class="rw-initials ${tint(account.id)}" aria-hidden="true">${escape(initials(account.name))}</span><a class="rw-name" href="${href}">${escape(account.name)}</a><span class="rw-money">${account.billing ? money(account.billing.totalMinor, account.billing.currency) : '<span class="rw-none">No invoice</span>'}</span>${pill(account.health.status)}<a class="rw-open" href="${openHref}" aria-expanded="${open}" aria-label="${open ? 'Close' : 'Open'} ${escape(account.name)} on the runway">${open ? '−' : '+'}</a></div><div class="rw-track" role="img" aria-label="${label}"><div class="rw-axis">${marks.join('')}</div></div></div>`;
+  marks.push(`<i class="rw-flag ${status} ${flag}" aria-hidden="true"></i><span class="rw-date ${flag}" aria-hidden="true">${day(account.renewalDate)}</span>`);
+  const label = `${escape(account.name)}: ${healthLabel(status)}, renews ${day(account.renewalDate)}, notice ${day(account.noticeDate)}${said.length ? `. Evidence ahead: ${escape(said.join(' '))}` : '.'}`;
+  return `<div class="rw-row"><div class="rw-who"><span class="rw-initials ${tint(account.id)}" aria-hidden="true">${escape(initials(account.name))}</span><a class="rw-name" href="${href}">${escape(account.name)}</a><span class="rw-money">${account.billing ? money(account.billing.totalMinor, account.billing.currency) : '<span class="rw-none">No invoice</span>'}</span>${pill(status)}<a class="rw-open" href="${openHref}" aria-expanded="${open}" aria-label="${open ? 'Close' : 'Open'} ${escape(account.name)} on the runway">${open ? '−' : '+'}</a></div><div class="rw-track"><span class="sr-only">${label}</span><div class="rw-axis">${marks.join('')}</div></div></div>`;
 }
 
 function header(axis: Axis, sheet: Sheet, count: number): string {

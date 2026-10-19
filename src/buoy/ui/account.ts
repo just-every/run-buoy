@@ -1,6 +1,6 @@
 import { accountForm } from './account-form';
 import { actorName } from './band';
-import { button, date, day, details, disclosure, escape, field, form, hidden, money, pathId, pill, section, textarea, valueOf } from './html';
+import { button, date, day, details, disclosure, escape, field, form, hidden, money, pathId, pill, section, textarea, titleLine, valueOf } from './html';
 import { runway } from './runway';
 import { canManage, type Account, type Fields, type State } from './types';
 import type { View } from './work';
@@ -18,7 +18,7 @@ export function accountPage(state: State, account: Account, values: Fields | und
     return item && !item.missing ? `<dt>Source system</dt><dd>Manual snapshot</dd><dt>Freshness</dt><dd>${item.stale ? `<strong>Stale</strong>: older than ${escape(item.staleAfterDays)} days` : `Current (stale after ${escape(item.staleAfterDays)} days)`}</dd>` : '';
   };
   const strong = billing ? [0] : [], facts = [billing ? `${money(billing.totalMinor, billing.currency)} invoiced` : 'No invoice recorded', `renews ${day(account.renewalDate)}`, `notice ${day(account.noticeDate)}`];
-  const head = `<div class="title-line account-title"><h1>${escape(account.name)}</h1>${pill(account.health.status)}${facts.map((fact, index) => `<span class="dot" aria-hidden="true">·</span><span class="fact${strong.includes(index) ? ' strong' : ''}">${fact}</span>`).join('')}</div>`;
+  const head = titleLine(escape(account.name), facts, strong, pill(account.health.status), 'account-title');
   const view = runway(state, [account], today, open === undefined ? account.id : open, base);
 
   const evidence = section('Recorded evidence', `<div class="evidence-grid"><div><h3>Renewal</h3><dl><dt>Renewal date</dt><dd>${date(account.renewalDate)}</dd><dt>Notice deadline</dt><dd>${date(account.noticeDate)}</dd><dt>Notice period</dt><dd>${escape(account.noticeDays)} days</dd><dt>Reference</dt><dd>${escape(account.renewalEvidence)}</dd></dl></div><div><h3>Billing</h3>${billing ? `<dl><dt>Observed</dt><dd>${date(billing.observedAt)}</dd><dt>Reference</dt><dd>${escape(billing.reference)}</dd><dt>Total</dt><dd>${money(billing.totalMinor, billing.currency)}</dd><dt>Credits</dt><dd>${money(billing.creditsMinor, billing.currency)}</dd><dt>Allocated payments</dt><dd>${money(billing.allocatedMinor, billing.currency)}</dd><dt>Due</dt><dd>${date(billing.dueDate)}</dd>${provenance('billing')}</dl>` : '<p>No billing observation recorded.</p>'}</div><div><h3>Support</h3>${support ? `<dl><dt>Observed</dt><dd>${date(support.observedAt)}</dd><dt>Reference</dt><dd>${escape(support.reference)}</dd><dt>Open tickets</dt><dd>${escape(support.openTickets)}</dd><dt>Urgent tickets</dt><dd>${escape(support.urgentTickets)}</dd>${provenance('support')}</dl>` : '<p>No support observation recorded.</p>'}</div></div>${details('account-source-details', 'Account source details', account)}`, 'evidence');

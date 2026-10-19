@@ -45,13 +45,21 @@ html.rer-themed .buoy-app .rw-open { display: grid; place-items: center; width: 
 html.rer-themed .buoy-app .rw-open:hover { background: var(--buoy-panel); }
 .rw-track { position: relative; min-width: 0; }
 
-.rw-seen, .rw-ahead { top: 50%; }
-.rw-seen { height: 5px; margin-top: -2.5px; border-radius: 6px; background: var(--buoy-amber); }
-.rw-seen.healthy { background: var(--buoy-green); }
-.rw-seen.at-risk { background: var(--buoy-red); }
-.rw-ahead { margin-top: -1.5px; border-top: 2px dashed var(--buoy-amber); opacity: 0.8; }
-.rw-ahead.healthy { border-top-color: var(--buoy-green); }
-.rw-ahead.at-risk { border-top-color: var(--buoy-red); }
+/* Health ribbons: about 6 px in the band of the account's health today (the pill's band), solid to today and dashed
+   at the same weight ahead to the renewal flag. */
+.rw-ribbon { top: 50%; height: 6px; margin-top: -3px; background-color: var(--buoy-amber); }
+.rw-ribbon.healthy { background-color: var(--buoy-green); }
+.rw-ribbon.at-risk { background-color: var(--buoy-red); }
+.rw-ribbon.past, .rw-ribbon.starts { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+.rw-ribbon.ahead, .rw-ribbon.ends { border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
+.rw-ribbon.ahead { -webkit-mask: repeating-linear-gradient(90deg, #000 0 12px, transparent 12px 18px); mask: repeating-linear-gradient(90deg, #000 0 12px, transparent 12px 18px); }
+/* A day ahead on which evidence turns stale or a judgment expires: a small marker, its reason on hover and focus. */
+.rw-turn { top: 50%; z-index: 2; width: 12px; height: 12px; margin: -6px 0 0 -6px; border: 2px solid var(--buoy-ink); border-radius: 50%; background: #fff; cursor: help; }
+.rw-turn:hover, .rw-turn:focus-visible { z-index: 6; }
+.rw-turn:focus-visible { outline: 2px solid var(--buoy-plum); outline-offset: 2px; }
+.rw-tip { position: absolute; bottom: calc(100% + 10px); left: 50%; width: 248px; padding: 8px 11px; transform: translateX(-50%); border: 1px solid var(--buoy-line); border-radius: 10px; background: #fff; box-shadow: 0 8px 18px -8px rgba(27, 39, 64, 0.3); color: var(--buoy-body); font-size: 12.5px; line-height: 1.4; white-space: normal; visibility: hidden; opacity: 0; pointer-events: none; }
+.rw-tip b { display: block; color: var(--buoy-ink); font-weight: 700; }
+.rw-turn:hover .rw-tip, .rw-turn:focus-visible .rw-tip { visibility: visible; opacity: 1; }
 .rw-notice { top: 50%; z-index: 1; width: 10px; height: 10px; margin: -5px 0 0 -5px; background: var(--buoy-notice); border: 1.5px solid #fff; transform: rotate(45deg); }
 .rw-days { top: calc(50% + 7px); transform: translateX(-50%); color: #52617e; font-size: 11px; white-space: nowrap; opacity: 0; transition: opacity .15s; }
 /* Notice labels stay quiet: shown on hover, on the open lane and on a lane already in notice. */

@@ -5,6 +5,8 @@ export function insist(condition: unknown, message: string, status = 400): asser
  if (!condition) throw new Problem(status, message)
 }
 export const now = () => new Date().toISOString()
+/** "Wed Nov 18, 2026": the US date Buoy writes in its own text. Calendar dates are UTC dates. */
+export const usDay = (value: string) => new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${value.slice(0, 10)}T00:00:00Z`)).replace(/,(?= \w{3} )/, '')
 export const id = () => crypto.randomUUID()
 export function text(value: unknown, label: string, max = 1000): string {
  insist(typeof value === 'string' && value.trim().length > 0 && value.length <= max, `${label} is required (up to ${max} characters).`)

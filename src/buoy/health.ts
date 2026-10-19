@@ -1,3 +1,4 @@
+import { usDay } from './core'
 import { majorAmount } from './currencies'
 import { DEFAULT_STALENESS, type Staleness } from './settings'
 // Adapted from Nectar receivables.ts BALANCE_SQL at c76a60ccffa39cc1a207b52c152bda16d6d7b1df.
@@ -16,8 +17,8 @@ function judgment(sentiment: Sentiment | null, today: string) {
  const by = sentiment.recordedBy.split(':').slice(2).join(':') || 'A team member', expired = today > sentiment.expiresOn
  const rating = sentiment.rating[0].toUpperCase() + sentiment.rating.slice(1)
  return {...sentiment, by, expired, line: expired
-  ? `CSM sentiment from ${by} expired after ${sentiment.expiresOn}; the sentiment measure is missing until someone records a new rating.`
-  : `${rating} CSM sentiment — ${by}’s judgment, not source data, counting through ${sentiment.expiresOn}: ${sentiment.reason}`}
+  ? `CSM sentiment from ${by} expired after ${usDay(sentiment.expiresOn)}; the sentiment measure is missing until someone records a new rating.`
+  : `${rating} CSM sentiment — ${by}’s judgment, not source data, counting through ${usDay(sentiment.expiresOn)}: ${sentiment.reason}`}
 }
 // DATA-001: evidence is stale when its observation date is more than the source
 // kind's threshold in whole UTC days before today. Every observation is a manual snapshot today.

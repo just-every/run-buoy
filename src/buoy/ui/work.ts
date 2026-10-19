@@ -1,5 +1,5 @@
 import { accountForm } from './account-form';
-import { button, disclosure, escape, field, form, hidden, money, pathId, valueOf } from './html';
+import { button, disclosure, escape, field, form, hidden, money, pathId, titleLine, valueOf } from './html';
 import { axisFor, quarters, runway } from './runway';
 import { canManage, type Account, type Fields, type State } from './types';
 
@@ -14,7 +14,7 @@ function totals(accounts: Account[]): string {
 
 export function runwayHead(title: string, accounts: Account[], today: string): string {
   const strong = [0, 2], facts = [quarters(axisFor(accounts, today)), `${accounts.length} account${accounts.length === 1 ? '' : 's'}`, totals(accounts)].filter(Boolean);
-  return `<div class="title-line"><h1>${escape(title)}</h1>${facts.map((fact, index) => `<span class="dot" aria-hidden="true">·</span><span class="fact${strong.includes(index) ? ' strong' : ''}">${fact}</span>`).join('')}</div>`;
+  return titleLine(escape(title), facts, strong);
 }
 
 export function workPage(state: State, values: Fields | undefined, open: string | null | undefined, today: string): View {

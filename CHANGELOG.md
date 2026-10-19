@@ -2,9 +2,10 @@
 
 ## 2026-10-19
 
-- The app takes the owner-picked look: Renewals is the renewal runway, with accounts as lanes on one time axis, each lane's health solid to today and dashed ahead as its evidence projects, notice ticks at each account's own term, renewal flags, the gradient today rule, and one account opened in place with its dated evidence, the finding, the approval and its open work. The account page, Imports, Backups, sign-in and setup share the top bar, Inter type, hairline cards and quiet fields; the left rail, Spectral and Red Hat Text are gone.
+- The app takes the owner-picked look: Renewals is the renewal runway, with accounts as lanes on one time axis, each lane a ribbon in the band of its health today, solid to today and dashed at the same weight ahead, with a marker (its reason on hover, focus and for screen readers) on each day its evidence turns stale or a judgment expires, notice ticks at each account's own term, renewal flags, the gradient today rule, and one account opened in place with its dated evidence, the finding, the approval and its open work. The account page, Imports, Backups, sign-in and setup share the top bar, Inter type, hairline cards and quiet fields; the left rail, Spectral and Red Hat Text are gone.
 - The state API returns each account's health outlook (today's band and each later day its evidence turns stale or a judgment expires), from the same rules as the health-on-a-date read.
-- The demo is Tidewell Software's eleven-account runway, with Cascade Freight at risk and an approval its agent prepared.
+- The demo is Tidewell Software's eleven-account runway, with Cascade Freight at risk and an approval its agent prepared, on the homepage's own 2026–27 dates (Cascade Freight renews Thu Dec 31, 2026, notice Mon Nov 30).
+- Buoy writes US dates in its own text: CSM sentiment counts through "Wed Nov 18, 2026", not an ISO date. Title facts keep their "·" separators off the start and end of a line.
 
 ## 2026-10-16
 

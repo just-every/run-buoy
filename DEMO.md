@@ -6,12 +6,12 @@ on stop, and leaves `.wrangler/state` alone. Every start is signed in as the
 owner. The title and nav read **Buoy Demo**, with no bar or outbox.
 
 `src/demo.ts` installs Tidewell Software's renewal runway: eleven US accounts
-renewing over the next six months ($1,037,500 of annual invoices), with billing
+renewing Fri Oct 30, 2026 to Wed Mar 31, 2027 ($1,037,500 of annual invoices), with billing
 and support observations of different ages (three accounts read Unknown on
 stale or missing evidence), Cascade Freight at risk on urgent tickets and a red
 CSM sentiment, an approved and a completed Cascade playbook, renewed and
 deferred decisions, and one playbook prepared by Buoy's agent (through the
-same preparation path as the commands API) awaiting approval. Dates are relative to the start. Stable account IDs and proposal lookups make the hook idempotent; it never
+same preparation path as the commands API) awaiting approval. Renewal and notice dates are the homepage's own records (Cascade Freight renews Thu Dec 31, 2026, notice Mon Nov 30), each on a weekday; observations, tasks and recorded work are dated relative to the start. Stable account IDs and proposal lookups make the hook idempotent; it never
 fetches. Accounts, proposals, approvals and task completions go through Buoy’s
 domain functions, with their real validation, revisions and audit trail. Maya
 Okafor owns the sample workspace at maya@harbourstudio.example. Cascade Freight

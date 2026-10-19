@@ -17,10 +17,11 @@ html.rer-themed .buoy-app main { width: auto; max-width: none; padding: 0; margi
 .back-link { margin: 0 0 6px; font-size: 13px; }
 html.rer-themed .buoy-app .back-link a { color: var(--buoy-body); text-decoration: none; }
 html.rer-themed .buoy-app .back-link a:hover { color: var(--buoy-ink); }
-.title-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.title-line { --sep: 28px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--sep); clip-path: inset(-40px -40px -40px 0); }
 html.rer-themed .buoy-app h1 { margin: 0; font-size: 36px; line-height: 1.08; font-weight: 850; letter-spacing: -0.045em; word-spacing: 0.08em; text-align: left; }
-.title-line .dot { font-size: 24px; font-weight: 700; color: var(--buoy-ink); }
-.title-line .fact { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; white-space: nowrap; }
+/* The "·" sits in the gap before its fact: it never ends a line, and the title line's clip hides it when the fact starts one. */
+.title-line .fact { position: relative; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; white-space: nowrap; }
+.title-line .dot { position: absolute; right: 100%; width: var(--sep); text-align: center; font-weight: 700; letter-spacing: 0; color: var(--buoy-ink); }
 .title-line .fact.strong { font-size: 26px; font-weight: 800; letter-spacing: -0.035em; }
 .title-line .pill { align-self: center; }
 .account-title .fact { font-size: 20px; }
@@ -181,7 +182,7 @@ html.rer-themed .buoy-app .app-footer p { margin: 0; color: var(--buoy-muted); f
   html.rer-themed .app-bar .rer-brand::before { width: 38px; height: 38px; }
   .head-row { display: grid; gap: 16px; margin: 6px 0 22px; }
   html.rer-themed .buoy-app h1 { font-size: 30px; }
-  .title-line .dot { font-size: 19px; }
+  .title-line { --sep: 22px; }
   .title-line .fact { font-size: 18px; }
   .title-line .fact.strong { font-size: 20px; }
   .controls { justify-content: space-between; gap: 12px; }
