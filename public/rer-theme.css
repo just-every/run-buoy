@@ -187,3 +187,6 @@ html.rer-themed a { color: var(--buoy-ink); text-underline-offset: 4px; text-dec
   html.rer-themed main { padding: 30px 22px 28px; }
   html.rer-themed h1 { font-size: 32px; }
 }
+
+/* STYLE-001: commands in the installed Lobby use the declared local mono face. */
+body:has(> main.door) code { font-family: var(--buoy-font-mono); }

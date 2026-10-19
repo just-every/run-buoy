@@ -17,7 +17,6 @@ export const browserScript = `(() => {
   const saved = url.searchParams.get('saved');
   if (saved && storage) { const split = saved.indexOf('|'); if (split > 0 && saved.startsWith('/app')) storage.removeItem('buoy:draft:' + saved.slice(0, split) + ':' + saved.slice(split + 1)); }
   if (saved && storage && saved.endsWith('|delete')) { for (const key of Object.keys(storage)) if (key.startsWith('buoy:draft:')) storage.removeItem(key); }
-  if (saved && storage && saved.endsWith('|import-apply')) storage.removeItem('buoy:draft:/app/imports:import-preview');
   if (saved) { url.searchParams.delete('saved'); history.replaceState(null, '', url); }
   const error = document.querySelector('[data-form-error]');
   if (error) { error.tabIndex = -1; error.focus(); }

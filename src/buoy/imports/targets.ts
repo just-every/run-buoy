@@ -25,6 +25,10 @@ export const accountTargets: D1TargetAdapter = {
     return row ? sql('EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND document=? AND revision=?)', id, canonicalJson(row.value), row.revision)
       : sql('NOT EXISTS(SELECT 1 FROM buoy_accounts WHERE id=?)', id)
   },
+  matchesMany(rows) {
+    const images=JSON.stringify(rows.map(row=>({id:row.targetId,document:canonicalJson(row.value),revision:row.revision})))
+    return [sql(`(SELECT count(*) FROM buoy_accounts)=? AND (SELECT count(*) FROM json_each(?) i JOIN buoy_accounts a ON a.id=json_extract(i.value,'$.id') WHERE a.document=json_extract(i.value,'$.document') AND a.revision=json_extract(i.value,'$.revision'))=?`,rows.length,images,rows.length)]
+  },
   matchesCount: count => sql('(SELECT count(*) FROM buoy_accounts)=?', count),
   write(row) {
     const notErased = notErasedSql(row.targetId)

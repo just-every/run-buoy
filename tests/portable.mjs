@@ -1,3 +1,4 @@
+import { importClient } from './import-door-client.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
 // Source and destination run sequentially; no provider calls or data fakes.
 import assert from 'node:assert/strict'
@@ -30,8 +31,8 @@ try{
  running=await startWorker({root:source,directory:join(source,'.wrangler/state'),keep:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
- const plan=await call('/imports/preview','POST',fixture)
- const job=await call('/imports/apply','POST',{...fixture,fingerprint:plan.fingerprint,operationKey:'portable-import'})
+ const door=importClient(running.request,running.cookie), plan=await door.plan(fixture)
+ const job=await door.apply(plan)
  assert.equal(job.state,'completed')
  const accountId=fixture.accounts[0].id
  const proposal=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'renewed',reason:'Annual renewal accepted',evidence:'Signed renewal R-17'}})
@@ -72,7 +73,7 @@ try{
  assert.deepEqual(after.decisions,before.decisions)
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
  assert.equal((await running.request('/api/buoy/accounts',{method:'POST',body:erased,cookie:running.cookie})).status,409,'restored erasure tombstone prevents recreation')
- const history=await call('/imports');assert.ok(history.jobs.some(item=>item.id===job.id))
+ const history=await (await running.request('/api/operator/import-history',{cookie:running.cookie})).json();assert.ok(history.history.some(item=>item.jobId===job.id))
  const followup=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'deferred',reason:'Review next year',evidence:'Account review note CS-18'}})
  await call(`/proposals/${followup.id}/approve`,'POST',{})
  assert.equal((await call('/state')).decisions.length,before.decisions.length+1)

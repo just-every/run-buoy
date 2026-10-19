@@ -1,6 +1,8 @@
+import { importClient } from './import-door-client.mjs'
 import assert from 'node:assert/strict'
 // SEGMENT-001 through authenticated product HTTP; paid mail is the only fake.
 export async function segmentJourney({call,json,request,cookie,member,account,scheduled}) {
+ const door=importClient(request,cookie)
  const a={...account('segment-harbour'),name:'SEGMENT-001 Harbour Software',billing:{...account().billing,currency:'USD',totalMinor:6000000,creditsMinor:0,allocatedMinor:0},support:{...account().support,urgentTickets:1}}
  await json(await call('/accounts','POST',a),201)
  const condition=(field,op,value)=>({field,op,...(value===undefined?{}:{value})})
@@ -52,8 +54,8 @@ export async function segmentJourney({call,json,request,cookie,member,account,sc
  // OR/missing conditions and automatic import evaluation use the real import door.
  const otherId=(await json(await call('/segments','POST',{...source,name:'Missing billing or named account',tier:null,stage:null,playbook:null,rules:{match:'any',conditions:[condition('billing.totalMinor','is-missing'),condition('name','contains','SEGMENT-001')]}}),201)).id
  assert.ok((await seg(otherId)).members.some(x=>x.accountId===a.id));assert.ok((await seg(otherId)).members.some(x=>x.accountId==='unknown'),'SEGMENT-001 missing billing matches only the explicit missing predicate')
- const imported={...a,id:'segment-imported',name:'SEGMENT-001 Imported Software'},upload={accounts:[imported]},preview=await json(await call('/imports/preview','POST',upload))
- await json(await call('/imports/apply','POST',{...upload,fingerprint:preview.fingerprint,operationKey:'segment-import'}))
+ const imported={...a,id:'segment-imported',name:'SEGMENT-001 Imported Software'},upload={accounts:[imported]},preview=await door.plan(upload)
+ await door.apply(preview)
  assert.equal((await report()).count,2)
  // Source health changes and the hourly clock can make an account enter/exit.
  const clock={...a,id:'segment-clock',name:'SEGMENT-001 Clock',billing:{...a.billing,allocatedMinor:a.billing.totalMinor},support:{...a.support,urgentTickets:0}}

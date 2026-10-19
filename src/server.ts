@@ -1,3 +1,4 @@
+import { importDoorResponse } from './buoy/imports/door'
 import { scheduledSegments } from './buoy/segments'
 import { withDemo } from './modules/demo/index.mjs'
 import { seedDemo } from './demo'
@@ -33,6 +34,8 @@ export default withDemo({
   async fetch(request, env, execution) {
     const asset = await staticAssetResponse(request, env)
     if (asset) return asset
+    const door = await importDoorResponse(request, env)
+    if (door) return door
     const auth = await authResponse(request, env)
     if (auth) return auth
     // The installed variant: the Lobby at / and the public claim state it reads.

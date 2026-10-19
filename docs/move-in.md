@@ -43,24 +43,28 @@ Money uses nonnegative integer minor units of an ISO 4217 currency at its expone
 
 Use `null` for either observation when it is absent. Missing billing or support means unknown, not zero, paid or healthy. Imports do not fetch evidence from providers. Do not include credentials or executable connector settings in the upload.
 
-## Preview and apply
+## Upload, review and apply
 
-1. As an owner or admin, open **Imports** in your installed Buoy.
-2. Paste your JSON into **Account snapshot JSON** and select **Preview import**.
-3. Read **Dry-run review**. Check the input, unique, duplicate and other reported counts, diagnostics and **Import review details**. Preview has not imported any accounts.
-4. Select **Apply reviewed import** only after reviewing the exact source.
-5. Check **Import journal** for the completed job and return to **Accounts** to inspect the imported evidence.
+1. As the owner, open **Imports** in your installed Buoy (`/app/imports`, also `/app/import`).
+2. Choose the original **Account snapshot JSON** file and select **Upload and review**.
+3. Read the counts, differences, rejections, credential-removal diagnostics and reviewed fingerprint. Planning changes no accounts.
+4. Check the review confirmation and select **Apply reviewed import**.
+5. Select **Reconcile native records**, then return to **Accounts** to inspect the actual evidence.
 
-The reviewed fingerprint binds confirmation to that upload, including IDs and evidence. Changing the source requires another preview. Imports create new accounts; conflicting existing accounts are refused rather than overwritten. Use [source refresh](/docs/accounts#refresh-sources) for an existing account.
+The exact reviewed fingerprint binds apply to this plan. Repeated apply resumes or returns its same durable job. The screen also offers **Continue import** when work remains. Imported accounts are inert: importing does not send mail, approve work or grant access.
 
-## Understand custody and resuming
+For a later export from the same source, select **Update an earlier import from the same source** before planning. Review additions, replacements, unchanged records and records gone from the source. Gone records remain in Buoy with an explanation. Native edits are protected from replacement. After erasure withdrew a baseline snapshot, leave that box unchecked to begin a new baseline; erased IDs still cannot return.
 
-The journal retains normalized source, mapping and custody. It does not preserve the original upload’s byte formatting; this limitation appears in the preview diagnostics.
+## Custody and shared authority
 
-For API use, apply with the preview’s fingerprint and a stable operation key, alongside the same accounts. Repeating that operation key with the same reviewed source resumes or returns the same durable job. Another upload cannot reuse that key. If an API job is `applying` or `undoing`, repeat the same apply or undo call until it completes. See the repository’s [move-in kit](https://github.com/just-every/run-buoy/blob/main/fixtures/move-in/README.md).
+The shared Base door retains original uploaded bytes, normalized source and reviewed plan custody. If the kit removes credentials from a record, the review lists each removal and the original bytes are withheld and discarded. The screen needs JavaScript for same-origin uploads; only this import page allows same-origin static scripts and connections under its content security policy.
+
+The owner can use imports even when **Business imports** is off. Business requests additionally need signed, action-bound grants, explicit enablement and a current non-revoked signing key. A self-hosted installation starts with Business disabled. A Business-provisioned installation opens it after owner claim only when its provisioning setting is exactly `RER_IMPORT_DOOR=on`; later owner paths heal incomplete provisioning but never override a saved disable. Key revocation is permanent, including across disable/re-enable.
+
+Local and Business approvals appear in one history, labelled **approved by** or **approved via Business by**. Earlier imports remain in **Earlier import journal**; the owner can read and undo earlier admin jobs. Account editing permissions are unchanged.
 
 ## Undo an import
 
-Open its record in **Import journal** and select **Undo this import**. Undo succeeds only while its account records have not changed or gained dependent proposals, tasks, decisions or events.
+Open its history entry and select **Undo import**. Undo is strict: account edits and dependent proposals, tasks or decisions prevent removal. Owner undo works while Business is disabled. Undo a newer import before an earlier import whose records it superseded.
 
-Buoy refuses undo when later work exists; it does not discard those changes. Review the account and its history rather than repeatedly applying the upload. Owner [account erasure](/docs/accounts#delete-an-account) is a separate action with different retention consequences.
+Owner [account erasure](/docs/accounts#delete-an-account) is separate. It removes the account and dependent work, withdraws retained upload and snapshot bytes, and advances the archive restore checkpoint in the same transaction. Its journal inventories the withdrawn custody. It preserves anonymous approval/history bookkeeping, installation settings and revoked keys; erasure cannot resurrect a record through a later import or older archive.

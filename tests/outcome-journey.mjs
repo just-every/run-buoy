@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 // PLAY-004: real approved playbooks, sources, human decisions and Cron through HTTP.
-export async function outcomeJourney({call,json,request,member,account,scheduled}) {
+export async function outcomeJourney({call,json,request,cookie,member,account,scheduled}) {
  const accounts=Array.from({length:80},(_,i)=>({...account(`outcome-${String(i).padStart(3,'0')}`),name:`Outcome Customer ${i+1}`}))
- for(let i=0;i<80;i+=40){const upload={accounts:accounts.slice(i,i+40)},preview=await json(await call('/imports/preview','POST',upload));await json(await call('/imports/apply','POST',{...upload,fingerprint:preview.fingerprint,operationKey:'outcome-seed-'+i}))}
+ for(const account of accounts) await json(await call('/accounts','POST',account),201)
  const segmentInput={name:'PLAY-004 outcome cohort',mode:'static',rules:{match:'all',conditions:[]},accountIds:accounts.map(a=>a.id),tier:null,stage:null,playbook:null}
  const segmentId=(await json(await call('/segments','POST',segmentInput),201)).id
  const taskIds=[]

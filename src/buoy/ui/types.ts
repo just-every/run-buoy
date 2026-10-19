@@ -34,6 +34,5 @@ export interface State {
 export type Api = (request: Request) => Promise<Response>;
 export type Fields = Record<string, string>;
 export interface Job { id: string; state: string; operationKey?: string; checkpoint?: number; total?: number; error?: string | null; [key: string]: unknown }
-export interface Preview { fingerprint: string; counts: unknown; diagnostics: unknown }
 export const canManage = (state: State) => ['owner', 'admin'].includes(state.operator.role);
 export const personName = (state: State, id: string | null) => state.people.find(person => person.id === id)?.displayName ?? (id ? 'A former team member' : 'No one');

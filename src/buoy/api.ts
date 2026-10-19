@@ -84,14 +84,9 @@ buoyApi.delete('/api/buoy/accounts/:id', async c => {
  insist(body.confirmation === current.name, 'Type the account name to confirm erasure.')
  return c.json(await imports.erase(c.env.DB, actor, current.id))
 })
-buoyApi.get('/api/buoy/imports', async c => {requirePerson(c.get('actor')); return c.json(await imports.history(c.env.DB, c.get('actor')))})
-buoyApi.post('/api/buoy/imports/preview', async c => {requirePerson(c.get('actor')); return c.json(await imports.preview(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)))})
-buoyApi.post('/api/buoy/imports/apply', async c => {
- const actor = c.get('actor'); requirePerson(actor); const body = await jsonBody(c.req.raw)
- return c.json(await imports.apply(c.env.DB, actor, {accounts: body.accounts, fingerprint: text(body.fingerprint, 'Reviewed fingerprint', 64), operationKey: text(body.operationKey, 'Operation key', 200)}))
-})
-buoyApi.get('/api/buoy/imports/:id', async c => {requirePerson(c.get('actor')); return c.json(await imports.job(c.env.DB, c.get('actor'), c.req.param('id')))})
-buoyApi.post('/api/buoy/imports/:id/undo', async c => {requirePerson(c.get('actor')); await jsonBody(c.req.raw); return c.json(await imports.undo(c.env.DB, c.get('actor'), c.req.param('id')))})
+buoyApi.get('/api/buoy/imports', async c => {requirePerson(c.get('actor'), true); return c.json(await imports.history(c.env.DB, c.get('actor')))})
+buoyApi.get('/api/buoy/imports/:id', async c => {requirePerson(c.get('actor'), true); return c.json(await imports.job(c.env.DB, c.get('actor'), c.req.param('id')))})
+buoyApi.post('/api/buoy/imports/:id/undo', async c => {requirePerson(c.get('actor'), true); await jsonBody(c.req.raw); return c.json(await imports.undo(c.env.DB, c.get('actor'), c.req.param('id')))})
 buoyApi.post('/api/buoy/agent-tokens', async c => c.json(await mintAgent(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.delete('/api/buoy/agent-tokens/:id', async c => {
  const actor = c.get('actor'); requirePerson(actor, true)

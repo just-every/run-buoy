@@ -1,7 +1,7 @@
 import { mutateTeam } from './team-actions';
 import type { TeamPreview } from './team';
 import { accountBody } from './account-form';
-import type { Api, Fields, Job, Preview } from './types';
+import type { Api, Fields, Job } from './types';
 
 export class ApiError extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -22,16 +22,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export function importAccounts(source: string): unknown[] {
-  let input: unknown;
-  try { input = JSON.parse(source); } catch { throw new ApiError('Enter valid JSON containing an accounts array. Your upload has been retained below.'); }
-  if (!input || typeof input !== 'object' || Array.isArray(input) || !Array.isArray((input as { accounts?: unknown }).accounts)) throw new ApiError('The upload must be an object containing an accounts array.');
-  if (Object.keys(input).some(key => key !== 'accounts')) throw new ApiError('Only the accounts property is supported at the top level of an upload.');
-  const accounts = (input as { accounts: unknown[] }).accounts;
-  if (accounts.length < 1 || accounts.length > 50) throw new ApiError('An upload must contain between 1 and 50 accounts.');
-  return accounts;
-}
-export interface MutationResult { redirect?: string; message?: string; preview?: Preview; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -122,16 +113,6 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     }
   }
   if (path === '/app/imports') {
-    if (action === 'import-preview') {
-      const accounts = importAccounts(fields.source);
-      const preview = await send<Preview>('/api/buoy/imports/preview', { accounts });
-      return { preview };
-    }
-    if (action === 'import-apply') {
-      const accounts = importAccounts(fields.source);
-      const job = await send<Job>('/api/buoy/imports/apply', { accounts, fingerprint: fields.fingerprint, operationKey: fields.operationKey });
-      return { redirect: path, message: job.state === 'completed' ? 'Import completed. The journal below records its result.' : 'Import request recorded. Check its current state in the journal below.', saved: 'import-apply' };
-    }
     if (action === 'import-undo') {
       const job = await send<Job>(`/api/buoy/imports/${encodeURIComponent(fields.id)}/undo`, {});
       return { redirect: path, message: job.state === 'undone' ? 'Import undone.' : 'Undo request recorded. Check its current state in the journal below.', saved: `undo-${fields.id}` };

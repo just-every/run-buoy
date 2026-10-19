@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 
-export async function mailWorker({ root = process.cwd() } = {}) {
+export async function mailWorker({ root = process.cwd(), bindings = () => ({}) } = {}) {
  const require = createRequire(await realpath(join(root, 'node_modules/wrangler/package.json')))
  const { Miniflare, convertV4MiniflareOptions } = require('miniflare')
  const { unstable_splitSqlQuery: splitSql } = require('wrangler')
@@ -16,6 +16,7 @@ export async function mailWorker({ root = process.cwd() } = {}) {
  const origin = `https://127.0.0.1:${port}`, directory = await mkdtemp(join(tmpdir(), 'buoy-mail-'))
  const secret = () => randomBytes(32).toString('base64url'), mails = [], outbound = []
  const vars = { AUTH_LOCAL: 'false', AUTH_ORIGIN: origin, OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
+ Object.assign(vars, bindings(origin))
  let mailStatus = 200
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
   host:'127.0.0.1', port, https:true,

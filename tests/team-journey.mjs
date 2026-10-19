@@ -1,4 +1,4 @@
-// TEAM-001: 300 real account records through import, reviewed assignment and handover doors.
+// TEAM-001: 300 real account records through account creation, reviewed assignment and handover doors.
 import assert from 'node:assert/strict'
 export async function teamJourney({call,json,request,cookie,member,signIn,account}){
  const owner=(await json(await call('/state'))).operator.id, csms=[]
@@ -9,10 +9,7 @@ export async function teamJourney({call,json,request,cookie,member,signIn,accoun
  const operators=await json(await request('/auth/operators',{cookie}))
  for(const name of ['Maya Chen','Owen Reed','Priya Shah','Sam Brooks'])csms.push(operators.find(p=>p.displayName===name).id)
  const accounts=Array.from({length:300},(_,i)=>({...account(`team-${String(i).padStart(3,'0')}`),name:`TEAM-001 Customer ${String(i+1).padStart(3,'0')}`}))
- for(let i=0;i<300;i+=50){
-  const batch=accounts.slice(i,i+50), preview=await json(await call('/imports/preview','POST',{accounts:batch}))
-  await json(await call('/imports/apply','POST',{accounts:batch,fingerprint:preview.fingerprint,operationKey:'TEAM-001-'+i}))
- }
+ for(const account of accounts) await json(await call('/accounts','POST',account),201)
  const settings={teams:[{id:'growth',name:'Growth CSMs',pod:'Commercial',personIds:csms},{id:'overflow',name:'Existing book',pod:'Leadership',personIds:[owner]}],capacities:[...csms.map(personId=>({personId,capacity:75})),{personId:owner,capacity:500}],rules:[{id:'cohort',name:'Commercial territory',teamId:'growth',territory:'Commercial'},{id:'rest',name:'Existing unassigned accounts',teamId:'overflow'}],territories:accounts.map(a=>({accountId:a.id,territory:'Commercial'}))}
  assert.equal((await call('/team/settings','PUT',settings,{cookie:member})).status,403)
  assert.equal((await call('/team/preview','POST',{mode:'rules'},{cookie:member})).status,403)

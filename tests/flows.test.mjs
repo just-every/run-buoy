@@ -1,3 +1,4 @@
+import { importClient } from './import-door-client.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { outcomeJourney } from './outcome-journey.mjs'
@@ -69,23 +70,26 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.equal((await call(`/proposals/${draft.id}/approve`,'POST',{})).status,409)
    assert.equal((await json(await call('/state'))).decisions[0].renewalDate,'2027-03-31','earlier decision evidence keeps original date')
   })
-  let imported
-  await t.test('move-in dry run, review binding, idempotent apply and strict undo',async()=>{
+  const door=importClient(request,cookie)
+ let imported
+  await t.test('IMPORT-001 shared door no-write planning, review binding, idempotent apply, reconcile and strict undo',async()=>{
    const upload={accounts:[account('move-one')]}
-   const plan=await json(await call('/imports/preview','POST',upload))
+   const plan=await door.plan(upload)
    assert.equal((await json(await call('/state'))).accounts.length,2)
-   assert.equal((await call('/imports/apply','POST',{...upload,fingerprint:'0'.repeat(64),operationKey:'import-one'})).status,409)
-   const input={...upload,fingerprint:plan.fingerprint,operationKey:'import-one'}
-   imported=await json(await call('/imports/apply','POST',input));assert.equal(imported.state,'completed')
-   const replay=await json(await call('/imports/apply','POST',input));assert.equal(replay.id,imported.id)
-   const undone=await json(await call(`/imports/${imported.id}/undo`,'POST',{}));assert.equal(undone.state,'undone')
+   assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:'0'.repeat(64)})).status,403)
+   const input={planId:plan.planId,reviewedFingerprint:plan.fingerprint}
+   imported=await door.apply(plan);assert.equal(imported.state,'completed')
+   const replay=await door.apply(plan);assert.equal(replay.id,imported.id)
+   assert.equal((await call(`/imports/${imported.id}/undo`,'POST',{})).status,409,'IMPORT-001 the legacy undo route refuses door jobs')
+   const report=await door.json('reconcile',{planId:plan.planId});assert.equal(report.ok,true);assert.equal(report.counts.present,1)
+   const undone=await door.undo(plan);assert.equal(undone.state,'undone')
    assert.ok(!(await json(await call('/state'))).accounts.some(a=>a.id==='move-one'))
   })
-  await t.test('undo preserves changed accounts and owner erasure redacts imported custody',async()=>{
-   const upload={accounts:[account('move-two')]}, plan=await json(await call('/imports/preview','POST',upload))
-   const job=await json(await call('/imports/apply','POST',{...upload,fingerprint:plan.fingerprint,operationKey:'import-two'}))
+  await t.test('IMPORT-001 ERASE-001 door undo preserves dependent work and owner erasure withdraws door custody',async()=>{
+   const upload={accounts:[account('move-two')]}, plan=await door.plan(upload)
+   const job=await door.apply(plan)
    await json(await call('/proposals','POST',{accountId:'move-two',kind:'playbook',payload:{title:'Escalate support',dueDate:'2027-01-31'}}),201)
-   assert.equal((await call(`/imports/${job.id}/undo`,'POST',{})).status,409)
+   assert.equal((await door.send('undo',{planId:plan.planId})).status,409)
    assert.equal((await call('/accounts/move-two','DELETE',{confirmation:'Harbour Software'},{cookie:member})).status,403)
    await json(await call('/accounts/move-two','DELETE',{confirmation:'Harbour Software'}))
    const state=await json(await call('/state'));assert.ok(!state.accounts.some(a=>a.id==='move-two'));assert.ok(!state.proposals.some(p=>p.accountId==='move-two'))
@@ -93,6 +97,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const retained=JSON.stringify(await json(await call(`/imports/${job.id}`)))
    assert.ok(!retained.includes('Harbour Software'));assert.ok(!retained.includes('INV-1042'))
    assert.equal((await call('/accounts','POST',account('move-two'))).status,409)
+   const withdrawn=await door.send('reconcile',{planId:plan.planId});assert.equal(withdrawn.status,410)
   })
   await t.test('server-rendered work screens and unknown paths',async()=>{
    for(const path of ['/app','/app/accounts/harbour','/app/imports','/app/backups']){
@@ -436,7 +441,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   })
   await t.test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>teamJourney({call,json,request,cookie,member,signIn,account}))
   await t.test('SEGMENT-001 rules, classification, intervals, proposals, reports and erasure',async()=>segmentJourney({call,json,request,cookie,member,account,scheduled}))
-  await t.test('PLAY-004 frozen cohorts, 40 playbooks, outcomes, observed times and comparison',async()=>outcomeJourney({call,json,request,member,account,scheduled}))
+  await t.test('PLAY-004 frozen cohorts, 40 playbooks, outcomes, observed times and comparison',async()=>outcomeJourney({call,json,request,cookie,member,account,scheduled}))
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))
@@ -449,4 +454,9 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok(worker.outbound.length);assert.deepEqual([...new Set(worker.outbound)],['https://api.resend.com/emails'],'the only outbound call is the sign-in mail provider')
   })
  }finally{await worker.close()}
+})
+
+test('HTTP-001 IMPORT-001 operator and Business door authority, provisioning, revocation and erasure',async()=>{
+ const {importDoorJourney}=await import('./import-door-journey.mjs')
+ await importDoorJourney()
 })

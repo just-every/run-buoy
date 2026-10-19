@@ -35,6 +35,11 @@ const inspect = () => {
   .filter(field => !(field.labels?.length || field.getAttribute('aria-label') || field.getAttribute('aria-labelledby'))).map(describe)
  const forms = [...document.forms].filter(visible).map(form => { const submit = [...form.querySelectorAll('button:not([type=button]),input[type=submit]')].filter(visible)[0]; return submit ? { submit: !submit.disabled && rect(submit).height >= 24 && rect(submit).right <= width + 1, text: describe(submit) } : { submit: false, text: describe(form) } })
  const marks = [...document.querySelectorAll('img[src="/brand/mark.svg"]')].filter(visible).map(image => image.complete && image.naturalWidth > 0)
+ // Base also renders the same mark through the theme's visible brand pseudo-element.
+ for(const brand of [...document.querySelectorAll('.rer-brand')].filter(visible)) {
+  const pseudo=getComputedStyle(brand,'::before')
+  if(pseudo.backgroundImage.includes('/brand/mark.svg')) marks.push(parseFloat(pseudo.width)>1 && parseFloat(pseudo.height)>1 && pseudo.display!=='none' && performance.getEntriesByType('resource').some(entry=>new URL(entry.name).pathname==='/brand/mark.svg'))
+ }
  const family = selector => { const element = [...document.querySelectorAll(selector)].find(visible); return element ? getComputedStyle(element).fontFamily : null }
  return { overflow: document.documentElement.scrollWidth - width, controls: controls.length, offscreen, clipped, unlabelled, forms, marks,
   theme: [...document.querySelectorAll('link[rel=stylesheet]')].map(link => new URL(link.href).pathname),
@@ -52,7 +57,7 @@ try {
  const today = new Date().toISOString().slice(0, 10)
  assert.equal((await call('/accounts', 'POST', { id: 'harbour', name: 'Harbour Software', renewalDate: '2027-03-31', noticeDays: 30, renewalEvidence: 'Signed order form section 4', billing: { observedAt: today, reference: 'Nectar invoice INV-1042', currency: 'AUD', totalMinor: 120000, creditsMinor: 10000, allocatedMinor: 20000, dueDate: '2026-01-01' }, support: null })).status, 201)
  const cookies = app.cookie.split('; ').map(pair => { const [name, ...value] = pair.split('='); return { name, value: value.join('='), url: app.origin } })
- const screens = [[site.origin, '/', false], [site.origin, '/run', false], [site.origin, '/docs', false], [app.origin, '/signin', false], [app.origin, '/setup', true], [app.origin, '/app', true], [app.origin, '/app/accounts/harbour', true], [app.origin, '/app/imports', true]]
+ const screens = [[site.origin, '/', false], [site.origin, '/run', false], [site.origin, '/docs', false], [site.origin, '/contract', false], [app.origin, '/', false], [app.origin, '/signin', false], [app.origin, '/setup', true], [app.origin, '/app', true], [app.origin, '/app/accounts/harbour', true], [app.origin, '/app/imports', true]]
  for (const width of [1440, 390]) {
   for (const [origin, path, signedIn] of screens) {
    const context = await browser.newContext({ viewport: { width, height: 900 }, ignoreHTTPSErrors: true })
@@ -73,15 +78,43 @@ try {
    check(() => { if (seen.code) assert.match(seen.code, /^"?IBM Plex Mono/, `${where} sets commands in IBM Plex Mono`) })
    // App documents link no icon, so the browser shows the installation's /favicon.ico (checked below).
    check(() => { assert.deepEqual(seen.icons.sort(), origin === site.origin ? ['/favicon-32.svg', '/favicon.ico'] : [], `${where} icon links`) })
-   // Base's sign-in page shows the product name, not the mark (STYLE-001 Gap).
-   check(() => { if (path !== '/signin') assert.ok(seen.marks.length && seen.marks.every(Boolean), `${where} shows the mark`) })
+   check(() => { assert.ok(seen.marks.length && seen.marks.every(Boolean), `${where} shows the mark`) })
    check(() => { assert.ok(seen.overflow <= 1, `${where} has no horizontal page scroll (${seen.overflow}px)`) })
    check(() => { assert.deepEqual(seen.offscreen, [], `${where} keeps every control on screen`) })
    check(() => { assert.deepEqual(seen.clipped, [], `${where} clips no text`) })
    check(() => { assert.deepEqual(seen.unlabelled, [], `${where} labels every form field`) })
    check(() => { for (const form of seen.forms) assert.ok(form.submit, `${where} form submit is usable: ${form.text}`) })
+   if (path === '/signin' || path === '/app/imports' || path === '/' || path === '/contract') { const { mkdir } = await import('node:fs/promises'); await mkdir('../screens', {recursive:true}); await page.screenshot({path:`../screens/style-${path === '/signin' ? 'signin' : path === '/app/imports' ? 'imports' : path === '/contract' ? 'contract' : origin === app.origin ? 'lobby' : 'site'}-${width}.png`,fullPage:path !== '/contract'}) }
    await context.close()
   }
+ }
+ // IMPORT-001: use the replacement move-in screen as an owner at both widths.
+ for (const width of [1440,390]) {
+  const context=await browser.newContext({viewport:{width,height:900},ignoreHTTPSErrors:true})
+  await context.addCookies(cookies)
+  const page=await context.newPage();await page.goto(app.origin+'/app/imports',{waitUntil:'networkidle'})
+  const account={id:'browser-import-'+width,name:'Harbour Migration '+width,renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Customer-signed order',billing:null,support:null}
+  await page.locator('#import-bundle').setInputFiles({name:'accounts.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({accounts:[account]}))})
+  await page.getByRole('button',{name:'Upload and review',exact:true}).click()
+  await page.locator('#import-review').waitFor({state:'visible'})
+  await page.getByText('Reviewed fingerprint',{exact:true}).click()
+  assert.match(await page.locator('#import-fingerprint').innerText(),/^[a-f0-9]{64}$/,'IMPORT-001 browser shows the fingerprint before approval')
+  assert.equal((await (await call('/state')).json()).accounts.some(a=>a.id===account.id),false,'IMPORT-001 browser plan has no native writes')
+  await page.locator('#import-confirmed').check()
+  await page.getByRole('button',{name:'Apply reviewed import',exact:true}).click()
+  await page.getByRole('heading',{name:'Import completed',exact:true}).waitFor()
+  await page.getByRole('button',{name:'Reconcile native records',exact:true}).click()
+  await page.locator('#import-reconciliation').waitFor({state:'visible'})
+  assert.match(await page.locator('#import-reconcile-summary').innerText(),/match|present|reconcil/i)
+  assert.equal((await (await call('/state')).json()).accounts.find(a=>a.id===account.id).name,account.name,'IMPORT-001 browser imported native values')
+  await page.screenshot({path:`../screens/import-completed-${width}.png`,fullPage:true})
+  const seen=await page.evaluate(inspect)
+  assert.ok(seen.overflow<=1 && !seen.offscreen.length && !seen.clipped.length,'STYLE-001 import completion stays usable at '+width)
+  await page.getByRole('button',{name:'Undo import',exact:true}).click()
+  await page.getByRole('heading',{name:'Import undone',exact:true}).waitFor()
+  assert.equal((await (await call('/state')).json()).accounts.some(a=>a.id===account.id),false,'IMPORT-001 browser undo removes the imported account')
+  await page.screenshot({path:`../screens/import-undone-${width}.png`,fullPage:true})
+  await context.close()
  }
  assert.deepEqual(failures, [], 'STYLE-001 every screen at both widths')
  // The 16 and 32 pixel favicon frames, and the forms themselves at phone width.
@@ -96,6 +129,6 @@ try {
  const signin = await phone.newPage(); await signin.goto(app.origin + '/signin')
  await signin.getByLabel(/email/i).first().fill('owner@example.test'); await Promise.all([signin.waitForLoadState('networkidle'), signin.locator('form button[type=submit], form button:not([type])').first().click()])
  assert.match(new URL(signin.url()).search, /notice=sent/, 'STYLE-001 the sign-in form submits at 390 pixels')
- console.log(`STYLE-001 browser journey passed: 8 screens at 1440 and 390 pixels, ${controls} controls and ${forms} forms checked; installation faces, theme, mark and favicons; no clipping; forms usable.`)
+ console.log(`STYLE-001 browser journey passed: 10 screens at 1440 and 390 pixels, ${controls} controls and ${forms} forms checked; installation faces, theme, mark and favicons; no clipping; forms usable.`)
  await phone.close()
 } finally { await browser.close(); await app.close(); await site.close() }

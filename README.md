@@ -27,7 +27,7 @@ Stop with `rer dev --stop`. Local data persists in `.wrangler/state`; private se
 2. Billing uses an invoice total minus credits and allocated payments. For an overdue unpaid invoice or urgent open support ticket, the account becomes **At risk**, with the source and observation dates shown. Observations older than 30 days remain labeled stale. No risk signal with fresh billing and support gives **Healthy**; this is a defined rule, not a churn prediction.
 3. Open the account. Prepare a playbook action and due date. Review its retained evidence, approve it as an owner/admin, then record completion evidence. Approval does not send a message or imply completion.
 4. Prepare a renewal outcome, reason and evidence reference. Approve it to record who decided and when. A source refresh makes pending proposals stale; prepare a new proposal from the changed evidence. Earlier decisions stay attached to the date they approved.
-5. **Imports** accepts the [Account, billing and support JSON v1 kit](fixtures/move-in/README.md). Paste your documented-shape snapshot, preview, review counts and diagnostics, then apply. The journal supports undo until a record changes or gains work. The example files are explicitly synthetic, for a trial only.
+5. **Imports** accepts the [Account, billing and support JSON v1 kit](fixtures/move-in/README.md). Choose your original JSON snapshot file, review counts, differences and diagnostics, then approve the exact plan and reconcile its native records. The journal supports undo until a record changes or gains work. The example files are explicitly synthetic, for a trial only.
 
 The first release accepts at most 500 accounts, 50 per import and 256 KB per API request. Amounts are integer minor units of an ISO 4217 currency at its exponent. Billing and support are human-supplied snapshots, with references to evidence held in your existing systems. Buoy does not fetch those references or move money.
 
@@ -76,7 +76,7 @@ The dry run builds and validates without provider calls. Real deploy provisions 
 
 ## Development
 
-Package mode pins `@runeditrun/rer` **0.2.62**; [SOURCES.md](SOURCES.md) identifies the Base and sibling source. The app uses Base authentication, theme, document frames, import-kit and portability. The product's server-rendered forms work without client rendering.
+Package mode pins `@runeditrun/rer` **0.2.70**; [SOURCES.md](SOURCES.md) identifies the Base and sibling source. The app uses Base authentication, theme, document frames, import-kit and portability. Account work uses server-rendered forms; the shared import door uses its same-origin file uploader.
 
 ```sh
 rer dev --stop
