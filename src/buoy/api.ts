@@ -1,3 +1,6 @@
+import { startOutcome } from './outcomes'
+import { observeOutcomes } from './outcomes/observe'
+import { outcomeState, outcomeReport, outcomeCsv } from './outcomes/report'
 import { Hono } from 'hono'
 import type { Bindings } from '../auth.server'
 import { actorFor, jsonBody, mintAgent } from './access'
@@ -27,8 +30,9 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  // record their actual effect atomically in core.commit. No body or credential is retained.
  if (actor.kind === 'agent') await auditRecord(c.env.DB, actor, 'agent.requested', `agent:${actor.id}`, `${['GET','POST'].includes(c.req.method) ? c.req.method : 'Other method'} commands request received; outcome not recorded.`).run()
  await reconcile(c.env.DB, actor)
+ await observeOutcomes(c.env.DB,actor)
  await next()
- if(c.req.method!=='GET'&&c.res.status<400)await reconcile(c.env.DB,actor)
+ if(c.req.method!=='GET'&&c.res.status<400){await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
  if (c.req.method !== 'GET' && c.res.status < 400) await flushNotifications(c.env)
 })
 buoyApi.onError((error, c) => {
@@ -41,6 +45,10 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.get('/api/buoy/outcomes',async c=>c.json(await outcomeState(c.env.DB)))
+buoyApi.post('/api/buoy/outcomes',async c=>c.json(await startOutcome(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+buoyApi.get('/api/buoy/outcomes/:id/report',async c=>c.json(await outcomeReport(c.env.DB,c.req.param('id'))))
+buoyApi.get('/api/buoy/outcomes/:id/report.csv',async c=>c.body(outcomeCsv(await outcomeReport(c.env.DB,c.req.param('id'))),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=playbook-outcomes.csv'}))
 buoyApi.get('/api/buoy/segments',async c=>c.json(await segmentState(c.env.DB)))
 buoyApi.post('/api/buoy/segments',async c=>c.json(await saveSegment(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.put('/api/buoy/accounts/:id/classification',async c=>c.json(await setClassification(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))

@@ -1,3 +1,4 @@
+import { observeOutcomes } from '../outcomes/observe'
 import { accountAudit } from '../audit-records'
 import { auditRecord } from '../audit-records'
 import { authority, guard, id, insist, now, requirePerson, stmt, type Actor } from '../core'
@@ -72,5 +73,5 @@ export function reportCsv(report:Awaited<ReturnType<typeof segmentReport>>) {
 }
 export async function scheduledSegments(db:D1Database,at:Date) {
  const owner=await db.prepare("SELECT id,display_name AS displayName,role FROM oa_operators WHERE role='owner' AND status='active' ORDER BY id LIMIT 1").first<{id:string;displayName:string;role:string}>()
- if(owner)await reconcile(db,{...owner,kind:'person'},at)
+ if(owner){const actor={...owner,kind:'person' as const};await reconcile(db,actor,at);await observeOutcomes(db,actor,at)}
 }

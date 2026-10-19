@@ -39,6 +39,10 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(path==='/app/outcomes'&&action==='outcome-start'){
+    await send('/api/buoy/outcomes',{name:fields.name,segmentId:fields.segmentId,kind:fields.kind,windowDays:Number(fields.windowDays),taskIds:fields.taskIds.split(',').map(s=>s.trim()).filter(Boolean),operationKey:fields.operationKey});
+    return {redirect:path,message:'Outcome tracking started.',saved:'outcome-start-form'};
+  }
   if (path === '/app/segments') {
     if(action==='segment-save') {
       let conditions:unknown;try{conditions=JSON.parse(fields.conditions)}catch{throw new ApiError('Enter a valid JSON array of rule conditions.')}
