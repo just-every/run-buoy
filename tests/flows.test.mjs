@@ -164,7 +164,8 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const after=(await json(await call('/state'))).accounts.find(a=>a.id==='harbour')
    assert.equal(after.revision,before.revision,'no term changed');assert.ok(!(await json(await call('/state'))).proposals.some(p=>p.payload.reason==='Offer 20% off to close'))
    assert.equal((await call('/audit','GET',undefined,{cookie:member})).status,403)
-   const recorded=(await json(await call('/audit'))).entries.filter(e=>e.actor===`agent:${agent.id}`)
+   const recorded=(await json(await call('/audit'))).entries.filter(e=>e.actor===`agent:${agent.id}`&&e.action==='agent.refused')
+   assert.equal((await json(await call('/audit?actor='+agent.id+'&action=agent.requested'))).entries.length,2,'AUDIT-001 commands attempts are distinct from their refusal outcomes');
    assert.deepEqual(recorded.map(e=>e.action),['agent.refused','agent.refused','agent.refused']);for(const e of recorded)assert.equal(e.actor,`agent:${agent.id}`,'AUDIT-001 retains the agent id without its display name')
    for(const [,,subject,reason] of attempts){const entry=recorded.find(e=>e.subject===subject);assert.ok(entry,`${subject} is recorded`);assert.match(entry.detail,reason);assert.ok(Date.parse(entry.occurredAt))}
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
@@ -223,6 +224,24 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.deepEqual((await json(await call('/audit?actor='+agent.id))).entries.filter(e=>e.action==='agent.refused'),retained.filter(e=>e.action==='agent.refused'))
    assert.ok(!(await json(await call('/state'))).accounts.some(a=>a.id===privateId))
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
+  })
+  await t.test('AUDIT-001 agent reads and invalid commands record attempts without claiming outcomes',async()=>{
+   const agent=await json(await call('/agent-tokens','POST',{label:'Portfolio assistant'}),201), as={cookie:undefined,token:agent.token}
+   await json(await call('/commands','GET',undefined,as))
+   const data=await json(await call('/commands','POST',{command:'renewals.list'},as));assert.ok(data.accounts.some(a=>a.id==='harbour'))
+   assert.equal((await call('/commands','POST',[],as)).status,400)
+   assert.equal((await call('/commands','POST',{command:'renewal.<script>alert(1)</script>'},as)).status,400)
+   const read=async()=>(await json(await call('/audit?actor='+agent.id+'&action=agent.requested'))).entries
+   const attempts=await read();assert.equal(attempts.length,4)
+   for(const row of attempts){assert.equal(row.actor,`agent:${agent.id}`);assert.equal(row.subject,`agent:${agent.id}`);assert.ok(Date.parse(row.occurredAt));assert.match(row.detail,/^(GET|POST) commands request received; outcome not recorded\.$/)}
+   assert.equal(attempts.filter(row=>row.detail.startsWith('GET')).length,1)
+   assert.equal(attempts.filter(row=>row.detail.startsWith('POST')).length,3)
+   assert.doesNotMatch(JSON.stringify(attempts),/Portfolio|Bearer|Harbour/)
+   const page=await (await request('/app/audit?actor='+agent.id,{cookie})).text()
+   assert.match(page,/&lt;script&gt;alert/);assert.doesNotMatch(page,/<script>alert/)
+   await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
+   assert.equal((await call('/commands','POST',{command:'renewals.list'},as)).status,401)
+   assert.deepEqual(await read(),attempts,'a revoked credential cannot confer an audit actor identity')
   })
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
