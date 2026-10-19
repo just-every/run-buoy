@@ -185,9 +185,12 @@ html.rer-themed .buoy-app .app-footer p { margin: 0; color: var(--buoy-muted); f
   .title-line { --sep: 22px; }
   .title-line .fact { font-size: 18px; }
   .title-line .fact.strong { font-size: 20px; }
-  .controls { justify-content: space-between; gap: 12px; }
+  /* The operator's disc moves up beside the wordmark, so the view chips (four for managers) share the whole row. */
+  .buoy-shell { position: relative; }
+  html.rer-themed .buoy-app .operator { position: absolute; top: 13px; right: 0; }
+  .controls { display: block; }
   .views { overflow-x: auto; scrollbar-width: none; min-width: 0; }
-  html.rer-themed .views a { min-height: 38px; padding: 0 16px; font-size: 14px; }
+  html.rer-themed .views a { flex: 1 1 auto; justify-content: center; min-height: 38px; padding: 0 10px; font-size: 14px; }
   .operator-initials { width: 40px; height: 40px; font-size: 14px; }
   html.rer-themed .buoy-app .panel { padding: 18px 16px; }
   html.rer-themed .buoy-app .disclosure { padding: 0; }
