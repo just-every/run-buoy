@@ -16,7 +16,7 @@
 .lane-name { font: 650 calc(19 * var(--u))/1.2 var(--buoy-font); }
 .pct { color: var(--buoy-plum-deep); font-size: calc(15 * var(--u)); font-weight: 600; white-space: nowrap; }
 .bar { display: flex; align-items: center; height: calc(36 * var(--u)); padding: 0 calc(14 * var(--u)); border-radius: calc(7 * var(--u)); background: #efe3fb; color: #2b2c38; font-size: calc(15.5 * var(--u)); white-space: nowrap; overflow: hidden; }
-.bar b { font-weight: 600; margin-right: calc(4 * var(--u)); }
+.bar b { font-weight: 600; }
 .bar .tick { margin-left: calc(8 * var(--u)); color: var(--buoy-plum); }
 .bar.two { height: calc(58 * var(--u)); white-space: nowrap; line-height: 1.25; display: block; padding: calc(8 * var(--u)) calc(10 * var(--u)) 0; font-size: calc(14.5 * var(--u)); }
 .bar.two .tick { margin-left: calc(4 * var(--u)); }
