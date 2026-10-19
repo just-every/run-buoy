@@ -9,6 +9,8 @@ import { setStaleness, setTaskTiming } from './settings'
 import { assignAccount, setManager, setAway, tasksOn } from './tasks'
 import { auditRecord, auditIfChanged } from './audit-records'
 import { audit, refuse } from './audit'
+import { inbox, setPreferences, markRead, mention } from './notify'
+import { flushNotifications } from './notify-mail'
 import * as imports from './imports/index'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
@@ -23,6 +25,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  // record their actual effect atomically in core.commit. No body or credential is retained.
  if (actor.kind === 'agent') await auditRecord(c.env.DB, actor, 'agent.requested', `agent:${actor.id}`, `${['GET','POST'].includes(c.req.method) ? c.req.method : 'Other method'} commands request received; outcome not recorded.`).run()
  await next()
+ if (c.req.method !== 'GET' && c.res.status < 400) await flushNotifications(c.env)
 })
 buoyApi.onError((error, c) => {
  if (error instanceof Problem) return c.json({error: error.message}, error.status as 400)
@@ -34,6 +37,10 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.get('/api/buoy/notifications', async c => c.json(await inbox(c.env.DB, c.get('actor'))))
+buoyApi.put('/api/buoy/notifications/preferences', async c => c.json(await setPreferences(c.env.DB, c.get('actor'), await jsonBody(c.req.raw))))
+buoyApi.post('/api/buoy/notifications/:id/read', async c => {await jsonBody(c.req.raw); return c.json(await markRead(c.env.DB,c.get('actor'),c.req.param('id')))})
+buoyApi.post('/api/buoy/accounts/:id/mentions', async c => c.json(await mention(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/state', async c => c.json(await state(c.env.DB, c.get('actor'))))
 buoyApi.post('/api/buoy/accounts', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.put('/api/buoy/accounts/:id', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw), c.req.param('id'))))

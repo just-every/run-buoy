@@ -154,7 +154,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.equal((await json(await call('/state'))).proposals.find(p=>p.id===draft.id).snapshot.billing.allocatedMinor,0,'earlier work keeps the earlier revision')
    assert.equal((await call(`/proposals/${draft.id}/approve`,'POST',{})).status,409)
   })
-  await t.test('BOUNDARY-004 agent commercial changes are refused with their reason and recorded; mail is sign-in only',async()=>{
+  await t.test('BOUNDARY-004 agent commercial changes are refused with their reason and recorded; mail is single-recipient team mail',async()=>{
    const agent=await json(await call('/agent-tokens','POST',{label:'Discount probe'}),201), as={cookie:undefined,token:agent.token}
    const before=(await json(await call('/state'))).accounts.find(a=>a.id==='harbour')
    const attempts=[
@@ -170,8 +170,10 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.deepEqual(recorded.map(e=>e.action),['agent.refused','agent.refused','agent.refused']);for(const e of recorded)assert.equal(e.actor,`agent:${agent.id}`,'AUDIT-001 retains the agent id without its display name')
    for(const [,,subject,reason] of attempts){const entry=recorded.find(e=>e.subject===subject);assert.ok(entry,`${subject} is recorded`);assert.match(entry.detail,reason);assert.ok(Date.parse(entry.occurredAt))}
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
-   // No journey, campaign or other one-to-many send exists: every message the installation sent is a sign-in link to the one person who asked for it.
-   assert.ok(worker.mails.length);for(const mail of worker.mails){assert.equal([mail.to].flat().length,1);assert.match(mail.html,/\/auth\/confirm\?token=/)}
+   // NOTIFY-001 adds internal notices. Every message still has one team recipient;
+   // sign-in mail still contains its ordinary confirmation door.
+   const people=await json(await request('/auth/operators',{cookie})), emails=people.map(p=>p.email)
+   assert.ok(worker.mails.length);for(const mail of worker.mails){assert.equal([mail.to].flat().length,1);assert.ok(emails.includes([mail.to].flat()[0]));if(mail.subject.startsWith('Buoy:'))assert.match(mail.html,/\/app\/accounts\//);else assert.match(mail.html,/\/auth\/confirm\?token=/)}
   })
   await t.test('AUDIT-001 admins search recorded actions with inclusive UTC dates and stable pages',async()=>{
    const agent=await json(await call('/agent-tokens','POST',{label:'Audit desk <script>alert(1)</script>'}),201), as={cookie:undefined,token:agent.token}
@@ -299,7 +301,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const kept=await create('PLAY-002 executive sponsor intro',day(5),{ownerId:M,type:'expansion'})
    assert.deepEqual([soon.ownerId,soon.priority,soon.type],[A,'high','renewal'],'the account owner owns a task by default')
    assert.deepEqual([due.ownerId,due.priority,due.type,late.priority,kept.ownerId],[A,'medium','risk','urgent',M])
-   const mailsFor=email=>worker.mails.filter(m=>[m.to].flat().includes(email)&&/PLAY-002/.test(m.subject))
+   const mailsFor=email=>worker.mails.filter(m=>[m.to].flat().includes(email)&&/PLAY-002/.test(m.subject)&&/^(Due |Escalated,)/.test(m.subject))
    const inbox=async as=>(await json(await call('/state','GET',undefined,{cookie:as}))).notifications.filter(n=>/PLAY-002/.test(n.title))
    await scheduled()
    assert.deepEqual(await inbox(casey),[],'before 8 am in the installation time zone no reminder is recorded')
@@ -345,6 +347,89 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const recorded=(await json(await call('/audit?subject=person:'+B))).entries.map(e=>[e.action,e.detail])
    assert.ok(recorded.some(([action,detail])=>action==='person.away-set'&&detail===`cover person:${A} from ${local} through ${day(1)}`))
    assert.ok((await json(await call('/audit?action=account.reassigned'))).entries.length>=2)
+  })
+  await t.test('NOTIFY-001 own inbox: mentions, assignments, current signals and approvals; per-type email; daily/weekly book digests without duplicates',async()=>{
+   const ownerState=await json(await call('/state')), ownerId=ownerState.operator.id
+   const modes={mention:'immediate',assignment:'immediate',signal:'digest',approval:'none'}
+   const prefs=(body,as=cookie)=>call('/notifications/preferences','PUT',body,{cookie:as})
+   const read=async(as=cookie)=>json(await call('/notifications','GET',undefined,{cookie:as}))
+   assert.equal((await prefs({frequency:'hourly',modes})).status,400)
+   assert.equal((await prefs({frequency:'daily',modes:{...modes,extra:'none'}})).status,400)
+   assert.equal((await prefs({frequency:'daily',modes,personId:'someone-else'})).status,400)
+   await json(await prefs({frequency:'daily',modes}))
+   const stored=await read();assert.equal(stored.preferences.frequency,'daily');assert.deepEqual(stored.preferences.modes,modes)
+   const other=await read(member);assert.equal(other.preferences.frequency,'off','preferences are personal')
+   const token=await json(await call('/agent-tokens','POST',{label:'NOTIFY-001 refused agent'}),201), as={cookie:undefined,token:token.token}
+   for(const [path,method,body] of [['/notifications','GET'],['/notifications/preferences','PUT',{frequency:'daily',modes}],['/accounts/harbour/mentions','POST',{personId:ownerId,note:'forbidden'}]])assert.equal((await call(path,method,body,as)).status,403)
+   await json(await call('/agent-tokens/'+token.id,'DELETE'))
+   const a={...account('notify-case'),name:'NOTIFY-001 Renewal Labs'}
+   await json(await call('/accounts','POST',a),201)
+   await json(await call('/accounts/notify-case/owner','PUT',{ownerId}))
+   const baseline=worker.mails.length
+   const mention=await json(await call('/accounts/notify-case/mentions','POST',{personId:ownerId,note:'NOTIFY-001 please review the renewal commitment'},{cookie:member}),201)
+   const proposal=await json(await call('/proposals','POST',{accountId:a.id,kind:'playbook',payload:{title:'NOTIFY-001 call the champion',dueDate:'2027-02-01'}}),201)
+   await json(await call('/proposals/'+proposal.id+'/approve','POST',{}))
+   assert.ok(worker.mails.slice(baseline).some(m=>m.subject.includes('mentioned you')&&m.text.includes('NOTIFY-001 please review')))
+   assert.equal(worker.mails.slice(baseline).filter(m=>m.subject==='Buoy: NOTIFY-001 call the champion').length,1)
+   assert.ok(!worker.mails.slice(baseline).some(m=>m.subject==='Buoy: Review playbook proposal'&&m.to.includes('owner@example.test')),'approval email disabled; inbox remains')
+   // Exact public Cron Trigger timestamps exercise time-zone, daily and weekly semantics.
+   await json(await call('/settings/tasks','PUT',{remindDaysBefore:1,escalateAfterDays:1,timeZone:'America/New_York'}))
+   const cron=at=>scheduled('0 * * * *',Date.parse(at))
+   await cron('2026-10-19T11:00:00Z') // Monday 7am
+   assert.equal((await read()).digests.length,0,'no digest before 8am installation time')
+   let all=await read(), mine=all.items.filter(i=>i.accountId===a.id)
+   assert.deepEqual(mine.map(i=>i.type).sort(),['approval','assignment','mention','signal'])
+   const signal=mine.find(i=>i.type==='signal');assert.equal(signal.email,'queued')
+   assert.ok(!worker.mails.slice(baseline).some(m=>m.subject==='Buoy: Account at risk'),'digest-only signal has no immediate mail')
+   assert.ok(!(await read(member)).items.some(i=>i.id===mention.id),'a colleague cannot read another inbox')
+   assert.equal((await call('/notifications/'+mention.id+'/read','POST',{}, {cookie:member})).status,404)
+   await json(await call('/notifications/'+mention.id+'/read','POST',{}))
+   assert.ok((await read()).items.find(i=>i.id===mention.id).readAt)
+   await cron('2026-10-19T12:00:00Z');await cron('2026-10-19T13:00:00Z')
+   const digests=worker.mails.slice(baseline).filter(m=>m.subject==='Buoy daily digest')
+   assert.equal(digests.length,1);assert.deepEqual(digests[0].to,['owner@example.test'])
+   assert.equal(digests[0].text.split('signal: Account at risk — NOTIFY-001 Renewal Labs').length-1,1)
+   assert.match(digests[0].text,/NOTIFY-001 Renewal Labs: \d+ recorded book change/)
+   assert.doesNotMatch(digests[0].text,/mention:|assignment:|approval:/,'already-immediate and disabled types are not duplicated in digest')
+   all=await read();assert.equal(all.items.find(i=>i.id===signal.id).email,'digest');assert.equal(all.digests[0].email,'accepted')
+   assert.equal(all.items.filter(i=>i.id===signal.id).length,1,'digest does not create another inbox notification')
+   await cron('2026-10-20T12:00:00Z')
+   const tomorrow=worker.mails.filter(m=>m.subject==='Buoy daily digest').at(-1)
+   assert.doesNotMatch(tomorrow.text,/signal: Account at risk|NOTIFY-001 Renewal Labs: /,'consumed notices and old book changes stay consumed')
+   await json(await prefs({frequency:'weekly',modes:{...modes,mention:'digest'}},member))
+   const memberId=ownerState.people.find(p=>p.displayName==='CS colleague').id
+   await json(await call('/accounts/notify-case/mentions','POST',{personId:memberId,note:'NOTIFY-001 weekly note'}),201)
+   await cron('2026-10-20T12:00:00Z')
+   assert.equal((await read(member)).digests.length,0,'weekly waits for Monday')
+   await cron('2026-10-26T12:00:00Z');await cron('2026-10-26T13:00:00Z')
+   const weekly=worker.mails.filter(m=>m.subject==='Buoy weekly digest'&&m.to.includes('member@example.test'))
+   assert.equal(weekly.length,1);assert.match(weekly[0].text,/NOTIFY-001 weekly note/)
+   await json(await prefs({frequency:'off',modes:{mention:'none',assignment:'none',signal:'none',approval:'none'}},member))
+   const before=worker.mails.length
+   await json(await call('/accounts/notify-case/mentions','POST',{personId:memberId,note:'NOTIFY-001 inbox only'}),201)
+   const beforeDST=worker.mails.filter(m=>m.subject==='Buoy daily digest').length
+   await cron('2026-11-02T12:00:00Z')
+   assert.equal(worker.mails.filter(m=>m.subject==='Buoy daily digest').length,beforeDST,'after DST ends, 12Z is still before 8am New York')
+   await cron('2026-11-02T13:00:00Z')
+   assert.equal(worker.mails.filter(m=>m.subject==='Buoy daily digest').length,beforeDST+1)
+   assert.ok(!(worker.mails.slice(before).some(m=>m.to.includes('member@example.test'))))
+   assert.equal((await read(member)).items.find(i=>i.body==='NOTIFY-001 inbox only').email,'none')
+   for(const [status,label] of [[400,'failed'],[500,'uncertain']]){
+    worker.setMailStatus(status)
+    const notice=await json(await call('/accounts/notify-case/mentions','POST',{personId:ownerId,note:`NOTIFY-001 mail edge ${status}`}),201)
+    assert.equal((await read()).items.find(i=>i.id===notice.id).email,label)
+   }
+   worker.setMailStatus(200)
+   const sent=worker.mails.length
+   await cron('2026-11-02T14:00:00Z')
+   assert.equal(worker.mails.length,sent,'refused and unconfirmed immediate attempts are never resent')
+   const page=await (await request('/app/notifications',{cookie})).text()
+   assert.match(page,/Your inbox/);assert.match(page,/NOTIFY-001 please review/);assert.match(page,/Email accepted by the mail provider/)
+   const browserForm=await request('/app/notifications',{method:'POST',cookie:member,headers:{'content-type':'application/x-www-form-urlencoded'},body:undefined})
+   assert.equal(browserForm.status,400,'invalid form action refused')
+   await json(await call('/accounts/notify-case','DELETE',{confirmation:a.name}))
+   assert.ok(!(await read()).items.some(i=>i.accountId===a.id),'account erasure clears inbox content')
+   assert.doesNotMatch(worker.mails.findLast(m=>m.subject==='Buoy weekly digest').text,/NOTIFY-001 inbox only/)
   })
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))

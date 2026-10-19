@@ -37,6 +37,20 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if (path === '/app/notifications') {
+    if (action === 'notification-preferences') {
+      await send('/api/buoy/notifications/preferences', {frequency: fields.frequency, modes: {mention:fields.mention,assignment:fields.assignment,signal:fields.signal,approval:fields.approval}}, 'PUT');
+      return {redirect:path,message:'Your notification preferences saved.',saved:action};
+    }
+    if (action === 'notification-read') {
+      await send(`/api/buoy/notifications/${encodeURIComponent(fields.id)}/read`, {});
+      return {redirect:path,message:'Notification marked read.'};
+    }
+    if (action === 'mention') {
+      await send(`/api/buoy/accounts/${encodeURIComponent(fields.accountId)}/mentions`, {personId:fields.personId,note:fields.note});
+      return {redirect:path,message:'Mention sent to their inbox.',saved:action};
+    }
+  }
   if (path === '/app' && action === 'account-create') {
     const account = await send<{ id: string }>('/api/buoy/accounts', accountBody(fields));
     return { redirect: `/app/accounts/${encodeURIComponent(account.id)}`, message: 'Account created.', saved: 'account-create' };

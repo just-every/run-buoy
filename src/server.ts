@@ -12,6 +12,7 @@ import { authResponse, runtimeBindings, type Bindings } from './auth.server'
 import { identity } from './identity'
 import { buoyApi } from './buoy/api'
 import { buoyPage } from './buoy/ui/index'
+import { runNotifications } from './buoy/notify-mail'
 import { runReminders } from './buoy/reminders'
 
 const api = new Hono<{ Bindings: Bindings }>()
@@ -44,7 +45,9 @@ export default withDemo({
     return rejectedResponse(request, await dispatch(request, () => api.fetch(request, env, execution), async () => noTransform(await start.fetch(request))))
   },
   // PLAY-002: hourly task reminders and escalations (triggers.crons in wrangler.jsonc and deploy.json).
-  async scheduled(_controller, env) {
-    await runReminders(runtimeBindings(env))
+  async scheduled(controller, env) {
+    const at = new Date(controller.scheduledTime)
+    await runReminders(runtimeBindings(env), at)
+    await runNotifications(runtimeBindings(env), at)
   },
 } satisfies ExportedHandler<Bindings>, { seed: seedDemo })

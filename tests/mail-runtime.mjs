@@ -16,6 +16,7 @@ export async function mailWorker({ root = process.cwd() } = {}) {
  const origin = `https://127.0.0.1:${port}`, directory = await mkdtemp(join(tmpdir(), 'buoy-mail-'))
  const secret = () => randomBytes(32).toString('base64url'), mails = [], outbound = []
  const vars = { AUTH_LOCAL: 'false', AUTH_ORIGIN: origin, OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
+ let mailStatus = 200
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
   host:'127.0.0.1', port, https:true,
   modulesRoot: join(root, 'dist/server'),
@@ -27,7 +28,7 @@ export async function mailWorker({ root = process.cwd() } = {}) {
    outbound.push(request.url)
    assert.equal(request.url, 'https://api.resend.com/emails')
    mails.push(await request.json())
-   return Response.json({id:`provider-receipt-${mails.length}`})
+   return Response.json(mailStatus === 200 ? {id:`provider-receipt-${mails.length}`} : {error:'test provider failure'}, {status:mailStatus})
   },
  }), resourcePersistencePath:join(directory,'state') })
  try {
@@ -53,7 +54,7 @@ export async function mailWorker({ root = process.cwd() } = {}) {
    return response.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
   }
   // The Cron Trigger door, as Cloudflare calls it.
-  const scheduled=async(cron='0 * * * *')=>(await mf.getWorker()).scheduled({cron})
-  return {origin,directory,request,cookie,signIn,scheduled,mails,outbound,async close(){await mf.dispose();await rm(directory,{recursive:true,force:true})}}
+  const scheduled=async(cron='0 * * * *',scheduledTime=Date.now())=>(await mf.getWorker()).scheduled({cron,scheduledTime})
+  return {origin,directory,request,cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){await mf.dispose();await rm(directory,{recursive:true,force:true})}}
  }catch(error){await mf.dispose();await rm(directory,{recursive:true,force:true});throw error}
 }

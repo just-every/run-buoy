@@ -2,7 +2,7 @@ import { canonicalJson, sha256 } from '../../modules/import-kit/src/d1/index.ts'
 import type { D1Sql, D1TargetAdapter, TargetRow } from '../../modules/import-kit/src/d1/index.ts'
 import { DESTINATION, KIND } from './source'
 export const sql = (sql: string, ...params: unknown[]): D1Sql => ({ sql, params })
-export const dependencyTables = ['buoy_proposals', 'buoy_tasks', 'buoy_decisions', 'buoy_sentiments'] as const
+export const dependencyTables = ['buoy_proposals', 'buoy_tasks', 'buoy_decisions', 'buoy_sentiments', 'buoy_account_owners', 'buoy_inbox'] as const
 export function noDependencies(id: string): D1Sql {
   return sql(dependencyTables.map(table => `NOT EXISTS(SELECT 1 FROM ${table} WHERE account_id=?)`).join(' AND '), ...dependencyTables.map(() => id))
 }
