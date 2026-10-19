@@ -5,6 +5,7 @@ import { assignmentInput, plan, settingsInput, type AssignmentInput, type Snapsh
 // One deterministic database image is both the review input and the atomic guard.
 // Include tasks and operator status so reviewed move counts and eligibility cannot drift.
 const SNAPSHOT = `SELECT json_object(
+ 'segments',json((SELECT json_group_array(json_object('id',s.id,'name',json_extract(s.document,'$.name'),'accountId',e.account_id)) FROM buoy_segments s LEFT JOIN buoy_segment_entries e ON e.segment_id=s.id AND e.exited_at IS NULL)),
  'settings',(SELECT document FROM buoy_team_settings WHERE singleton=1),
  'accounts',json((SELECT json_group_array(json_object('id',id,'document',document,'revision',revision,'ownerId',owner_id,'assignedAt',assigned_at)) FROM
   (SELECT a.id,a.document,a.revision,o.owner_id,o.assigned_at FROM buoy_accounts a LEFT JOIN buoy_account_owners o ON o.account_id=a.id ORDER BY a.id))),
@@ -23,12 +24,14 @@ async function fingerprint(raw: string, input: AssignmentInput) {
  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('')
 }
 
+const definitionsForTeam=(value:Snapshot)=>[...new Set(value.segments?.map(s=>s.id)??[])].map(id=>({id,name:value.segments?.find(s=>s.id===id)?.name??id}))
+
 /** Same installation-wide read policy as accounts; mutation doors enforce owner/admin. */
 export async function teamState(db: D1Database, _actor: Actor) {
  const {value} = await snapshot(db), settings = JSON.parse(value.settings) as TeamSettings
  const handovers = await db.prepare('SELECT id,account_id AS accountId,from_id AS fromId,to_id AS toId,note,actor_id AS actorId,recorded_at AS recordedAt FROM buoy_handovers ORDER BY recorded_at DESC,id DESC').all()
  const ownerIds = new Set([...value.people.filter(p=>p.status==='active').map(p=>p.id), ...settings.capacities.map(c => c.personId), ...value.accounts.flatMap(a => a.ownerId ? [a.ownerId] : [])])
- return {...settings, territories: value.territories,
+ return {...settings, segments: definitionsForTeam(value), territories: value.territories,
   books: [...ownerIds].sort().map(personId => ({personId, capacity: settings.capacities.find(c => c.personId === personId)?.capacity ?? null,
    assigned: value.accounts.filter(a => a.ownerId === personId).length})),
   unassigned: value.accounts.filter(a => !a.ownerId).length, handovers: handovers.results}

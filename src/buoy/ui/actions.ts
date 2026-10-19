@@ -39,6 +39,17 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if (path === '/app/segments') {
+    if(action==='segment-save') {
+      let conditions:unknown;try{conditions=JSON.parse(fields.conditions)}catch{throw new ApiError('Enter a valid JSON array of rule conditions.')}
+      await send('/api/buoy/segments',{...(fields.segmentId?{id:fields.segmentId,revision:fields.revision}:{}),name:fields.name,mode:fields.mode,rules:{match:fields.match,conditions},accountIds:fields.accountIds.split(',').map(s=>s.trim()).filter(Boolean),tier:fields.tier||null,stage:fields.stage||null,playbook:fields.playbookTitle?{title:fields.playbookTitle,dueDays:Number(fields.dueDays)}:null});
+      return {redirect:path,message:'Segment saved.',saved:fields.segmentId?`segment-edit-${fields.segmentId}`:'segment-create'};
+    }
+    if(action==='segment-classify') {
+      await send(`/api/buoy/accounts/${encodeURIComponent(fields.accountId)}/classification`,{tier:fields.tier||null,stage:fields.stage||null},'PUT');
+      return {redirect:path,message:'Account classification saved.',saved:action};
+    }
+  }
   if (path === '/app/team') return mutateTeam(api,request,fields);
   if (path === '/app/notifications') {
     if (action === 'notification-preferences') {

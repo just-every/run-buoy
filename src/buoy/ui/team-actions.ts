@@ -15,7 +15,7 @@ export async function mutateTeam(api:Api,request:Request,fields:Fields):Promise<
  else if(action==='team-member'){
   const team=input.teams.find(t=>t.id===fields.teamId);if(!team)throw new ApiError('Team not found.')
   team.personIds=team.personIds.filter(id=>id!==fields.personId);if(fields.change==='add')team.personIds.push(fields.personId)
- }else if(action==='team-rule')input.rules.push({id:crypto.randomUUID(),name:fields.name,teamId:fields.teamId,...(fields.territory?{territory:fields.territory}:{})})
+ }else if(action==='team-rule')input.rules.push({id:crypto.randomUUID(),name:fields.name,teamId:fields.teamId,...(fields.segmentId?{segmentId:fields.segmentId}:{}),...(fields.territory?{territory:fields.territory}:{})})
  else if(action==='team-rule-order'){
   const index=input.rules.findIndex(r=>r.id===fields.id), position=Number(fields.position)
   if(index<0||!Number.isInteger(position)||position<1||position>input.rules.length)throw new ApiError('Choose a current rule position.')

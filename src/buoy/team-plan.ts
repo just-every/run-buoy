@@ -3,11 +3,11 @@ import { insist, object, text } from './core'
 export interface Team { id: string; name: string; pod: string; personIds: string[] }
 export interface TeamSettings {
  teams: Team[]; capacities: {personId: string; capacity: number}[];
- rules: {id: string; name: string; teamId: string; territory?: string}[]
+ rules: {id: string; name: string; teamId: string; territory?: string; segmentId?:string}[]
 }
 export interface AssignmentInput { mode: 'rules' | 'handover' | 'rebalance'; fromId?: string; toId?: string; note?: string }
 export interface Snapshot {
- settings: string;
+ settings: string; segments?:{id:string;name:string;accountId:string}[];
  accounts: {id: string; document: string; revision: string; ownerId: string | null; assignedAt: string | null}[];
  territories: {accountId: string; territory: string}[];
  people: {id: string; role: string; status: string; version: number}[];
@@ -39,9 +39,10 @@ export function settingsInput(input: Record<string, unknown>, snapshot: Snapshot
  })
  unique(capacities.map(c => c.personId), 'Capacity people')
  const rules = list(input.rules, 'Rules').map(value => {
-  const row = object(value); keys(row, ['id', 'name', 'teamId', 'territory'])
+  const row = object(value); keys(row, ['id', 'name', 'teamId', 'territory', 'segmentId'])
+  if(row.segmentId!==undefined)insist(typeof row.segmentId==='string'&&snapshot.segments?.some(s=>s.id===row.segmentId),'Choose an existing segment with members.')
   const teamId = identifier(row.teamId, 'Rule team'); insist(teams.some(t => t.id === teamId), 'Choose a configured team for every rule.')
-  return {id: identifier(row.id, 'Rule id'), name: text(row.name, 'Rule name', 100), teamId, ...(row.territory === undefined ? {} : {territory: text(row.territory, 'Territory', 100)})}
+  return {id: identifier(row.id, 'Rule id'), name: text(row.name, 'Rule name', 100), teamId, ...(row.segmentId===undefined?{}:{segmentId:String(row.segmentId)}), ...(row.territory === undefined ? {} : {territory: text(row.territory, 'Territory', 100)})}
  })
  unique(rules.map(r => r.id), 'Rule ids')
  const territories = input.territories === undefined ? snapshot.territories : list(input.territories, 'Territories').map(value => {
@@ -75,7 +76,7 @@ export function plan(snapshot: Snapshot, input: AssignmentInput) {
   let candidates: string[]
   if (input.mode === 'handover') candidates = [input.toId!]
   else {
-   const rule = settings.rules.find(r => r.territory === undefined || r.territory === territory.get(account.id))
+   const rule = settings.rules.find(r => (r.territory === undefined || r.territory === territory.get(account.id)) && (!r.segmentId || snapshot.segments?.some(s=>s.id===r.segmentId&&s.accountId===account.id)))
    candidates = rule ? settings.teams.find(t => t.id === rule.teamId)!.personIds : []
   }
   candidates = candidates.filter(id => active.has(id) && (counts.get(id) ?? 0) < (capacity.get(id) ?? 0))

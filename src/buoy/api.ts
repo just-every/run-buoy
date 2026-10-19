@@ -12,6 +12,7 @@ import { audit, refuse } from './audit'
 import { teamState, saveTeamSettings, previewAssignment, applyAssignment } from './team'
 import { inbox, setPreferences, markRead, mention } from './notify'
 import { flushNotifications } from './notify-mail'
+import { reconcile, segmentState, saveSegment, setClassification, segmentReport, reportCsv } from './segments'
 import * as imports from './imports/index'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
@@ -25,7 +26,9 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  // This is an attempt, never a claim that the command completed. Preparations
  // record their actual effect atomically in core.commit. No body or credential is retained.
  if (actor.kind === 'agent') await auditRecord(c.env.DB, actor, 'agent.requested', `agent:${actor.id}`, `${['GET','POST'].includes(c.req.method) ? c.req.method : 'Other method'} commands request received; outcome not recorded.`).run()
+ await reconcile(c.env.DB, actor)
  await next()
+ if(c.req.method!=='GET'&&c.res.status<400)await reconcile(c.env.DB,actor)
  if (c.req.method !== 'GET' && c.res.status < 400) await flushNotifications(c.env)
 })
 buoyApi.onError((error, c) => {
@@ -38,6 +41,11 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.get('/api/buoy/segments',async c=>c.json(await segmentState(c.env.DB)))
+buoyApi.post('/api/buoy/segments',async c=>c.json(await saveSegment(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+buoyApi.put('/api/buoy/accounts/:id/classification',async c=>c.json(await setClassification(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
+buoyApi.get('/api/buoy/segments/:id/report',async c=>c.json(await segmentReport(c.env.DB,c.req.param('id'))))
+buoyApi.get('/api/buoy/segments/:id/report.csv',async c=>{const report=await segmentReport(c.env.DB,c.req.param('id'));return c.body(reportCsv(report),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=segment-report.csv'})})
 buoyApi.get('/api/buoy/team', async c => c.json(await teamState(c.env.DB,c.get('actor'))))
 buoyApi.put('/api/buoy/team/settings', async c => c.json(await saveTeamSettings(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/team/preview', async c => c.json(await previewAssignment(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
