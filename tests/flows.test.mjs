@@ -168,6 +168,34 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    // No journey, campaign or other one-to-many send exists: every message the installation sent is a sign-in link to the one person who asked for it.
    assert.ok(worker.mails.length);for(const mail of worker.mails){assert.equal([mail.to].flat().length,1);assert.match(mail.html,/\/auth\/confirm\?token=/)}
   })
+  await t.test('AUDIT-001 admins search recorded actions with inclusive UTC dates and stable pages',async()=>{
+   const agent=await json(await call('/agent-tokens','POST',{label:'Audit desk <script>alert(1)</script>'}),201), as={cookie:undefined,token:agent.token}
+   for(let i=0;i<52;i++)assert.equal((await call('/commands','POST',{command:`audit-probe-${String(i).padStart(2,'0')}`},as)).status,400)
+   const filters=`actor=${encodeURIComponent(agent.id)}&action=AGENT.REFUSED&subject=command%20AUDIT-probe&since=${today}&until=${today}`
+   const first=await json(await call('/audit?'+filters))
+   assert.equal(first.entries.length,50);assert.equal(first.nextOffset,50)
+   for(const entry of first.entries){assert.match(entry.actor,new RegExp(agent.id));assert.equal(entry.action,'agent.refused');assert.match(entry.subject,/^command audit-probe-\d{2}$/);assert.equal(entry.occurredAt.slice(0,10),today)}
+   const last=await json(await call('/audit?'+filters+'&offset='+first.nextOffset))
+   assert.equal(last.entries.length,2);assert.equal(last.nextOffset,null)
+   assert.equal(new Set([...first.entries,...last.entries].map(e=>e.id)).size,52)
+   assert.deepEqual([...first.entries,...last.entries].map(e=>e.occurredAt),[...first.entries,...last.entries].map(e=>e.occurredAt).sort().reverse())
+   assert.equal((await json(await call('/audit?'+filters.replace('action=AGENT.REFUSED','action=missing')))).entries.length,0)
+   assert.equal((await json(await call('/audit?actor='+encodeURIComponent(agent.id)+'&subject=%25'))).entries.length,0,'percent is literal, not a wildcard')
+   const tomorrow=new Date(Date.parse(today)+86400000).toISOString().slice(0,10)
+   assert.equal((await json(await call('/audit?'+filters.replace(`since=${today}&until=${today}`,`since=${tomorrow}`)))).entries.length,0)
+   for(const query of ['since=2026-02-30','since=2027-01-02&until=2027-01-01','offset=-1','offset=1.5','actor='+ 'a'.repeat(201)])assert.equal((await call('/audit?'+query)).status,400)
+   const page=await request('/app/audit?'+filters,{cookie});assert.equal(page.status,200)
+   const html=await page.text();assert.match(html,/Audit entries/);assert.match(html,/audit-probe-/);assert.match(html,/Next entries/);assert.doesNotMatch(html,/<script>alert/)
+   assert.equal((await request('/app/audit',{cookie:member})).status,403)
+   assert.equal((await request('/app/audit?since=bad',{cookie})).status,400)
+   assert.match(await (await request('/app/audit?action=missing',{cookie})).text(),/No recorded actions match/)
+   assert.equal((await call('/audit','GET',undefined,as)).status,403)
+   await json(await request('/auth/invite',{method:'POST',cookie,body:{email:'admin@example.test',displayName:'CS administrator',role:'admin'}}),202)
+   const admin=await signIn('admin@example.test')
+   assert.equal((await request('/app/audit?'+filters,{cookie:admin})).status,200)
+   assert.deepEqual((await json(await call('/audit?'+filters,'GET',undefined,{cookie:admin}))).entries,first.entries)
+   await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
+  })
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))

@@ -70,6 +70,6 @@ buoyApi.post('/api/buoy/commands', async c => {
  if (extra.length) return refuse(db, actor, `account ${String(input.accountId)}`, `Agents cannot set ${extra.join(', ')}. A preparation carries only ${fields.join(', ')}; prices, discounts and other commercial terms change only by a person in the billing system.`)
  return c.json(await prepare(db, actor, {...input, kind: body.command === 'playbook.prepare' ? 'playbook' : 'renewal'}), 201)
 })
-buoyApi.get('/api/buoy/audit', async c => c.json(await audit(c.env.DB, c.get('actor'))))
+buoyApi.get('/api/buoy/audit', async c => c.json(await audit(c.env.DB, c.get('actor'), new URL(c.req.url).searchParams)))
 // BOUNDARY-001/002: the route list, read from the router itself.
 buoyApi.get('/api/buoy/routes', c => c.json({routes: buoyApi.routes.filter(route => route.method !== 'ALL').map(({method, path}) => ({method, path}))}))
