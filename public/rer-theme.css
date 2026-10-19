@@ -69,6 +69,11 @@
   --buoy-tick: #c3cad6;
   --buoy-notice: #b0b8c6;
   --buoy-chevron: #50525e;
+  /* Small text in the app and Base's forms meets WCAG AA (4.5:1) on white, the app's grid lines and the open bands:
+     the muted grey and the green label, each darkened by the least that passes. The run site keeps --buoy-muted and
+     --buoy-green-ink. */
+  --buoy-muted-text: #6d6f7d;
+  --buoy-green-text: #098141;
 
   /* Base's shared documents (Lobby, /run, /contract, the 404, sign-in, setup) read only --rer-*. */
   --rer-font-heading: var(--buoy-font);
@@ -178,7 +183,7 @@ html.rer-themed input:not([type=checkbox]):not([type=hidden]):hover { border-col
 html.rer-themed input:not([type=checkbox]):not([type=hidden]):focus-visible, html.rer-themed select:focus-visible, html.rer-themed textarea:focus-visible { outline: none; border-color: var(--buoy-plum); box-shadow: var(--buoy-focus-ring); }
 html.rer-themed input[type=checkbox] { accent-color: var(--buoy-plum); }
 html.rer-themed :focus-visible { outline: 2px solid var(--buoy-plum); outline-offset: 3px; }
-html.rer-themed dt { color: var(--buoy-muted); }
+html.rer-themed dt { color: var(--buoy-muted-text); }
 html.rer-themed dl { row-gap: 12px; }
 html.rer-themed dd { overflow-wrap: anywhere; font-weight: 550; }
 html.rer-themed a { color: var(--buoy-ink); text-underline-offset: 4px; text-decoration-color: rgba(138, 46, 174, 0.5); }

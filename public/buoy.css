@@ -53,13 +53,13 @@ html.rer-themed .buoy-app .notice.error h2, .error-text { color: var(--buoy-red-
 /* Health and record states, always labelled. */
 .pill { display: inline-flex; align-items: center; gap: 8px; width: max-content; min-height: 28px; padding: 2px 12px 2px 2px; border-radius: 999px; font-size: 13.5px; font-weight: 650; white-space: nowrap; background: var(--buoy-amber-soft); color: #4a3200; }
 .pill i { display: grid; place-items: center; width: 26px; height: 24px; border-radius: 999px; font-style: normal; font-size: 13px; font-weight: 800; color: #3b2a00; background: linear-gradient(120deg, #ffcb51, var(--buoy-amber)); }
-.pill.healthy { background: var(--buoy-green-soft); color: var(--buoy-green-ink); }
+.pill.healthy { background: var(--buoy-green-soft); color: var(--buoy-green-text); }
 .pill.healthy i { color: #fff; background: linear-gradient(120deg, #19d77f, var(--buoy-green)); }
 .pill.at-risk { background: var(--buoy-red-soft); color: var(--buoy-red-ink); }
 .pill.at-risk i { color: #fff; background: linear-gradient(120deg, #ff7a7f, var(--buoy-red)); }
 .status { display: inline-flex; align-items: center; width: max-content; max-width: 100%; min-height: 24px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: var(--buoy-panel); color: var(--buoy-body); border: 1px solid var(--buoy-line); }
 .status.prepared, .status.queued, .status.applying, .status.undoing { background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); border-color: var(--buoy-lilac); }
-.status.approved, .status.completed { background: var(--buoy-green-soft); color: var(--buoy-green-ink); border-color: #c9eed8; }
+.status.approved, .status.completed { background: var(--buoy-green-soft); color: var(--buoy-green-text); border-color: #c9eed8; }
 .status.open { background: var(--buoy-amber-soft); color: var(--buoy-amber-ink); border-color: #f6e2a8; }
 .status.failed, .status.rolled_back, .status.rolling_back { background: var(--buoy-red-soft); color: var(--buoy-red-ink); border-color: var(--buoy-finding-line); }
 .stale .status { background: var(--buoy-red-soft); color: var(--buoy-red-ink); border-color: var(--buoy-finding-line); }
@@ -112,14 +112,14 @@ html.rer-themed .buoy-app .disclosure { padding: 0; }
 .panel > h2 + .record, .journal > .record:first-child { border-top: 0; padding-top: 2px; }
 .record:last-child { padding-bottom: 0; }
 .record-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 6px 12px; margin-bottom: 6px; }
-html.rer-themed .buoy-app .record-meta { color: var(--buoy-muted); font-size: 13px; }
+html.rer-themed .buoy-app .record-meta { color: var(--buoy-muted-text); font-size: 13px; }
 .record form { margin-top: 10px; }
-html.rer-themed .buoy-app .empty-line { margin: 0; color: var(--buoy-muted); }
+html.rer-themed .buoy-app .empty-line { margin: 0; color: var(--buoy-muted-text); }
 .journal { margin: 0; padding: 0; }
 
 /* Lists and definition lists. */
 html.rer-themed .buoy-app dl { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 8px 14px; margin: 0 0 14px; font-size: 13.5px; }
-html.rer-themed .buoy-app dt { min-width: 0; color: var(--buoy-muted); }
+html.rer-themed .buoy-app dt { min-width: 0; color: var(--buoy-muted-text); }
 html.rer-themed .buoy-app dd { margin: 0; font-weight: 550; overflow-wrap: anywhere; }
 .reasons { margin: 12px 0 0; padding: 0; list-style: none; }
 .reasons li { position: relative; padding-left: 18px; color: var(--buoy-body); }
@@ -145,7 +145,7 @@ html.rer-themed .buoy-app .below-side > .panel { margin: 0; }
 .checklist li { position: relative; padding: 8px 12px 8px 42px; border: 1px solid var(--buoy-line); border-radius: 12px; background: #fff; counter-increment: step; }
 .checklist li::before { content: counter(step); position: absolute; left: 10px; top: 8px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--buoy-panel); border: 1px solid var(--buoy-line-strong); font-size: 12px; font-weight: 700; }
 .checklist li.done::before { content: "✓"; background: var(--buoy-green); border-color: var(--buoy-green); color: #fff; }
-.step-note { color: var(--buoy-muted); font-size: 13px; }
+.step-note { color: var(--buoy-muted-text); font-size: 13px; }
 .show-intro { grid-column: 1 / -1; margin: 0; }
 .workbench { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 28px; }
 .actions-area { margin-top: 12px; }
@@ -169,7 +169,7 @@ html.rer-themed .buoy-app dialog { width: min(720px, calc(100% - 32px)); max-hei
 dialog::backdrop { background: rgba(11, 11, 31, 0.32); }
 
 .app-footer { margin-top: 36px; padding: 18px 0; border-top: 1px solid var(--buoy-line); }
-html.rer-themed .buoy-app .app-footer p { margin: 0; color: var(--buoy-muted); font-size: 13px; }
+html.rer-themed .buoy-app .app-footer p { margin: 0; color: var(--buoy-muted-text); font-size: 13px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 @media (max-width: 1180px) {
@@ -201,4 +201,10 @@ html.rer-themed .buoy-app .app-footer p { margin: 0; color: var(--buoy-muted); f
   html.rer-themed .buoy-app button, .buoy-app a.button { width: 100%; }
   html.rer-themed .buoy-app button.details-button { width: fit-content; }
   .record-head { display: grid; }
+}
+/* WCAG 1.4.10 at 320 CSS px (a 1280 px window at 400 %): the view chips wrap instead of scrolling out of sight, and
+   commands and payloads wrap inside their blocks. 390 px phones keep the look above. */
+@media (max-width: 389px) {
+  .views { flex-wrap: wrap; overflow-x: visible; border-radius: 24px; }
+  html.rer-themed .buoy-app pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 }

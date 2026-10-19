@@ -34,12 +34,12 @@ html.rer-themed .buoy-app .rw-today { top: 0; z-index: 4; display: grid; justify
 .rw-initials.plum { background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); }
 .rw-initials.teal { background: #dff6f3; color: #0b6f68; }
 .rw-initials.blue { background: #e5edff; color: #1f4fb8; }
-.rw-initials.green { background: var(--buoy-green-soft); color: var(--buoy-green-ink); }
+.rw-initials.green { background: var(--buoy-green-soft); color: var(--buoy-green-text); }
 .rw-initials.amber { background: var(--buoy-amber-soft); color: var(--buoy-amber-ink); }
 html.rer-themed .buoy-app .rw-name { min-width: 0; color: var(--buoy-ink); font-size: 13px; font-weight: 650; letter-spacing: -0.02em; text-decoration: none; overflow-wrap: anywhere; line-height: 1.25; }
 html.rer-themed .buoy-app .rw-name:hover { text-decoration: underline; text-decoration-color: rgba(138, 46, 174, 0.5); }
 .rw-money { color: #33415f; font-size: 13px; font-variant-numeric: tabular-nums; }
-.rw-none { color: var(--buoy-muted); font-size: 12.5px; }
+.rw-none { color: var(--buoy-muted-text); font-size: 12.5px; }
 html.rer-themed .buoy-app .rw-open { display: grid; place-items: center; width: 22px; height: 26px; border-radius: 8px; color: var(--buoy-body); font-size: 17px; font-weight: 600; line-height: 1; text-decoration: none; opacity: 0; }
 .rw-lane:hover .rw-open, .rw-open:focus-visible, .rw-lane.is-open .rw-open { opacity: 1; }
 html.rer-themed .buoy-app .rw-open:hover { background: var(--buoy-panel); }
@@ -88,7 +88,7 @@ html.rer-themed .buoy-app .rw-lane.is-open .rw-name { font-size: 16px; font-weig
 .rw-pins li.bad::before { background: var(--buoy-red); }
 .rw-pins li.watch::before { background: var(--buoy-amber); }
 .rw-pins time { color: #243452; line-height: 1.4; }
-.rw-pins time small { display: block; font-size: 13px; color: var(--buoy-muted); }
+.rw-pins time small { display: block; font-size: 13px; color: var(--buoy-muted-text); }
 .rw-pins .tag { display: inline-block; margin: 2px 0 0 4px; padding: 1px 9px; border: 1px solid #dfe3ec; border-radius: 20px; background: #f4f6f9; color: #384663; font-size: 12px; white-space: nowrap; }
 .rw-work { min-width: 0; padding-right: 18px; }
 .rw-work > * { min-width: 0; }
@@ -100,7 +100,7 @@ html.rer-themed .buoy-app .rw-lane.is-open .rw-name { font-size: 16px; font-weig
 .rw-finding img { flex: none; width: 44px; height: 44px; }
 html.rer-themed .buoy-app .rw-finding p { margin: 2px 0 4px; color: var(--buoy-ink); font-size: 15px; }
 .rw-finding strong { color: var(--buoy-red-ink); font-weight: 750; }
-.rw-exception.healthy .rw-finding strong { color: var(--buoy-green-ink); }
+.rw-exception.healthy .rw-finding strong { color: var(--buoy-green-text); }
 .rw-exception.unknown .rw-finding strong { color: var(--buoy-amber-ink); }
 .rw-finding ul { margin: 0; padding: 0 0 0 16px; color: #2c3550; font-size: 13px; line-height: 1.4; }
 .rw-finding li + li { margin-top: 3px; }
