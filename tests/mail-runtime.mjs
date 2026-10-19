@@ -52,6 +52,8 @@ export async function mailWorker({ root = process.cwd() } = {}) {
    assert.equal(response.status,303)
    return response.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
   }
-  return {origin,directory,request,cookie,signIn,mails,outbound,async close(){await mf.dispose();await rm(directory,{recursive:true,force:true})}}
+  // The Cron Trigger door, as Cloudflare calls it.
+  const scheduled=async(cron='0 * * * *')=>(await mf.getWorker()).scheduled({cron})
+  return {origin,directory,request,cookie,signIn,scheduled,mails,outbound,async close(){await mf.dispose();await rm(directory,{recursive:true,force:true})}}
  }catch(error){await mf.dispose();await rm(directory,{recursive:true,force:true});throw error}
 }

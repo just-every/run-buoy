@@ -19,7 +19,7 @@ export async function seedWork(db: D1Database, owner: Actor, accounts: Account[]
     if (approved && record.status !== 'approved') await approve(db, owner, record.id)
     if (completed) {
       const task = await db.prepare('SELECT id,completed_at FROM buoy_tasks WHERE proposal_id=?').bind(record.id).first<{ id: string; completed_at: string | null }>()
-      if (task && !task.completed_at) await completeTask(db, owner, task.id, { evidence: completed })
+      if (task && !task.completed_at) await completeTask(db, owner, task.id, { outcome: 'Operations lead confirmed the health alert was handled.', evidence: completed })
     }
   }
   const cascade = find('cascade')

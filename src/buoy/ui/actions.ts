@@ -45,13 +45,25 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     await send('/api/buoy/settings/staleness', { billingDays: Number(fields.billingDays), supportDays: Number(fields.supportDays) }, 'PUT');
     return { redirect: '/app', message: 'Freshness thresholds saved.', saved: 'staleness' };
   }
+  if (path === '/app' && action === 'task-timing') {
+    await send('/api/buoy/settings/tasks', { remindDaysBefore: Number(fields.remindDaysBefore), escalateAfterDays: Number(fields.escalateAfterDays), timeZone: fields.timeZone || null }, 'PUT');
+    return { redirect: '/app', message: 'Reminder timing saved.', saved: 'task-timing' };
+  }
+  if (path === '/app' && action === 'manager') {
+    await send(`/api/buoy/people/${encodeURIComponent(fields.personId)}/manager`, { managerId: fields.managerId || null }, 'PUT');
+    return { redirect: '/app', message: 'Manager saved.', saved: 'manager' };
+  }
+  if (path === '/app' && action === 'away') {
+    await send(`/api/buoy/people/${encodeURIComponent(fields.personId)}/away`, { coverId: fields.coverId, startsOn: fields.startsOn, endsOn: fields.endsOn });
+    return { redirect: '/app', message: 'Away period and cover saved.', saved: 'away' };
+  }
   if (accountId) {
     if (action === 'account-update') {
       await send(accountPath, accountBody(fields, accountId), 'PUT');
       return { redirect: path, message: 'Account source refresh saved.', saved: 'account-update' };
     }
     if (action === 'playbook' || action === 'renewal') {
-      const payload = action === 'playbook' ? { title: fields.title, dueDate: fields.dueDate } : { outcome: fields.outcome, reason: fields.reason, evidence: fields.evidence };
+      const payload = action === 'playbook' ? { title: fields.title, dueDate: fields.dueDate, priority: fields.priority, type: fields.type, ...(fields.ownerId ? { ownerId: fields.ownerId } : {}) } : { outcome: fields.outcome, reason: fields.reason, evidence: fields.evidence };
       await send('/api/buoy/proposals', { accountId, kind: action === 'playbook' ? 'playbook' : 'renewal', payload });
       return { redirect: path, message: 'Proposal prepared and awaiting approval.', saved: action };
     }
@@ -64,8 +76,12 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
       return { redirect: path, message: 'Proposal approved. Review the recorded work or decision below.', saved: `approve-${fields.id}` };
     }
     if (action === 'complete') {
-      await send(`/api/buoy/tasks/${encodeURIComponent(fields.id)}/complete`, { evidence: fields.evidence });
+      await send(`/api/buoy/tasks/${encodeURIComponent(fields.id)}/complete`, { outcome: fields.outcome, evidence: fields.evidence });
       return { redirect: path, message: 'Task completion recorded with evidence.', saved: `complete-${fields.id}` };
+    }
+    if (action === 'account-owner') {
+      await send(`${accountPath}/owner`, { ownerId: fields.ownerId }, 'PUT');
+      return { redirect: path, message: 'Account owner saved. Open tasks moved to them.', saved: 'account-owner' };
     }
     if (action === 'delete') {
       await send(accountPath, { confirmation: fields.confirmation }, 'DELETE');

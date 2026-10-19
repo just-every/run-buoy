@@ -5,7 +5,7 @@ import { startWorker } from './worker.mjs'
 const today=new Date().toISOString().slice(0,10)
 const account=(id='harbour')=>({id,name:'Harbour Software',renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Signed order form section 4, approved by customer',billing:{observedAt:today,reference:'Nectar invoice INV-1042',currency:'AUD',totalMinor:120000,creditsMinor:10000,allocatedMinor:20000,dueDate:'2026-01-01'},support:{observedAt:today,reference:'Support case CS-42',openTickets:3,urgentTickets:1}})
 test('Buoy public HTTP jobs and trust boundaries',async t=>{
- const worker=await startWorker(), {cookie,signIn}=worker, seen=[]
+ const worker=await startWorker(), {cookie,signIn,scheduled}=worker, seen=[]
  const request=(path,options={})=>{seen.push([options.method??'GET',path.split('?')[0]]);return worker.request(path,options)}
  const call=(path,method='GET',body,extra={})=>request('/api/buoy'+path,{method,body,cookie,...extra})
  async function json(response,status=200){assert.equal(response.status,status,await response.clone().text());return response.json()}
@@ -46,7 +46,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const data=await json(await call('/state'));assert.equal(data.tasks.length,1);task=data.tasks[0]
    assert.match(data.proposals[0].approvedBy,/person:/);assert.ok(data.proposals[0].approvedAt)
    assert.equal((await call(`/tasks/${task.id}/complete`,'POST',{evidence:''})).status,400)
-   await json(await call(`/tasks/${task.id}/complete`,'POST',{evidence:'Customer meeting minutes 2027-01-15; incident resolved.'}))
+   await json(await call(`/tasks/${task.id}/complete`,'POST',{outcome:'Incident resolved with the customer',evidence:'Customer meeting minutes 2027-01-15; incident resolved.'}))
    assert.ok((await json(await call('/state'))).tasks[0].completedAt)
   })
   await t.test('agents prepare decisions, cannot approve; revoked tokens stop',async()=>{
@@ -272,6 +272,79 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const custody=(await json(await call('/audit?subject=agent:'+agent.id))).entries.filter(e=>e.action.startsWith('agent.credential'))
    assert.deepEqual(custody.map(e=>[e.action,e.actor]),[['agent.credential-revoked',owner],['agent.credential-issued',owner]],'AUDIT-001 issuing and the first revocation are recorded; a repeat adds nothing')
    assert.match(custody[1].detail,/^expires \d{4}-\d{2}-\d{2}T/);assert.doesNotMatch(JSON.stringify(custody),/Portfolio/)
+  })
+  await t.test('PLAY-002 owners, priority and type; reminders in-app and by email; escalation; reassignment; away cover; outcome',async()=>{
+   // Task days are dates in the installation's time zone: pick one where it is now about noon.
+   const zoneAt=hour=>{const offset=((hour-new Date().getUTCHours()+36)%24)-12;return [offset===0?'Etc/GMT':`Etc/GMT${offset>0?'-':'+'}${Math.abs(offset)}`,new Date(Date.now()+offset*3600000).toISOString().slice(0,10)]}
+   const [zone,local]=zoneAt(12), [night]=zoneAt(3)
+   const day=n=>new Date(Date.parse(local)+n*86400000).toISOString().slice(0,10)
+   for(const [email,displayName] of [['casey@example.test','Casey CSM'],['blair@example.test','Blair CSM'],['morgan@example.test','Morgan Manager']])await json(await request('/auth/invite',{method:'POST',cookie,body:{email,displayName,role:'member'}}),202)
+   const casey=await signIn('casey@example.test');await signIn('blair@example.test');const morgan=await signIn('morgan@example.test')
+   const people=await json(await request('/auth/operators',{cookie})), idOf=email=>people.find(p=>p.email===email).id
+   const [A,B,M]=['casey','blair','morgan'].map(name=>idOf(`${name}@example.test`))
+   assert.equal((await call('/accounts/harbour/owner','PUT',{ownerId:A},{cookie:member})).status,403)
+   assert.equal((await call(`/people/${A}/manager`,'PUT',{managerId:M},{cookie:member})).status,403)
+   assert.equal((await call('/settings/tasks','PUT',{remindDaysBefore:1,escalateAfterDays:2,timeZone:zone},{cookie:member})).status,403)
+   await json(await call('/accounts/harbour/owner','PUT',{ownerId:A}))
+   await json(await call(`/people/${A}/manager`,'PUT',{managerId:M}))
+   assert.equal((await call(`/people/${A}/manager`,'PUT',{managerId:A})).status,400)
+   for(const bad of [{remindDaysBefore:0,escalateAfterDays:2},{remindDaysBefore:1,escalateAfterDays:31},{remindDaysBefore:1,escalateAfterDays:2,quiet:true},{remindDaysBefore:1,escalateAfterDays:2,timeZone:'Mars/Olympus'}])assert.equal((await call('/settings/tasks','PUT',bad)).status,400)
+   await json(await call('/settings/tasks','PUT',{remindDaysBefore:1,escalateAfterDays:2,timeZone:night}))
+   const create=async(title,dueDate,extra={})=>{const p=await json(await call('/proposals','POST',{accountId:'harbour',kind:'playbook',payload:{title,dueDate,...extra}}),201);await json(await call(`/proposals/${p.id}/approve`,'POST',{}));return (await json(await call('/state'))).tasks.find(t=>t.proposalId===p.id)}
+   assert.equal((await call('/proposals','POST',{accountId:'harbour',kind:'playbook',payload:{title:'x',dueDate:local,priority:'someday'}})).status,400)
+   assert.equal((await call('/proposals','POST',{accountId:'harbour',kind:'playbook',payload:{title:'x',dueDate:local,type:'chore'}})).status,400)
+   const soon=await create('PLAY-002 renewal prep call',day(1),{priority:'high',type:'renewal'})
+   const due=await create('PLAY-002 usage recap',local)
+   const late=await create('PLAY-002 resolve escalated ticket',day(-1),{priority:'urgent'})
+   const kept=await create('PLAY-002 executive sponsor intro',day(5),{ownerId:M,type:'expansion'})
+   assert.deepEqual([soon.ownerId,soon.priority,soon.type],[A,'high','renewal'],'the account owner owns a task by default')
+   assert.deepEqual([due.ownerId,due.priority,due.type,late.priority,kept.ownerId],[A,'medium','risk','urgent',M])
+   const mailsFor=email=>worker.mails.filter(m=>[m.to].flat().includes(email)&&/PLAY-002/.test(m.subject))
+   const inbox=async as=>(await json(await call('/state','GET',undefined,{cookie:as}))).notifications.filter(n=>/PLAY-002/.test(n.title))
+   await scheduled()
+   assert.deepEqual(await inbox(casey),[],'before 8 am in the installation time zone no reminder is recorded')
+   assert.equal((await json(await call('/settings/tasks','PUT',{remindDaysBefore:1,escalateAfterDays:2,timeZone:zone}))).tasks.timeZone,zone)
+   await scheduled()
+   assert.deepEqual((await inbox(casey)).map(n=>[n.kind,n.title]).sort(),[['due-soon','PLAY-002 renewal prep call'],['due-today','PLAY-002 usage recap']],'reminders before and on the due date arrive in-app')
+   for(const n of await inbox(casey)){assert.equal(n.email,'accepted');assert.equal(n.emailLabel,'Email accepted by the mail provider');assert.equal(n.accountName,'Harbour Software')}
+   assert.deepEqual(mailsFor('casey@example.test').map(m=>m.subject).sort(),[`Due ${new Intl.DateTimeFormat('en-US',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(new Date(day(1)+'T00:00:00Z')).replace(/,(?= \w{3} )/,'')}: PLAY-002 renewal prep call`,'Due today: PLAY-002 usage recap'],'and by email, one recipient each')
+   for(const m of mailsFor('casey@example.test')){assert.equal([m.to].flat().length,1);assert.match(m.text,/Harbour Software/);assert.match(m.text,/\/app\/accounts\/harbour#tasks/)}
+   assert.deepEqual(await inbox(morgan),[],'one day overdue is inside the two-day escalation delay')
+   await json(await call('/settings/tasks','PUT',{remindDaysBefore:1,escalateAfterDays:1,timeZone:zone}))
+   await scheduled();await scheduled()
+   assert.deepEqual((await inbox(morgan)).map(n=>[n.kind,n.title]),[['escalated','PLAY-002 resolve escalated ticket']],'the overdue task escalates to the owner’s manager once the delay has passed')
+   assert.equal(mailsFor('morgan@example.test').length,1);assert.match(mailsFor('morgan@example.test')[0].text,/Casey CSM's task for Harbour Software was due .* escalated to you as their manager/)
+   assert.equal((await inbox(casey)).length,2,'repeated runs add no duplicate');assert.equal(mailsFor('casey@example.test').length,2)
+   await json(await call('/accounts/harbour/owner','PUT',{ownerId:B}))
+   let tasks=(await json(await call('/state'))).tasks
+   assert.deepEqual([soon,due,late,kept].map(x=>tasks.find(t=>t.id===x.id).ownerId),[B,B,B,M],'reassignment moves the previous owner’s open tasks; another owner’s task stays')
+   assert.equal((await json(await call('/state'))).accounts.find(a=>a.id==='harbour').ownerId,B)
+   assert.equal((await call(`/people/${B}/away`,'POST',{coverId:A,startsOn:local,endsOn:day(1)},{cookie:member})).status,403)
+   assert.equal((await call(`/people/${B}/away`,'POST',{coverId:B,startsOn:local,endsOn:day(1)})).status,400)
+   assert.equal((await call(`/people/${B}/away`,'POST',{coverId:A,startsOn:day(2),endsOn:day(1)})).status,400)
+   await json(await call(`/people/${B}/away`,'POST',{coverId:A,startsOn:local,endsOn:day(1)}),201)
+   assert.equal((await call(`/people/${B}/away`,'POST',{coverId:M,startsOn:day(1),endsOn:day(3)})).status,409)
+   const handlers=async on=>Object.fromEntries((await json(await call('/tasks?on='+on))).tasks.filter(t=>[soon.id,kept.id].includes(t.id)).map(t=>[t.id,[t.ownerId,t.handlerId]]))
+   assert.deepEqual(await handlers(day(-1)),{[soon.id]:[B,B],[kept.id]:[M,M]})
+   for(const on of [local,day(1)])assert.deepEqual(await handlers(on),{[soon.id]:[B,A],[kept.id]:[M,M]},'the cover handles the away person’s tasks for the away period')
+   assert.deepEqual(await handlers(day(2)),{[soon.id]:[B,B],[kept.id]:[M,M]},'and they return the day after it')
+   const fresh=await create('PLAY-002 away-week check-in',day(1))
+   assert.equal(fresh.ownerId,B);assert.equal(fresh.handlerId,A)
+   await scheduled()
+   assert.ok((await inbox(casey)).some(n=>n.kind==='due-soon'&&n.title==='PLAY-002 away-week check-in'),'while Blair is away the reminder goes to the cover')
+   assert.equal(mailsFor('blair@example.test').length,0)
+   const home=await (await request('/app',{cookie:casey})).text()
+   assert.match(home,/Your reminders/);assert.match(home,/Due today<\/strong>: <a href="\/app\/accounts\/harbour#tasks">PLAY-002 usage recap<\/a> for Harbour Software/)
+   const page=await (await request('/app/accounts/harbour',{cookie})).text()
+   assert.match(page,/Urgent priority · Risk · Owner Blair CSM/);assert.match(page,/Owner Blair CSM · Covered today by Casey CSM/)
+   assert.equal((await call(`/tasks/${soon.id}/complete`,'POST',{evidence:'Call notes CN-4'})).status,400,'completion needs an outcome reason')
+   await json(await call(`/tasks/${soon.id}/complete`,'POST',{outcome:'Renewal terms confirmed on the call',evidence:'Call notes CN-4'}))
+   const done=(await json(await call('/state'))).tasks.find(t=>t.id===soon.id)
+   assert.deepEqual([done.outcome,done.evidence,!!done.completedAt],['Renewal terms confirmed on the call','Call notes CN-4',true])
+   assert.match(await (await request('/app/accounts/harbour',{cookie})).text(),/Outcome: Renewal terms confirmed on the call/)
+   const recorded=(await json(await call('/audit?subject=person:'+B))).entries.map(e=>[e.action,e.detail])
+   assert.ok(recorded.some(([action,detail])=>action==='person.away-set'&&detail===`cover person:${A} from ${local} through ${day(1)}`))
+   assert.ok((await json(await call('/audit?action=account.reassigned'))).entries.length>=2)
   })
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))

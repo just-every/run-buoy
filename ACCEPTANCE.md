@@ -9,8 +9,8 @@ The first-release candidate (items 1 to 8 as done or partial) remains the shippe
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 6 | 2 | 0 | 8 |
-| Target and push further | 5 | 22 | 68 | 95 |
-| All | 11 | 24 | 68 | 103 |
+| Target and push further | 6 | 21 | 68 | 95 |
+| All | 12 | 23 | 68 | 103 |
 
 HTTP-001 ships the fixed read/preparation scope described in CONTRACT.md; invalid bearer credentials are refused even when a valid session cookie accompanies them. RESTORE-001 remains partial because SCALE-001 archive volumes are unproven and installations remain capped at 500 accounts. A11Y-001 is partial: labeled native controls, text health labels and keyboard focus ship; the full WCAG pass, portal and native mobile screens remain outstanding. BILLING-004 is partial: native invoice snapshots in any ISO 4217 currency ship; subscriptions, USD conversion, rate tables, rate-edit audits and constant-currency FX movement remain required.
 
@@ -71,7 +71,7 @@ HTTP-001 ships the fixed read/preparation scope described in CONTRACT.md; invali
 ## Lifecycle work
 
 43. **PLAY-001 — Automated playbooks** (`partial`). Build a playbook triggered by health falling below 50 with a task, a wait, a branch on whether usage recovered, an approval-gated email and a Slack post; push three accounts through both branches and a fourth that recovers mid-way; steps run in order, the recovered account exits, no account enrolls twice inside the limit and every step is on the timeline. The audit lists each playbook publish (AUDIT-001).
-44. **PLAY-002 — Tasks, reminders and escalation** (`partial`). Create tasks due tomorrow and yesterday, reassign an account, mark a CSM away with a named cover, and complete one with an outcome; reminders arrive in-app and by email, the overdue task escalates to the manager, the reassigned task moves, the away CSM's due tasks move to the cover for the away period and return after it, and the completed task stores outcome and evidence.
+44. **PLAY-002 — Tasks, reminders and escalation** (`done`). Create tasks due tomorrow and yesterday, reassign an account, mark a CSM away with a named cover, and complete one with an outcome; reminders arrive in-app and by email, the overdue task escalates to the manager, the reassigned task moves, the away CSM's due tasks move to the cover for the away period and return after it, and the completed task stores outcome and evidence.
 45. **PLAY-003 — Automation run history and failure alerts** (`missing`). Break a webhook step, run a playbook for ten accounts, cross the threshold, fix the step and retry; admins are notified once, the log shows the failures, and retry completes only the failed steps.
 46. **PLAY-004 — Outcome tracking for playbooks** (`missing`). Run a playbook for 40 accounts with a defined outcome, let half reach it, and open the playbook report; outcome rate, time to outcome and the unenrolled comparison are shown with their account lists.
 47. **ONBOARD-001 — Onboarding projects** (`missing`). Start a project from a template on an Orbit handoff, complete internal tasks, leave a customer task overdue and shift a dependency. Dates recalculate, the project shows at risk with the overdue customer task named, and the onboarding report shows time to value per account. Then close-won a Salesforce cross-sell opportunity for a new product on an existing account: a second project starts once from that product's template, beside the first.

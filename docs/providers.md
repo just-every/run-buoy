@@ -19,26 +19,26 @@ Local use on your computer talks to none of these providers. Sign-in links appea
 
 ## Sign-in mail
 
-A deployed installation sends sign-in links through the one mail provider you choose with `MAIL_PROVIDER`. Buoy sends no customer messages.
+A deployed installation sends sign-in links, and task reminders and escalations to your own team, through the one mail provider you choose with `MAIL_PROVIDER`. Buoy sends no customer messages. A reminder names the task, its account and its due date; erasing an account in Buoy does not delete reminder mail the provider or the recipient already holds.
 
 ### Resend
 
 - **When:** `MAIL_PROVIDER=resend`.
-- **Sends:** the recipient's email address, your sender address and the sign-in message with its one-time link.
+- **Sends:** the recipient's email address, your sender address and the sign-in message with its one-time link; for a task reminder or escalation, the team member's email address, the task title, account name, due date and a link to the account.
 - **Receives:** the provider's message ID.
 - **Terms:** [Resend terms of service](https://resend.com/legal/terms-of-service) and [Resend DPA](https://resend.com/legal/dpa).
 
 ### SendGrid
 
 - **When:** `MAIL_PROVIDER=sendgrid`.
-- **Sends:** the recipient's email address, your sender address and the sign-in message with its one-time link.
+- **Sends:** the recipient's email address, your sender address and the sign-in message with its one-time link; for a task reminder or escalation, the team member's email address, the task title, account name, due date and a link to the account.
 - **Receives:** the provider's acceptance of the message.
 - **Terms:** [Twilio terms of service](https://www.twilio.com/en-us/legal/tos) and [Twilio data protection addendum](https://www.twilio.com/en-us/legal/data-protection-addendum).
 
 ### Cloudflare Email
 
 - **When:** `MAIL_PROVIDER=cloudflare`, through your Cloudflare account's email sending API.
-- **Sends:** the recipient's email address, your sender address and the sign-in message with its one-time link.
+- **Sends:** the recipient's email address, your sender address and the sign-in message with its one-time link; for a task reminder or escalation, the team member's email address, the task title, account name, due date and a link to the account.
 - **Receives:** the provider's message ID.
 - **Terms:** [Cloudflare terms](https://www.cloudflare.com/terms/) and the [Cloudflare customer DPA](https://www.cloudflare.com/cloudflare-customer-dpa/).
 

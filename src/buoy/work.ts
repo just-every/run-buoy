@@ -1,6 +1,7 @@
 import { account } from './accounts'
 import { accountHealth } from './sentiment'
 import { insist, text, date, object, stmt, guard, commit, id, now, requirePerson, type Actor } from './core'
+import { PRIORITIES, TYPES } from './tasks'
 
 // Revision-bound drafts and guarded approval adapted from Orbit approval-repository
 // 38cef87571a413802dbaa7aa6afbab332d8cd778 and Nectar subscriptions
@@ -12,7 +13,12 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
  let normalized: Record<string, string>
  if (kind === 'playbook') {
   insist((await accountHealth(db, current)).status === 'at-risk', 'An at-risk signal is needed to prepare this playbook.', 409)
-  normalized = {title: text(payload.title, 'Playbook action', 500), dueDate: date(payload.dueDate, 'Due date')}
+  // PLAY-002: priority and type default to medium and risk. The owner named here, else
+  // the account's CSM at approval, else the approving person owns the task.
+  insist(payload.priority === undefined || PRIORITIES.includes(String(payload.priority)), `Priority is one of ${PRIORITIES.join(', ')}.`)
+  insist(payload.type === undefined || TYPES.includes(String(payload.type)), `Task type is one of ${TYPES.join(', ')}.`)
+  normalized = {title: text(payload.title, 'Playbook action', 500), dueDate: date(payload.dueDate, 'Due date'), priority: String(payload.priority ?? 'medium'), type: String(payload.type ?? 'risk'),
+   ...(payload.ownerId === undefined || payload.ownerId === '' ? {} : {ownerId: text(payload.ownerId, 'Task owner', 100)})}
  } else {
   insist(['renewed','churned','deferred'].includes(String(payload.outcome)), 'Choose a renewal outcome.')
   normalized = {outcome: String(payload.outcome), reason: text(payload.reason, 'Decision reason'), evidence: text(payload.evidence, 'Decision evidence')}
@@ -35,7 +41,9 @@ export async function approve(db: D1Database, actor: Actor, proposalId: string) 
  const at = now(), actorLabel = `person:${actor.id}:${actor.displayName}`, statements = [
   guard(db, "EXISTS(SELECT 1 FROM buoy_proposals p JOIN buoy_accounts a ON a.id=p.account_id WHERE p.id=? AND p.status='prepared' AND a.revision=p.account_revision)", proposalId),
   stmt(db, "UPDATE buoy_proposals SET status='approved',approved_by=?,approved_at=? WHERE id=?", actorLabel, at, proposalId)]
- if (proposal.kind === 'playbook') statements.push(stmt(db, 'INSERT INTO buoy_tasks(id,account_id,proposal_id,title,due_date) VALUES(?,?,?,?,?)', id(), current.id, proposalId, payload.title, payload.dueDate))
+ if (proposal.kind === 'playbook') statements.push(
+  ...(payload.ownerId ? [guard(db, "EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')", payload.ownerId)] : []),
+  stmt(db, 'INSERT INTO buoy_tasks(id,account_id,proposal_id,title,due_date,owner_id,priority,type) VALUES(?,?,?,?,?,COALESCE(?,(SELECT owner_id FROM buoy_account_owners WHERE account_id=?),?),?,?)', id(), current.id, proposalId, payload.title, payload.dueDate, payload.ownerId ?? null, current.id, actor.id, payload.priority ?? 'medium', payload.type ?? 'risk'))
  else statements.push(stmt(db, 'INSERT INTO buoy_decisions(id,account_id,proposal_id,outcome,reason,evidence,renewal_date,recorded_by,recorded_at) VALUES(?,?,?,?,?,?,?,?,?)', id(), current.id, proposalId, payload.outcome, payload.reason, payload.evidence, current.renewalDate, actorLabel, at))
  statements.push(stmt(db, 'UPDATE buoy_accounts SET revision=? WHERE id=?', id(), current.id))
  await commit(db, actor, current.id, `${proposal.kind}.approved`, statements, true)
@@ -45,11 +53,12 @@ export async function completeTask(db: D1Database, actor: Actor, taskId: string,
  requirePerson(actor)
  const task = await stmt(db, 'SELECT * FROM buoy_tasks WHERE id=?', taskId).first<Record<string, string>>()
  insist(task, 'Task not found.', 404)
- const evidence = text(input.evidence, 'Completion evidence')
+ // PLAY-002: completion records the outcome reason and its evidence.
+ const outcome = text(input.outcome, 'Outcome reason', 500), evidence = text(input.evidence, 'Completion evidence')
  insist(!task.completed_at, 'Task is already complete.', 409)
  await commit(db, actor, task.account_id, 'playbook.completed', [
   guard(db, 'EXISTS(SELECT 1 FROM buoy_tasks WHERE id=? AND completed_at IS NULL)', taskId),
-  stmt(db, 'UPDATE buoy_tasks SET completed_at=?,evidence=? WHERE id=?', now(), evidence, taskId),
+  stmt(db, 'UPDATE buoy_tasks SET completed_at=?,outcome=?,evidence=? WHERE id=?', now(), outcome, evidence, taskId),
   stmt(db, 'UPDATE buoy_accounts SET revision=? WHERE id=?', id(), task.account_id)], true)
  return {id: taskId, status: 'completed'}
 }
