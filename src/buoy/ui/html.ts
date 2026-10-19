@@ -1,3 +1,4 @@
+import { majorAmount, minorUnitDigits } from '../currencies';
 import type { Fields } from './types';
 
 export function escape(value: unknown): string {
@@ -17,13 +18,13 @@ export const date = (value: string | null) => usDate(value, { weekday: 'short', 
 export const day = (value: string | null) => usDate(value, { weekday: 'short', month: 'short', day: 'numeric' });
 /** "7:14 am" in the operator's Eastern day, for recorded moments. */
 export const clock = (value: string) => escape(new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }).format(new Date(value)).replace(/\s+/g, ' ').toLowerCase());
-/** Whole dollars when there are no cents: "$148,000". Unknown currencies stay in minor units. */
+/** "$148,000": whole units when there are no minor units, with each currency's ISO 4217 exponent (DATA-001).
+ * A code without a minor unit stays in minor units. */
 export function money(minor: number, currency: string): string {
-  try {
-    const digits = new Intl.NumberFormat('en-US', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
-    const value = minor / 10 ** digits;
-    return escape(new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: Number.isInteger(value) ? 0 : digits }).format(value));
-  } catch { return `${escape(minor)} minor units (${escape(currency)})`; }
+  const digits = minorUnitDigits(currency);
+  if (digits === undefined) return `${escape(minor)} minor units (${escape(currency)})`;
+  const whole = minor % 10 ** digits === 0;
+  return escape(new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'narrowSymbol', minimumFractionDigits: whole ? 0 : digits, maximumFractionDigits: whole ? 0 : digits }).format(Number(majorAmount(minor, currency))));
 }
 export const healthLabel = (status: string) => status === 'at-risk' ? 'At risk' : status === 'healthy' ? 'Healthy' : 'Unknown';
 const glyph: Record<string, string> = { healthy: '✓', 'at-risk': '!', unknown: '?' };

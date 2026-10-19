@@ -136,6 +136,8 @@ html.rer-themed .buoy-app .evidence-grid h3 { margin-bottom: 10px; }
 /* /app below the runway; the account page's workbench and actions. */
 .below { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 24px; }
 .below > [data-introduction] > .panel, .below > .panel { margin: 0; }
+.below-side { display: grid; gap: 16px; min-width: 0; }
+html.rer-themed .buoy-app .below-side > .panel { margin: 0; }
 .intro-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .intro-head a { font-size: 13px; }
 .checklist { display: grid; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; counter-reset: step; }

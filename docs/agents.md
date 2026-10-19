@@ -69,7 +69,9 @@ Replace the illustrative account and evidence with confirmed records. Outcomes a
 
 An owner or admin opens the account, checks the proposal’s retained evidence, then approves in the app. A changed account revision refuses stale approval. Review and prepare again from current evidence when needed.
 
-The agent credential can access only `/api/buoy/commands`. It cannot approve, complete tasks, edit accounts, import records, erase accounts or manage credentials, even when its issuing owner could do those things.
+The agent credential can access only `/api/buoy/commands`. It cannot approve, complete tasks, edit accounts, import records, erase accounts or manage credentials, even when its issuing owner could do those things. It cannot change commercial terms either: a preparation carries only the fields shown above, so a price, discount, credit or term change is refused.
+
+Every refused agent request (another route, an unknown command or an extra preparation field) returns its reason and is recorded. An owner or admin reads the record with `GET /api/buoy/audit`: each `agent.refused` entry names the credential, the time, the subject (an account ID, command or route) and the reason.
 
 ## Revoke access
 

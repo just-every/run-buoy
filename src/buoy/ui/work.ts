@@ -1,5 +1,5 @@
 import { accountForm } from './account-form';
-import { disclosure, escape, money, pathId } from './html';
+import { button, disclosure, escape, field, form, hidden, money, pathId, valueOf } from './html';
 import { axisFor, quarters, runway } from './runway';
 import { canManage, type Account, type Fields, type State } from './types';
 
@@ -34,5 +34,8 @@ export function workPage(state: State, values: Fields | undefined, open: string 
   const create = manage
     ? disclosure('Create account', 'Name, renewal date, notice period and the billing and support evidence you hold.', accountForm(undefined, values), 'create-account', !state.accounts.length || values?.action === 'account-create')
     : '<section class="panel note-panel"><h2>Adding accounts</h2><p>Your owner or administrator can add and refresh account sources. You can prepare work and renewal decisions on an existing account.</p></section>';
-  return { head: runwayHead('Renewals', state.accounts, today), body: `${view.html}<div class="below"><div data-introduction>${intro}</div>${create}</div>`, style: view.css };
+  const limits = state.settings.staleness, v = (name: string, fallback: unknown) => values?.action === 'staleness' ? valueOf(values, name, fallback) : fallback;
+  const explain = '<p>Billing and support snapshots are entered by hand or moved in from a file. Each source kind goes stale after its own number of days; health then names it as stale.</p>';
+  const freshness = disclosure('Evidence freshness', `Billing goes stale after ${limits.billingDays} days, support after ${limits.supportDays}.`, manage ? explain + form('staleness', '/app', hidden('action', 'staleness') + `<div class="form-grid">${field('billingDays', 'Billing snapshots stale after (days)', v('billingDays', limits.billingDays), 'number', true, 'min="1" max="365" step="1"')}${field('supportDays', 'Support snapshots stale after (days)', v('supportDays', limits.supportDays), 'number', true, 'min="1" max="365" step="1"')}</div>` + button('Save freshness thresholds')) : `${explain}<p>Billing snapshots go stale after ${escape(limits.billingDays)} days and support snapshots after ${escape(limits.supportDays)} days.</p>`, 'evidence-freshness', values?.action === 'staleness');
+  return { head: runwayHead('Renewals', state.accounts, today), body: `${view.html}<div class="below"><div data-introduction>${intro}</div><div class="below-side">${create}${freshness}</div></div>`, style: view.css };
 }

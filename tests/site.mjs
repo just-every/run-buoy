@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { createServer } from 'node:net'
-import { mkdtemp, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'
+import { pathToFileURL } from 'node:url'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
@@ -48,6 +49,20 @@ try {
   assert.ok(documents.has('/run'), 'Homepage reaches the run instructions')
   assert.ok(documents.has('/docs'), 'Homepage reaches repository documentation')
   assert.ok([...documents.keys()].some(path => path.startsWith('/docs/')), 'Docs navigation reaches the guides')
+  // BOUNDARY-005: every provider the code can reach has a section with its data flows and terms.
+  const mailCode = await readFile('src/mail.server.mjs', 'utf8')
+  const mail = JSON.parse(mailCode.match(/if \(!(\[[^\]]+\])\.includes\(env\.MAIL_PROVIDER\)\)/)[1].replaceAll("'", '"'))
+  const mailNames = { resend: 'Resend', sendgrid: 'SendGrid', cloudflare: 'Cloudflare Email' }
+  const { PRESETS } = await import(pathToFileURL(resolve('src/modules/operator-auth/identity/oidc/presets.mjs')).href)
+  const providers = ['Cloudflare', ...mail.map(id => mailNames[id] ?? id), ...Object.values(PRESETS).map(preset => preset.label)]
+  const guide = documents.get('/docs/providers') ?? ''
+  assert.match(guide, /SOC 2 or similar attestations cover your deployment/, 'BOUNDARY-005: certifications are the deployment\'s')
+  for (const name of providers) {
+    const section = guide.split(/<h3[^>]*>/).find(part => part.startsWith(`${name}</h3>`))
+    assert.ok(section, `BOUNDARY-005: the providers guide has a section for ${name}`)
+    for (const label of ['When:', 'Sends:', 'Receives:', 'Terms:']) assert.ok(section.includes(label), `BOUNDARY-005: ${name} lists ${label}`)
+    if (name !== 'Auth' && name !== 'Company') assert.match(section.split('Terms:')[1], /href="https:\/\/[^"]+"/, `BOUNDARY-005: ${name} links its provider terms`)
+  }
   assert.equal((await fetch(origin + '/does-not-exist')).status, 404, 'Unknown route is a 404')
   console.log(`Run-site journey passed: ${documents.size} public documents, ${checked.size} linked resources, all fragments resolve`)
 } finally {

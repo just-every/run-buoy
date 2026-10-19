@@ -6,10 +6,11 @@ export interface Support { observedAt: string; reference: string; openTickets: n
 export interface Account {
   id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string;
   billing: Billing | null; support: Support | null; revision: string; noticeDate: string;
-  health: { status: 'at-risk' | 'healthy' | 'unknown'; reasons: string[]; sentiment: Sentiment | null };
+  health: { status: 'at-risk' | 'healthy' | 'unknown'; reasons: string[]; sentiment: Sentiment | null; evidence: Evidence[] };
   /** Today's band, then each later day before renewal on which today's evidence projects a new band. */
   outlook: { from: string; status: 'at-risk' | 'healthy' | 'unknown' }[];
 }
+export interface Evidence { kind: 'billing' | 'support'; sourceSystem: 'manual' | null; staleAfterDays: number; missing: boolean; stale: boolean }
 export interface Sentiment { rating: 'red' | 'amber' | 'green'; reason: string; by: string; recordedAt: string; expiresOn: string; expired: boolean }
 export interface Proposal {
   id: string; accountId: string; kind: 'playbook' | 'renewal';
@@ -19,7 +20,7 @@ export interface Proposal {
 export interface Task { id: string; accountId: string; proposalId: string; title: string; dueDate: string; completedAt: string | null; evidence: string | null }
 export interface Decision { id: string; accountId: string; proposalId: string; outcome: string; reason: string; evidence: string; renewalDate: string; recordedBy: string; recordedAt: string }
 export interface State {
-  operator: { displayName: string; role: string }; accounts: Account[]; proposals: Proposal[]; tasks: Task[]; decisions: Decision[];
+  operator: { displayName: string; role: string }; settings: { staleness: { billingDays: number; supportDays: number } }; accounts: Account[]; proposals: Proposal[]; tasks: Task[]; decisions: Decision[];
 }
 export type Api = (request: Request) => Promise<Response>;
 export type Fields = Record<string, string>;

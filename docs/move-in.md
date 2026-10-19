@@ -39,7 +39,7 @@ This is an explicitly synthetic shape example, for a deliberate trial only. Repl
 }
 ```
 
-Money uses nonnegative integer minor units in USD, CAD, EUR, GBP, AUD or NZD. Credits plus allocated payments cannot exceed the total. Observation dates cannot be in the future. Ticket counts are nonnegative whole numbers; urgent tickets cannot exceed open tickets.
+Money uses nonnegative integer minor units of an ISO 4217 currency at its exponent (see [Accounts](/docs/accounts)). Credits plus allocated payments cannot exceed the total. Observation dates cannot be in the future. Ticket counts are nonnegative whole numbers; urgent tickets cannot exceed open tickets.
 
 Use `null` for either observation when it is absent. Missing billing or support means unknown, not zero, paid or healthy. Imports do not fetch evidence from providers. Do not include credentials or executable connector settings in the upload.
 

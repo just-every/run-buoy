@@ -41,6 +41,10 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     const account = await send<{ id: string }>('/api/buoy/accounts', accountBody(fields));
     return { redirect: `/app/accounts/${encodeURIComponent(account.id)}`, message: 'Account created.', saved: 'account-create' };
   }
+  if (path === '/app' && action === 'staleness') {
+    await send('/api/buoy/settings/staleness', { billingDays: Number(fields.billingDays), supportDays: Number(fields.supportDays) }, 'PUT');
+    return { redirect: '/app', message: 'Freshness thresholds saved.', saved: 'staleness' };
+  }
   if (accountId) {
     if (action === 'account-update') {
       await send(accountPath, accountBody(fields, accountId), 'PUT');

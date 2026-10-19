@@ -5,6 +5,8 @@ import { Problem, insist, text, date, object, requirePerson, stmt, type Actor } 
 import { saveAccount, account, state } from './accounts'
 import { prepare, approve, completeTask } from './work'
 import { recordSentiment, healthOn, today } from './sentiment'
+import { setStaleness } from './settings'
+import { audit, refuse } from './audit'
 import * as imports from './imports/index'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
@@ -30,6 +32,7 @@ buoyApi.post('/api/buoy/accounts', async c => c.json(await saveAccount(c.env.DB,
 buoyApi.put('/api/buoy/accounts/:id', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw), c.req.param('id'))))
 buoyApi.post('/api/buoy/accounts/:id/sentiment', async c => c.json(await recordSentiment(c.env.DB, c.get('actor'), c.req.param('id'), await jsonBody(c.req.raw)), 201))
 buoyApi.get('/api/buoy/accounts/:id/health', async c => c.json(await healthOn(c.env.DB, c.req.param('id'), date(c.req.query('on') ?? today(), 'Health date'))))
+buoyApi.put('/api/buoy/settings/staleness', async c => c.json(await setStaleness(c.env.DB, c.get('actor'), await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/proposals', async c => c.json(await prepare(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.post('/api/buoy/proposals/:id/approve', async c => {await jsonBody(c.req.raw); return c.json(await approve(c.env.DB, c.get('actor'), c.req.param('id')))})
 buoyApi.post('/api/buoy/tasks/:id/complete', async c => c.json(await completeTask(c.env.DB, c.get('actor'), c.req.param('id'), await jsonBody(c.req.raw))))
@@ -54,10 +57,19 @@ buoyApi.delete('/api/buoy/agent-tokens/:id', async c => {
  return c.json({status: 'revoked'})
 })
 buoyApi.get('/api/buoy/commands', c => c.json({commands: ['renewals.list','playbook.prepare','renewal.prepare'], approval: 'An active owner or admin reviews and approves in the app.'}))
+// BOUNDARY-004: a preparation carries only these fields; anything else (a price,
+// discount, credit or term change) is refused and, for an agent, recorded.
+const PREPARATION: Record<string, string[]> = {'playbook.prepare': ['title', 'dueDate'], 'renewal.prepare': ['outcome', 'reason', 'evidence']}
 buoyApi.post('/api/buoy/commands', async c => {
- const body = await jsonBody(c.req.raw), actor = c.get('actor')
- if (body.command === 'renewals.list') return c.json({accounts: (await state(c.env.DB, actor)).accounts})
- insist(body.command === 'playbook.prepare' || body.command === 'renewal.prepare', 'Unknown command. Agents can prepare; people approve.')
- const input = object(body.input)
- return c.json(await prepare(c.env.DB, actor, {...input, kind: body.command === 'playbook.prepare' ? 'playbook' : 'renewal'}), 201)
+ const body = await jsonBody(c.req.raw), actor = c.get('actor'), db = c.env.DB
+ if (body.command === 'renewals.list') return c.json({accounts: (await state(db, actor)).accounts})
+ const fields = Object.hasOwn(PREPARATION, String(body.command)) ? PREPARATION[String(body.command)] : undefined
+ if (!fields) return refuse(db, actor, `command ${String(body.command)}`, 'Unknown command. Agents can prepare; people approve.', 400)
+ const input = object(body.input), payload = object(input.payload)
+ const extra = [...Object.keys(input).filter(key => key !== 'accountId' && key !== 'payload'), ...Object.keys(payload).filter(key => !fields.includes(key))]
+ if (extra.length) return refuse(db, actor, `account ${String(input.accountId)}`, `Agents cannot set ${extra.join(', ')}. A preparation carries only ${fields.join(', ')}; prices, discounts and other commercial terms change only by a person in the billing system.`)
+ return c.json(await prepare(db, actor, {...input, kind: body.command === 'playbook.prepare' ? 'playbook' : 'renewal'}), 201)
 })
+buoyApi.get('/api/buoy/audit', async c => c.json(await audit(c.env.DB, c.get('actor'))))
+// BOUNDARY-001/002: the route list, read from the router itself.
+buoyApi.get('/api/buoy/routes', c => c.json({routes: buoyApi.routes.filter(route => route.method !== 'ALL').map(({method, path}) => ({method, path}))}))

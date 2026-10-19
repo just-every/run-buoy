@@ -13,6 +13,7 @@ import renewals from '../../docs/renewals.md?raw'
 import agents from '../../docs/agents.md?raw'
 import moveIn from '../../docs/move-in.md?raw'
 import backups from '../../docs/backups.md?raw'
+import providers from '../../docs/providers.md?raw'
 
 const guides = [
   { slug: '', title: 'Overview', description: 'Owner guides for renewal evidence, approved playbooks and decisions in Buoy.', source: overview, file: 'index.md' },
@@ -23,6 +24,7 @@ const guides = [
   { slug: 'agents', title: 'Agents', description: 'Use scoped agent credentials to list renewals and prepare proposals for people to approve.', source: agents, file: 'agents.md' },
   { slug: 'move-in', title: 'Move in', description: 'Preview, apply and undo your account JSON imports in Buoy.', source: moveIn, file: 'move-in.md' },
   { slug: 'backups', title: 'Backup and restore', description: 'Export Buoy domain records and restore an empty installation.', source: backups, file: 'backups.md' },
+  { slug: 'providers', title: 'Providers and data flows', description: 'Every provider a Buoy installation talks to, the data each receives and the terms that govern it.', source: providers, file: 'providers.md' },
 ]
 
 const escape = (value: string) => value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]!))

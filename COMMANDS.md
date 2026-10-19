@@ -1,10 +1,10 @@
 # Buoy agent commands
 
-All requests use the installation origin and JSON. People use a current native session cookie and the exact Origin header for writes. Agent callers use `Authorization: Bearer <credential>` and can only access `/api/buoy/commands`. Never put credentials in URLs or logs.
+All requests use the installation origin and JSON. People use a current native session cookie and the exact Origin header for writes. Agent callers use `Authorization: Bearer <credential>` and can only access `/api/buoy/commands`; a preparation carries only the fields below, and any other route, command or field is refused with its reason and recorded for owners and admins at `GET /api/buoy/audit`. Never put credentials in URLs or logs.
 
 An owner creates a credential with `POST /api/buoy/agent-tokens` and `{"label":"Renewal assistant"}`. Save the returned token privately: only its hash is stored. It expires in seven days, stops if its issuing owner loses authority, and can be revoked with `DELETE /api/buoy/agent-tokens/:id`. Credentials are not exported.
 
-`GET /api/buoy/commands` lists the supported commands. POST examples:
+`GET /api/buoy/commands` lists the supported commands. A signed-in person can read every product API route with `GET /api/buoy/routes`; none moves money. POST examples:
 
 ```json
 {"command":"renewals.list"}

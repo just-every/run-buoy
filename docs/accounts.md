@@ -23,7 +23,7 @@ A billing period does not establish a renewal date. Record confirmed contract te
 
 Select **Include billing observation** and supply the observation date, source reference, currency, invoice total, credits, allocated payments and payment due date.
 
-Amounts are nonnegative whole minor units. For the supported two-decimal currencies, `100` means `1.00`. The supported codes are USD, CAD, EUR, GBP, AUD and NZD. Credits plus allocated payments cannot exceed the invoice total.
+Amounts are nonnegative whole minor units at the currency's ISO 4217 exponent: `100` means `1.00` USD, `100` means ¥100, and `1500` means 1.500 KWD. Any active ISO 4217 code works, as do codes withdrawn since 2023 (HRK, ANG, BGN, SLL and ZWL) for earlier invoices. Codes without minor units, such as XAU or XDR, are refused. Credits plus allocated payments cannot exceed the invoice total.
 
 Only payments allocated to that invoice reduce its outstanding amount. For example, a total of `120000`, credits of `10000` and allocated payments of `30000` leave `80000` minor units outstanding. If its payment due date is before today, that is an at-risk signal.
 
@@ -38,10 +38,12 @@ Observation dates cannot be in the future. Use the date of the source observatio
 Health names the recorded signals and gaps:
 
 - **At risk** — an overdue unpaid invoice or an urgent open support ticket is recorded. Missing or stale evidence is also shown when present.
-- **Unknown** — no defined risk signal is recorded, but billing or support evidence is missing or older than 30 days.
+- **Unknown** — no defined risk signal is recorded, but billing or support evidence is missing or stale.
 - **Healthy** — fresh billing and support snapshots show no defined risk signal.
 
 An old risk signal still appears as **At risk**, alongside its stale-evidence warning. Missing observations remain unknown; they never become a paid invoice or zero tickets. Health explains the evidence Buoy holds and is not a prediction of whether the customer will renew.
+
+Billing and support snapshots go stale after 30 days by default. Every snapshot today is a manual one, typed in here or moved in from a file, and **Recorded evidence** shows its source system and whether it is stale. The owner or an admin can change the threshold for each source kind under **Evidence freshness** on the accounts page (1 to 365 days, or `PUT /api/buoy/settings/staleness` with `billingDays` and `supportDays`). Evidence is stale when its observation date is more than that many UTC days ago. Changing a threshold changes no observation.
 
 Open an account to inspect **Recorded evidence**, including source references and observation dates. The account’s **Details** and audit disclosures show its retained records.
 
