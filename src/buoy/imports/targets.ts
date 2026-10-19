@@ -2,7 +2,7 @@ import { canonicalJson, sha256 } from '../../modules/import-kit/src/d1/index.ts'
 import type { D1Sql, D1TargetAdapter, TargetRow } from '../../modules/import-kit/src/d1/index.ts'
 import { DESTINATION, KIND } from './source'
 export const sql = (sql: string, ...params: unknown[]): D1Sql => ({ sql, params })
-export const dependencyTables = ['buoy_proposals', 'buoy_tasks', 'buoy_decisions', 'buoy_events', 'buoy_sentiments'] as const
+export const dependencyTables = ['buoy_proposals', 'buoy_tasks', 'buoy_decisions', 'buoy_sentiments'] as const
 export function noDependencies(id: string): D1Sql {
   return sql(dependencyTables.map(table => `NOT EXISTS(SELECT 1 FROM ${table} WHERE account_id=?)`).join(' AND '), ...dependencyTables.map(() => id))
 }
@@ -29,7 +29,8 @@ export const accountTargets: D1TargetAdapter = {
   write(row) {
     const notErased = notErasedSql(row.targetId)
     return [sql("SELECT CASE WHEN ((SELECT count(*) FROM buoy_accounts)<500 OR EXISTS(SELECT 1 FROM buoy_accounts WHERE id=?)) THEN 1 ELSE json('ACCOUNT_LIMIT') END", row.targetId), sql(`SELECT CASE WHEN (${notErased.sql}) THEN 1 ELSE json('IMPORT_SOURCE_ERASED') END`, ...notErased.params ?? []),
-      sql("INSERT INTO buoy_accounts(id,document,revision,created_at) VALUES(?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision", row.targetId, canonicalJson(row.value), row.revision)]
+      sql("INSERT INTO buoy_accounts(id,document,revision,created_at) VALUES(?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision", row.targetId, canonicalJson(row.value), row.revision),
+      sql('INSERT OR IGNORE INTO buoy_audit_subjects(account_id,subject) VALUES(?,lower(hex(randomblob(16))))', row.targetId)]
   },
   remove(_destination, _kind, id) {
     const clear = noDependencies(id)

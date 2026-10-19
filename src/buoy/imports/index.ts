@@ -70,6 +70,9 @@ export async function erase(db: D1Database, operator: Operator, id: string) {
       json_array(json_object('store','buoy_accounts','rows',(SELECT count(*) FROM buoy_accounts WHERE id=?)),
       ${dependencyTables.map(table => `json_object('store','${table}','rows',(SELECT count(*) FROM ${table} WHERE account_id=?))`).join(',')})`,
       receipt, DESTINATION, recordedAt, digest, id, ...dependencyTables.map(() => id)),
+    // Record erasure and scrub prior refusals in the same kit transaction.
+    sql("INSERT INTO buoy_audit(id,actor,action,subject,detail,occurred_at) SELECT ?,?,'account.erased',subject,'',? FROM buoy_audit_subjects WHERE account_id=?", randomUUID(), `person:${operator.id}`, recordedAt, id),
+    sql("UPDATE buoy_audit SET subject=(SELECT subject FROM buoy_audit_subjects WHERE account_id=?),detail='Agent request refused; subject erased.' WHERE action='agent.refused' AND (subject=? OR substr(subject,instr(subject,' ')+1)=? OR substr(subject,instr(subject,' ')+1,?)=?)", id, `account ${id}`, `/api/buoy/accounts/${encodeURIComponent(id)}`, `/api/buoy/accounts/${encodeURIComponent(id)}/`.length, `/api/buoy/accounts/${encodeURIComponent(id)}/`),
     sql('DELETE FROM buoy_accounts WHERE id=?', id),
   ], context(db, operator))
   return { id: receipt, state: 'erased' as const, erasedRecords: result.erasedRecords, recordedAt }
