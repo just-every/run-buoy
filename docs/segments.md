@@ -16,6 +16,8 @@ These are invoice snapshots, not ARR. Amounts use the stated currency's minor un
 
 Membership refreshes after source and configuration changes, on requests, and hourly for changing dates and evidence freshness. Each entry and exit remains in Membership history. Each configured entry task creates one proposal; the owner/admin approves it on the account. Approval checks the account revision, active entry and segment revision. Re-entry can prepare a new proposal. Changing a segment never replays an active interval; an invalid old proposal needs a new legitimate entry. Task offsets count UTC calendar days.
 
+Owners and administrators define their own service tier names under **Service tier names**; high-touch, scaled and digital are examples seeded by default. Add names before using them. A name in use cannot be removed until its segments/accounts are reclassified.
+
 Rule tier and stage use the first matching segment in creation order. Classification rules read source and manual classification first; membership then reads the effective classification. Manual account classifications override rules until **Return to segment rules** is selected. **Explicitly unset** keeps a classification empty. The account's Recorded evidence shows its effective tier, stage and segments.
 
 Each segment report lists its members and health counts; **Download full segment report (CSV)** exports the same accounts. Team assignment rules can select a segment alongside a territory; the existing capacity and reviewed assignment rules still apply. Erasure removes membership history, entry proposals, classifications and static references.

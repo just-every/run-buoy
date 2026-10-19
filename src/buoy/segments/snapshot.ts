@@ -1,7 +1,7 @@
 import { guard, insist } from '../core'
 import { health, noticeDate, type Account, type Sentiment } from '../health'
 import { DEFAULT_STALENESS } from '../settings'
-import type { Segment, Values } from './rules'
+import { TIERS, type Segment, type Values } from './rules'
 // One SQL image fences every rule input and the previous membership intervals.
 export const SNAPSHOT = `SELECT json_object(
  'accounts',json((SELECT json_group_array(json_object('id',id,'document',document,'revision',revision,'createdAt',created_at)) FROM (SELECT * FROM buoy_accounts ORDER BY id))),
@@ -12,13 +12,15 @@ export const SNAPSHOT = `SELECT json_object(
  'sentiments',json((SELECT json_group_array(json_object('accountId',account_id,'rating',rating,'reason',reason,'recordedBy',recorded_by,'recordedAt',recorded_at,'expiresOn',expires_on)) FROM (SELECT * FROM buoy_sentiments ORDER BY recorded_at,id))),
  'tasks',json((SELECT json_group_array(json_object('accountId',account_id,'completedAt',completed_at)) FROM (SELECT * FROM buoy_tasks ORDER BY id))),
  'entries',json((SELECT json_group_array(json_object('id',id,'segmentId',segment_id,'accountId',account_id,'enteredAt',entered_at,'exitedAt',exited_at,'proposalId',proposal_id)) FROM (SELECT * FROM buoy_segment_entries ORDER BY entered_at,id))),
+ 'tiers',(SELECT document FROM buoy_tiers WHERE singleton=1),
  'staleness',(SELECT value FROM buoy_settings WHERE key='staleness')
  ) AS snapshot`
 interface Row {id:string;document:string;revision:string;createdAt:string}
 interface Classification {accountId:string;tier:string|null;stage:string|null;tierManual:number;stageManual:number}
-export interface Image {accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null}
+export interface Image {accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null}
 export async function snapshot(db:D1Database){const row=await db.prepare(SNAPSHOT).first<{snapshot:string}>();insist(row,'Segment data unavailable.',503);return {raw:row.snapshot,value:JSON.parse(row.snapshot) as Image}}
 export const fence=(db:D1Database,raw:string)=>guard(db,`(${SNAPSHOT})=?`,raw)
+export const tierNames=(image:Image):string[]=>image.tiers?JSON.parse(image.tiers):TIERS
 export const definitions=(image:Image):Segment[]=>image.segments.map(row=>({...JSON.parse(row.document),id:row.id,revision:row.revision,createdAt:row.createdAt}))
 export function accountValues(image:Image,on:string) {
  const limits=image.staleness?JSON.parse(image.staleness):DEFAULT_STALENESS

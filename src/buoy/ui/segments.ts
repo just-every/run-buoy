@@ -9,10 +9,10 @@ export interface SegmentView {
   members: { accountId: string; name: string; health: string; tier: string | null; stage: string | null; enteredAt: string }[];
   history: { accountId: string; enteredAt: string; exitedAt: string | null; proposalId: string | null }[];
 }
-export interface SegmentsPage { fields: Record<string, 'text' | 'number'>; segments: SegmentView[] }
+export interface SegmentsPage { tiers:string[]; fields: Record<string, 'text' | 'number'>; segments: SegmentView[] }
 
 type Choice = readonly [string, string];
-const tiers: Choice[] = [['high-touch', 'High touch'], ['scaled', 'Scaled'], ['digital', 'Digital']];
+const tierChoices=(data:SegmentsPage):Choice[]=>data.tiers.map(name=>[name,name]);
 const stages: Choice[] = [['onboarding', 'Onboarding'], ['adoption', 'Adoption'], ['expansion', 'Expansion'], ['renewal', 'Renewal'], ['churned', 'Churned']];
 const select = (name: string, label: string, choices: Choice[], chosen: unknown, required = false) =>
   `<label>${escape(label)}<select name="${escape(name)}"${required ? ' required' : ''}>${choices.map(([value, text]) => `<option value="${escape(value)}"${chosen === value ? ' selected' : ''}>${escape(text)}</option>`).join('')}</select></label>`;
@@ -26,7 +26,7 @@ function ruleHelp(data: SegmentsPage): string {
     + `<dl>${Object.entries(data.fields).map(([name, type]) => `<dt><code>${escape(name)}</code></dt><dd>${escape(type)}</dd>`).join('')}</dl>`;
 }
 
-function segmentForm(segment: SegmentView | undefined, values?: Fields): string {
+function segmentForm(data:SegmentsPage,segment: SegmentView | undefined, values?: Fields): string {
   const mine = values?.action === 'segment-save' && (values.segmentId || '') === (segment?.id || '');
   const v = (name: string, initial: unknown = '') => valueOf(mine ? values : undefined, name, initial);
   const id = segment ? `segment-edit-${segment.id}` : 'segment-create';
@@ -35,23 +35,23 @@ function segmentForm(segment: SegmentView | undefined, values?: Fields): string 
     + `<div class="form-grid">${field('name', 'Segment name', v('name', segment?.name))}${select('mode', 'Membership mode', [['dynamic', 'Dynamic rules'], ['static', 'Static account list']], v('mode', segment?.mode ?? 'dynamic'), true)}${select('match', 'Match conditions', [['all', 'All conditions'], ['any', 'Any condition']], v('match', segment?.rules.match ?? 'all'), true)}</div>`
     + textarea('conditions', 'Rule conditions (JSON array; dynamic mode)', v('conditions', JSON.stringify(segment?.rules.conditions ?? [], null, 2)), true, 'spellcheck="false"')
     + textarea('accountIds', 'Account IDs (comma-separated; static mode)', v('accountIds', segment?.accountIds.join(', ') ?? ''), false)
-    + `<div class="form-grid">${select('tier', 'Rule tier (optional)', [['', 'No tier classification'], ...tiers], v('tier', segment?.tier ?? ''))}${select('stage', 'Rule stage (optional)', [['', 'No stage classification'], ...stages], v('stage', segment?.stage ?? ''))}</div>`
+    + `<div class="form-grid">${select('tier', 'Rule tier (optional)', [['', 'No tier classification'], ...tierChoices(data)], v('tier', segment?.tier ?? ''))}${select('stage', 'Rule stage (optional)', [['', 'No stage classification'], ...stages], v('stage', segment?.stage ?? ''))}</div>`
     + `<div class="form-grid">${field('playbookTitle', 'Entry playbook title (optional)', v('playbookTitle', segment?.playbook?.title), 'text', false)}${field('dueDays', 'Playbook due in days', v('dueDays', segment?.playbook?.dueDays ?? 7), 'number', true, 'min="0" step="1"')}</div>`
     + '<p>Segment entry prepares one task proposal. Human approval is required: an owner or administrator approves the proposal on the account before a task is created.</p>'
     + button(segment ? 'Save segment' : 'Create segment'));
 }
 
-function classification(state: State, values?: Fields): string {
+function classification(data:SegmentsPage,state: State, values?: Fields): string {
   const mine = values?.action === 'segment-classify';
   const v = (name: string, initial = '') => valueOf(mine ? values : undefined, name, initial);
   return section('Manual account classification', '<p>A manual tier or stage takes priority over segment rules. Choose “Return to segment rules” to clear that override, or “Explicitly unset” to keep the classification empty.</p>'
     + form('segment-classify', '/app/segments', hidden('action', 'segment-classify')
       + select('accountId', 'Account', [['', 'Choose an account'], ...state.accounts.map(account => [account.id, account.name] as Choice)], v('accountId'), true)
-      + `<div class="form-grid">${select('tier', 'Manual tier', [['__rules__', 'Return to segment rules'], ['', 'Explicitly unset'], ...tiers], v('tier', '__rules__'))}${select('stage', 'Manual stage', [['__rules__', 'Return to segment rules'], ['', 'Explicitly unset'], ...stages], v('stage', '__rules__'))}</div>`
+      + `<div class="form-grid">${select('tier', 'Manual tier', [['__rules__', 'Return to segment rules'], ['', 'Explicitly unset'], ...tierChoices(data)], v('tier', '__rules__'))}${select('stage', 'Manual stage', [['__rules__', 'Return to segment rules'], ['', 'Explicitly unset'], ...stages], v('stage', '__rules__'))}</div>`
       + button('Save account classification')));
 }
 
-function report(segment: SegmentView, state: State, values?: Fields): string {
+function report(data:SegmentsPage,segment: SegmentView, state: State, values?: Fields): string {
   const members = segment.members;
   const counts = ['at-risk', 'healthy', 'unknown'].map(status => `${members.filter(member => member.health === status).length} ${status === 'at-risk' ? 'at risk' : status}`).join(' · ');
   const records = members.map(member => `<li class="record"><h3>${accountLink(member.accountId, member.name)}</h3><p>${pill(member.health)}</p><dl><dt>Tier</dt><dd>${escape(member.tier ?? 'Unset')}</dd><dt>Stage</dt><dd>${escape(member.stage ?? 'Unset')}</dd><dt>Entered (UTC)</dt><dd>${timestamp(member.enteredAt)}</dd></dl></li>`).join('');
@@ -59,7 +59,7 @@ function report(segment: SegmentView, state: State, values?: Fields): string {
     const name = state.accounts.find(account => account.id === interval.accountId)?.name ?? interval.accountId;
     return `<li class="record">${accountLink(interval.accountId, name)}<dl><dt>Entered (UTC)</dt><dd>${timestamp(interval.enteredAt)}</dd><dt>Exited (UTC)</dt><dd>${interval.exitedAt ? timestamp(interval.exitedAt) : 'Current member'}</dd><dt>Entry proposal</dt><dd>${interval.proposalId ? `<a href="/app/accounts/${pathId(interval.accountId)}">Proposal ${escape(interval.proposalId)}</a>` : 'No proposal prepared'}</dd></dl></li>`;
   }).join('');
-  const edit = canManage(state) ? disclosure('Edit segment', 'Change membership rules, classification or entry playbook.', segmentForm(segment, values), `edit-segment-${segment.id}`, values?.action === 'segment-save' && values.segmentId === segment.id) : '';
+  const edit = canManage(state) ? disclosure('Edit segment', 'Change membership rules, classification or entry playbook.', segmentForm(data,segment, values), `edit-segment-${segment.id}`, values?.action === 'segment-save' && values.segmentId === segment.id) : '';
   return section(segment.name, `<p>${escape(segment.mode)} membership · ${members.length} members · ${counts}</p><p>Rule tier: ${escape(segment.tier ?? 'Unset')} · Rule stage: ${escape(segment.stage ?? 'Unset')}. Account reports show each account’s effective classification.</p>`
     + `<p><a href="/api/buoy/segments/${pathId(segment.id)}/report.csv">Download full segment report (CSV)</a></p>`
     + (records ? `<ul class="journal">${records}</ul>` : '<p>No accounts match this report.</p>')
@@ -69,7 +69,7 @@ function report(segment: SegmentView, state: State, values?: Fields): string {
 
 export function segmentsPage(data: SegmentsPage, state: State, fields?: Fields): string {
   return section('Segment reports', '<p>Membership reports show current health, tier and stage. Rule classifications use the first matching segment in stable creation order; manual account overrides take priority.</p>')
-    + (data.segments.length ? data.segments.map(segment => report(segment, state, fields)).join('') : '<p>No segments created yet.</p>')
-    + (canManage(state) ? disclosure('Create a segment', 'Choose dynamic rules or a static account list.', segmentForm(undefined, fields), 'create-segment', fields?.action === 'segment-save' && !fields.id)
-      + section('Supported rule fields', ruleHelp(data)) + classification(state, fields) : '');
+    + (data.segments.length ? data.segments.map(segment => report(data,segment, state, fields)).join('') : '<p>No segments created yet.</p>')
+    + (canManage(state) ? disclosure('Create a segment', 'Choose dynamic rules or a static account list.', segmentForm(data,undefined, fields), 'create-segment', fields?.action === 'segment-save' && !fields.id)
+      + section('Service tier names', '<p>Define your own service tiers. Names in use by an account or segment must be reclassified before removal.</p>'+form('segment-tiers','/app/segments',hidden('action','segment-tiers')+textarea('tiers','Tier names (one per line)',fields?.action==='segment-tiers'?fields.tiers:data.tiers.join('\n'))+button('Save tier names'))) + section('Supported rule fields', ruleHelp(data)) + classification(data,state, fields) : '');
 }

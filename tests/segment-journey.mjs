@@ -11,7 +11,11 @@ export async function segmentJourney({call,json,request,cookie,member,account,sc
  assert.equal((await call('/segments','POST',{...source,rules:{match:'all',conditions:[condition('billing.totalMinor','gt','5000000')]}})).status,400)
  assert.equal((await call('/segments','POST',{...source,rules:{match:'all',conditions:[condition('arr','gt',5000000)]}})).status,400,'no fabricated ARR')
  assert.equal((await call('/segments','POST',{...source,rules:{match:'all',conditions:[condition('name','contains','Harbour'),{field:'name',op:'is-missing',value:'not allowed'}]}})).status,400)
+ assert.equal((await call('/segments/tiers','PUT',{tiers:['high-touch','scaled','digital','Strategic partners']},{cookie:member})).status,403)
+ await json(await call('/segments/tiers','PUT',{tiers:['high-touch','scaled','digital','Strategic partners']}))
  const {id}=await json(await call('/segments','POST',source),201)
+ const custom=(await json(await call('/segments','POST',{...source,name:'Custom service tier',tier:'Strategic partners',playbook:null}),201)).id
+ assert.equal((await call('/segments/tiers','PUT',{tiers:['high-touch','scaled','digital']})).status,409,'SEGMENT-001 a used owner-defined tier cannot be removed')
  const read=async()=>await json(await call('/segments'))
  const seg=async sid=>(await read()).segments.find(s=>s.id===(sid??id))
  const report=async()=>await json(await call(`/segments/${id}/report`))
@@ -38,7 +42,7 @@ export async function segmentJourney({call,json,request,cookie,member,account,sc
  const memberReport=await json(await call(`/segments/${id}/report`,'GET',undefined,{cookie:member}));assert.deepEqual(memberReport,r,'segment never grants or changes access')
  const manual=async(tier,stage)=>json(await call(`/accounts/${a.id}/classification`,'PUT',{tier,stage}))
  assert.equal((await call(`/accounts/${a.id}/classification`,'PUT',{tier:'digital',stage:'adoption'},{cookie:member})).status,403)
- await manual('digital','adoption');let current=(await json(await call('/state'))).accounts.find(x=>x.id===a.id);assert.equal(current.tier,'digital');assert.equal(current.stage,'adoption')
+ await manual('Strategic partners','adoption');let current=(await json(await call('/state'))).accounts.find(x=>x.id===a.id);assert.equal(current.tier,'Strategic partners');assert.equal(current.stage,'adoption')
  await manual(null,null);current=(await json(await call('/state'))).accounts.find(x=>x.id===a.id);assert.equal(current.tier,null);assert.equal(current.stage,null)
  await manual('__rules__','__rules__');current=(await json(await call('/state'))).accounts.find(x=>x.id===a.id);assert.equal(current.tier,'high-touch');assert.equal(current.stage,'renewal')
  const staticInput={...source,name:'Hand picked accounts',mode:'static',rules:{match:'all',conditions:[]},accountIds:[a.id],tier:'digital',stage:'adoption',playbook:null}

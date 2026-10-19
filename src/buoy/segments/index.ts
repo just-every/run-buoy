@@ -1,10 +1,10 @@
 import { observeOutcomes } from '../outcomes/observe'
 import { accountAudit } from '../audit-records'
 import { auditRecord } from '../audit-records'
-import { authority, guard, id, insist, now, requirePerson, stmt, type Actor } from '../core'
+import { authority, guard, id, insist, now, requirePerson, stmt, text, type Actor } from '../core'
 import type { Values } from './rules'
 import { FIELDS, classify, includes, segmentInput } from './rules'
-import { snapshot, fence, definitions, accountValues, type Image } from './snapshot'
+import { snapshot, fence, definitions, tierNames, accountValues, type Image } from './snapshot'
 
 export function evaluated(image:Image,on:string) {
  const segments=definitions(image)
@@ -42,7 +42,7 @@ export async function reconcile(db:D1Database,actor:Actor,at=new Date()) {
 }
 export async function segmentState(db:D1Database) {
  const image=(await snapshot(db)).value,accounts=evaluated(image,new Date().toISOString().slice(0,10))
- return {fields:FIELDS,segments:definitions(image).map(s=>({...s,
+ return {fields:FIELDS,tiers:tierNames(image),segments:definitions(image).map(s=>({...s,
   members:image.entries.filter(e=>e.segmentId===s.id&&!e.exitedAt).map(e=>{const a=accounts.find(a=>a.account.id===e.accountId)!;return {accountId:e.accountId,name:a.account.name,health:a.values['health.status'] as string,tier:a.tier,stage:a.stage,enteredAt:e.enteredAt}}),
   history:image.entries.filter(e=>e.segmentId===s.id).map(e=>({accountId:e.accountId,enteredAt:e.enteredAt,exitedAt:e.exitedAt,proposalId:e.proposalId}))})),
   classifications:accounts.map(a=>({accountId:a.account.id,tier:a.tier,stage:a.stage,tierManual:!!a.classification?.tierManual,stageManual:!!a.classification?.stageManual}))}
@@ -52,15 +52,16 @@ export async function saveSegment(db:D1Database,actor:Actor,input:Record<string,
  const image=await snapshot(db),existing=input.id?image.value.segments.find(s=>s.id===input.id):undefined
  if(input.id)insist(existing&&input.revision===existing.revision,'Segment changed. Reload before saving.',409)
  else insist(image.value.segments.length<50,'At most 50 segments are supported.')
- const value=segmentInput(input,new Set(image.value.accounts.map(a=>a.id))),segmentId=existing?.id??id()
+ const value=segmentInput(input,new Set(image.value.accounts.map(a=>a.id)),tierNames(image.value)),segmentId=existing?.id??id()
  await db.batch([authority(db,actor,true),fence(db,image.raw),stmt(db,'INSERT INTO buoy_segments(id,document,revision,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',segmentId,JSON.stringify(value),id(),existing?.createdAt??now()),auditRecord(db,actor,'segment.saved',`segment:${segmentId}`),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:segmentId}
 }
 export async function setClassification(db:D1Database,actor:Actor,accountId:string,input:Record<string,unknown>) {
  requirePerson(actor)
  insist(Object.keys(input).every(k=>['tier','stage'].includes(k)),'Only tier and stage can be classified.')
- const tier=input.tier==='__rules__'?null:classify(input.tier??null,'tier'),stage=input.stage==='__rules__'?null:classify(input.stage??null,'stage')
- await db.batch([authority(db,actor,true),guard(db,'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=?)',accountId),stmt(db,'INSERT INTO buoy_classifications(account_id,tier,stage,tier_manual,stage_manual) VALUES(?,?,?,?,?) ON CONFLICT(account_id) DO UPDATE SET tier=excluded.tier,stage=excluded.stage,tier_manual=excluded.tier_manual,stage_manual=excluded.stage_manual',accountId,tier,stage,Number(input.tier!=='__rules__'),Number(input.stage!=='__rules__')),...accountAudit(db,actor,accountId,'account.classified'),stmt(db,'DELETE FROM buoy_assertions')])
+ const image=await snapshot(db)
+ const tier=input.tier==='__rules__'?null:classify(input.tier??null,'tier',tierNames(image.value)),stage=input.stage==='__rules__'?null:classify(input.stage??null,'stage')
+ await db.batch([authority(db,actor,true),fence(db,image.raw),guard(db,'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=?)',accountId),stmt(db,'INSERT INTO buoy_classifications(account_id,tier,stage,tier_manual,stage_manual) VALUES(?,?,?,?,?) ON CONFLICT(account_id) DO UPDATE SET tier=excluded.tier,stage=excluded.stage,tier_manual=excluded.tier_manual,stage_manual=excluded.stage_manual',accountId,tier,stage,Number(input.tier!=='__rules__'),Number(input.stage!=='__rules__')),...accountAudit(db,actor,accountId,'account.classified'),stmt(db,'DELETE FROM buoy_assertions')])
  return {accountId}
 }
 export async function segmentReport(db:D1Database,segmentId:string) {
@@ -74,4 +75,15 @@ export function reportCsv(report:Awaited<ReturnType<typeof segmentReport>>) {
 export async function scheduledSegments(db:D1Database,at:Date) {
  const owner=await db.prepare("SELECT id,display_name AS displayName,role FROM oa_operators WHERE role='owner' AND status='active' ORDER BY id LIMIT 1").first<{id:string;displayName:string;role:string}>()
  if(owner){const actor={...owner,kind:'person' as const};await reconcile(db,actor,at);await observeOutcomes(db,actor,at)}
+}
+
+export async function setTiers(db:D1Database,actor:Actor,input:Record<string,unknown>) {
+ requirePerson(actor)
+ insist(Object.keys(input).length===1&&Array.isArray(input.tiers)&&input.tiers.length>0&&input.tiers.length<=50,'Enter a nonempty list of at most 50 tier names.')
+ const tiers=(input.tiers as unknown[]).map(v=>text(v,'Tier name',100))
+ insist(new Set(tiers).size===tiers.length&&tiers.every(v=>v!=='__rules__'&&!/[\u0000-\u001f]/.test(v)),'Tier names must be unique and contain no control characters or reserved rule marker.')
+ const image=await snapshot(db),used=new Set([...definitions(image.value).flatMap(s=>s.tier?[s.tier]:[]),...image.value.classifications.flatMap(c=>c.tier?[c.tier]:[])])
+ insist([...used].every(name=>tiers.includes(name)),'A removed tier is still used by a segment or account. Reclassify them first.',409)
+ await db.batch([authority(db,actor,true),fence(db,image.raw),stmt(db,"INSERT INTO buoy_tiers(singleton,document) VALUES(1,?) ON CONFLICT(singleton) DO UPDATE SET document=excluded.document",JSON.stringify(tiers)),auditRecord(db,actor,'segment.tiers-saved','installation:segments'),stmt(db,'DELETE FROM buoy_assertions')])
+ return {tiers}
 }

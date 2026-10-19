@@ -15,7 +15,7 @@ import { audit, refuse } from './audit'
 import { teamState, saveTeamSettings, previewAssignment, applyAssignment } from './team'
 import { inbox, setPreferences, markRead, mention } from './notify'
 import { flushNotifications } from './notify-mail'
-import { reconcile, segmentState, saveSegment, setClassification, segmentReport, reportCsv } from './segments'
+import { reconcile, segmentState, setTiers, saveSegment, setClassification, segmentReport, reportCsv } from './segments'
 import * as imports from './imports/index'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
@@ -50,6 +50,7 @@ buoyApi.post('/api/buoy/outcomes',async c=>c.json(await startOutcome(c.env.DB,c.
 buoyApi.get('/api/buoy/outcomes/:id/report',async c=>c.json(await outcomeReport(c.env.DB,c.req.param('id'))))
 buoyApi.get('/api/buoy/outcomes/:id/report.csv',async c=>c.body(outcomeCsv(await outcomeReport(c.env.DB,c.req.param('id'))),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=playbook-outcomes.csv'}))
 buoyApi.get('/api/buoy/segments',async c=>c.json(await segmentState(c.env.DB)))
+buoyApi.put('/api/buoy/segments/tiers',async c=>c.json(await setTiers(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/segments',async c=>c.json(await saveSegment(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.put('/api/buoy/accounts/:id/classification',async c=>c.json(await setClassification(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
 buoyApi.get('/api/buoy/segments/:id/report',async c=>c.json(await segmentReport(c.env.DB,c.req.param('id'))))

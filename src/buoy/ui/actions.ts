@@ -44,6 +44,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     return {redirect:path,message:'Outcome tracking started.',saved:'outcome-start-form'};
   }
   if (path === '/app/segments') {
+    if(action==='segment-tiers'){await send('/api/buoy/segments/tiers',{tiers:fields.tiers.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)},'PUT');return {redirect:path,message:'Tier names saved.',saved:action}}
     if(action==='segment-save') {
       let conditions:unknown;try{conditions=JSON.parse(fields.conditions)}catch{throw new ApiError('Enter a valid JSON array of rule conditions.')}
       await send('/api/buoy/segments',{...(fields.segmentId?{id:fields.segmentId,revision:fields.revision}:{}),name:fields.name,mode:fields.mode,rules:{match:fields.match,conditions},accountIds:fields.accountIds.split(',').map(s=>s.trim()).filter(Boolean),tier:fields.tier||null,stage:fields.stage||null,playbook:fields.playbookTitle?{title:fields.playbookTitle,dueDays:Number(fields.dueDays)}:null});

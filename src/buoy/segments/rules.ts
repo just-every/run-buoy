@@ -14,11 +14,11 @@ export interface Condition {field:string;op:string;value?:string|number}
 export interface Rules {match:'all'|'any';conditions:Condition[]}
 export interface Segment {id:string;name:string;mode:'static'|'dynamic';rules:Rules;accountIds:string[];tier:string|null;stage:string|null;playbook:{title:string;dueDays:number}|null;revision:string;createdAt:string}
 const keys = (row:Record<string,unknown>,allowed:string[]) => insist(Object.keys(row).every(k=>allowed.includes(k)), 'Unsupported segment field.')
-export function classify(value:unknown,kind:'tier'|'stage') {
- insist(value === null || (kind==='tier'?TIERS:STAGES).includes(String(value)), `Choose a valid ${kind}.`)
+export function classify(value:unknown,kind:'tier'|'stage',tiers=TIERS) {
+ insist(value === null || (kind==='tier'?tiers:STAGES).includes(String(value)), `Choose a valid ${kind}.`)
  return value as string|null
 }
-export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>) {
+export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>,tiers=TIERS) {
  keys(input,['id','revision','name','mode','rules','accountIds','tier','stage','playbook'])
  insist(input.mode==='dynamic'||input.mode==='static','Choose dynamic or static membership.')
  const rules=object(input.rules);keys(rules,['match','conditions'])
@@ -40,7 +40,7 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
  insist(input.mode==='static'||ids.length===0,'Dynamic segments do not take static members.')
  let playbook:Segment['playbook']=null
  if(input.playbook!==null&&input.playbook!==undefined){const p=object(input.playbook);keys(p,['title','dueDays']);insist(Number.isInteger(p.dueDays)&&Number(p.dueDays)>=0&&Number(p.dueDays)<=365,'Entry task is due in 0 to 365 whole days.');playbook={title:text(p.title,'Entry task title',500),dueDays:Number(p.dueDays)}}
- return {name:text(input.name,'Segment name',100),mode:input.mode,rules:{match:rules.match,conditions},accountIds:ids,tier:classify(input.tier??null,'tier'),stage:classify(input.stage??null,'stage'),playbook} as Omit<Segment,'id'|'revision'|'createdAt'>
+ return {name:text(input.name,'Segment name',100),mode:input.mode,rules:{match:rules.match,conditions},accountIds:ids,tier:classify(input.tier??null,'tier',tiers),stage:classify(input.stage??null,'stage'),playbook} as Omit<Segment,'id'|'revision'|'createdAt'>
 }
 export function matches(rules:Rules,values:Values) {
  const tests=rules.conditions.map(c=>{
