@@ -71,3 +71,5 @@ buoyApi.post('/api/buoy/commands', async c => {
  return c.json(await prepare(db, actor, {...input, kind: body.command === 'playbook.prepare' ? 'playbook' : 'renewal'}), 201)
 })
 buoyApi.get('/api/buoy/audit', async c => c.json(await audit(c.env.DB, c.get('actor'))))
+// BOUNDARY-001/002: the route list, read from the router itself.
+buoyApi.get('/api/buoy/routes', c => c.json({routes: buoyApi.routes.filter(route => route.method !== 'ALL').map(({method, path}) => ({method, path}))}))

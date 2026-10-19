@@ -14,7 +14,7 @@ export async function mailWorker({ root = process.cwd() } = {}) {
  const config = JSON.parse(await readFile(join(root, 'dist/server/wrangler.json'), 'utf8'))
  const socket=createServer(); await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve)); const port=socket.address().port; await new Promise(resolve=>socket.close(resolve))
  const origin = `https://127.0.0.1:${port}`, directory = await mkdtemp(join(tmpdir(), 'buoy-mail-'))
- const secret = () => randomBytes(32).toString('base64url'), mails = []
+ const secret = () => randomBytes(32).toString('base64url'), mails = [], outbound = []
  const vars = { AUTH_LOCAL: 'false', AUTH_ORIGIN: origin, OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
   host:'127.0.0.1', port, https:true,
@@ -24,6 +24,7 @@ export async function mailWorker({ root = process.cwd() } = {}) {
   assets: {directory:join(root,'dist/client'),routerConfig:{has_user_worker:true}},
   d1Databases: {DB:'foundation'}, bindings:vars,
   outboundService: async request => {
+   outbound.push(request.url)
    assert.equal(request.url, 'https://api.resend.com/emails')
    mails.push(await request.json())
    return Response.json({id:`provider-receipt-${mails.length}`})
@@ -51,6 +52,6 @@ export async function mailWorker({ root = process.cwd() } = {}) {
    assert.equal(response.status,303)
    return response.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
   }
-  return {origin,directory,request,cookie,signIn,mails,async close(){await mf.dispose();await rm(directory,{recursive:true,force:true})}}
+  return {origin,directory,request,cookie,signIn,mails,outbound,async close(){await mf.dispose();await rm(directory,{recursive:true,force:true})}}
  }catch(error){await mf.dispose();await rm(directory,{recursive:true,force:true});throw error}
 }

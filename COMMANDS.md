@@ -4,7 +4,7 @@ All requests use the installation origin and JSON. People use a current native s
 
 An owner creates a credential with `POST /api/buoy/agent-tokens` and `{"label":"Renewal assistant"}`. Save the returned token privately: only its hash is stored. It expires in seven days, stops if its issuing owner loses authority, and can be revoked with `DELETE /api/buoy/agent-tokens/:id`. Credentials are not exported.
 
-`GET /api/buoy/commands` lists the supported commands. POST examples:
+`GET /api/buoy/commands` lists the supported commands. A signed-in person can read every product API route with `GET /api/buoy/routes`; none moves money. POST examples:
 
 ```json
 {"command":"renewals.list"}

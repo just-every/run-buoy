@@ -5,7 +5,8 @@ import { startWorker } from './worker.mjs'
 const today=new Date().toISOString().slice(0,10)
 const account=(id='harbour')=>({id,name:'Harbour Software',renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Signed order form section 4, approved by customer',billing:{observedAt:today,reference:'Nectar invoice INV-1042',currency:'AUD',totalMinor:120000,creditsMinor:10000,allocatedMinor:20000,dueDate:'2026-01-01'},support:{observedAt:today,reference:'Support case CS-42',openTickets:3,urgentTickets:1}})
 test('Buoy public HTTP jobs and trust boundaries',async t=>{
- const worker=await startWorker(), {request,cookie,signIn}=worker
+ const worker=await startWorker(), {cookie,signIn}=worker, seen=[]
+ const request=(path,options={})=>{seen.push([options.method??'GET',path.split('?')[0]]);return worker.request(path,options)}
  const call=(path,method='GET',body,extra={})=>request('/api/buoy'+path,{method,body,cookie,...extra})
  async function json(response,status=200){assert.equal(response.status,status,await response.clone().text());return response.json()}
  let member,token,proposal,task
@@ -166,6 +167,17 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
    // No journey, campaign or other one-to-many send exists: every message the installation sent is a sign-in link to the one person who asked for it.
    assert.ok(worker.mails.length);for(const mail of worker.mails){assert.equal([mail.to].flat().length,1);assert.match(mail.html,/\/auth\/confirm\?token=/)}
+  })
+  await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
+   const {routes}=await json(await call('/routes'))
+   assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))
+   for(const route of routes){
+    assert.doesNotMatch(route.path,/charge|payment|refund|payout|dunning|checkout|tax|subscription|card/i,`${route.method} ${route.path} does not move money`)
+    if(route.method==='GET')continue
+    const pattern=new RegExp('^'+route.path.replace(/:[^/]+/g,'[^/]+')+'$')
+    assert.ok(seen.some(([method,path])=>method===route.method&&pattern.test(path)),`${route.method} ${route.path} ran in this journey`)
+   }
+   assert.ok(worker.outbound.length);assert.deepEqual([...new Set(worker.outbound)],['https://api.resend.com/emails'],'the only outbound call is the sign-in mail provider')
   })
  }finally{await worker.close()}
 })
