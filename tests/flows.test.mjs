@@ -11,12 +11,15 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
  async function json(response,status=200){assert.equal(response.status,status,await response.clone().text());return response.json()}
  let member,token,proposal,task
  try {
-  await t.test('native sign-in, unauthenticated data refusal and CSRF',async()=>{
+  await t.test('AUDIT-001 native sign-in records an opaque actor; unauthenticated data refusal and CSRF',async()=>{
    assert.equal((await request('/api/buoy/state')).status,401)
    assert.equal((await call('/accounts','POST',account(),{headers:{origin:'https://other.invalid'}})).status,403)
    assert.equal((await request('/__dev/outbox')).status,404)
    const signedIn=await signIn('owner@example.test')
    assert.equal((await request('/api/buoy/state',{cookie:signedIn})).status,200)
+   const signins=(await json(await call('/audit?action=auth.signed-in'))).entries
+   assert.equal(signins.length,1);assert.match(signins[0].actor,/^person:[0-9a-f-]+$/)
+   assert.equal(signins[0].subject,signins[0].actor);assert.ok(Date.parse(signins[0].occurredAt));assert.doesNotMatch(JSON.stringify(signins),/owner@example|Harbour CS owner/)
   })
   await t.test('billing evidence, renewal date and honest unknown health',async()=>{
    await json(await call('/accounts','POST',account()),201)
@@ -161,12 +164,65 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const after=(await json(await call('/state'))).accounts.find(a=>a.id==='harbour')
    assert.equal(after.revision,before.revision,'no term changed');assert.ok(!(await json(await call('/state'))).proposals.some(p=>p.payload.reason==='Offer 20% off to close'))
    assert.equal((await call('/audit','GET',undefined,{cookie:member})).status,403)
-   const recorded=(await json(await call('/audit'))).entries.filter(e=>e.actor===`agent:${agent.id}:Discount probe`)
-   assert.deepEqual(recorded.map(e=>e.action),['agent.refused','agent.refused','agent.refused'])
+   const recorded=(await json(await call('/audit'))).entries.filter(e=>e.actor===`agent:${agent.id}`)
+   assert.deepEqual(recorded.map(e=>e.action),['agent.refused','agent.refused','agent.refused']);for(const e of recorded)assert.equal(e.actor,`agent:${agent.id}`,'AUDIT-001 retains the agent id without its display name')
    for(const [,,subject,reason] of attempts){const entry=recorded.find(e=>e.subject===subject);assert.ok(entry,`${subject} is recorded`);assert.match(entry.detail,reason);assert.ok(Date.parse(entry.occurredAt))}
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
    // No journey, campaign or other one-to-many send exists: every message the installation sent is a sign-in link to the one person who asked for it.
    assert.ok(worker.mails.length);for(const mail of worker.mails){assert.equal([mail.to].flat().length,1);assert.match(mail.html,/\/auth\/confirm\?token=/)}
+  })
+  await t.test('AUDIT-001 admins search recorded actions with inclusive UTC dates and stable pages',async()=>{
+   const agent=await json(await call('/agent-tokens','POST',{label:'Audit desk <script>alert(1)</script>'}),201), as={cookie:undefined,token:agent.token}
+   for(let i=0;i<52;i++)assert.equal((await call('/commands','POST',{command:`audit-probe-${String(i).padStart(2,'0')}`},as)).status,400)
+   const filters=`actor=${encodeURIComponent(agent.id)}&action=AGENT.REFUSED&subject=command%20AUDIT-probe&since=${today}&until=${today}`
+   const first=await json(await call('/audit?'+filters))
+   assert.equal(first.entries.length,50);assert.equal(first.nextOffset,50)
+   for(const entry of first.entries){assert.match(entry.actor,new RegExp(agent.id));assert.equal(entry.action,'agent.refused');assert.match(entry.subject,/^command audit-probe-\d{2}$/);assert.equal(entry.occurredAt.slice(0,10),today)}
+   const last=await json(await call('/audit?'+filters+'&offset='+first.nextOffset))
+   assert.equal(last.entries.length,2);assert.equal(last.nextOffset,null)
+   assert.equal(new Set([...first.entries,...last.entries].map(e=>e.id)).size,52)
+   assert.deepEqual([...first.entries,...last.entries].map(e=>e.occurredAt),[...first.entries,...last.entries].map(e=>e.occurredAt).sort().reverse())
+   assert.equal((await json(await call('/audit?'+filters.replace('action=AGENT.REFUSED','action=missing')))).entries.length,0)
+   assert.equal((await json(await call('/audit?actor='+encodeURIComponent(agent.id)+'&subject=%25'))).entries.length,0,'percent is literal, not a wildcard')
+   const tomorrow=new Date(Date.parse(today)+86400000).toISOString().slice(0,10)
+   assert.equal((await json(await call('/audit?'+filters.replace(`since=${today}&until=${today}`,`since=${tomorrow}`)))).entries.length,0)
+   for(const query of ['since=2026-02-30','since=2027-01-02&until=2027-01-01','offset=-1','offset=1.5','actor='+ 'a'.repeat(201)])assert.equal((await call('/audit?'+query)).status,400)
+   const page=await request('/app/audit?'+filters,{cookie});assert.equal(page.status,200)
+   const html=await page.text();assert.match(html,/Audit entries/);assert.match(html,/audit-probe-/);assert.match(html,/Next entries/);assert.doesNotMatch(html,/<script>alert/)
+   assert.equal((await request('/app/audit',{cookie:member})).status,403)
+   assert.equal((await request('/app/audit?since=bad',{cookie})).status,400)
+   assert.match(await (await request('/app/audit?action=missing',{cookie})).text(),/No recorded actions match/)
+   assert.equal((await call('/audit','GET',undefined,as)).status,403)
+   await json(await request('/auth/invite',{method:'POST',cookie,body:{email:'admin@example.test',displayName:'CS administrator',role:'admin'}}),202)
+   const admin=await signIn('admin@example.test')
+   assert.equal((await request('/app/audit?'+filters,{cookie:admin})).status,200)
+   assert.deepEqual((await json(await call('/audit?'+filters,'GET',undefined,{cookie:admin}))).entries,first.entries)
+   await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
+  })
+  await t.test('AUDIT-001 approvals and agent preparation survive erasure without subject or actor names',async()=>{
+   const privateId='joan-example-person', name='Joan Example LLC', path='/accounts/'+encodeURIComponent(privateId)
+   await json(await call('/accounts','POST',{...account(privateId),name}),201)
+   const created=(await json(await call('/audit?action=account.created'))).entries[0]
+   assert.match(created.subject,/^[0-9a-f]{32}$/)
+   const subject=created.subject, read=async()=>(await json(await call('/audit?subject='+subject))).entries
+   const agent=await json(await call('/agent-tokens','POST',{label:'Joan Example assistant'}),201), as={cookie:undefined,token:agent.token}
+   const prepared=await json(await call('/commands','POST',{command:'renewal.prepare',input:{accountId:privateId,payload:{outcome:'renewed',reason:'Confirmed renewal',evidence:'Signed renewal order R-18'}}},as),201)
+   await json(await call(`/proposals/${prepared.id}/approve`,'POST',{}))
+   await json(await call(`/proposals/${prepared.id}/approve`,'POST',{}))
+   assert.equal((await read()).filter(e=>e.action==='renewal.approved').length,1,'approval replay adds no audit action')
+   const before=await read()
+   assert.equal((await call(path,'PUT',{...account(privateId),name,revision:'outdated'})).status,409)
+   assert.deepEqual(await read(),before,'a failed transaction adds no audit action')
+   assert.equal((await call(path,'PUT',{},as)).status,403)
+   assert.equal((await call(path,'DELETE',{confirmation:name},{cookie:member})).status,403)
+   await json(await call(path,'DELETE',{confirmation:name}))
+   const retained=await read()
+   assert.deepEqual(retained.map(e=>e.action).sort(),['account.created','account.erased','agent.refused','renewal.approved','renewal.prepared'])
+   for(const entry of retained){assert.match(entry.actor,/^(person|agent):[0-9a-f-]+$/);assert.ok(Date.parse(entry.occurredAt));assert.equal(entry.subject,subject)}
+   assert.doesNotMatch(JSON.stringify(retained),/Joan|joan|example.test|Harbour CS owner/)
+   assert.deepEqual((await json(await call('/audit?actor='+agent.id))).entries.filter(e=>e.action==='agent.refused'),retained.filter(e=>e.action==='agent.refused'))
+   assert.ok(!(await json(await call('/state'))).accounts.some(a=>a.id===privateId))
+   await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
   })
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))

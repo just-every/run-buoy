@@ -1,4 +1,5 @@
 import type { Bindings } from '../../auth.server';
+import { auditPage, type AuditPage } from './audit';
 import { accountPage } from './account';
 import { ApiError, apiCall, mutate } from './actions';
 import { escape, section } from './html';
@@ -27,8 +28,8 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   let accountId: string | undefined;
   try { accountId = match ? decodeURIComponent(match[1]) : undefined; } catch { /* The shell below renders a 404. */ }
   const account = accountId ? state.accounts.find(item => item.id === accountId) : undefined;
-  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
-  if (path === '/app/imports' && !canManage(state)) return shell({ title: 'Imports', body: section('Administrator access required', '<p>Only the owner or an administrator can preview, apply or undo an import.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
+  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
+  if ((path === '/app/imports' || path === '/app/audit') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
   let fields: Fields | undefined, error: string | undefined, preview: Preview | undefined, status = 200;
   if (request.method === 'POST') {
     try {
@@ -54,7 +55,15 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   const open = url.searchParams.has('open') ? (url.searchParams.get('open') === 'none' ? null : url.searchParams.get('open')) : undefined;
   const today = new Date().toISOString().slice(0, 10);
   let title = 'Renewals', body: string, head: string | undefined, style: string | undefined;
-  if (path === '/app/imports') {
+  if (path === '/app/audit') {
+    title = 'Audit';
+    try {
+      body = auditPage(await apiCall<AuditPage>(api, request, '/api/buoy/audit?' + url.searchParams.toString()), url.searchParams);
+    } catch (caught) {
+      status = caught instanceof ApiError ? caught.status : 503;
+      body = section('Audit unavailable', `<p>${escape(caught instanceof Error ? caught.message : 'Reload to read the audit.')}</p><p><a href="/app/audit">Clear filters and reload</a></p>`);
+    }
+  } else if (path === '/app/imports') {
     title = 'Imports';
     try {
       const journal = await apiCall<{ jobs: Job[]; erasures?: unknown[] }>(api, request, '/api/buoy/imports');

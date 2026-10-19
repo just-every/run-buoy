@@ -1,3 +1,4 @@
+import { accountAudit } from './audit-records'
 export class Problem extends Error {
  constructor(public status: number, message: string) { super(message) }
 }
@@ -33,6 +34,6 @@ export function authority(db: D1Database, actor: Actor, approval = false) {
 }
 export async function commit(db: D1Database, actor: Actor, accountId: string, action: string, statements: D1PreparedStatement[], approval = false) {
  await db.batch([authority(db, actor, approval), ...statements,
-  stmt(db, 'INSERT INTO buoy_events(id,account_id,actor,action,occurred_at) VALUES(?,?,?,?,?)', id(), accountId, `${actor.kind}:${actor.id}:${actor.displayName}`, action, now()),
+  ...accountAudit(db, actor, accountId, action),
   stmt(db, 'DELETE FROM buoy_assertions')])
 }

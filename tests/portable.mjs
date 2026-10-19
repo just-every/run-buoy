@@ -37,10 +37,15 @@ try{
  const proposal=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'renewed',reason:'Annual renewal accepted',evidence:'Signed renewal R-17'}})
  await call(`/proposals/${proposal.id}/approve`,'POST',{})
  const token=await call('/agent-tokens','POST',{label:'Portable preparation assistant'})
+ assert.equal((await running.request('/api/buoy/accounts/'+accountId,{method:'PUT',body:{},token:token.token})).status,403)
  const erased={...fixture.accounts[0],id:'erase-before-backup',name:'Retired account'}
  await call('/accounts','POST',erased)
  await call('/accounts/erase-before-backup','DELETE',{confirmation:'Retired account'})
- const before=await call('/state')
+ const before=await call('/state'), beforeAudit=(await call('/audit')).entries
+ assert.ok(beforeAudit.length,'AUDIT-001 archive starts with real recorded actions')
+ const screen=await (await running.request('/app/audit',{cookie:running.cookie})).text()
+ assert.equal((screen.match(/<article class="record">/g)??[]).length,beforeAudit.length,'AUDIT-001 screen lists the exported entries')
+ for(const entry of beforeAudit){assert.ok(screen.includes(entry.action));assert.ok(screen.includes(entry.subject));assert.ok(screen.includes(entry.occurredAt))}
  await running.close();running=null
  await command(source,['export','--output',archive])
  await command(destination,['import','--input',archive,'--yes'])
@@ -50,6 +55,7 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,directory:join(destination,'.wrangler/state'),keep:true})
  const after=await call('/state')
+ assert.deepEqual((await call('/audit')).entries,beforeAudit,'AUDIT-001 archive preserves exactly the audit entries shown before export')
  assert.deepEqual(after.accounts,before.accounts)
  assert.deepEqual(after.proposals,before.proposals)
  assert.deepEqual(after.decisions,before.decisions)
@@ -59,5 +65,5 @@ try{
  const followup=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'deferred',reason:'Review next year',evidence:'Account review note CS-18'}})
  await call(`/proposals/${followup.id}/approve`,'POST',{})
  assert.equal((await call('/state')).decisions.length,before.decisions.length+1)
- console.log('Archive journey passed: HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
+ console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
 }finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}
