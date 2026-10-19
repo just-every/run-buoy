@@ -71,7 +71,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   }
   // Success messages are selected from known server outcomes, not arbitrary
   // text supplied in a link to this private page.
-  const messages = new Set(['Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import completed. The journal below records its result.', 'Import request recorded. Check its current state in the journal below.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.']);
+  const messages = new Set(['Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import completed. The journal below records its result.', 'Import request recorded. Check its current state in the journal below.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.']);
   const success = url.searchParams.get('success') ?? '';
   const response = await shell(title, body, state, account ? '/app' : path, status, error, messages.has(success) ? success : undefined, !!account);
   return request.method === 'HEAD' ? new Response(null, { status: response.status, headers: response.headers }) : response;

@@ -5,8 +5,20 @@ export interface Account {
  billing: null | {observedAt: string; reference: string; currency: string; totalMinor: number; creditsMinor: number; allocatedMinor: number; dueDate: string};
  support: null | {observedAt: string; reference: string; openTickets: number; urgentTickets: number};
 }
-export function health(account: Account, today = new Date().toISOString().slice(0, 10)) {
- const reasons: string[] = [], gaps: string[] = []
+export interface Sentiment { rating: 'red' | 'amber' | 'green'; reason: string; recordedBy: string; recordedAt: string; expiresOn: string }
+// HEALTH-002: red sentiment is a risk reason; amber and green are shown as the
+// person's judgment without moving the band. An expired rating is a missing
+// optional measure: it is named but, unlike billing and support, never makes health Unknown.
+function judgment(sentiment: Sentiment | null, today: string) {
+ if (!sentiment) return null
+ const by = sentiment.recordedBy.split(':').slice(2).join(':') || 'A team member', expired = today > sentiment.expiresOn
+ const rating = sentiment.rating[0].toUpperCase() + sentiment.rating.slice(1)
+ return {...sentiment, by, expired, line: expired
+  ? `CSM sentiment from ${by} expired after ${sentiment.expiresOn}; the sentiment measure is missing until someone records a new rating.`
+  : `${rating} CSM sentiment — ${by}’s judgment, not source data, counting through ${sentiment.expiresOn}: ${sentiment.reason}`}
+}
+export function health(account: Account, today = new Date().toISOString().slice(0, 10), sentiment: Sentiment | null = null) {
+ const reasons: string[] = [], gaps: string[] = [], judged = judgment(sentiment, today)
  const stale = (observed: string) => Date.parse(today) - Date.parse(observed) > 30 * 86400000
  if (!account.billing) gaps.push('Billing evidence is missing.')
  else {
@@ -19,7 +31,11 @@ export function health(account: Account, today = new Date().toISOString().slice(
   if (stale(account.support.observedAt)) gaps.push('Support evidence is older than 30 days.')
   if (account.support.urgentTickets > 0) reasons.push(`${account.support.urgentTickets} urgent open support ticket(s) in ${account.support.reference}.`)
  }
- return { status: reasons.length ? 'at-risk' : gaps.length ? 'unknown' : 'healthy', reasons: [...reasons, ...gaps, ...(!reasons.length && !gaps.length ? ['Current billing and support snapshots show no defined risk signal.'] : [])] }
+ const evidenceRisk = reasons.length > 0
+ if (judged && !judged.expired && judged.rating === 'red') reasons.push(judged.line)
+ const notes = judged && (judged.expired || judged.rating !== 'red') ? [judged.line] : []
+ return { status: reasons.length ? 'at-risk' : gaps.length ? 'unknown' : 'healthy', reasons: [...reasons, ...gaps, ...(!evidenceRisk && !gaps.length ? ['Current billing and support snapshots show no defined risk signal.'] : []), ...notes],
+  sentiment: judged && {rating: judged.rating, reason: judged.reason, by: judged.by, recordedAt: judged.recordedAt, expiresOn: judged.expiresOn, expired: judged.expired} }
 }
 // Adapted from Locket's confirmed-term deadline path. Calendar dates use UTC
 // arithmetic, never browser-local parsing; no billing period implies renewal.

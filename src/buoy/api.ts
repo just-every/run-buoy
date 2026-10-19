@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../auth.server'
 import { actorFor, jsonBody, mintAgent } from './access'
-import { Problem, insist, text, object, requirePerson, stmt, type Actor } from './core'
+import { Problem, insist, text, date, object, requirePerson, stmt, type Actor } from './core'
 import { saveAccount, account, state } from './accounts'
 import { prepare, approve, completeTask } from './work'
+import { recordSentiment, healthOn, today } from './sentiment'
 import * as imports from './imports/index'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
@@ -27,6 +28,8 @@ buoyApi.onError((error, c) => {
 buoyApi.get('/api/buoy/state', async c => c.json(await state(c.env.DB, c.get('actor'))))
 buoyApi.post('/api/buoy/accounts', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.put('/api/buoy/accounts/:id', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw), c.req.param('id'))))
+buoyApi.post('/api/buoy/accounts/:id/sentiment', async c => c.json(await recordSentiment(c.env.DB, c.get('actor'), c.req.param('id'), await jsonBody(c.req.raw)), 201))
+buoyApi.get('/api/buoy/accounts/:id/health', async c => c.json(await healthOn(c.env.DB, c.req.param('id'), date(c.req.query('on') ?? today(), 'Health date'))))
 buoyApi.post('/api/buoy/proposals', async c => c.json(await prepare(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.post('/api/buoy/proposals/:id/approve', async c => {await jsonBody(c.req.raw); return c.json(await approve(c.env.DB, c.get('actor'), c.req.param('id')))})
 buoyApi.post('/api/buoy/tasks/:id/complete', async c => c.json(await completeTask(c.env.DB, c.get('actor'), c.req.param('id'), await jsonBody(c.req.raw))))

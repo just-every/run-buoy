@@ -6,8 +6,9 @@ export interface Support { observedAt: string; reference: string; openTickets: n
 export interface Account {
   id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string;
   billing: Billing | null; support: Support | null; revision: string; noticeDate: string;
-  health: { status: 'at-risk' | 'healthy' | 'unknown'; reasons: string[] };
+  health: { status: 'at-risk' | 'healthy' | 'unknown'; reasons: string[]; sentiment: Sentiment | null };
 }
+export interface Sentiment { rating: 'red' | 'amber' | 'green'; reason: string; by: string; recordedAt: string; expiresOn: string; expired: boolean }
 export interface Proposal {
   id: string; accountId: string; kind: 'playbook' | 'renewal';
   payload: { title?: string; dueDate?: string; outcome?: string; reason?: string; evidence?: string };

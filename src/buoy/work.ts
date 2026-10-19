@@ -1,5 +1,5 @@
 import { account } from './accounts'
-import { health } from './health'
+import { accountHealth } from './sentiment'
 import { insist, text, date, object, stmt, guard, commit, id, now, requirePerson, type Actor } from './core'
 
 // Revision-bound drafts and guarded approval adapted from Orbit approval-repository
@@ -11,7 +11,7 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
  insist(kind === 'playbook' || kind === 'renewal', 'Choose playbook or renewal.')
  let normalized: Record<string, string>
  if (kind === 'playbook') {
-  insist(health(current).status === 'at-risk', 'An at-risk signal is needed to prepare this playbook.', 409)
+  insist((await accountHealth(db, current)).status === 'at-risk', 'An at-risk signal is needed to prepare this playbook.', 409)
   normalized = {title: text(payload.title, 'Playbook action', 500), dueDate: date(payload.dueDate, 'Due date')}
  } else {
   insist(['renewed','churned','deferred'].includes(String(payload.outcome)), 'Choose a renewal outcome.')
@@ -31,7 +31,7 @@ export async function approve(db: D1Database, actor: Actor, proposalId: string) 
  if (proposal.status === 'approved') return {id: proposalId, status: 'approved'}
  const current = await account(db, proposal.account_id), payload = JSON.parse(proposal.payload)
  insist(current.revision === proposal.account_revision, 'Evidence changed since preparation. Prepare a new proposal.', 409)
- if (proposal.kind === 'playbook') insist(health(current).status === 'at-risk', 'This account no longer has an at-risk signal. Prepare from current evidence.', 409)
+ if (proposal.kind === 'playbook') insist((await accountHealth(db, current)).status === 'at-risk', 'This account no longer has an at-risk signal. Prepare from current evidence.', 409)
  const at = now(), actorLabel = `person:${actor.id}:${actor.displayName}`, statements = [
   guard(db, "EXISTS(SELECT 1 FROM buoy_proposals p JOIN buoy_accounts a ON a.id=p.account_id WHERE p.id=? AND p.status='prepared' AND a.revision=p.account_revision)", proposalId),
   stmt(db, "UPDATE buoy_proposals SET status='approved',approved_by=?,approved_at=? WHERE id=?", actorLabel, at, proposalId)]

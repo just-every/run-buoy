@@ -9,8 +9,8 @@ The first-release candidate (items 1 to 8 as done or partial) remains the shippe
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 5 | 3 | 0 | 8 |
-| Target and push further | 0 | 25 | 70 | 95 |
-| All | 5 | 28 | 70 | 103 |
+| Target and push further | 1 | 25 | 69 | 95 |
+| All | 6 | 28 | 69 | 103 |
 
 HTTP-001 ships the fixed read/preparation scope described in CONTRACT.md; invalid bearer credentials are refused even when a valid session cookie accompanies them. RESTORE-001 remains partial because SCALE-001 archive volumes are unproven and installations remain capped at 500 accounts. A11Y-001 is partial: labeled native controls, text health labels and keyboard focus ship; the full WCAG pass, portal and native mobile screens remain outstanding. BILLING-004 is partial: native AUD, CAD, EUR, GBP, NZD and USD invoice snapshots ship; subscriptions, USD conversion, rate tables, rate-edit audits and constant-currency FX movement remain required.
 
@@ -64,7 +64,7 @@ HTTP-001 ships the fixed read/preparation scope described in CONTRACT.md; invali
 ## Health, segments and signals
 
 39. **HEALTH-001 — Configurable, explainable health scores** (`partial`). Build a scorecard with five measures and segment-specific weights, preview it, publish it, then change a source value and remove a source; the changed account rescores within five minutes of the source change, an unchanged account shows a recalculation timestamp no older than an hour, every account shows a score with its measure breakdown and sources, history shows the change of version, and the missing source is reweighted or shown as unknown exactly as configured.
-40. **HEALTH-002 — CSM sentiment and manual measures** (`missing`). Record a red sentiment with a reason, observe the score change and explanation, then advance past expiry; the measure becomes missing and the explanation says it expired.
+40. **HEALTH-002 — CSM sentiment and manual measures** (`done`). Record a red sentiment with a reason, observe the score change and explanation, then advance past expiry; the measure becomes missing and the explanation says it expired. Advance by reading health on the expiry date and on the day after it; the rating still counts on its expiry date. An agent credential cannot record a rating.
 41. **SIGNAL-001 — Risk and opportunity alerts** (`partial`). Configure a usage-drop risk and a 90% utilization upsell signal, generate both, and dismiss one with a reason; each fires once per account, reaches the owner in-app and in Slack, the dismissed one does not re-fire inside its window and the upsell signal can open an expansion opportunity.
 42. **SEGMENT-001 — Segments, tiers and lifecycle stages** (`missing`). Define a segment "ARR over $50,000 and health below 60", change an account so it enters and leaves, and run a report filtered by the segment; entry and exit are timestamped, a playbook triggered on entry runs once and the report counts match the rule.
 

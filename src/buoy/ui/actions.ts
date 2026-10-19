@@ -51,6 +51,10 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
       await send('/api/buoy/proposals', { accountId, kind: action === 'playbook' ? 'playbook' : 'renewal', payload });
       return { redirect: path, message: 'Proposal prepared and awaiting approval.', saved: action };
     }
+    if (action === 'sentiment') {
+      await send(`${accountPath}/sentiment`, { rating: fields.rating, reason: fields.reason, days: Number(fields.days) });
+      return { redirect: path, message: 'CSM sentiment recorded.', saved: 'sentiment' };
+    }
     if (action === 'approve') {
       await send(`/api/buoy/proposals/${encodeURIComponent(fields.id)}/approve`, {});
       return { redirect: path, message: 'Proposal approved. Review the recorded work or decision below.', saved: `approve-${fields.id}` };

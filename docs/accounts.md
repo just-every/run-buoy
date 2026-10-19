@@ -45,6 +45,18 @@ An old risk signal still appears as **At risk**, alongside its stale-evidence wa
 
 Open an account to inspect **Recorded evidence**, including source references and observation dates. The account’s **Details** and audit disclosures show its retained records.
 
+## Record CSM sentiment
+
+On an account, use **Record CSM sentiment** to add your judgment: a red, amber or green rating, a reason and how many days it counts (1 to 90, 30 by default). Owners, admins and members can record sentiment; agent credentials cannot, because a rating is a person's judgment. The account's **Health** section shows the rating as a person's judgment rather than source data, with who recorded it and the last day it counts. Dates are UTC calendar dates.
+
+- **Red** makes the account **At risk** while it counts, so you can prepare a playbook from it.
+- **Amber** and **Green** are shown beside the health band without changing it.
+- From the day after its last day, the rating is expired: health says so and treats sentiment as missing, but takes its band from billing and support evidence.
+
+A new rating replaces the current one. Earlier ratings stay in the account's history until the account is erased.
+
+To see what will be stale or expired on a later date, read `GET /api/buoy/accounts/<id>/health?on=YYYY-MM-DD`. The date can be from today up to 366 days ahead, and the read changes nothing.
+
 ## Refresh sources
 
 On the account page, an owner or admin uses **Refresh account sources**, reviews the terms and observations, and selects **Save source refresh**. A concurrent edit is refused; reload and review the current account before saving again.

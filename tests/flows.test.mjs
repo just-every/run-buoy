@@ -92,5 +92,31 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    }
    assert.equal((await request('/app/no-such-page',{cookie})).status,404)
   })
+  await t.test('HEALTH-002 CSM sentiment feeds health as a dated judgment and expires to missing',async()=>{
+   const calm={...account('calm'),name:'Calm Ledger',billing:{...account().billing,allocatedMinor:110000},support:{...account().support,urgentTickets:0}}
+   await json(await call('/accounts','POST',calm),201)
+   const read=async()=>(await json(await call('/state'))).accounts.find(a=>a.id==='calm').health
+   assert.equal((await read()).status,'healthy');assert.equal((await read()).sentiment,null)
+   const playbook={accountId:'calm',kind:'playbook',payload:{title:'Executive check-in',dueDate:'2027-02-01'}}
+   assert.equal((await call('/proposals','POST',playbook)).status,409)
+   assert.equal((await call('/accounts/calm/sentiment','POST',{rating:'purple',reason:'x'},{cookie:member})).status,400)
+   assert.equal((await call('/accounts/calm/sentiment','POST',{rating:'red',reason:'Sponsor left',days:91},{cookie:member})).status,400)
+   const agent=await json(await call('/agent-tokens','POST',{label:'Sentiment probe'}),201)
+   assert.equal((await call('/accounts/calm/sentiment','POST',{rating:'red',reason:'Agent guess',days:7},{cookie:undefined,token:agent.token})).status,403)
+   await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
+   const recorded=await json(await call('/accounts/calm/sentiment','POST',{rating:'red',reason:'Executive sponsor left; renewal call cancelled',days:7},{cookie:member}),201)
+   const expiresOn=recorded.sentiment.expiresOn, after=new Date(Date.parse(expiresOn)+86400000).toISOString().slice(0,10)
+   const now=await read();assert.equal(now.status,'at-risk')
+   assert.match(now.reasons.join(' '),/Red CSM sentiment — CS colleague’s judgment, not source data, counting through \d{4}-\d{2}-\d{2}: Executive sponsor left/)
+   assert.deepEqual({rating:now.sentiment.rating,by:now.sentiment.by,expired:now.sentiment.expired},{rating:'red',by:'CS colleague',expired:false})
+   const page=await (await request('/app/accounts/calm',{cookie})).text()
+   assert.match(page,/CSM sentiment<\/h3><p>A person’s judgment, not source data\. Counts through/);assert.match(page,/Executive sponsor left/)
+   await json(await call('/proposals','POST',playbook),201)
+   assert.equal((await json(await call(`/accounts/calm/health?on=${expiresOn}`))).health.status,'at-risk','the rating counts through its expiry date')
+   const lapsed=(await json(await call(`/accounts/calm/health?on=${after}`))).health
+   assert.equal(lapsed.status,'healthy');assert.equal(lapsed.sentiment.expired,true)
+   assert.match(lapsed.reasons.join(' '),new RegExp(`CSM sentiment from CS colleague expired after ${expiresOn}; the sentiment measure is missing`))
+   assert.equal((await call('/accounts/calm/health?on=2020-01-01')).status,400)
+  })
  }finally{await worker.close()}
 })
