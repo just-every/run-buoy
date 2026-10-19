@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-19
+
+- The app takes the owner-picked look: Renewals is the renewal runway, with accounts as lanes on one time axis, each lane's health solid to today and dashed ahead as its evidence projects, notice ticks at each account's own term, renewal flags, the gradient today rule, and one account opened in place with its dated evidence, the finding, the approval and its open work. The account page, Imports, Backups, sign-in and setup share the top bar, Inter type, hairline cards and quiet fields; the left rail, Spectral and Red Hat Text are gone.
+- The state API returns each account's health outlook (today's band and each later day its evidence turns stale or a judgment expires), from the same rules as the health-on-a-date read.
+- The demo is Tidewell Software's eleven-account runway, with Cascade Freight at risk and an approval its agent prepared.
+
 ## 2026-10-16
 
 - Moved the hosted demo to RER 0.2.30's native Worker Loader host: each visitor gets their own isolate and SQLite copy instead of a container. Refreshed every vendored Base copy from `rer-v0.2.30`, adopted Base's `run-demo.yml`, removed the container-era observer and `instanceType`, and stopped marking the header name twice now that Base's theme frame marks it.

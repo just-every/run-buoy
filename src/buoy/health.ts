@@ -42,3 +42,18 @@ export function health(account: Account, today = new Date().toISOString().slice(
 export function noticeDate(account: Account) {
  return new Date(Date.parse(account.renewalDate) - account.noticeDays * 86400000).toISOString().slice(0, 10)
 }
+// The runway's health along a lane: today's band, then each day before renewal on
+// which today's evidence turns stale or a judgment expires. It projects forward
+// exactly as healthOn does and never looks back or invents history.
+const DAY = 86400000
+const shift = (value: string, days: number) => new Date(Date.parse(value.slice(0, 10)) + days * DAY).toISOString().slice(0, 10)
+export function outlook(account: Account, today: string, sentiment: Sentiment | null = null) {
+ const turns = [account.billing && shift(account.billing.observedAt, 31), account.support && shift(account.support.observedAt, 31), sentiment && shift(sentiment.expiresOn, 1)]
+ const days = [today, ...turns.filter((day): day is string => !!day && day > today && day < account.renewalDate)].sort()
+ const segments: {from: string; status: string}[] = []
+ for (const day of days) {
+  const status = health(account, day, sentiment).status
+  if (segments.at(-1)?.status !== status) segments.push({from: day, status})
+ }
+ return segments
+}

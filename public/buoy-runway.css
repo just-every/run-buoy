@@ -1,0 +1,169 @@
+/* The renewal runway (src/buoy/ui/runway.ts, band.ts): accounts as lanes on one time axis with health along each lane,
+   the today rule in the plum-to-teal chrome gradient, and one account opened in place on a soft band. Each mark's
+   left/width comes from the page's generated, CSP-hashed stylesheet. */
+.rw { --rw-who: 428px; --rw-room: 112px; position: relative; margin: 0 0 8px; }
+.rw-scroll { position: relative; border-radius: 18px; }
+.rw-scroll:focus-visible { outline: 2px solid var(--buoy-plum); outline-offset: 4px; }
+.rw-inner { position: relative; min-width: 100%; }
+.rw-head, .rw-row, .rw-rules, .rw-band { display: grid; grid-template-columns: var(--rw-who) minmax(0, 1fr); }
+.rw-axis { position: relative; height: 100%; margin-right: var(--rw-room); }
+.rw-axis > * { position: absolute; }
+
+/* Header: column names under the month band, week ticks on Mondays and the today pill above. */
+.rw-head { height: 116px; }
+.rw-cols { display: grid; grid-template-columns: 32px minmax(0, 1fr) 74px 100px 18px; gap: 0 7px; align-self: end; padding: 0 8px 14px; color: #34415f; font-size: 13.5px; font-weight: 500; }
+.rw-cols span:first-child { grid-column: 1 / 3; }
+.rw-month { top: 54px; height: 62px; padding: 2px 0 0 10px; border-left: 1px solid var(--buoy-line); color: #44516e; font-size: 13.5px; font-weight: 550; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; }
+.rw-week { top: 82px; transform: translateX(-50%); color: #5f6d85; font-size: 11px; font-variant-numeric: tabular-nums; }
+.rw-week::after { content: ""; position: absolute; left: 50%; top: 19px; height: 8px; border-left: 1px solid var(--buoy-tick); }
+html.rer-themed .buoy-app .rw-today { top: 0; z-index: 4; display: grid; justify-items: center; margin: 0; padding: 8px 16px 9px; transform: translateX(-50%); border-radius: 14px; background: var(--buoy-chrome-gradient); color: #fff; font-size: 13px; line-height: 1.25; white-space: nowrap; box-shadow: 0 6px 16px -6px rgba(142, 45, 184, 0.55); }
+.rw-today strong { font-size: 15px; font-weight: 700; }
+
+/* The today rule runs down every lane. */
+.rw-body { position: relative; }
+.rw-rules { position: absolute; inset: -6px 0 -14px; z-index: 2; pointer-events: none; }
+.rw-rules .rw-axis { grid-column: 2; }
+.rw-rule { top: 0; bottom: 0; width: 2px; margin-left: -1px; background: linear-gradient(180deg, var(--buoy-plum) 0%, #5a5fb3 45%, #1fb5a8 100%); -webkit-mask: repeating-linear-gradient(180deg, #000 0 3px, transparent 3px 7px); mask: repeating-linear-gradient(180deg, #000 0 3px, transparent 3px 7px); }
+
+/* Lanes. */
+.rw-lanes { margin: 0; padding: 0; list-style: none; }
+.rw-lane { position: relative; }
+.rw-row { min-height: 45px; }
+.rw-who { display: grid; grid-template-columns: 32px minmax(0, 1fr) 74px 100px 18px; gap: 0 7px; align-items: center; padding: 0 8px; border-bottom: 1px solid #eef0f4; background: rgba(255, 255, 255, 0.78); border-radius: 18px 12px 12px 18px; }
+.rw-initials { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-size: 12px; font-weight: 750; letter-spacing: 0.02em; }
+.rw-initials.plum { background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); }
+.rw-initials.teal { background: #dff6f3; color: #0b6f68; }
+.rw-initials.blue { background: #e5edff; color: #1f4fb8; }
+.rw-initials.green { background: var(--buoy-green-soft); color: var(--buoy-green-ink); }
+.rw-initials.amber { background: var(--buoy-amber-soft); color: var(--buoy-amber-ink); }
+html.rer-themed .buoy-app .rw-name { min-width: 0; color: var(--buoy-ink); font-size: 13px; font-weight: 650; letter-spacing: -0.02em; text-decoration: none; overflow-wrap: anywhere; line-height: 1.25; }
+html.rer-themed .buoy-app .rw-name:hover { text-decoration: underline; text-decoration-color: rgba(138, 46, 174, 0.5); }
+.rw-money { color: #33415f; font-size: 13px; font-variant-numeric: tabular-nums; }
+.rw-none { color: var(--buoy-muted); font-size: 12.5px; }
+html.rer-themed .buoy-app .rw-open { display: grid; place-items: center; width: 22px; height: 26px; border-radius: 8px; color: var(--buoy-body); font-size: 17px; font-weight: 600; line-height: 1; text-decoration: none; opacity: 0; }
+.rw-lane:hover .rw-open, .rw-open:focus-visible, .rw-lane.is-open .rw-open { opacity: 1; }
+html.rer-themed .buoy-app .rw-open:hover { background: var(--buoy-panel); }
+.rw-track { position: relative; min-width: 0; }
+
+.rw-seen, .rw-ahead { top: 50%; }
+.rw-seen { height: 5px; margin-top: -2.5px; border-radius: 6px; background: var(--buoy-amber); }
+.rw-seen.healthy { background: var(--buoy-green); }
+.rw-seen.at-risk { background: var(--buoy-red); }
+.rw-ahead { margin-top: -1.5px; border-top: 2px dashed var(--buoy-amber); opacity: 0.8; }
+.rw-ahead.healthy { border-top-color: var(--buoy-green); }
+.rw-ahead.at-risk { border-top-color: var(--buoy-red); }
+.rw-notice { top: 50%; z-index: 1; width: 10px; height: 10px; margin: -5px 0 0 -5px; background: var(--buoy-notice); border: 1.5px solid #fff; transform: rotate(45deg); }
+.rw-days { top: calc(50% + 7px); transform: translateX(-50%); color: #52617e; font-size: 11px; white-space: nowrap; opacity: 0; transition: opacity .15s; }
+/* Notice labels stay quiet: shown on hover, on the open lane and on a lane already in notice. */
+.rw-lane:hover .rw-days, .rw-lane.is-open .rw-days, .rw-lane.in-notice .rw-days { opacity: 1; }
+.rw-lane.in-notice .rw-days { color: var(--buoy-amber-ink); font-weight: 600; transform: none; }
+/* Renewal dates are flags (judge's note), not rings. */
+.rw-flag { top: 50%; z-index: 1; width: 2px; height: 20px; margin: -15px 0 0 -1px; background: var(--buoy-ink); border-radius: 1px; }
+.rw-flag::after { content: ""; position: absolute; left: 2px; top: 0; width: 11px; height: 9px; background: var(--buoy-amber); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.rw-flag.healthy::after { background: var(--buoy-green); }
+.rw-flag.at-risk::after { background: var(--buoy-red); }
+.rw-date { top: 50%; margin: -11px 0 0 18px; color: var(--buoy-ink); font-size: 13px; font-weight: 500; white-space: nowrap; }
+
+/* One account open in place: its band, its evidence pins, the finding at the today line and the work beside it. */
+.rw-lane.is-open { margin: 4px 0; border: 1px solid #f3e9ed; border-radius: 16px; background: var(--buoy-band-calm); box-shadow: 0 2px 6px rgba(39, 57, 77, 0.03); }
+.rw-lane.is-open.at-risk { background: linear-gradient(110deg, #fff8f9, #fff1f4); }
+.rw-lane.is-open .rw-row { min-height: 50px; }
+.rw-lane.is-open .rw-who { background: transparent; border-bottom: 0; }
+html.rer-themed .buoy-app .rw-lane.is-open .rw-name { font-size: 16px; font-weight: 780; letter-spacing: -0.025em; }
+.rw-lane.is-open .rw-money { font-size: 14px; color: var(--buoy-ink); }
+.rw-band { position: relative; z-index: 3; padding: 4px 0 14px; }
+.rw-pins { position: relative; margin: 0; padding: 8px 12px 0 28px; list-style: none; }
+.rw-pins li { position: relative; display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 10px; padding: 0 0 13px 24px; font-size: 13px; color: #243452; }
+.rw-pins li::before { content: ""; position: absolute; left: 0; top: 4px; width: 13px; height: 13px; border-radius: 50%; background: var(--buoy-notice); box-shadow: 0 0 0 3px #fff; z-index: 1; }
+.rw-pins li:not(:last-child)::after { content: ""; position: absolute; left: 6px; top: 16px; bottom: 0; border-left: 1px solid #c5cdd9; }
+.rw-pins li.good::before { background: var(--buoy-green); }
+.rw-pins li.bad::before { background: var(--buoy-red); }
+.rw-pins li.watch::before { background: var(--buoy-amber); }
+.rw-pins time { color: #243452; line-height: 1.4; }
+.rw-pins time small { display: block; font-size: 13px; color: var(--buoy-muted); }
+.rw-pins .tag { display: inline-block; margin: 2px 0 0 4px; padding: 1px 9px; border: 1px solid #dfe3ec; border-radius: 20px; background: #f4f6f9; color: #384663; font-size: 12px; white-space: nowrap; }
+.rw-work { min-width: 0; padding-right: 18px; }
+.rw-work > * { min-width: 0; }
+.rw-work { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(250px, 1fr); align-items: start; gap: 14px; }
+.rw-exception { min-width: 0; padding: 10px; border-radius: 16px; background: rgba(255, 255, 255, 0.72); box-shadow: 0 0 24px rgba(255, 255, 255, 0.8); }
+.rw-finding { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid var(--buoy-finding-line); border-radius: 13px; background: #fff1f3; }
+.rw-exception.healthy .rw-finding { border-color: #c9eed8; background: var(--buoy-green-soft); }
+.rw-exception.unknown .rw-finding { border-color: #f6e2a8; background: var(--buoy-amber-soft); }
+.rw-finding img { flex: none; width: 44px; height: 44px; }
+html.rer-themed .buoy-app .rw-finding p { margin: 2px 0 4px; color: var(--buoy-ink); font-size: 15px; }
+.rw-finding strong { color: var(--buoy-red-ink); font-weight: 750; }
+.rw-exception.healthy .rw-finding strong { color: var(--buoy-green-ink); }
+.rw-exception.unknown .rw-finding strong { color: var(--buoy-amber-ink); }
+.rw-finding ul { margin: 0; padding: 0 0 0 16px; color: #2c3550; font-size: 13px; line-height: 1.4; }
+.rw-finding li + li { margin-top: 3px; }
+html.rer-themed .buoy-app .rw-proposal { flex-basis: 100%; margin: 0 4px 2px; color: var(--buoy-ink); font-size: 14px; }
+.rw-proposal b { font-weight: 700; }
+.rw-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.rw-actions form { display: contents; }
+html.rer-themed .buoy-app .rw-actions button, html.rer-themed .buoy-app .rw-actions .button { min-height: 46px; padding: 10px 12px; font-size: 14px; font-weight: 700; }
+html.rer-themed .buoy-app .rw-actions button, html.rer-themed .buoy-app .rw-actions .button:not(.secondary) { flex: 1 1 auto; background: linear-gradient(#0b0b1f, #15152a); }
+.rw-side { position: relative; display: grid; gap: 24px; padding-top: 4px; justify-items: start; }
+html.rer-themed .buoy-app .rw-sticky { margin: 0 0 0 26px; padding: 14px 16px 16px; max-width: 150px; background: var(--buoy-sticky); color: #1d1a08; font: 700 23px/1.05 var(--buoy-font-hand); transform: rotate(-7deg); box-shadow: 0 10px 18px -12px rgba(60, 50, 0, 0.55), 0 1px 2px rgba(60, 50, 0, 0.12); }
+html.rer-themed .buoy-app .rw-card { display: grid; grid-template-columns: 42px minmax(0, 1fr) 14px; gap: 12px; align-items: center; width: 100%; padding: 12px 14px 12px 12px; border: 1px solid #dce2ec; border-radius: 13px; background: #fff; box-shadow: 0 4px 10px rgba(53, 65, 92, 0.05); color: var(--buoy-ink); text-decoration: none; }
+html.rer-themed .buoy-app .rw-card:hover { border-color: var(--buoy-lilac); }
+.rw-card strong { display: block; font-size: 15px; font-weight: 700; line-height: 1.3; }
+.rw-card small { display: block; margin-top: 3px; color: #53617d; font-size: 13px; }
+.rw-doc { position: relative; width: 42px; height: 42px; border-radius: 50%; background: #ecebff; }
+.rw-doc::before { content: ""; position: absolute; inset: 11px 14px; border: 2px solid #3b3fd8; border-radius: 3px; }
+.rw-doc::after { content: ""; position: absolute; left: 18px; right: 18px; top: 18px; height: 6px; border-top: 2px solid #3b3fd8; border-bottom: 2px solid #3b3fd8; }
+.rw-chevron { color: #57647c; font-size: 22px; line-height: 1; }
+
+/* An empty book: the axis stays, with one way in. */
+.rw-empty { display: grid; justify-items: center; gap: 12px; margin: 10px 0 0; padding: 40px 20px 36px; border: 1px dashed var(--buoy-line-strong); border-radius: 18px; background: #fff; text-align: center; position: relative; z-index: 3; }
+html.rer-themed .buoy-app .rw-empty p { margin: 0; max-width: 460px; text-align: center; color: var(--buoy-body); font-size: 15px; }
+.rw-empty strong { color: var(--buoy-ink); }
+.rw-empty .rw-actions { justify-content: center; }
+
+@media (max-width: 1180px) {
+  .rw { --rw-who: 372px; --rw-room: 100px; }
+  .rw-cols, .rw-who { grid-template-columns: 30px minmax(0, 1fr) 82px 112px 24px; gap: 0 8px; }
+  .rw-initials { width: 30px; height: 30px; font-size: 11px; }
+  .rw-band { display: block; }
+  .rw-work { grid-template-columns: minmax(0, 1.5fr) minmax(250px, 1fr); }
+  .rw-pins { padding: 6px 18px 4px 32px; }
+  .rw-work { padding: 0 18px !important; }
+}
+/* Phone: the runway scrolls sideways inside its own box with the account and health pinned at left (the invoice under
+   the name); the open band stays under its lane at the screen's width. */
+@media (max-width: 760px) {
+  .rw { --rw-who: 158px; --rw-room: 96px; margin: 0 -16px; }
+  .rw-scroll { overflow-x: auto; overscroll-behavior-x: contain; border-radius: 0; padding: 0 16px; scroll-padding-left: 158px; }
+  .rw-inner { min-width: 980px; }
+  .rw-head { height: 128px; }
+  .rw-cols { display: block; position: sticky; left: 0; z-index: 5; padding: 0 0 14px 4px; background: linear-gradient(90deg, #fff 88%, rgba(255, 255, 255, 0)); }
+  .rw-cols span:not(:first-child) { display: none; }
+  .rw-month { top: 58px; font-size: 13px; }
+  .rw-week { font-size: 13px; top: 86px; }
+  .rw-week::after { top: 22px; }
+  .rw-who { position: sticky; left: 0; z-index: 4; grid-template-columns: minmax(0, 1fr) 24px; grid-template-areas: "name open" "money money" "pill pill"; gap: 2px 4px; padding: 8px 8px 8px 4px; border-radius: 0; background: #fff; box-shadow: 8px 0 12px -10px rgba(11, 11, 31, 0.25); }
+  .rw-initials { display: none; }
+  html.rer-themed .buoy-app .rw-name { grid-area: name; font-size: 14px; }
+  .rw-money { grid-area: money; font-size: 13px; color: var(--buoy-body); }
+  .rw-who .pill { grid-area: pill; margin-top: 3px; font-size: 13px; }
+  html.rer-themed .buoy-app .rw-open { grid-area: open; opacity: 1; }
+  .rw-row { min-height: 92px; }
+  .rw-lane.is-open .rw-row { min-height: 96px; }
+  html.rer-themed .buoy-app .rw-lane.is-open .rw-name { font-size: 16px; }
+  .rw-lane.is-open .rw-who { background: #fff6f7; }
+  .rw-lane.is-open:not(.at-risk) .rw-who { background: #f8f7fc; }
+  .rw-lane.is-open { margin: 4px 0; border-radius: 0; border-left: 0; border-right: 0; }
+  .rw-band { position: sticky; left: 0; width: calc(100vw - 32px); padding: 4px 0 18px; background: #f8f7fc; }
+  .rw-lane.at-risk .rw-band { background: #fff6f7; }
+  .rw-pins { padding: 10px 4px 2px 4px; }
+  .rw-pins li { grid-template-columns: 92px minmax(0, 1fr); gap: 8px; padding-left: 24px; font-size: 13px; }
+  .rw-work { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 0 !important; }
+  .rw-exception { padding: 0; background: transparent; box-shadow: none; max-width: none; }
+  html.rer-themed .buoy-app .rw-finding p { font-size: 14px; }
+  .rw-finding ul { font-size: 13px; }
+  .rw-actions { display: grid; }
+  html.rer-themed .buoy-app .rw-actions button, html.rer-themed .buoy-app .rw-actions .button { width: 100%; font-size: 15px; }
+  .rw-side { display: grid; gap: 18px; padding-top: 0; }
+  .rw-side .rw-card { order: 1; }
+  html.rer-themed .buoy-app .rw-sticky { order: 2; margin-left: 16px; font-size: 22px; }
+  .rw-empty { position: sticky; left: 0; width: calc(100vw - 32px); padding: 28px 16px; }
+}

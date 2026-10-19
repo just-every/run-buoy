@@ -1,116 +1,198 @@
-/* Product records use the shared theme; only layout and components live here. */
+/* Buoy's app: the shell, cards, records and forms of the owner-picked look (desk-buoy/app, option A). Tokens live
+   once in rer-theme.css; the runway and its open band are public/buoy-runway.css. */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-padding-top: 24px; }
-html.rer-themed body { display: block; align-content: start; padding: 0 36px 120px; }
-.buoy-shell { width: 100%; max-width: 1400px; margin: 0 auto; }
-.app-header { display: flex; align-items: center; justify-content: space-between; min-height: 80px; border-bottom: 1px solid var(--line); }
-.brand-link { text-decoration: none; }
-html.rer-themed .app-header .rer-brand { margin: 0; justify-content: flex-start; gap: 10px; font-size: 26px; }
-html.rer-themed .app-header .rer-brand::before { width: 28px; height: 28px; }
-html.rer-themed .operator { margin: 0; color: var(--ink); }
-.operator-initial { display: none; }
-.app-layout { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 40px; padding-top: 28px; }
-.app-nav { border-right: 1px solid var(--line); padding: 12px 20px 32px 0; }
-.app-nav a { position: relative; display: flex; align-items: center; gap: 18px; min-height: 60px; padding-left: 28px; color: var(--muted); text-decoration: none; }
-.app-nav svg { width: 22px; height: 22px; flex: none; }
-.app-nav a[aria-current=page] { font-weight: 500; color: var(--ink); }
-.app-nav a[aria-current=page]::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); position: absolute; left: 4px; }
-.app-nav a:hover { color: var(--ink); }
-html.rer-themed .buoy-shell main { max-width: none; padding: 0; margin: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; min-width: 0; }
-html.rer-themed .buoy-shell h1 { font: 500 56px/1.05 var(--font-heading); letter-spacing: -.02em; text-align: left; margin: 0 0 24px; }
-html.rer-themed .buoy-shell h2 { font: 500 32px/1.15 var(--font-heading); margin: 0 0 16px; letter-spacing: -.02em; }
-html.rer-themed .buoy-shell h3 { font: 500 22px/1.3 var(--font-heading); margin: 0 0 12px; }
-html.rer-themed .buoy-shell p { text-align: left; margin: 0 0 16px; }
-html.rer-themed .buoy-shell .panel { margin: 0 0 28px; min-width: 0; }
-.introduction, #create-account, #source-refresh, #prepare-playbook, #prepare-decision, #delete-account, #health, .backup-panel, .import-columns > .panel, #import-journal, .notice {
-  border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); padding: 24px; box-shadow: var(--shadow-card);
-}
-html.rer-themed .buoy-shell .introduction h2 { margin-bottom: 4px; }
-.introduction > a { display: inline-block; font-size: 14px; }
-.checklist { margin: 12px 0 16px; padding-left: 24px; color: var(--muted); font-size: 14px; }
-li + li { margin-top: 6px; }
-.account-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-.account-card, .evidence-grid > div, .record { min-width: 0; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); padding: 22px; box-shadow: var(--shadow-card); }
-.account-card { display: flex; flex-direction: column; }
-.card-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
-html.rer-themed .card-heading h3 { margin-bottom: 14px; }
-.status { display: inline-flex; align-items: center; min-height: 28px; width: fit-content; padding: 3px 12px; border-radius: var(--r-pill); background: var(--unknown-bg); color: var(--unknown-text); font: 500 14px/1.4 var(--font-body); }
-.status.at-risk { background: var(--risk-bg); color: var(--risk-text); }
-.status.healthy, .status.approved, .status.completed { background: var(--healthy-bg); color: var(--healthy-text); }
-html.rer-themed .buoy-shell dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 12px; margin: 0 0 18px; font-size: 16px; }
-html.rer-themed .buoy-shell dd { text-align: right; font-weight: 500; overflow-wrap: anywhere; }
-html.rer-themed .buoy-shell dt { min-width: 0; }
-#health { display: grid; grid-template-columns: max-content 1fr; gap: 12px 24px; align-items: center; }
-html.rer-themed .buoy-shell #health h2, html.rer-themed .buoy-shell #health p { margin: 0; }
-#health ul { grid-column: 1 / -1; }
-.account-card ul, #health ul { list-style: none; padding: 0; margin: 0 0 16px; color: var(--muted); }
-.account-card ul { border-top: 1px solid var(--line); padding-top: 14px; font-size: 14px; }
-.account-card li, #health li { position: relative; padding-left: 16px; }
-.account-card li::before, #health li::before { content: ''; width: 6px; height: 6px; border-radius: 50%; position: absolute; left: 0; top: .6em; background: var(--unknown-text); }
-.account-card:has(.at-risk) li::before, #health:has(.at-risk) li::before { background: var(--risk-text); }
-.account-card:has(.healthy) li::before { background: var(--healthy-text); }
-.account-card .details-button { align-self: flex-end; margin-top: auto; }
-.empty-state { display: grid; place-items: center; text-align: center; padding: 36px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); color: var(--muted); }
-.empty-state svg { width: 28px; height: 28px; margin-bottom: 12px; }
-html.rer-themed .empty-state p { margin: 0; text-align: center; }
-.form-grid, .evidence-grid, .import-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; min-width: 0; }
-.import-columns { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
-.import-columns:not(:has(.import-review)) { grid-template-columns: 1fr; }
-.form-grid > *, .evidence-grid > * { min-width: 0; }
-.evidence-grid > div h3 { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
-html.rer-themed .evidence-grid dl { font-size: 14px; }
-html.rer-themed .buoy-shell form { display: grid; gap: 18px; max-width: none; margin: 0; }
-html.rer-themed .buoy-shell fieldset { min-width: 0; margin: 0; padding: 20px; border: 1px solid var(--line); border-radius: var(--r-input); }
-html.rer-themed .buoy-shell legend { color: var(--ink); font-weight: 500; padding: 0 6px; }
-html.rer-themed .buoy-shell label { display: grid; gap: 8px; color: var(--muted); font-size: 14px; font-weight: 400; }
-html.rer-themed .buoy-shell label.check { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
-html.rer-themed .buoy-shell input:not([type=hidden]), .buoy-shell select, .buoy-shell textarea { width: 100%; max-width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px; border: 1px solid var(--rer-border); border-radius: var(--r-input); color: var(--ink); background: var(--surface); font: 400 16px/1.4 var(--font-body); }
-/* every single-choice select draws its chevron 14px in from the right border (two gradient strokes in the theme's muted ink: the theme CSP allows no data: images); multiple and size>1 lists keep their native look */
-.buoy-shell select:not([multiple]):not([size]), .buoy-shell select[size="1"]:not([multiple]) { -webkit-appearance: none; appearance: none; padding-inline-end: 40px; background-image: linear-gradient(to top right, transparent calc(50% - 1.1px), var(--rer-muted) calc(50% - .55px), var(--rer-muted) calc(50% + .55px), transparent calc(50% + 1.1px)), linear-gradient(to top left, transparent calc(50% - 1.1px), var(--rer-muted) calc(50% - .55px), var(--rer-muted) calc(50% + .55px), transparent calc(50% + 1.1px)); background-repeat: no-repeat; background-position: right 20px center, right 14px center; background-size: 6px 6px; }
-html.rer-themed .buoy-shell input[type=checkbox] { width: 20px; height: 20px; min-height: 20px; flex: none; margin: 2px 0 0; }
-.buoy-shell textarea { resize: vertical; line-height: 1.5; }
-.buoy-shell textarea[hidden] { display: none; }
-#import-preview textarea { min-height: 320px; font: 14px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; }
-html.rer-themed .buoy-shell button { display: inline-flex; justify-content: center; align-items: center; width: fit-content; min-height: 48px; max-width: 100%; padding: 10px 28px; border: 1px solid transparent; border-radius: var(--r-pill); font: 500 16px/1.4 var(--font-body); cursor: pointer; background: var(--ink); color: var(--surface); }
-html.rer-themed .buoy-shell button.secondary { min-height: 36px; padding: 6px 24px; border-color: color-mix(in srgb, var(--ink) 70%, transparent); color: var(--ink); background: transparent; font-size: 14px; }
-html.rer-themed .buoy-shell button.danger { background: var(--danger); }
-html.rer-themed .buoy-shell #delete-account { border-color: var(--danger); box-shadow: none; }
-html.rer-themed button:hover { filter: brightness(1.15); }
-html.rer-themed :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-html.rer-themed button:disabled, html.rer-themed input:disabled { opacity: .6; cursor: not-allowed; }
-html.rer-themed [aria-invalid=true] { border-color: var(--danger); }
-.record { margin-bottom: 16px; }
-.record:last-child { margin-bottom: 0; }
-.record form { margin-top: 20px !important; }
-.back-link { font-size: 14px; }
-.notice { border-left: 3px solid var(--healthy-text); margin-bottom: 24px; }
-.notice.error { border-left-color: var(--danger); }
-.notice.error h2, .error-text { color: var(--danger); }
-html.rer-themed .buoy-shell pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; margin: 16px 0; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-input); font: 14px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; }
-.buoy-shell pre code { font-size: inherit; }
-code { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .875em; }
-html.rer-themed dialog { padding: 28px; max-width: min(720px, calc(100% - 40px)); max-height: calc(100dvh - 48px); color: var(--ink); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-card); }
-dialog::backdrop { background: rgb(30 36 40 / .35); }
-.app-footer { position: relative; margin: 28px 0 0 236px; padding: 20px 0; border-top: 1px solid var(--line); font-size: 14px; }
-html.rer-themed .app-footer p { margin: 0; }
+html.rer-themed:has(body.buoy-app) { --buoy-grid-step: 44px; --buoy-grid: #f4f6f8; }
+html.rer-themed body.buoy-app { display: block; align-content: start; padding: 0 clamp(16px, 1.55vw, 24px) 64px; font: 400 14px/1.5 var(--buoy-font); color: var(--buoy-ink); }
+.buoy-shell { width: 100%; max-width: 1560px; margin: 0 auto; }
+
+/* Top bar: the ring and the heavy wordmark alone, then the heading row with the view chips and the operator. */
+.app-bar { display: flex; align-items: center; min-height: 74px; padding: 10px 16px 0; }
+.brand-link { text-decoration: none; border-radius: 12px; }
+html.rer-themed .app-bar .rer-brand { margin: 0; justify-content: flex-start; gap: 12px; font-size: 36px; color: var(--buoy-ink); letter-spacing: -0.05em; }
+html.rer-themed .app-bar .rer-brand::before { width: 50px; height: 50px; }
+html.rer-themed .buoy-app main { width: auto; max-width: none; padding: 0; margin: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; min-width: 0; overflow-wrap: break-word; }
+.head-row { display: flex; align-items: center; justify-content: space-between; gap: 20px 28px; margin: 8px 16px 18px; }
+.page-head { min-width: 0; }
+.back-link { margin: 0 0 6px; font-size: 13px; }
+html.rer-themed .buoy-app .back-link a { color: var(--buoy-body); text-decoration: none; }
+html.rer-themed .buoy-app .back-link a:hover { color: var(--buoy-ink); }
+.title-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+html.rer-themed .buoy-app h1 { margin: 0; font-size: 36px; line-height: 1.08; font-weight: 850; letter-spacing: -0.045em; word-spacing: 0.08em; text-align: left; }
+.title-line .dot { font-size: 24px; font-weight: 700; color: var(--buoy-ink); }
+.title-line .fact { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; white-space: nowrap; }
+.title-line .fact.strong { font-size: 26px; font-weight: 800; letter-spacing: -0.035em; }
+.title-line .pill { align-self: center; }
+.account-title .fact { font-size: 20px; }
+.account-title .fact.strong { font-size: 23px; }
+.controls { display: flex; align-items: center; gap: 16px; flex: none; min-width: 0; }
+.views { display: flex; gap: 2px; padding: 4px; border: 1px solid var(--buoy-line-strong); border-radius: 999px; background: var(--buoy-chip-track); box-shadow: 0 3px 8px rgba(27, 53, 73, 0.04); }
+html.rer-themed .views a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 20px; border-radius: 999px; color: var(--buoy-ink); font-size: 15px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+html.rer-themed .views a:hover { background: #fff; }
+html.rer-themed .views a[aria-current=page] { background: var(--buoy-chrome-gradient); color: #fff; font-weight: 700; box-shadow: 0 4px 12px -4px rgba(142, 45, 184, 0.5); }
+html.rer-themed .buoy-app .operator { margin: 0; }
+.operator-initials { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--buoy-plum); color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 0.02em; box-shadow: 0 0 0 3px #fff, 0 0 0 4px var(--buoy-lilac); }
+
+/* Type inside the work area. */
+html.rer-themed .buoy-app h2 { margin: 0 0 14px; font-size: 19px; line-height: 1.25; font-weight: 820; letter-spacing: -0.025em; text-align: left; }
+html.rer-themed .buoy-app h3 { margin: 0; font-size: 15px; line-height: 1.35; font-weight: 700; letter-spacing: -0.01em; }
+html.rer-themed .buoy-app p { margin: 0 0 12px; text-align: left; color: var(--buoy-body); }
+html.rer-themed .buoy-app a { color: var(--buoy-ink); }
+html.rer-themed .buoy-app :focus-visible { outline: 2px solid var(--buoy-plum); outline-offset: 2px; }
+
+/* Cards: white, hairline, soft shadow. */
+html.rer-themed .buoy-app .panel { min-width: 0; margin: 0 0 20px; padding: 22px 24px; background: var(--buoy-card); border: 1px solid var(--buoy-line); border-radius: var(--buoy-radius); box-shadow: var(--buoy-card-shadow-soft); }
+.panel > :last-child { margin-bottom: 0; }
+.notice { margin: 0 0 20px; padding: 14px 18px; border: 1px solid var(--buoy-line); border-left: 4px solid var(--buoy-green); border-radius: 12px; background: var(--buoy-green-soft); }
+html.rer-themed .buoy-app p.notice { color: var(--buoy-ink); font-weight: 550; }
+.notice.error { border-left-color: var(--buoy-red); background: var(--buoy-red-soft); }
+html.rer-themed .buoy-app .notice.error h2, .error-text { color: var(--buoy-red-ink); }
+.notice.error p:last-child { margin: 0; }
+
+/* Health and record states, always labelled. */
+.pill { display: inline-flex; align-items: center; gap: 8px; width: max-content; min-height: 28px; padding: 2px 12px 2px 2px; border-radius: 999px; font-size: 13.5px; font-weight: 650; white-space: nowrap; background: var(--buoy-amber-soft); color: #4a3200; }
+.pill i { display: grid; place-items: center; width: 26px; height: 24px; border-radius: 999px; font-style: normal; font-size: 13px; font-weight: 800; color: #3b2a00; background: linear-gradient(120deg, #ffcb51, var(--buoy-amber)); }
+.pill.healthy { background: var(--buoy-green-soft); color: var(--buoy-green-ink); }
+.pill.healthy i { color: #fff; background: linear-gradient(120deg, #19d77f, var(--buoy-green)); }
+.pill.at-risk { background: var(--buoy-red-soft); color: var(--buoy-red-ink); }
+.pill.at-risk i { color: #fff; background: linear-gradient(120deg, #ff7a7f, var(--buoy-red)); }
+.status { display: inline-flex; align-items: center; width: max-content; max-width: 100%; min-height: 24px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: var(--buoy-panel); color: var(--buoy-body); border: 1px solid var(--buoy-line); }
+.status.prepared, .status.queued, .status.applying, .status.undoing { background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); border-color: var(--buoy-lilac); }
+.status.approved, .status.completed { background: var(--buoy-green-soft); color: var(--buoy-green-ink); border-color: #c9eed8; }
+.status.open { background: var(--buoy-amber-soft); color: var(--buoy-amber-ink); border-color: #f6e2a8; }
+.status.failed, .status.rolled_back, .status.rolling_back { background: var(--buoy-red-soft); color: var(--buoy-red-ink); border-color: var(--buoy-finding-line); }
+.stale .status { background: var(--buoy-red-soft); color: var(--buoy-red-ink); border-color: var(--buoy-finding-line); }
+
+/* Buttons: the ink button and the outlined one. */
+html.rer-themed .buoy-app button, .buoy-app a.button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; width: fit-content; max-width: 100%; min-height: 44px; padding: 10px 20px; border: 1px solid var(--buoy-ink); border-radius: 11px; background: var(--buoy-ink); color: #fff; font: 650 15px/1.3 var(--buoy-font); text-align: center; text-decoration: none; cursor: pointer; box-shadow: 0 2px 5px rgba(36, 48, 75, 0.08); filter: none; }
+html.rer-themed .buoy-app a.button { color: #fff; }
+html.rer-themed .buoy-app button:hover, html.rer-themed .buoy-app a.button:hover { background: #26263f; }
+html.rer-themed .buoy-app button.secondary, html.rer-themed .buoy-app a.button.secondary { background: #fff; color: var(--buoy-ink); }
+html.rer-themed .buoy-app button.secondary:hover, html.rer-themed .buoy-app a.button.secondary:hover { background: var(--buoy-panel); }
+html.rer-themed .buoy-app button.details-button { margin-top: 8px; min-height: 30px; padding: 3px 12px; border-color: var(--buoy-line-strong); border-radius: 999px; color: var(--buoy-body); font-size: 12.5px; font-weight: 600; box-shadow: none; }
+html.rer-themed .buoy-app button.danger { border-color: var(--buoy-red-ink); background: var(--buoy-red-ink); }
+html.rer-themed .buoy-app button:disabled, html.rer-themed .buoy-app input:disabled, html.rer-themed .buoy-app select:disabled, html.rer-themed .buoy-app textarea:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Forms: thin quiet borders and a clear plum focus ring. */
+html.rer-themed .buoy-app form { display: grid; gap: 16px; margin: 0; max-width: none; }
+html.rer-themed .buoy-app label { display: grid; gap: 6px; color: var(--buoy-ink); font-size: 13px; font-weight: 550; }
+html.rer-themed .buoy-app label.check { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; }
+html.rer-themed .buoy-app input:not([type=hidden]):not([type=checkbox]), html.rer-themed .buoy-app select, html.rer-themed .buoy-app textarea { width: 100%; max-width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--buoy-field-line); border-radius: 10px; background: #fff; color: var(--buoy-ink); font: 400 15px/1.4 var(--buoy-font); transition: border-color .15s, box-shadow .15s; }
+html.rer-themed .buoy-app input:not([type=hidden]):not([type=checkbox]):hover, html.rer-themed .buoy-app select:hover, html.rer-themed .buoy-app textarea:hover { border-color: #bfc3cf; }
+html.rer-themed .buoy-app input:not([type=hidden]):not([type=checkbox]):focus-visible, html.rer-themed .buoy-app select:focus-visible, html.rer-themed .buoy-app textarea:focus-visible { outline: none; border-color: var(--buoy-plum); box-shadow: var(--buoy-focus-ring); }
+html.rer-themed .buoy-app [aria-invalid=true] { border-color: var(--buoy-red); }
+html.rer-themed .buoy-app input[type=checkbox] { width: 18px; height: 18px; flex: none; margin: 1px 0 0; accent-color: var(--buoy-plum); }
+.buoy-app textarea { resize: vertical; line-height: 1.5; }
+.buoy-app textarea[hidden] { display: none; }
+/* Every single-choice select draws its chevron 14px in from the right border: two gradient strokes in the chevron ink
+   (the theme CSP allows no data: images); multiple and size>1 lists keep their native look. */
+html.rer-themed .buoy-app select:not([multiple]):not([size]), html.rer-themed .buoy-app select[size="1"]:not([multiple]) { -webkit-appearance: none; appearance: none; padding-inline-end: 40px; background-image: linear-gradient(to top right, transparent calc(50% - 1.1px), var(--buoy-chevron) calc(50% - .55px), var(--buoy-chevron) calc(50% + .55px), transparent calc(50% + 1.1px)), linear-gradient(to top left, transparent calc(50% - 1.1px), var(--buoy-chevron) calc(50% - .55px), var(--buoy-chevron) calc(50% + .55px), transparent calc(50% + 1.1px)); background-repeat: no-repeat; background-position: right 20px center, right 14px center; background-size: 6px 6px; }
+html.rer-themed .buoy-app fieldset { min-width: 0; margin: 0; padding: 16px 18px 18px; border: 1px solid var(--buoy-line); border-radius: 12px; background: #fcfcfd; }
+html.rer-themed .buoy-app legend { padding: 0 6px; color: var(--buoy-ink); font-size: 14px; font-weight: 700; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 16px; min-width: 0; }
+.form-grid > * { min-width: 0; }
+html.rer-themed .buoy-app fieldset label.check { margin-bottom: 14px; }
+
+/* Closed form cards: a title and one line, opened by their link, fragment or error. */
+html.rer-themed .buoy-app .disclosure { padding: 0; }
+.disclosure > summary { display: grid; grid-template-columns: minmax(0, 1fr) 28px; gap: 2px 12px; align-items: center; padding: 18px 20px; cursor: pointer; list-style: none; border-radius: var(--buoy-radius); }
+.disclosure > summary::-webkit-details-marker { display: none; }
+.disclosure > summary::after { content: ""; grid-column: 2; grid-row: 1 / span 2; justify-self: center; width: 9px; height: 9px; border-right: 2px solid var(--buoy-body); border-bottom: 2px solid var(--buoy-body); transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s; }
+.disclosure[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.disclosure > summary:hover .disclosure-title { text-decoration: underline; text-decoration-color: rgba(138, 46, 174, 0.5); text-underline-offset: 4px; }
+.disclosure-title { font-size: 16px; font-weight: 780; letter-spacing: -0.02em; }
+.disclosure-hint { grid-column: 1; color: var(--buoy-body); font-size: 13px; }
+.disclosure-body { padding: 0 20px 20px; }
+.disclosure[open] > summary { border-bottom: 1px solid var(--buoy-line); margin-bottom: 18px; border-radius: var(--buoy-radius) var(--buoy-radius) 0 0; }
+.disclosure.danger .disclosure-title { color: var(--buoy-red-ink); }
+
+/* Records inside a card: hairline rows, not cards in cards. */
+.record { padding: 16px 0; border-top: 1px solid var(--buoy-line); list-style: none; }
+.panel > h2 + .record, .journal > .record:first-child { border-top: 0; padding-top: 2px; }
+.record:last-child { padding-bottom: 0; }
+.record-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 6px 12px; margin-bottom: 6px; }
+html.rer-themed .buoy-app .record-meta { color: var(--buoy-muted); font-size: 13px; }
+.record form { margin-top: 10px; }
+html.rer-themed .buoy-app .empty-line { margin: 0; color: var(--buoy-muted); }
+.journal { margin: 0; padding: 0; }
+
+/* Lists and definition lists. */
+html.rer-themed .buoy-app dl { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 8px 14px; margin: 0 0 14px; font-size: 13.5px; }
+html.rer-themed .buoy-app dt { min-width: 0; color: var(--buoy-muted); }
+html.rer-themed .buoy-app dd { margin: 0; font-weight: 550; overflow-wrap: anywhere; }
+.reasons { margin: 12px 0 0; padding: 0; list-style: none; }
+.reasons li { position: relative; padding-left: 18px; color: var(--buoy-body); }
+.reasons li + li { margin-top: 6px; }
+.reasons li::before { content: ""; position: absolute; left: 2px; top: 0.55em; width: 7px; height: 7px; border-radius: 50%; background: var(--buoy-amber); }
+#health:has(.pill.at-risk) .reasons li::before { background: var(--buoy-red); }
+#health:has(.pill.healthy) .reasons li::before { background: var(--buoy-green); }
+.judgment { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--buoy-line); }
+html.rer-themed .buoy-app .judgment h3 { margin-bottom: 4px; }
+.evidence-grid { display: grid; gap: 0; }
+.evidence-grid > div { padding: 14px 0; border-top: 1px solid var(--buoy-line); min-width: 0; }
+.evidence-grid > div:first-child { border-top: 0; padding-top: 0; }
+html.rer-themed .buoy-app .evidence-grid h3 { margin-bottom: 10px; }
+
+/* /app below the runway; the account page's workbench and actions. */
+.below { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 24px; }
+.below > [data-introduction] > .panel, .below > .panel { margin: 0; }
+.intro-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.intro-head a { font-size: 13px; }
+.checklist { display: grid; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; counter-reset: step; }
+.checklist li { position: relative; padding: 8px 12px 8px 42px; border: 1px solid var(--buoy-line); border-radius: 12px; background: #fff; counter-increment: step; }
+.checklist li::before { content: counter(step); position: absolute; left: 10px; top: 8px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--buoy-panel); border: 1px solid var(--buoy-line-strong); font-size: 12px; font-weight: 700; }
+.checklist li.done::before { content: "✓"; background: var(--buoy-green); border-color: var(--buoy-green); color: #fff; }
+.step-note { color: var(--buoy-muted); font-size: 13px; }
+.show-intro { grid-column: 1 / -1; margin: 0; }
+.workbench { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 28px; }
+.actions-area { margin-top: 12px; }
+html.rer-themed .buoy-app .actions-area > h2 { font-size: 22px; font-weight: 850; letter-spacing: -0.035em; }
+.actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 16px; align-items: start; }
+html.rer-themed .buoy-app .actions-grid .panel { margin: 0; }
+.actions-grid .wide[open] { grid-column: 1 / -1; }
+
+/* Imports and backups. */
+.import-columns, .backup-columns { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.backup-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#import-preview textarea { min-height: 300px; font: 13.5px/1.6 var(--buoy-font-mono); }
+.import-review { border-color: var(--buoy-lilac); }
+.empty-card { display: grid; justify-items: center; gap: 10px; padding: 24px 12px 8px; text-align: center; }
+html.rer-themed .buoy-app .empty-card p { margin: 0; text-align: center; }
+html.rer-themed .buoy-app pre { margin: 12px 0 14px; padding: 16px 18px; overflow-x: auto; border-radius: 12px; background: var(--buoy-code); color: var(--buoy-code-text); font: 13.5px/1.7 var(--buoy-font-mono); white-space: pre; }
+html.rer-themed .buoy-app dialog pre { background: var(--buoy-panel); color: var(--buoy-ink); border: 1px solid var(--buoy-line); white-space: pre-wrap; overflow-wrap: anywhere; }
+code { font-family: var(--buoy-font-mono); font-size: 0.9em; overflow-wrap: anywhere; }
+p code { padding: 1px 6px; border-radius: 6px; background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); }
+html.rer-themed .buoy-app dialog { width: min(720px, calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 26px; color: var(--buoy-ink); border: 1px solid var(--buoy-line); border-radius: var(--buoy-radius); box-shadow: var(--buoy-card-shadow); }
+dialog::backdrop { background: rgba(11, 11, 31, 0.32); }
+
+.app-footer { margin-top: 36px; padding: 18px 0; border-top: 1px solid var(--buoy-line); }
+html.rer-themed .buoy-app .app-footer p { margin: 0; color: var(--buoy-muted); font-size: 13px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-@media (max-width: 1100px) { .account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .evidence-grid { grid-template-columns: 1fr; } }
-@media (max-width: 700px) {
-  html.rer-themed body { padding: 0 20px 120px; }
-  .app-header { min-height: 64px; }
-  .operator-label { display: none; }
-  .operator-initial { display: grid; place-items: center; width: 40px; height: 40px; background: var(--unknown-bg); border-radius: 50%; }
-  .app-layout { display: block; padding: 0; }
-  .app-nav { display: flex; gap: 24px; border: 0; border-bottom: 1px solid var(--line); padding: 0; margin-bottom: 28px; overflow-x: auto; }
-  .app-nav a { flex: none; padding: 0; min-height: 48px; font-size: 14px; border-bottom: 2px solid transparent; }
-  .app-nav svg, .app-nav a[aria-current=page]::before { display: none; }
-  .app-nav a[aria-current=page] { border-bottom-color: var(--signal); }
-  html.rer-themed .buoy-shell h1 { font-size: 40px; margin-bottom: 20px; }
-  html.rer-themed .buoy-shell h2 { font-size: 26px; }
-  .account-grid, .form-grid, .evidence-grid, .import-columns { grid-template-columns: minmax(0, 1fr); }
-  .account-card, .evidence-grid > div, .record, .introduction, #create-account, #source-refresh, #prepare-playbook, #prepare-decision, #delete-account, #health, .backup-panel, .import-columns > .panel, #import-journal { padding: 20px; }
-  html.rer-themed .buoy-shell fieldset { padding: 16px; }
-  .account-card .details-button { align-self: flex-start; }
-  .app-footer { margin-left: 0; }
-  html.rer-themed .buoy-shell button { max-width: 100%; }
+
+@media (max-width: 1180px) {
+  .head-row { flex-wrap: wrap; }
+  .workbench, .below, .import-columns { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .app-bar { min-height: 60px; padding: 6px 0 0; }
+  html.rer-themed .app-bar .rer-brand { font-size: 29px; gap: 10px; }
+  html.rer-themed .app-bar .rer-brand::before { width: 38px; height: 38px; }
+  .head-row { display: grid; gap: 16px; margin: 6px 0 22px; }
+  html.rer-themed .buoy-app h1 { font-size: 30px; }
+  .title-line .dot { font-size: 19px; }
+  .title-line .fact { font-size: 18px; }
+  .title-line .fact.strong { font-size: 20px; }
+  .controls { justify-content: space-between; gap: 12px; }
+  .views { overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  html.rer-themed .views a { min-height: 38px; padding: 0 16px; font-size: 14px; }
+  .operator-initials { width: 40px; height: 40px; font-size: 14px; }
+  html.rer-themed .buoy-app .panel { padding: 18px 16px; }
+  html.rer-themed .buoy-app .disclosure { padding: 0; }
+  .disclosure > summary { padding: 16px; }
+  .disclosure-body { padding: 0 16px 16px; }
+  .backup-columns { grid-template-columns: minmax(0, 1fr); }
+  html.rer-themed .buoy-app dl { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 8px 10px; }
+  html.rer-themed .buoy-app button, .buoy-app a.button { width: 100%; }
+  html.rer-themed .buoy-app button.details-button { width: fit-content; }
+  .record-head { display: grid; }
 }

@@ -7,12 +7,14 @@ export interface Account {
   id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string;
   billing: Billing | null; support: Support | null; revision: string; noticeDate: string;
   health: { status: 'at-risk' | 'healthy' | 'unknown'; reasons: string[]; sentiment: Sentiment | null };
+  /** Today's band, then each later day before renewal on which today's evidence projects a new band. */
+  outlook: { from: string; status: 'at-risk' | 'healthy' | 'unknown' }[];
 }
 export interface Sentiment { rating: 'red' | 'amber' | 'green'; reason: string; by: string; recordedAt: string; expiresOn: string; expired: boolean }
 export interface Proposal {
   id: string; accountId: string; kind: 'playbook' | 'renewal';
   payload: { title?: string; dueDate?: string; outcome?: string; reason?: string; evidence?: string };
-  accountRevision: string; status: 'prepared' | 'approved'; preparedBy: string; approvedBy: string | null; approvedAt: string | null;
+  accountRevision: string; status: 'prepared' | 'approved'; preparedBy: string; preparedAt: string; approvedBy: string | null; approvedAt: string | null;
 }
 export interface Task { id: string; accountId: string; proposalId: string; title: string; dueDate: string; completedAt: string | null; evidence: string | null }
 export interface Decision { id: string; accountId: string; proposalId: string; outcome: string; reason: string; evidence: string; renewalDate: string; recordedBy: string; recordedAt: string }

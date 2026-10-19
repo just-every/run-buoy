@@ -8,7 +8,7 @@ import { seedWork } from './demo/work'
 export async function seedDemo(env: Bindings, { ownerEmail, now }: { ownerEmail: string; now: Date }) {
   const owner = await env.DB.prepare("SELECT id FROM oa_operators WHERE email=? AND role='owner' AND status='active'").bind(ownerEmail).first<{ id: string }>()
   if (!owner) return
-  const actor: Actor = { id: owner.id, displayName: 'Maya Patel', kind: 'person', role: 'owner' }
+  const actor: Actor = { id: owner.id, displayName: 'Maya Okafor', kind: 'person', role: 'owner' }
   await env.DB.batch([
     env.DB.prepare('UPDATE oa_operators SET display_name=? WHERE id=?').bind(actor.displayName, owner.id),
     env.DB.prepare('INSERT INTO oa_first_run(singleton,completed_by,completed_at) VALUES(1,?,?) ON CONFLICT DO NOTHING').bind(owner.id, now.getTime()),

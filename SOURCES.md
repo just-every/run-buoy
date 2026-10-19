@@ -11,7 +11,7 @@ Copied/adapted MIT sibling patterns:
 - [Nectar subscriptions](https://github.com/just-every/run-nectar/blob/c76a60ccffa39cc1a207b52c152bda16d6d7b1df/src/nectar/subscriptions.ts): prepared snapshots and current revision approval, adapted in `work.ts`.
 - [Locket renewal obligations](https://github.com/just-every/run-locket/blob/82478229f356d017bda62b4944b584138ef9671c/src/locket/obligations.ts): confirmed date/notice evidence and person-recorded renewal decision, adapted in `health.ts`, `accounts.ts` and `work.ts`. Billing periods never imply renewal terms.
 
-Run Coaster, Beam and Pier main README/OPERATIONS/package-mode examples informed the CLI and archive wiring. No sibling repository was modified. Support snapshot rules are Buoy's own implementation. Source retains the Run Edit Run MIT copyright; the self-hosted Spectral and Red Hat Text fonts retain their SIL Open Font Licenses.
+Run Coaster, Beam and Pier main README/OPERATIONS/package-mode examples informed the CLI and archive wiring. No sibling repository was modified. Support snapshot rules are Buoy's own implementation. Source retains the Run Edit Run MIT copyright; the self-hosted Inter, Caveat and IBM Plex Mono fonts retain their SIL Open Font Licenses.
 
 The exact published RER 0.2.30 package supplies bounded, nonblocking macOS listener ownership inspection. No local RER patches are applied.
 

@@ -5,13 +5,17 @@ with `rer demo --stop`. Base creates fresh data under `.rer/demo/`, deletes it
 on stop, and leaves `.wrangler/state` alone. Every start is signed in as the
 owner. The title and nav read **Buoy Demo**, with no bar or outbox.
 
-`src/demo.ts` installs 24 accounts, current billing/support observations,
-prepared playbooks, approved open/completed tasks, and renewed/deferred/churned
-decisions. Dates are relative to the start. Stable account IDs and proposal lookups make the hook idempotent; it never
+`src/demo.ts` installs Tidewell Software's renewal runway: eleven US accounts
+renewing over the next six months ($1,037,500 of annual invoices), with billing
+and support observations of different ages (three accounts read Unknown on
+stale or missing evidence), Cascade Freight at risk on urgent tickets and a red
+CSM sentiment, an approved and a completed Cascade playbook, renewed and
+deferred decisions, and one playbook prepared by Buoy's agent (through the
+same preparation path as the commands API) awaiting approval. Dates are relative to the start. Stable account IDs and proposal lookups make the hook idempotent; it never
 fetches. Accounts, proposals, approvals and task completions go through Buoy’s
 domain functions, with their real validation, revisions and audit trail. Maya
-Patel owns the sample workspace at maya@harbourstudio.example. Harbor Studio
-shows completed and open work, an agreed renewal extension and a current draft. The manual move-in fixture provides
+Okafor owns the sample workspace at maya@harbourstudio.example. Cascade Freight
+opens in place on the runway with its evidence, its finding and the approval. The manual move-in fixture provides
 the account shape; these expanded examples live only in demo state.
 
 The demo uses the unmodified published RER package and Base runtime modules

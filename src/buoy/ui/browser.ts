@@ -1,5 +1,6 @@
 // The server remains the source of truth. This only preserves unsent form text
-// in the current browser tab and gives metadata dialogs native focus handling.
+// in the current browser tab, gives metadata dialogs native focus handling and
+// opens the closed form card a link or fragment names.
 export const browserScript = `(() => {
   let storage;
   try { storage = window.sessionStorage; storage.setItem('buoy:check', '1'); storage.removeItem('buoy:check'); } catch {}
@@ -38,6 +39,8 @@ export const browserScript = `(() => {
     }
   }
   window.addEventListener('beforeunload', event => { if (document.querySelector('[data-dirty="true"]')) { event.preventDefault(); event.returnValue = ''; } });
+  const reveal = () => { let target = null; try { target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch {} const card = target && target.closest('details'); if (card && !card.open) { card.open = true; target.scrollIntoView(); } };
+  reveal(); window.addEventListener('hashchange', reveal);
   for (const opener of document.querySelectorAll('[data-open]')) {
     const dialog = document.getElementById(opener.dataset.open);
     opener.addEventListener('click', () => { dialog.showModal(); dialog.querySelector('button').focus(); });

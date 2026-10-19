@@ -1,6 +1,6 @@
 import { canonicalJson } from '../modules/import-kit/src/d1/index.ts'
 import { Problem, insist, stmt, guard, commit, id, now, requirePerson, type Actor } from './core'
-import { health, noticeDate, type Account } from './health'
+import { health, noticeDate, outlook, type Account } from './health'
 import { parseAccounts, notErasedSql } from './imports/index'
 import { latestSentiments, today } from './sentiment'
 
@@ -34,7 +34,7 @@ export async function state(db: D1Database, actor: Actor) {
   db.prepare('SELECT id,account_id AS accountId,proposal_id AS proposalId,outcome,reason,evidence,renewal_date AS renewalDate,recorded_by AS recordedBy,recorded_at AS recordedAt FROM buoy_decisions ORDER BY recorded_at DESC,id')])
  const sentiments = await latestSentiments(db), on = today()
  return {operator: {displayName: actor.displayName, role: actor.role},
-  accounts: result[0].results.map(row => {const a = JSON.parse(String(row.document)) as Account; return {...a, revision: row.revision, health: health(a, on, sentiments.get(a.id) ?? null), noticeDate: noticeDate(a)}}),
+  accounts: result[0].results.map(row => {const a = JSON.parse(String(row.document)) as Account; const judged = sentiments.get(a.id) ?? null; return {...a, revision: row.revision, health: health(a, on, judged), outlook: outlook(a, on, judged), noticeDate: noticeDate(a)}}),
   proposals: result[1].results.map(row => ({...row, payload: JSON.parse(String(row.payload)), snapshot: JSON.parse(String(row.snapshot))})),
   tasks: result[2].results, decisions: result[3].results}
 }
