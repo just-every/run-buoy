@@ -17,7 +17,7 @@
     "test:email-link": "rer queue test:email-link -- sh -c \"node tests/email-link.mjs\"",
     "onboard": "node scripts/install.mjs",
     "build:app": "rer queue build:app -- sh -c \"vite build\"",
-    "verify:app": "pnpm run build && pnpm run build:site && pnpm run typecheck && pnpm run test:site && pnpm run test:flows && pnpm run test:email-link && pnpm run test:portable",
+    "verify:app": "pnpm run build && pnpm run build:site && pnpm run typecheck && pnpm run test:site && pnpm run test:style && pnpm run test:flows && pnpm run test:email-link && pnpm run test:portable",
     "reset": "rer reset",
     "export": "rer export",
     "import": "rer import",
@@ -31,7 +31,8 @@
     "test:flows": "node --test --test-concurrency=1 tests/flows.test.mjs",
     "test:portable": "node tests/portable.mjs",
     "build:site": "rer build --site",
-    "test:site": "node tests/site.mjs"
+    "test:site": "node tests/site.mjs",
+    "test:style": "node tests/style.mjs"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.33",
