@@ -31,6 +31,6 @@ export function accountValues(image:Image,on:string) {
   if(a.billing)values['billing.balanceMinor']=a.billing.totalMinor-a.billing.creditsMinor-a.billing.allocatedMinor
   for(const e of h.evidence){values[`health.${e.kind}Missing`]=Number(e.missing);values[`health.${e.kind}Stale`]=Number(e.stale)}
   if(sentiment)for(const key of ['rating','reason','recordedBy','recordedAt','expiresOn'] as const)values[`sentiment.${key}`]=sentiment[key]
-  return {account:{...a,revision:row.revision},values,classification}
+  return {account:{...a,revision:row.revision},values,classification,assessment:h}
  })
 }

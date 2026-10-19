@@ -1,3 +1,4 @@
+import { HEALTH_INTERPRETATION } from '../health'
 import { observeOutcomes } from '../outcomes/observe'
 import { accountAudit } from '../audit-records'
 import { auditRecord } from '../audit-records'
@@ -43,7 +44,7 @@ export async function reconcile(db:D1Database,actor:Actor,at=new Date()) {
 export async function segmentState(db:D1Database) {
  const image=(await snapshot(db)).value,accounts=evaluated(image,new Date().toISOString().slice(0,10))
  return {fields:FIELDS,tiers:tierNames(image),segments:definitions(image).map(s=>({...s,
-  members:image.entries.filter(e=>e.segmentId===s.id&&!e.exitedAt).map(e=>{const a=accounts.find(a=>a.account.id===e.accountId)!;return {accountId:e.accountId,name:a.account.name,health:a.values['health.status'] as string,tier:a.tier,stage:a.stage,enteredAt:e.enteredAt}}),
+  members:image.entries.filter(e=>e.segmentId===s.id&&!e.exitedAt).map(e=>{const a=accounts.find(a=>a.account.id===e.accountId)!;return {accountId:e.accountId,name:a.account.name,health:a.values['health.status'] as string,assessment:a.assessment,tier:a.tier,stage:a.stage,enteredAt:e.enteredAt}}),
   history:image.entries.filter(e=>e.segmentId===s.id).map(e=>({accountId:e.accountId,enteredAt:e.enteredAt,exitedAt:e.exitedAt,proposalId:e.proposalId}))})),
   classifications:accounts.map(a=>({accountId:a.account.id,tier:a.tier,stage:a.stage,tierManual:!!a.classification?.tierManual,stageManual:!!a.classification?.stageManual}))}
 }
@@ -66,11 +67,11 @@ export async function setClassification(db:D1Database,actor:Actor,accountId:stri
 }
 export async function segmentReport(db:D1Database,segmentId:string) {
  const segment=(await segmentState(db)).segments.find(s=>s.id===segmentId);insist(segment,'Segment not found.',404)
- return {id:segment.id,name:segment.name,count:segment.members.length,health:Object.fromEntries(['at-risk','healthy','unknown'].map(status=>[status,segment.members.filter(a=>a.health===status).length])),accounts:segment.members}
+ return {interpretation:HEALTH_INTERPRETATION,id:segment.id,name:segment.name,count:segment.members.length,health:Object.fromEntries(['at-risk','healthy','unknown'].map(status=>[status,segment.members.filter(a=>a.health===status).length])),accounts:segment.members}
 }
 export function reportCsv(report:Awaited<ReturnType<typeof segmentReport>>) {
  const cell=(v:unknown)=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"'
- return [['Account id','Account','Health','Tier','Stage','Entered at'],...report.accounts.map(a=>[a.accountId,a.name,a.health,a.tier,a.stage,a.enteredAt])].map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n'
+ return [['Account id','Account','Health','Tier','Stage','Entered at','Health reasons','Source coverage','Interpretation'],...report.accounts.map(a=>[a.accountId,a.name,a.health,a.tier,a.stage,a.enteredAt,a.assessment.reasons.join('; '),a.assessment.evidence.map(e=>`${e.kind}: ${e.missing?'missing':e.stale?'stale':'current'}`).join('; '),a.assessment.interpretation])].map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n'
 }
 export async function scheduledSegments(db:D1Database,at:Date) {
  const owner=await db.prepare("SELECT id,display_name AS displayName,role FROM oa_operators WHERE role='owner' AND status='active' ORDER BY id LIMIT 1").first<{id:string;displayName:string;role:string}>()
