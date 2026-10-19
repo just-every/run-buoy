@@ -1,133 +1,92 @@
-*, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
-body.landing { margin: 0; color: var(--ink); background: var(--paper); font: 400 17px/1.55 var(--font-body); -webkit-font-smoothing: antialiased; }
-.landing h1, .landing h2, .landing h3, .landing p { margin: 0; }
+/* The homepage's frame: stages drawn in desk pixels, the heading pair, cards, pills, cursors, stickies, sparks and
+   dotted connectors. --u is one desk pixel (desk-buoy/page-s1 is 1536 wide); every section scales with the page up to
+   1536 px. Below 1180 px each stage stacks its parts in reading order at phone and tablet sizes. */
+body.landing { margin: 0; color: var(--buoy-ink); font-family: var(--buoy-font); font-optical-sizing: auto; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: clip; }
+.landing *, .landing *::before, .landing *::after { box-sizing: border-box; }
+.landing :where(p, h1, h2, h3, h4, ul, ol, dl, dd, figure, table) { margin: 0; padding: 0; }
+.landing :where(ul, ol) { list-style: none; }
 .landing a { color: inherit; }
-.landing a:focus-visible { outline: 2px solid var(--ink); outline-offset: 5px; }
-.landing-header, .landing-footer { max-width: 1360px; margin: 0 auto; padding: 26px 28px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.landing-header { position: relative; z-index: 1; border-bottom: 1px solid var(--line); }
-.landing-brand { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; font: 500 26px/1 var(--font-heading); }
-.landing-brand img { flex: none; }
-.landing nav { display: flex; align-items: center; gap: 40px; }
-.landing nav a { text-decoration: none; min-height: 28px; }
-.landing nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.landing-container { width: calc(100% - 80px); max-width: 1200px; margin-inline: auto; }
-.landing-hero { position: relative; isolation: isolate; padding: 54px 0 144px; }
-.landing-hero::before { content: ''; position: absolute; inset: 0; background: url('/design-assets/still-water-1440.webp') center bottom / 100% auto no-repeat; z-index: -1; }
-.hero-copy { max-width: 760px; }
-.landing h1 { font: 500 88px/.98 var(--font-heading); letter-spacing: -.02em; }
-.landing .subhead { max-width: 720px; font-size: 20px; line-height: 1.5; color: var(--muted); margin-top: 26px; }
-.alternative { margin-top: 14px !important; color: var(--muted); }
-.alternative strong { color: var(--ink); font-weight: 700; }
-.landing-actions { display: flex; align-items: center; gap: 32px; margin-top: 24px; }
-.primary-pill { min-height: 52px; display: inline-flex; align-items: center; justify-content: center; padding: 0 32px; border-radius: var(--r-pill); font-weight: 500; font-size: 16px; text-decoration: none; background: var(--ink); color: var(--surface) !important; }
-.primary-pill:hover { background: color-mix(in srgb, var(--ink) 85%, var(--surface)); }
-.text-link { text-decoration: underline; text-underline-offset: 5px; font-weight: 500; }
-.small-print { margin-top: 18px !important; color: var(--muted); font-size: 14px; }
-.renewal-story { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; margin-top: 84px; }
-.story-step { position: relative; min-width: 0; }
-.landing .story-step h2 { display: flex; align-items: center; gap: 14px; font: 500 28px/1.3 var(--font-heading); margin-bottom: 12px; }
-.story-step h2 > span { color: var(--signal); font: 500 32px/1 var(--font-body); }
-.drawing-card { position: relative; z-index: 1; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 24px; box-shadow: var(--shadow-card); }
-.story-step > .drawing-card { min-height: 148px; }
-.draw-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-.story-step .draw-heading { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
-.draw-heading strong { font-size: 18px; font-weight: 500; }
-.drawing-card p { color: var(--muted); font-size: 16px; line-height: 1.45; }
-.drawing-card p + p { margin-top: 8px; }
-.drawing-card b { color: var(--ink); font-weight: 500; }
-.badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 12px; min-height: 28px; border-radius: var(--r-pill); font-size: 14px; line-height: 1.4; font-weight: 500; }
-.badge.risk { color: var(--risk-text); background: var(--risk-bg); }
-.badge.healthy { color: var(--healthy-text); background: var(--healthy-bg); }
-.badge.unknown { color: var(--unknown-text); background: var(--unknown-bg); }
-.draw-pill { display: flex; justify-content: center; align-items: center; padding: 10px 16px; min-height: 40px; color: var(--surface); background: var(--ink); border-radius: var(--r-pill); font-size: 14px; text-align: center; }
-.renewed-evidence { display: flex; gap: 16px; align-items: center; color: var(--ink) !important; }
-.check { display: inline-grid; place-items: center; flex: none; border-radius: 50%; width: 40px; height: 40px; background: var(--healthy-bg); color: var(--healthy-text); font: 500 28px/1 var(--font-body); }
-.reflection { position: absolute; top: calc(100% + 3px); width: 100%; transform: scaleY(-1); filter: blur(2px); opacity: .12; mask-image: linear-gradient(to top, #000, transparent 85%); pointer-events: none; }
-.reflection .drawing-card { min-height: 148px; }
-.feature { display: grid; grid-template-columns: 46% 46%; gap: 8%; align-items: center; padding-block: 112px; }
-.feature.reverse .feature-copy { order: 2; }
-.feature.reverse .feature-drawing { order: 1; }
-.feature:nth-child(4), .feature:nth-child(6) { border-top: 1px solid var(--line); }
-.landing .eyebrow { color: var(--muted); font-weight: 600; font-size: 13px; line-height: 1; letter-spacing: .14em; margin-bottom: 24px; }
-.landing h2 { font: 500 48px/1.08 var(--font-heading); letter-spacing: -.02em; }
-.feature-copy > p:last-child { color: var(--muted); margin-top: 22px; max-width: 45ch; }
-.feature-drawing { position: relative; padding: 20px 32px 48px; isolation: isolate; }
-.feature-drawing::after { content: ''; position: absolute; inset: 40% -40px -24px; background: url('/design-assets/still-water-1440.webp') center bottom / cover no-repeat; z-index: -1; mask-image: radial-gradient(ellipse, #000 15%, transparent 70%); opacity: .75; }
-.feature-drawing .drawing-card { max-width: 480px; margin: auto; }
-.landing .drawing-card h3 { font: 500 24px/1.3 var(--font-heading); margin-bottom: 12px; }
-.license-lines { margin-top: 18px; }
-.license-lines p { font-size: 11px; line-height: 1.5; color: var(--muted); }
-.health-rows > div { padding: 14px 0; border-bottom: 1px solid var(--line); }
-.health-rows > div:first-child { padding-top: 0; }
-.health-rows > div:last-child { border: 0; padding-bottom: 0; }
-.health-rows .draw-heading { margin-bottom: 4px; }
-.health-rows p { font-size: 14px; }
-.drawing-card dl { margin: 0; font-size: 16px; }
-.drawing-card dl > div { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.drawing-card dl > div:last-child { border: 0; }
-.drawing-card dt { color: var(--muted); }
-.drawing-card dd { margin: 0; font-weight: 500; }
-#notice .drawing-card dl > div:last-child { background: var(--risk-bg); padding-inline: 12px; border-radius: 6px; }
-#notice .drawing-card dl > div:last-child dt::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: var(--signal); }
-.landing .decision-title { display: flex; align-items: center; gap: 12px; }
-.drawing-card .draw-ink { color: var(--ink); }
-.drawing-card .draw-small { font-size: 13px; margin-top: 20px; }
-#agents .draw-pill, #move-in .draw-pill { margin-top: 18px; }
-.included { padding: 72px 0 80px; }
-.included ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 0; margin: 32px 0 0; list-style: none; }
-.included li { display: flex; align-items: center; gap: 24px; border: 1px solid var(--line); border-radius: var(--r-card); padding: 28px; min-height: 104px; }
-.included svg { flex: none; width: 24px; height: 24px; }
-.landing-close { min-height: 360px; background: url('/design-assets/still-water-1440.webp') center top / cover no-repeat; padding-top: 48px; }
-.landing-close h2 { max-width: 1000px; }
-.landing-footer { border-top: 1px solid var(--line); font-size: 14px; padding-block: 28px; }
-@media (max-width: 1000px) and (min-width: 701px) {
-  .landing h1 { font-size: 72px; }
-  .renewal-story { gap: 18px; }
-  .drawing-card { padding: 18px; }
-  .feature-drawing { padding-inline: 0; }
+.landing a:focus-visible { outline: 3px solid var(--buoy-plum-deep); outline-offset: 4px; border-radius: 6px; }
+.skip { position: absolute; left: 16px; top: -60px; z-index: 10; padding: 10px 16px; border-radius: 999px; background: var(--buoy-ink); color: #fff; font-weight: 600; }
+.skip:focus { top: 12px; }
+
+.stage-wrap { container-type: inline-size; position: relative; }
+.stage { --u: min(1px, calc(100cqw / 1536)); position: relative; max-width: 1536px; height: calc(var(--h) * var(--u)); margin: 0 auto; font-size: calc(16 * var(--u)); line-height: 1.4; }
+.place { position: absolute; left: calc(var(--x) * var(--u)); top: calc(var(--y) * var(--u)); width: calc(var(--w) * var(--u)); rotate: calc(var(--r, 0) * 1deg); }
+
+/* Headings: one size for every section heading, the hero's ultra-heavy tight grotesk; the second line is one
+   left-to-right plum-to-turquoise gradient at the same weight and width. Word spacing keeps words apart. */
+.eyebrow { color: var(--buoy-eyebrow); font: 600 calc(15 * var(--u))/1.2 var(--buoy-font); letter-spacing: 0.24em; text-transform: uppercase; }
+.landing h1, .copy h2, .closing h2 { font-weight: var(--buoy-heading-weight); letter-spacing: var(--buoy-heading-tracking); word-spacing: var(--buoy-heading-word-space); color: var(--buoy-ink); font-optical-sizing: auto; }
+.copy h2, .closing h2 { margin-top: calc(22 * var(--u)); font-size: calc(76 * var(--u)); line-height: 0.95; text-wrap: balance; }
+.l1 { display: block; }
+.l2 { display: inline-block; padding-bottom: 0.14em; margin-bottom: -0.14em; background: var(--buoy-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { margin-top: calc(16 * var(--u)); color: var(--buoy-body); font: 400 calc(24 * var(--u))/1.4 var(--buoy-font); text-wrap: pretty; }
+.copy.center { text-align: center; }
+.copy.narrow-lede .lede { max-width: calc(740 * var(--u)); }
+.copy.center .lede { margin-inline: auto; max-width: calc(800 * var(--u)); }
+
+/* Cards and their small parts. */
+.card { background: var(--buoy-card); border: 1px solid var(--buoy-line); border-radius: calc(16 * var(--u)); box-shadow: var(--buoy-card-shadow); }
+.card-title { font: 750 calc(21 * var(--u))/1.25 var(--buoy-font); letter-spacing: -0.015em; }
+.card-sub { color: var(--buoy-muted); font-size: calc(16 * var(--u)); }
+.dot { display: inline-block; flex: none; width: 0.78em; height: 0.78em; border-radius: 50%; background: var(--buoy-muted); }
+.dot.red { background: var(--buoy-red); } .dot.green { background: var(--buoy-green); } .dot.amber { background: var(--buoy-amber); } .dot.plum { background: var(--buoy-plum); }
+.pill { display: inline-flex; align-items: center; gap: 0.5em; padding: 0.32em 0.85em; border-radius: 999px; font-weight: 600; white-space: nowrap; line-height: 1.2; }
+.pill.red { background: var(--buoy-red-soft); color: var(--buoy-red-ink); }
+.pill.green { background: var(--buoy-green-soft); color: var(--buoy-green-ink); }
+.pill.amber { background: var(--buoy-amber-soft); color: var(--buoy-amber-ink); }
+.pill.plum { background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); }
+.pill.grey { background: var(--buoy-panel); color: var(--buoy-body); }
+.tick { color: var(--buoy-green-ink); font-weight: 700; }
+.sep { color: inherit; opacity: 0.75; }
+.nowrap { white-space: nowrap; }
+.avatar { display: inline-grid; place-items: center; flex: none; width: calc(46 * var(--u)); height: calc(46 * var(--u)); border-radius: 50%; font: 650 calc(17 * var(--u))/1 var(--buoy-font); letter-spacing: 0.02em; }
+.avatar.plum { background: var(--buoy-plum-soft); color: var(--buoy-plum-deep); }
+.avatar.blue { background: #e4effd; color: #2763c4; }
+.avatar.green { background: var(--buoy-green-soft); color: var(--buoy-green-ink); }
+.avatar.teal { background: #dff6f5; color: #0b7f86; }
+.avatar.grey { background: #eceef2; color: #575b69; }
+.check-disc { display: inline-grid; place-items: center; flex: none; width: 1.55em; height: 1.55em; border-radius: 50%; background: var(--buoy-green); color: #fff; font-weight: 800; font-size: 0.95em; }
+.mono { font-family: var(--buoy-font-mono); }
+
+/* Hand-drawn layer: cursors, stickies, sparks and dotted plum connectors. */
+.cursor { display: flex; flex-direction: column; align-items: flex-start; width: auto; z-index: 6; pointer-events: none; }
+.cursor svg { width: calc(38 * var(--u)); height: calc(44 * var(--u)); filter: drop-shadow(0 2px 2px rgba(11, 11, 31, 0.25)); }
+.cursor svg path { stroke: #fff; stroke-width: 1.6; stroke-linejoin: round; }
+.cursor b { margin: calc(-6 * var(--u)) 0 0 calc(20 * var(--u)); padding: calc(5 * var(--u)) calc(13 * var(--u)) calc(6 * var(--u)); border-radius: 999px; color: #fff; font: 650 calc(18 * var(--u))/1.15 var(--buoy-font); box-shadow: 0 6px 12px -6px rgba(11, 11, 31, 0.45); }
+.cursor.maya svg path { fill: var(--buoy-maya); } .cursor.maya b { background: var(--buoy-maya); }
+.cursor.jordan svg path { fill: var(--buoy-jordan); } .cursor.jordan b { background: var(--buoy-jordan); }
+.sticky { padding: calc(18 * var(--u)) calc(16 * var(--u)) calc(20 * var(--u)); background: var(--buoy-sticky); color: var(--buoy-ink); font: 700 calc(29 * var(--u))/1.08 var(--buoy-font-hand); text-align: center; box-shadow: 0 2px 3px rgba(80, 60, 0, 0.12), 0 16px 22px -14px rgba(80, 60, 0, 0.45); z-index: 4; }
+.hand { font-family: var(--buoy-font-hand); font-weight: 700; }
+.spark { height: auto; z-index: 3; }
+.spark path { fill: none; stroke: var(--buoy-plum); stroke-width: 4.4; stroke-linecap: round; }
+.links { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 1; }
+.links path { fill: none; stroke: var(--buoy-plum); stroke-width: 3.2; stroke-linecap: round; stroke-dasharray: 0.5 7.5; }
+.links marker path { stroke-dasharray: none; }
+.links path.solid { stroke-dasharray: none; stroke-width: 2.4; }
+
+/* Word spaces on every card heading stay at a quarter em or more under the tight tracking (measured: word-gaps.txt). */
+.card-title, .remedy h4, .channel, .lane-name, .doc-part h4 { word-spacing: 0.08em; }
+.cascade-card h3, .score-head h3, .big-title, .plan-title, .ask-title, .plan-head h3, .playbook-card .card-title, .people .card-title { word-spacing: 0.16em; }
+
+/* Actions. */
+.actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: calc(18 * var(--u)) calc(44 * var(--u)); }
+.run-pill { display: inline-flex; align-items: center; justify-content: center; gap: 0.4em; min-height: calc(62 * var(--u)); padding: 0 calc(42 * var(--u)); border-radius: 999px; background: var(--buoy-ink); color: #fff !important; font: 650 calc(25 * var(--u))/1 var(--buoy-font); letter-spacing: -0.01em; text-decoration: none; box-shadow: 0 16px 28px -18px rgba(11, 11, 31, 0.9); }
+.run-pill:hover { background: #24243a; }
+.text-link { font: 500 calc(21 * var(--u))/1.3 var(--buoy-font); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
+.text-link:hover { text-decoration-color: var(--buoy-plum); }
+
+/* Phones and tablets: every stage stacks its parts in reading order. */
+@media (max-width: 1179px) {
+  .stage { --u: 1px; height: auto; max-width: 760px; display: flex; flex-direction: column; gap: 18px; padding: 56px clamp(16px, 4vw, 32px) 8px; font-size: 16px; }
+  .place { position: relative; left: auto; top: auto; width: auto; rotate: none; }
+  .links, .spark, .desk-only { display: none !important; }
+  .copy h2, .closing h2 { font-size: clamp(42px, 9.4vw, 64px); line-height: 0.98; margin-top: 14px; }
+  .eyebrow { font-size: 13px; letter-spacing: 0.18em; line-height: 1.45; }
+  .lede { font-size: 18px; margin-top: 14px; }
+  .copy.center { text-align: left; }
+  .cursor { display: none; }
+  .sticky { align-self: flex-start; rotate: -3deg; font-size: 26px; padding: 14px 18px; margin: 4px 0 4px 6px; }
 }
-@media (max-width: 700px) {
-  .landing-header, .landing-footer { padding: 20px; gap: 16px; }
-  .landing-header { margin-inline: 20px; padding-inline: 0; }
-  .landing-brand { font-size: 24px; gap: 8px; }
-  .landing nav { gap: 24px; font-size: 14px; }
-  .landing-container { width: calc(100% - 40px); }
-  .landing-hero { padding: 40px 0 80px; }
-  .landing-hero::before { background-image: url('/design-assets/still-water-390.webp'); background-size: 100% 65%; background-position: center bottom; }
-  .landing h1 { font-size: 46px; line-height: 1; }
-  .landing .subhead { margin-top: 24px; font-size: 17px; line-height: 1.5; }
-  .alternative { font-size: 16px; }
-  .landing-actions { flex-direction: column; align-items: flex-start; gap: 16px; margin-top: 24px; }
-  .primary-pill { min-height: 52px; padding-inline: 32px; }
-  .small-print { margin-top: 20px !important; }
-  .renewal-story { grid-template-columns: 1fr; gap: 16px; margin: 110px 40px 0; }
-  .story-step { padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-card); }
-  .landing .story-step h2 { font-size: 26px; gap: 14px; margin-bottom: 16px; }
-  .story-step h2 > span { font-size: 28px; }
-  .story-step > .drawing-card { border: 0; box-shadow: none; border-radius: 0; padding: 0; min-height: 0; }
-  .story-step .drawing-card p { font-size: 14px; }
-  .story-step .draw-heading strong { font-size: 16px; }
-  .reflection { display: none; }
-  .story-step:last-child .reflection { display: block; top: calc(100% + 2px); left: 0; }
-  .feature, .feature.reverse { grid-template-columns: 1fr; gap: 32px; padding: 64px 0; }
-  .feature.reverse .feature-copy, .feature.reverse .feature-drawing { order: initial; }
-  .landing h2 { font-size: 32px; line-height: 1.12; }
-  .landing .eyebrow { font-size: 12px; margin-bottom: 18px; }
-  .feature-copy > p:last-child { font-size: 16px; margin-top: 18px; }
-  .feature-drawing { padding: 12px 12px 32px; }
-  .feature-drawing::after { inset-inline: -20px; }
-  .drawing-card { padding: 20px; }
-  .draw-heading { gap: 6px; }
-  .draw-heading strong { font-size: 16px; }
-  .health-rows p { font-size: 14px; }
-  .drawing-card dl { font-size: 14px; }
-  .drawing-card dl > div { gap: 10px; }
-  .included { padding: 40px 0 64px; }
-  .included ul { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
-  .included li { flex-direction: column; justify-content: center; text-align: center; gap: 14px; padding: 20px 12px; font-size: 14px; min-height: 132px; }
-  .landing-close { min-height: 300px; padding-top: 32px; background-position: 75% top; }
-  .landing-footer { flex-wrap: wrap; }
-  .landing-footer nav { gap: 20px; }
-}
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media (min-width: 1180px) { .phone-only { display: none !important; } }

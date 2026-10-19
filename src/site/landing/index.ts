@@ -1,29 +1,49 @@
-import { identity } from '../../identity';
-import { siteHeader, siteFooter } from '../chrome';
-import { icon } from '../../buoy/ui/icons';
-import { drawings, heroDrawing } from './drawings';
-import styles from './landing.css?raw';
+// The run site's homepage: the owner-approved desk page (desk-buoy/page-s1, screens 01–13) in order, every card,
+// chart and drawing real HTML, CSS and SVG. Visual authority: desk-buoy/README.md and page-s1/STRUCTURE.md.
+import { siteHead } from '../head'
+import { siteFooter, siteHeader } from '../chrome'
+import chrome from '../chrome.css?raw'
+import base from './landing.css?raw'
+import { hero } from './sections/hero'
+import heroStyle from './sections/hero.css?raw'
+import { account } from './sections/account'
+import accountStyle from './sections/account.css?raw'
+import { health } from './sections/health'
+import healthStyle from './sections/health.css?raw'
+import { alert } from './sections/alert'
+import alertStyle from './sections/alert.css?raw'
+import { verify } from './sections/verify'
+import verifyStyle from './sections/verify.css?raw'
+import { playbook } from './sections/playbook'
+import playbookStyle from './sections/playbook.css?raw'
+import { quarter } from './sections/quarter'
+import quarterStyle from './sections/quarter.css?raw'
+import { portfolio } from './sections/portfolio'
+import portfolioStyle from './sections/portfolio.css?raw'
+import { signals } from './sections/signals'
+import signalsStyle from './sections/signals.css?raw'
+import { onboarding } from './sections/onboarding'
+import onboardingStyle from './sections/onboarding.css?raw'
+import { renewals } from './sections/renewals'
+import renewalsStyle from './sections/renewals.css?raw'
+import { cutover } from './sections/cutover'
+import cutoverStyle from './sections/cutover.css?raw'
+import { closing } from './sections/closing'
+import closingStyle from './sections/closing.css?raw'
 
-const actions = (demo = false) => `<div class="landing-actions"><a class="primary-pill" href="/run">Run Buoy →</a>${demo ? '<a class="primary-pill" href="https://demo.run-buoy.com/">Try the demo</a>' : ''}<a class="text-link" href="/docs">Read the docs</a></div>`;
-const features = [
-  { id: 'free', eyebrow: 'FREE', heading: '100% free. Yours to keep.', body: 'Free as in cost and free as in code. MIT licensed, with your data in your own database.', drawing: drawings.free },
-  { id: 'health', eyebrow: 'HEALTH', heading: 'Health you can explain.', body: 'Every status names the invoice or ticket behind it. Missing or old evidence stays in view.', drawing: drawings.health },
-  { id: 'notice', eyebrow: 'NOTICE DATES', heading: 'The deadline before the date.', body: 'Enter the renewal date and notice period. Buoy shows when you need to act.', drawing: drawings.notice },
-  { id: 'decisions', eyebrow: 'DECISIONS', heading: 'Every decision, on record.', body: 'Who approved it, when, and the evidence it rested on. Earlier decisions keep their terms.', drawing: drawings.decisions },
-  { id: 'agents', eyebrow: 'AGENTS', heading: 'Agents prepare. Your team decides.', body: 'Give an assistant a scoped credential to list renewals and prepare playbooks. People approve.', drawing: drawings.agents },
-  { id: 'move-in', eyebrow: 'MOVE IN', heading: 'Bring your accounts with you.', body: 'Paste account JSON, review the dry run, then apply. Undo while nothing has changed.', drawing: drawings.move },
-];
+const sections = [hero, account, health, alert, verify, playbook, quarter, portfolio, signals, onboarding, renewals, cutover, closing]
+const styles = [chrome, base, heroStyle, accountStyle, healthStyle, alertStyle, verifyStyle, playbookStyle, quarterStyle, portfolioStyle, signalsStyle, onboardingStyle, renewalsStyle, cutoverStyle, closingStyle]
+
+/** Separators, arrows and range dashes stay on the line of the word before them (no line starts with one), and a
+ * dash-joined token (a time range, a score band, a money band) never breaks at its dash. Styles are left alone. */
+export const keepSeparators = (html: string) => html.split(/(<style>[\s\S]*?<\/style>)/).map(part => part.startsWith('<style>') ? part
+  : part.replace(/>[^<]+</g, text => text.replace(/ ([·→–—])/g, '\u00a0$1').replace(/[^\s>]+–[^\s<]+/g, token => `<span class="nowrap">${token}</span>`)).replace(/ <span class="sep"/g, '\u00a0<span class="sep"')).join('')
+
 export function landingHtml(): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Buoy — See every renewal coming</title><meta name="description" content="${identity.tagline}"><link rel="icon" href="/brand/mark.svg"><link rel="stylesheet" href="/rer-theme.css"><style>${styles}</style></head><body class="landing">
-  ${siteHeader('landing')}
-  <main>
-    <section class="landing-hero" id="top"><div class="landing-container"><div class="hero-copy"><h1>See every renewal<br>coming.</h1><p class="subhead">Renewal dates and notice deadlines beside billing and support evidence, with every decision on record.</p><p class="alternative">100% free, open source alternative to <strong>Vitally</strong>, <strong>Planhat</strong> and <strong>ChurnZero</strong></p>${actions(true)}<p class="small-print">Free and open source, MIT licensed.</p></div>${heroDrawing()}</div></section>
-    <div class="landing-container features">${features.map((feature, index) => `<section class="feature ${index % 2 ? 'reverse' : ''}" id="${feature.id}"><div class="feature-copy"><p class="eyebrow">${feature.eyebrow}</p><h2>${feature.heading}</h2><p>${feature.body}</p></div><div class="feature-drawing" role="group" aria-label="${feature.heading}">${feature.drawing()}</div></section>`).join('')}</div>
-    <section class="included landing-container" id="included"><h2>Also included</h2><ul>${[
-      ['people', 'Owner, admin and member roles'], ['coins', 'Six currencies'], ['export', 'Export and restore'],
-      ['trash', 'Erase an account'], ['code', 'Works without JavaScript'], ['undo', 'Import journal with undo'],
-    ].map(([name, label]) => `<li>${icon(name)}<span>${label}</span></li>`).join('')}</ul></section>
-    <section class="landing-close"><div class="landing-container"><h2>See every renewal coming.</h2>${actions()}</div></section>
-  </main>${siteFooter('landing')}
-  </body></html>`;
+  return keepSeparators(siteHead({
+    title: 'Buoy · Spot the risk. Save the renewal.',
+    description: 'Buoy joins CRM, billing, support and usage data for every account, explains its health, runs your playbooks and reconciles renewals to billing. Free and open source.',
+    path: '/',
+    style: styles.join('\n'),
+  }) + `<body class="landing buoy-paper"><a class="skip" href="#main">Skip to content</a>${siteHeader()}<main id="main">${sections.map(section => section()).join('')}</main>${siteFooter()}</body></html>`)
 }

@@ -30,4 +30,4 @@ All team members can read the installation’s accounts. Owners and admins creat
 
 Buoy stores human-supplied billing and support snapshots with references to the evidence in your existing systems. It does not fetch those references, send customer messages or move money. Health follows defined evidence rules; it is not a churn prediction.
 
-Buoy is free and open source under the [MIT licence](https://github.com/just-every/run-buoy/blob/main/LICENSE). The [repository](https://github.com/just-every/run-buoy) contains the source, command reference and operational details.
+Buoy is free and open source under the [MIT license](https://github.com/just-every/run-buoy/blob/main/LICENSE). The [repository](https://github.com/just-every/run-buoy) contains the source, command reference and operational details.

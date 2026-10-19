@@ -1,0 +1,42 @@
+/* 01 Hero: centred copy over the ring and its six cards (desk-buoy/hero-1536.png). */
+.hero-copy { text-align: center; }
+.hero h1 { font-size: calc(115 * var(--u)); line-height: 0.81; }
+.hero h1 .l2 { padding-bottom: 0.1em; }
+.hero-sub { max-width: calc(870 * var(--u)); margin: calc(22 * var(--u)) auto 0; color: var(--buoy-body); font: 400 calc(25 * var(--u))/1.36 var(--buoy-font); text-wrap: balance; }
+.hero-alt { margin-top: calc(12 * var(--u)); color: #2b2c38; font: 400 calc(21.5 * var(--u))/1.35 var(--buoy-font); }
+.hero-alt b { color: var(--buoy-ink); font-weight: 650; }
+.hero .actions { margin-top: calc(22 * var(--u)); }
+.hero-collage { display: contents; }
+.hero-label { font-size: calc(46 * var(--u)); line-height: 1; letter-spacing: 0.01em; z-index: 2; }
+.hero-label.risk { color: #e2402f; rotate: -4deg; }
+.hero-label.renewed { color: #0eb456; rotate: -3deg; }
+.hero-card { padding: calc(20 * var(--u)) calc(22 * var(--u)) calc(20 * var(--u)) calc(22 * var(--u)); font-size: calc(16.5 * var(--u)); line-height: 1.42; z-index: 2; }
+.hero-card .card-line { display: flex; gap: calc(14 * var(--u)); align-items: baseline; }
+.hero-card .card-line .dot { width: calc(21 * var(--u)); height: calc(21 * var(--u)); translate: 0 calc(3 * var(--u)); }
+.hero-card b { font-weight: 650; }
+.hero-reasons { margin: calc(10 * var(--u)) 0 0 calc(35 * var(--u)); color: #4e505c; font-size: calc(15.5 * var(--u)); line-height: 1.5; }
+.hero-card.exception { padding-left: calc(32 * var(--u)); border-left: calc(6 * var(--u)) solid #f27060; }
+.hero-card.exception p { margin-top: calc(12 * var(--u)); }
+.pill.solid.red { background: #f24f3d; color: #fff; padding: calc(4 * var(--u)) calc(14 * var(--u)) calc(6 * var(--u)); font-size: calc(17 * var(--u)); font-weight: 600; }
+.hero-ring { height: auto; z-index: 2; filter: drop-shadow(0 18px 24px rgba(60, 20, 90, 0.16)); }
+.hero-sticky { font-size: calc(27 * var(--u)); padding: calc(20 * var(--u)) calc(12 * var(--u)) calc(22 * var(--u)); }
+
+@media (max-width: 1179px) {
+  .hero .stage { padding-top: 40px; gap: 14px; }
+  .hero h1 { font-size: clamp(46px, 11.6vw, 84px); line-height: 0.9; }
+  .hero-copy { text-align: center; }
+  .hero-sub { font-size: 18px; margin-top: 20px; max-width: 34em; }
+  .hero-alt { font-size: 16px; margin-top: 12px; }
+  .hero .actions { margin-top: 22px; gap: 14px 26px; }
+  .run-pill { min-height: 54px; padding: 0 34px; font-size: 20px; }
+  .text-link { font-size: 17px; }
+  .hero-collage { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+  .hero-ring { order: -1; align-self: center; width: min(200px, 52vw); margin-bottom: 8px; }
+  .hero-label { font-size: 36px; margin-top: 8px; }
+  .hero-card { font-size: 16px; padding: 16px 18px; }
+  .hero-card .card-line .dot { width: 16px; height: 16px; translate: 0 2px; }
+  .hero-reasons { font-size: 15px; margin-left: 30px; }
+  .hero-card.exception { padding-left: 22px; }
+  .pill.solid.red { font-size: 15px; }
+  .hero-sticky { font-size: 26px; }
+}

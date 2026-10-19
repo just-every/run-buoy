@@ -1,85 +1,190 @@
 @import url('/fonts/fonts.css');
 
-/* Buoy's single palette, type and spacing source, shared by site, setup and app. */
+/* Buoy's theme: the one place its tokens are defined. Every Buoy page links it: the run site (landing, docs, /run,
+   /contract, the 404), the Lobby, sign-in, setup and the app. The --buoy-* tokens are the brand from the owner-approved
+   desk (desk-buoy, 19 Oct 2026: crisp white grid paper, heavy near-black grotesk, the plum-to-turquoise second line,
+   white hairline cards, red for the one failure, green for recovery, amber for Watch, the smiling life-ring mark).
+   Colours are sampled from logo-mark-1024.png and hero-1536.png. The --rer-* tokens map them for Base's shared
+   documents. The app's own tokens (paper, ink, muted, line, signal and the status pairs) keep the app as it is until
+   the app takes the desk's look; only its lockup takes the brand here. */
 :root {
-  --paper: #FBFAF7;
-  --sky: #F3F0EC;
-  --surface: #FFFFFF;
-  --ink: #1E2428;
-  --muted: #5D6670;
-  --line: #E4E6E8;
-  --water-1: #DCDEE1;
-  --water-2: #B9C3CC;
-  --water-3: #9BAAB9;
-  --signal: #E15D0F;
-  --risk-bg: #FBE3D6; --risk-text: #A8420A;
-  --healthy-bg: #DDEEE5; --healthy-text: #2F6B52;
-  --unknown-bg: #E8EAEC; --unknown-text: #4B5561;
-  --danger: #A1281F;
+  /* Type: Inter carries the brand (display cuts at headline sizes); Caveat only the hand-inked notes and stickies;
+     IBM Plex Mono commands and the terminal. */
+  --buoy-font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --buoy-font-hand: Caveat, 'Bradley Hand', 'Segoe Print', cursive;
+  --buoy-font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --buoy-heading-weight: 880;
+  --buoy-heading-tracking: -0.052em;
+  --buoy-heading-word-space: 0.13em;
+
+  /* Paper, ink and hairlines. */
+  --buoy-paper: #ffffff;
+  --buoy-grid: #eff1f5;
+  --buoy-grid-step: 74px;
+  --buoy-ink: #0b0b1f;
+  --buoy-body: #50525e;
+  --buoy-eyebrow: #5c6071;
+  --buoy-muted: #767988;
+  --buoy-line: #e8e9ef;
+  --buoy-line-strong: #d9dbe4;
+  --buoy-card: #ffffff;
+  --buoy-panel: #f7f7fa;
+  --buoy-card-shadow: 0 1px 2px rgba(11, 11, 31, 0.05), 0 18px 40px -22px rgba(40, 24, 72, 0.26);
+  --buoy-card-shadow-soft: 0 1px 2px rgba(11, 11, 31, 0.04), 0 10px 26px -18px rgba(40, 24, 72, 0.22);
+  --buoy-radius: 16px;
+  --buoy-radius-small: 10px;
+
+  /* The mark's colours, the cursors and the gradient second line (plum through blue to turquoise). */
+  --buoy-plum: #8a2eae;
+  --buoy-plum-deep: #6e1d93;
+  --buoy-plum-ink: #5b1580;
+  --buoy-plum-soft: #f4e6fc;
+  --buoy-lilac: #ead6f7;
+  --buoy-maya: #7a24a0;
+  --buoy-jordan: #08a8b0;
+  --buoy-mark-ink: #0b0b1f;
+  --buoy-gradient: linear-gradient(90deg, #83279d 0%, #7a33a8 20%, #5a5fb3 36%, #3384bc 50%, #1fa6c2 66%, #0db3b0 82%, #09b9ad 100%);
+  --buoy-chrome-gradient: linear-gradient(90deg, #8e2db8, #1fb5a8);
+
+  /* States: always with a text label. */
+  --buoy-red: #f4513f;
+  --buoy-red-ink: #c9271c;
+  --buoy-red-soft: #feeeed;
+  --buoy-green: #06c25a;
+  --buoy-green-ink: #0a8a45;
+  --buoy-green-soft: #e9f8ef;
+  --buoy-amber: #fdb80b;
+  --buoy-amber-ink: #8f5a00;
+  --buoy-amber-soft: #fff5dc;
+  --buoy-sticky: #feef97;
+  --buoy-code: #17181f;
+  --buoy-code-text: #f2f1f7;
+
+  /* The app's tokens (public/buoy.css), unchanged until the app round. */
+  --paper: #ffffff;
+  --sky: #f3f0ec;
+  --surface: #ffffff;
+  --ink: #1e2428;
+  --muted: #5d6670;
+  --line: #e4e6e8;
+  --signal: #e15d0f;
+  --risk-bg: #fbe3d6; --risk-text: #a8420a;
+  --healthy-bg: #ddeee5; --healthy-text: #2f6b52;
+  --unknown-bg: #e8eaec; --unknown-text: #4b5561;
+  --danger: #a1281f;
   --font-heading: 'Spectral', 'Spectral Fallback', Georgia, serif;
   --font-body: 'Red Hat Text', 'Red Hat Text Fallback', system-ui, sans-serif;
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px;
   --s6: 32px; --s7: 48px; --s8: 72px; --s9: 112px;
   --r-card: 12px; --r-input: 8px; --r-pill: 999px;
   --shadow-card: 0 1px 2px rgb(30 36 40 / .06), 0 10px 28px rgb(30 36 40 / .08);
-  --rer-font-heading: var(--font-heading);
-  --rer-font-body: var(--font-body);
-  --rer-page: var(--paper);
-  --rer-surface: var(--surface);
-  --rer-text: var(--ink);
-  --rer-muted: var(--muted);
-  --rer-border: #C9CED3;
-  --rer-link: var(--ink);
-  --rer-focus: var(--ink);
-  --rer-radius: var(--r-card);
-  --rer-accent: var(--ink);
-  --rer-accent-text: var(--surface);
-  --rer-button-radius: var(--r-pill);
-  --rer-wordmark-weight: 500;
+
+  /* Base's shared documents (Lobby, /run, /contract, the 404, sign-in, setup) read only --rer-*. */
+  --rer-font-heading: var(--buoy-font);
+  --rer-font-body: var(--buoy-font);
+  --rer-font-mono: var(--buoy-font-mono);
+  --rer-page: var(--buoy-paper);
+  --rer-surface: var(--buoy-card);
+  --rer-text: var(--buoy-ink);
+  --rer-muted: var(--buoy-body);
+  --rer-border: #c9ccd6;
+  --rer-link: var(--buoy-ink);
+  --rer-focus: var(--buoy-plum-deep);
+  --rer-radius: 12px;
+  --rer-accent: var(--buoy-ink);
+  --rer-accent-text: #ffffff;
+  --rer-button-radius: 999px;
+  --rer-code-background: var(--buoy-code);
+  --rer-code-text: var(--buoy-code-text);
+  --rer-wordmark-weight: 850;
+  --rer-wordmark-tracking: -0.045em;
   --rer-logo: url('/brand/mark.svg');
 }
 
-/* Base's plain HTTP forms carry the same quiet card and floor as the app. */
+/* The grid paper behind every public Buoy page: the hero's faint square grid. */
+.buoy-paper,
+body:has(> header.bar),
+body:has(> main.door),
+html.rer-themed {
+  background-color: var(--buoy-paper);
+  background-image: linear-gradient(var(--buoy-grid) 1px, transparent 1px), linear-gradient(90deg, var(--buoy-grid) 1px, transparent 1px);
+  background-size: var(--buoy-grid-step) var(--buoy-grid-step);
+  background-position: center -1px;
+}
+
+/* Base's Run, contract and not-found pages (src/base/run-site.ts): the landing's lockup, heavy heading, white step
+   cards, ink step numbers and the dark code card. The :has() prefix outranks the page's own <style>, which follows
+   this stylesheet. */
+body:has(> header.bar) > .bar { max-width: 1440px; padding: 24px clamp(16px, 4.2vw, 64px) 0; }
+body:has(> header.bar) > .bar .brand { gap: 12px; font-size: 34px; font-weight: 850; letter-spacing: -0.045em; }
+body:has(> header.bar) > .bar .brand img { width: 44px; height: 44px; }
+body:has(> header.bar) > .bar nav { gap: clamp(20px, 3vw, 40px); }
+body:has(> header.bar) > .bar nav a { color: var(--buoy-ink); font-size: 18px; font-weight: 500; }
+body:has(> header.bar) h1 { font-weight: var(--buoy-heading-weight); letter-spacing: var(--buoy-heading-tracking); word-spacing: var(--buoy-heading-word-space); line-height: 1.02; }
+body:has(> header.bar) .intro h1 { font-size: 66px; }
+body:has(> header.bar) .sub { color: var(--buoy-body); }
+body:has(> header.bar) .step { background: var(--buoy-card); border-color: var(--buoy-line); border-radius: 20px; box-shadow: var(--buoy-card-shadow); backdrop-filter: none; }
+body:has(> header.bar) .num { background: var(--buoy-ink); color: #fff; font-weight: 800; box-shadow: 0 0 0 4px var(--buoy-plum-soft); }
+body:has(> header.bar) .step h2 { font-weight: 800; letter-spacing: -0.03em; word-spacing: 0.1em; }
+body:has(> header.bar) .code { background: var(--buoy-code); color: var(--buoy-code-text); border-radius: 14px; box-shadow: 0 22px 40px -26px rgba(20, 12, 60, 0.6); }
+body:has(> header.bar) .code pre { font-size: 15.5px; }
+body:has(> header.bar) .copy { border-color: rgba(234, 214, 247, 0.45); color: #f1e6fa; }
+body:has(> header.bar) .copy:hover { background: rgba(138, 46, 174, 0.35); }
+body:has(> header.bar) .note code,
+body:has(> header.bar) .alt code { padding: 2px 6px; border-radius: 6px; background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); }
+body:has(> header.bar) .facts a,
+body:has(> header.bar) .link { text-decoration-color: rgba(138, 46, 174, 0.5); }
+body:has(> header.bar) .hero h1::after,
+body:has(> header.bar) .intro h1::after { content: ""; display: block; width: 96px; height: 6px; margin: 22px auto 0; border-radius: 6px; background: var(--buoy-gradient); }
+@media (max-width: 760px) {
+  body:has(> header.bar) > .bar .brand { font-size: 27px; gap: 9px; }
+  body:has(> header.bar) > .bar .brand img { width: 34px; height: 34px; }
+  body:has(> header.bar) > .bar nav a { font-size: 16px; }
+  body:has(> header.bar) .intro h1 { font-size: 42px; }
+  body:has(> header.bar) .code pre { font-size: 13px; }
+}
+/* A command never wraps inside itself: on the narrowest phones its block scrolls sideways instead. */
+@media (max-width: 420px) { body:has(> header.bar) .code pre { white-space: pre; overflow-x: auto; overflow-wrap: normal; } }
+
+/* The Lobby: the lockup in the brand face on the grid paper. */
+body:has(> main.door) .word { font-weight: 850; }
+
+/* Base's plain HTTP forms (sign-in, setup, refusals) carry a quiet card on the grid paper. */
 html.rer-themed body {
   position: relative;
   display: grid;
   align-content: center;
   min-height: 100dvh;
-  padding: 80px 20px 160px;
+  padding: 80px 20px 120px;
+  background: transparent;
   font: 400 16px/1.5 var(--font-body);
   -webkit-font-smoothing: antialiased;
   isolation: isolate;
-}
-html.rer-themed body::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0;
-  height: 120px;
-  z-index: -1;
-  background: url('/brand/band.svg') center bottom / cover no-repeat;
-  pointer-events: none;
 }
 html.rer-themed main {
   width: 100%;
   max-width: 480px;
   padding: 48px;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--buoy-line);
+  box-shadow: var(--buoy-card-shadow);
 }
 html.rer-themed h1, html.rer-themed h2, html.rer-themed h3 { font-weight: 500; }
 html.rer-themed h1 { font-size: 40px; line-height: 1.1; text-align: center; margin-bottom: 28px; }
-html.rer-themed .rer-brand { justify-content: center; font: 500 28px/1 var(--font-heading); }
+/* The lockup everywhere (sign-in, setup, the app's header): the mark beside "Buoy" in the brand face. */
+html.rer-themed .rer-brand,
+html.rer-themed .brand { justify-content: center; font: 850 30px/1 var(--buoy-font); letter-spacing: -0.045em; color: var(--buoy-ink); }
+html.rer-themed .rer-brand::before { width: 38px; height: 38px; }
+html.rer-themed .brand { margin-bottom: 32px; }
 html.rer-themed main > p { text-align: center; }
 html.rer-themed button { border-radius: var(--r-pill); font-weight: 500; }
 html.rer-themed label { font-weight: 400; color: var(--muted); font-size: 14px; }
 html.rer-themed input:not([type=checkbox]):not([type=hidden]) { min-height: 46px; border: 1px solid var(--rer-border); border-radius: var(--r-input); }
+html.rer-themed input { background: var(--surface); color: var(--ink); }
 html.rer-themed dl { row-gap: 16px; }
 html.rer-themed dd { overflow-wrap: anywhere; }
 html.rer-themed a { text-underline-offset: 4px; }
 @media (max-width: 600px) {
-  html.rer-themed body { padding: 64px 20px 160px; }
+  html.rer-themed body { padding: 64px 20px 80px; }
   html.rer-themed main { padding: 28px 24px; }
   html.rer-themed h1 { font-size: 32px; }
 }
-html.rer-themed .brand { justify-content: center; font: 500 28px/1 var(--font-heading); margin-bottom: 32px; }
-html.rer-themed input { background: var(--surface); color: var(--ink); }

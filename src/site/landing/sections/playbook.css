@@ -1,0 +1,50 @@
+/* 06 The Champion change staircase (page-06). */
+.copy.eyebrow-right .eyebrow { text-align: right; }
+.playbook-card { padding: calc(24 * var(--u)) calc(24 * var(--u)) calc(22 * var(--u)); z-index: 2; }
+.playbook-card .card-title { font-size: calc(26 * var(--u)); font-weight: 780; }
+.playbook-card .card-sub { margin-top: calc(2 * var(--u)); font-size: calc(17 * var(--u)); color: #5c5f6c; }
+.pb-steps { position: relative; margin-top: calc(16 * var(--u)); }
+.pb-steps li { position: relative; display: flex; gap: calc(16 * var(--u)); padding: calc(7 * var(--u)) 0 calc(9 * var(--u)); font-size: calc(15 * var(--u)); line-height: 1.35; color: #4b4e5b; }
+.pb-steps li:not(:last-child)::after { content: ""; position: absolute; left: calc(12.5 * var(--u)); top: calc(36 * var(--u)); bottom: calc(-6 * var(--u)); border-left: 2px dashed #b9e3c7; }
+.pb-steps b { color: var(--buoy-ink); font-weight: 650; font-size: calc(16 * var(--u)); }
+.pb-steps .check-disc, .outcome .check-disc { font-size: calc(16.5 * var(--u)); }
+.outcome { display: flex; align-items: center; gap: calc(12 * var(--u)); margin-top: calc(10 * var(--u)); padding: calc(12 * var(--u)) calc(16 * var(--u)); border-radius: calc(10 * var(--u)); background: var(--buoy-green-soft); color: var(--buoy-ink); font-size: calc(16.5 * var(--u)); font-weight: 600; }
+.green { color: var(--buoy-green-ink); }
+.outcome .green { font-weight: 500; }
+.people { padding: calc(24 * var(--u)) calc(24 * var(--u)) calc(18 * var(--u)); z-index: 2; }
+.people .card-title { font-size: calc(24 * var(--u)); font-weight: 780; }
+.people li { display: flex; align-items: center; gap: calc(18 * var(--u)); padding: calc(11 * var(--u)) 0; }
+.people p { display: grid; align-content: start; gap: calc(2 * var(--u)); color: #5c5f6c; font-size: calc(14.5 * var(--u)); line-height: 1.4; }
+.people .name { color: #2b2c38; font-size: calc(16.5 * var(--u)); }
+.people .name b { font-weight: 650; color: var(--buoy-ink); }
+.people s { color: #6b6e7c; text-decoration-thickness: 2px; }
+.people .proposed .avatar { box-shadow: 0 0 0 calc(3 * var(--u)) var(--buoy-plum); }
+.rob-sticky { font-size: calc(25 * var(--u)); }
+.zoom { padding: calc(20 * var(--u)) calc(20 * var(--u)) calc(20 * var(--u)); z-index: 2; }
+.zoom-head { display: flex; align-items: center; gap: calc(16 * var(--u)); }
+.zoom-head .avatar { box-shadow: 0 0 0 calc(2 * var(--u)) var(--buoy-plum); }
+.zoom-head .card-title { font-size: calc(22 * var(--u)); }
+.zoom-head .card-sub { font-size: calc(16 * var(--u)); }
+.cited { display: grid; gap: calc(8 * var(--u)); margin-top: calc(14 * var(--u)); }
+.cited li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(10 * var(--u)) calc(14 * var(--u)); border-radius: calc(8 * var(--u)); background: var(--buoy-panel); color: #2b2c38; font-size: calc(14.5 * var(--u)); line-height: 1.38; }
+.cited .ok { background: var(--buoy-green-soft); } .cited .warn { background: var(--buoy-amber-soft); }
+.cited .quote { font-size: calc(15.5 * var(--u)); }
+.cited b { font-weight: 650; color: var(--buoy-ink); }
+.stamp { display: inline-block; padding: calc(2 * var(--u)) calc(8 * var(--u)); border-radius: calc(6 * var(--u)); background: #e6e7ee; color: #4b4e5b; font-size: calc(14.5 * var(--u)); font-variant-numeric: tabular-nums; }
+.cited .warn .stamp { background: #fbe7b8; }
+@media (max-width: 1179px) {
+  #playbook .copy { order: -1; }
+  .copy.eyebrow-right .eyebrow { text-align: left; }
+  .playbook-card, .people, .zoom { padding: 18px 16px; }
+  .playbook-card .card-title { font-size: 22px; }
+  .playbook-card .card-sub, .pb-steps li { font-size: 15px; }
+  .pb-steps b { font-size: 15.5px; }
+  .outcome { font-size: 15.5px; }
+  .people .card-title, .zoom-head .card-title { font-size: 19px; }
+  .people .name { font-size: 15.5px; }
+  .people p { font-size: 14px; }
+  .people li { align-items: flex-start; }
+  .cited li { font-size: 14.5px; flex-wrap: wrap; }
+  .rob-sticky { order: 3; font-size: 23px; }
+  .zoom { order: 4; }
+}

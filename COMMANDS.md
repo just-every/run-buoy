@@ -11,11 +11,11 @@ An owner creates a credential with `POST /api/buoy/agent-tokens` and `{"label":"
 ```
 
 ```json
-{"command":"playbook.prepare","input":{"accountId":"harbour","payload":{"title":"Review unresolved incident with the customer","dueDate":"2027-01-15"}}}
+{"command":"playbook.prepare","input":{"accountId":"harbor","payload":{"title":"Review unresolved incident with the customer","dueDate":"2027-01-15"}}}
 ```
 
 ```json
-{"command":"renewal.prepare","input":{"accountId":"harbour","payload":{"outcome":"renewed","reason":"Customer accepted another year","evidence":"Signed order R-17, section 2"}}}
+{"command":"renewal.prepare","input":{"accountId":"harbor","payload":{"outcome":"renewed","reason":"Customer accepted another year","evidence":"Signed order R-17, section 2"}}}
 ```
 
 Preparation returns a proposal ID and changes no outcome or task. An owner/admin opens the account, reviews the exact evidence and approves. Direct `POST /api/buoy/proposals/:id/approve` also requires a person session and same-origin protection. The agent credential cannot call it, even when its issuing owner could. Approval is idempotent; a changed account revision refuses a stale proposal. Duplicate preparation creates separate drafts; clients should retain the returned proposal ID.

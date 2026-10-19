@@ -1,28 +1,33 @@
 # Buoy fonts
 
-Self-hosted WOFF2 subsets from Google Fonts: Spectral v15, normal 500;
-Red Hat Text v19, normal variable (declared 400–700). Latin and Latin Extended
-are separate unicode subsets, so ordinary English loads only the Latin files.
-Both families use SIL Open Font License 1.1; original notices are in each
-family directory's OFL.txt. No runtime font service is used.
+Every face is self-hosted WOFF2 under the SIL Open Font License 1.1; each
+family's licence and copyright notice is the `OFL.txt` beside it. No page
+makes a font request to a third party, and local fonts are never shipped.
 
-`fonts.css` owns only font-face declarations. Theme stacks should include
-`Spectral Fallback` after Spectral and `Red Hat Text Fallback` after Red Hat Text.
+- `inter/`: Inter, variable weight (100–900) and optical size (14–32), Latin and
+  Latin Extended, from Fontsource's `@fontsource-variable/inter` 5.3.0
+  (upstream https://github.com/rsms/inter). Buoy's brand face: the wordmark,
+  every run-site heading (weight 860–900 with tight tracking; the browser
+  picks the display cut at headline sizes) and body line, `/run`, the Lobby
+  and sign-in.
+- `caveat/`: Caveat, variable weight, Latin, from `@fontsource-variable/caveat`
+  5.3.0 (upstream https://github.com/googlefonts/caveat). Only the hand-inked
+  notes, stickies and "At risk" / "Renewed" labels in the run site's drawings.
+- `plex-mono/`: IBM Plex Mono 400 and 500, Latin and Latin Extended, from
+  `@fontsource/ibm-plex-mono` 5.3.0 (upstream https://github.com/IBM/plex).
+  Commands, the terminal and the `/buoy` lookup.
+- `spectral/` and `red-hat-text/`: Spectral 500 (Google Fonts v15) and Red Hat
+  Text variable 400–700 (v19), the app's headings and text until the app takes
+  the desk's look (upstream https://github.com/google/fonts/tree/main/ofl/spectral
+  and https://github.com/google/fonts/tree/main/ofl/redhattext).
 
-Fallbacks were measured with fontTools against macOS Georgia regular and
-Arial regular/bold: sum horizontal advance widths for the approved landing
-headline, subhead, health/decision headings, account/notice/evidence labels,
-UI actions, and digits 0–9, normalized by each font's units-per-em. Size-adjust
-is target advance sum / fallback advance sum. Vertical overrides divide target
-hhea ascent/descent by units-per-em and size-adjust; line gaps are zero.
-Spectral hhea is 1059/-463/0 at UPEM 1000. Red Hat Text hhea is
-1018/-305/0 at UPEM 1000 for all measured weights. Weight samples 400, 500,
-600, 700 use the variable font's actual instantiated advances. Arial bold is
-used for 600 and 700. Metrics minimize layout movement for this copy; they
-cannot make every individual glyph identical. Local fonts are never shipped.
+`fonts.css` declares every face once; Latin and Latin Extended are separate
+unicode ranges, so English pages load only the Latin files. `public/rer-theme.css`
+imports it, so every page that links the theme gets the faces.
 
-Source endpoints:
-- https://fonts.googleapis.com/css2?family=Spectral:wght@500&display=swap
-- https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400..700&display=swap
-- https://github.com/google/fonts/tree/main/ofl/spectral
-- https://github.com/google/fonts/tree/main/ofl/redhattext
+The Spectral and Red Hat Text fallbacks (`Spectral Fallback`, `Red Hat Text
+Fallback`) were measured with fontTools against macOS Georgia regular and
+Arial regular/bold: size-adjust is the target advance-width sum over the
+fallback's for the app's headings, labels and digits, and the vertical
+overrides divide the target hhea ascent/descent by units-per-em and
+size-adjust; line gaps are zero.

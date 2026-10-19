@@ -14,15 +14,15 @@ This is an explicitly synthetic shape example, for a deliberate trial only. Repl
 {
   "accounts": [
     {
-      "id": "synthetic-harbour",
-      "name": "Synthetic Harbour Studio",
+      "id": "synthetic-harbor",
+      "name": "Synthetic Harbor Studio",
       "renewalDate": "2027-01-15",
       "noticeDays": 30,
       "renewalEvidence": "Synthetic contract HBR-2026 section 4; manual example only",
       "billing": {
         "observedAt": "2026-10-15",
         "reference": "Synthetic invoice HBR-1001; manual example only",
-        "currency": "AUD",
+        "currency": "USD",
         "totalMinor": 120000,
         "creditsMinor": 10000,
         "allocatedMinor": 30000,
@@ -39,7 +39,7 @@ This is an explicitly synthetic shape example, for a deliberate trial only. Repl
 }
 ```
 
-Money uses nonnegative integer minor units in AUD, CAD, EUR, GBP, NZD or USD. Credits plus allocated payments cannot exceed the total. Observation dates cannot be in the future. Ticket counts are nonnegative whole numbers; urgent tickets cannot exceed open tickets.
+Money uses nonnegative integer minor units in USD, CAD, EUR, GBP, AUD or NZD. Credits plus allocated payments cannot exceed the total. Observation dates cannot be in the future. Ticket counts are nonnegative whole numbers; urgent tickets cannot exceed open tickets.
 
 Use `null` for either observation when it is absent. Missing billing or support means unknown, not zero, paid or healthy. Imports do not fetch evidence from providers. Do not include credentials or executable connector settings in the upload.
 

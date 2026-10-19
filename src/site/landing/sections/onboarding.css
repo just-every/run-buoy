@@ -1,0 +1,58 @@
+/* 10 The onboarding plan that lands on its date (page-10). */
+#onboarding .lede { margin: 0; font-size: calc(25 * var(--u)); }
+.plan { height: calc(465 * var(--u)); z-index: 2; }
+.plan-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.plan-lines .guide { stroke: #e1e3ea; stroke-dasharray: 3 5; } .plan-lines .lane { stroke: #e8e9ef; }
+.plan-lines .marker { stroke: var(--buoy-plum); stroke-width: 2; stroke-dasharray: 4 4; } .plan-lines .marker.solid { stroke-dasharray: none; }
+.plan-lines .pole { stroke: #148a3f; stroke-width: 3; } .plan-lines .flagpath { fill: #1cb85b; }
+.plan-lines .diamond { fill: var(--buoy-amber); } .plan-lines .plum { fill: var(--buoy-plum); } .plan-lines .done { fill: var(--buoy-green); }
+.plan-lines .tickmark { fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.plan-lines .dots { fill: none; stroke: var(--buoy-plum); stroke-width: 2.4; stroke-dasharray: 0.5 6; stroke-linecap: round; }
+.plan-lines .arrow { fill: none; stroke: #6b6e7c; stroke-width: 1.6; }
+.plan-head { display: flex; align-items: baseline; gap: calc(14 * var(--u)); }
+.plan-head h3 { flex: none; font: 780 calc(25 * var(--u))/1.2 var(--buoy-font); letter-spacing: -0.03em; }
+.plan-head p { color: #5c5f6c; font-size: calc(14.5 * var(--u)); letter-spacing: -0.005em; }
+.week { color: #4b4e5b; font-size: calc(16 * var(--u)); font-weight: 600; text-align: center; }
+.lane-name { font: 650 calc(19 * var(--u))/1.2 var(--buoy-font); }
+.pct { color: var(--buoy-plum-deep); font-size: calc(15 * var(--u)); font-weight: 600; white-space: nowrap; }
+.bar { display: flex; align-items: center; height: calc(36 * var(--u)); padding: 0 calc(14 * var(--u)); border-radius: calc(7 * var(--u)); background: #efe3fb; color: #2b2c38; font-size: calc(15.5 * var(--u)); white-space: nowrap; overflow: hidden; }
+.bar b { font-weight: 600; margin-right: calc(4 * var(--u)); }
+.bar .tick { margin-left: calc(8 * var(--u)); color: var(--buoy-plum); }
+.bar.two { height: calc(58 * var(--u)); white-space: nowrap; line-height: 1.25; display: block; padding: calc(8 * var(--u)) calc(10 * var(--u)) 0; font-size: calc(14.5 * var(--u)); }
+.bar.two .tick { margin-left: calc(4 * var(--u)); }
+.bar.kick { padding: 0; }
+.kick-label { color: #2b2c38; font-size: calc(15 * var(--u)); white-space: nowrap; }
+.kick-label .tick { color: var(--buoy-plum); }
+.golive { color: #2b2c38; font-size: calc(15.5 * var(--u)); white-space: nowrap; } .golive b { font-weight: 650; }
+.route { color: #5c5f6c; font-size: calc(14.5 * var(--u)); line-height: 1.35; }
+.callout { display: flex; gap: calc(12 * var(--u)); padding: calc(14 * var(--u)) calc(16 * var(--u)); border: 1px solid var(--buoy-line); border-radius: calc(12 * var(--u)); background: #fff; box-shadow: var(--buoy-card-shadow-soft); color: #2b2c38; font-size: calc(14.5 * var(--u)); line-height: 1.38; }
+.callout .mk { flex: none; width: calc(18 * var(--u)); height: calc(18 * var(--u)); margin-top: calc(2 * var(--u)); }
+.callout.amber .mk { background: var(--buoy-amber); rotate: 45deg; scale: 0.8; } .callout.plum .mk { border-radius: 50%; background: var(--buoy-plum); }
+.callout.done .mk { display: grid; place-items: center; border-radius: 50%; background: var(--buoy-green); color: #fff; font-size: calc(14.5 * var(--u)); line-height: 1; font-weight: 800; }
+.overdue { color: var(--buoy-red-ink); font-weight: 600; }
+.live { display: flex; align-items: center; gap: calc(18 * var(--u)); padding: calc(16 * var(--u)) calc(24 * var(--u)); border: 1px solid #d4efdd; border-radius: calc(14 * var(--u)); background: var(--buoy-green-soft); color: #1f3a2a; font-size: calc(19 * var(--u)); box-shadow: var(--buoy-card-shadow-soft); }
+.live b { font-weight: 700; } .live .check-disc { font-size: calc(22 * var(--u)); }
+.portal { padding: calc(18 * var(--u)) calc(16 * var(--u)) calc(16 * var(--u)); z-index: 2; }
+.portal-head { padding: 0 calc(14 * var(--u)) calc(12 * var(--u)); color: #5c5f6c; font-size: calc(15 * var(--u)); }
+.portal-head b { color: var(--buoy-ink); font-weight: 650; }
+.portal-body { border: 1px solid var(--buoy-line); border-radius: calc(10 * var(--u)); }
+.portal-task { display: flex; align-items: center; gap: calc(14 * var(--u)); padding: calc(14 * var(--u)) calc(16 * var(--u)); border-bottom: 1px solid var(--buoy-line); font-size: calc(15.5 * var(--u)); }
+.portal-note { display: flex; align-items: center; gap: calc(14 * var(--u)); padding: calc(14 * var(--u)) calc(16 * var(--u)); color: #2b2c38; font-size: calc(15 * var(--u)); line-height: 1.45; }
+.portal-note b { font-weight: 650; }
+@media (max-width: 1179px) {
+  #onboarding .lede { font-size: 18px; margin-top: -4px; }
+  .plan { height: auto; display: flex; flex-direction: column; gap: 10px; padding: 18px 16px; }
+  .plan-head { display: block; }
+  .plan-head h3 { font-size: 22px; }
+  .plan-head p { font-size: 14px; margin-top: 4px; }
+  .lane-name { margin-top: 10px; font-size: 17px; }
+  .bar, .bar.two { height: auto; white-space: normal; display: block; padding: 10px 12px; font-size: 15px; }
+  .bar.kick { display: none; }
+  .kick-label { padding: 10px 12px; border-radius: 7px; background: #efe3fb; white-space: normal; }
+  .bar.two br { display: none; }
+  .golive { font-size: 15px; }
+  .route { font-size: 14px; }
+  .callout { font-size: 14.5px; }
+  .live { font-size: 16px; align-items: flex-start; padding: 14px 16px; }
+  .portal-task, .portal-note { font-size: 14.5px; }
+}

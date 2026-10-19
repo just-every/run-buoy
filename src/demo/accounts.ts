@@ -3,18 +3,18 @@ import type { Account } from '../buoy/health'
 // The manual move-in fixture's account/billing/support shape, expanded into a
 // lived-in portfolio. All observations are current; risk is recorded evidence.
 const companies = [
-  ['harbour', 'Harbour Studio', 'AUD', 14], ['cedar', 'Cedar Health', 'USD', 21],
-  ['northstar', 'Northstar Logistics', 'GBP', 28], ['orchard', 'Orchard Workshop', 'AUD', 35],
-  ['mariner', 'Mariner Analytics', 'USD', 42], ['willow', 'Willow Learning', 'NZD', 49],
-  ['summit', 'Summit Engineering', 'CAD', 56], ['atlas', 'Atlas Coffee', 'EUR', 63],
-  ['juniper', 'Juniper Design', 'GBP', 70], ['coastal', 'Coastal Foods', 'AUD', 77],
-  ['birch', 'Birch Financial', 'USD', 84], ['fieldwork', 'Fieldwork Research', 'EUR', 91],
-  ['tandem', 'Tandem Mobility', 'CAD', 98], ['paperplane', 'Paperplane Media', 'USD', 105],
-  ['redgum', 'Redgum Construction', 'AUD', 112], ['lighthouse', 'Lighthouse Events', 'GBP', 119],
-  ['meadow', 'Meadow Veterinary', 'NZD', 126], ['foundry', 'Foundry Software', 'EUR', 133],
-  ['evergreen', 'Evergreen Energy', 'USD', 140], ['bridgewater', 'Bridgewater Legal', 'AUD', 147],
-  ['acorn', 'Acorn Childcare', 'CAD', 154], ['kinfolk', 'Kinfolk Retail', 'GBP', 161],
-  ['clearwater', 'Clearwater Marine', 'NZD', 168], ['copper', 'Copper Architecture', 'EUR', 175],
+  ['harbor', 'Harbor Studio', 'USD', 14], ['cedar', 'Cedar Health', 'USD', 21],
+  ['northstar', 'Northstar Logistics', 'USD', 28], ['orchard', 'Orchard Workshop', 'USD', 35],
+  ['mariner', 'Mariner Analytics', 'USD', 42], ['willow', 'Willow Learning', 'USD', 49],
+  ['summit', 'Summit Engineering', 'USD', 56], ['atlas', 'Atlas Coffee', 'USD', 63],
+  ['juniper', 'Juniper Design', 'USD', 70], ['coastal', 'Coastal Foods', 'USD', 77],
+  ['birch', 'Birch Financial', 'USD', 84], ['fieldwork', 'Fieldwork Research', 'USD', 91],
+  ['tandem', 'Tandem Mobility', 'USD', 98], ['paperplane', 'Paperplane Media', 'USD', 105],
+  ['redwood', 'Redwood Construction', 'USD', 112], ['lighthouse', 'Lighthouse Events', 'USD', 119],
+  ['meadow', 'Meadow Veterinary', 'USD', 126], ['foundry', 'Foundry Software', 'USD', 133],
+  ['evergreen', 'Evergreen Energy', 'USD', 140], ['bridgewater', 'Bridgewater Legal', 'USD', 147],
+  ['acorn', 'Acorn Childcare', 'USD', 154], ['kinfolk', 'Kinfolk Retail', 'USD', 161],
+  ['clearwater', 'Clearwater Marine', 'USD', 168], ['copper', 'Copper Architecture', 'USD', 175],
 ] as const
 
 export function demoDates(now: Date) {

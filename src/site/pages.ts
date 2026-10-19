@@ -18,6 +18,6 @@ export function sitePages({ contract }: Partial<SiteContext> = {}): SiteBuild {
       { path: '/404', html: siteNotFoundHtml(identity, data, contract) },
       ...docsPages(),
     ],
-    assets: ['rer-theme.css', 'fonts', 'brand', 'design-assets'],
+    assets: ['rer-theme.css', 'fonts', 'brand', 'site', 'favicon-16.svg'],
   }
 }

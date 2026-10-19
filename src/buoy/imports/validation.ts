@@ -37,7 +37,7 @@ export function parseAccount(value: unknown, at = 'account'): ImportedAccount {
   if (row.billing !== null) {
     const b = object(row.billing, `${at}.billing`, ['observedAt', 'reference', 'currency', 'totalMinor', 'creditsMinor', 'allocatedMinor', 'dueDate'])
     const currency = text(b.currency, `${at}.billing.currency`, 3)
-    if (!['AUD','CAD','EUR','GBP','NZD','USD'].includes(currency)) throw new Error(`${at}.billing.currency must be AUD, CAD, EUR, GBP, NZD or USD (two-decimal currencies).`)
+    if (!['AUD','CAD','EUR','GBP','NZD','USD'].includes(currency)) throw new Error(`${at}.billing.currency must be USD, CAD, EUR, GBP, AUD or NZD (two-decimal currencies).`)
     billing = { observedAt: date(b.observedAt, `${at}.billing.observedAt`), reference: text(b.reference, `${at}.billing.reference`), currency,
       totalMinor: integer(b.totalMinor, `${at}.billing.totalMinor`), creditsMinor: integer(b.creditsMinor, `${at}.billing.creditsMinor`), allocatedMinor: integer(b.allocatedMinor, `${at}.billing.allocatedMinor`), dueDate: date(b.dueDate, `${at}.billing.dueDate`) }
     if (billing.creditsMinor > billing.totalMinor - billing.allocatedMinor) throw new Error(`${at}.billing credits and allocations cannot exceed the invoice total.`)

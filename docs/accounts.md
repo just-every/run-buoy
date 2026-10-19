@@ -23,7 +23,7 @@ A billing period does not establish a renewal date. Record confirmed contract te
 
 Select **Include billing observation** and supply the observation date, source reference, currency, invoice total, credits, allocated payments and payment due date.
 
-Amounts are nonnegative whole minor units. For the supported two-decimal currencies, `100` means `1.00`. The supported codes are AUD, CAD, EUR, GBP, NZD and USD. Credits plus allocated payments cannot exceed the invoice total.
+Amounts are nonnegative whole minor units. For the supported two-decimal currencies, `100` means `1.00`. The supported codes are USD, CAD, EUR, GBP, AUD and NZD. Credits plus allocated payments cannot exceed the invoice total.
 
 Only payments allocated to that invoice reduce its outstanding amount. For example, a total of `120000`, credits of `10000` and allocated payments of `30000` leave `80000` minor units outstanding. If its payment due date is before today, that is an at-risk signal.
 

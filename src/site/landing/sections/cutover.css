@@ -1,0 +1,46 @@
+/* 12 The Salesforce cutover plan and the one-line start (page-12). */
+.terminal { margin: 0; padding: calc(18 * var(--u)) calc(22 * var(--u)) calc(22 * var(--u)); border-radius: calc(14 * var(--u)); background: var(--buoy-code); color: var(--buoy-code-text); box-shadow: 0 26px 40px -24px rgba(20, 12, 60, 0.7); z-index: 2; }
+.lights { display: flex; gap: calc(8 * var(--u)); } .lights i { width: calc(13 * var(--u)); height: calc(13 * var(--u)); border-radius: 50%; background: #c9cad4; }
+.terminal pre { margin: calc(16 * var(--u)) 0 0; font: 500 calc(15.5 * var(--u))/1.65 var(--buoy-font-mono); white-space: pre-wrap; }
+.terminal .prompt { color: #a9abb8; } .terminal .comment { color: #9fe3b8; font-weight: 400; }
+.also { color: #3d3f4b; font-size: calc(16 * var(--u)); }
+.cutover-plan { padding: calc(34 * var(--u)) calc(32 * var(--u)) calc(26 * var(--u)); z-index: 2; }
+.plan-title { font: 800 calc(38 * var(--u))/1.1 var(--buoy-font); letter-spacing: -0.035em; }
+.cutover-plan .card-sub { margin-top: calc(6 * var(--u)); font-size: calc(19 * var(--u)); color: #5c5f6c; }
+.fields { width: 100%; margin-top: calc(18 * var(--u)); border: 1px solid var(--buoy-line); border-radius: calc(12 * var(--u)); border-collapse: separate; border-spacing: 0; font-size: calc(17 * var(--u)); }
+.fields th, .fields td { padding: calc(11 * var(--u)) calc(20 * var(--u)); border-bottom: 1px solid var(--buoy-line); text-align: left; vertical-align: middle; color: #2b2c38; }
+.fields tr > * + * { border-left: 1px solid var(--buoy-line); }
+.fields tbody tr:last-child > * { border-bottom: 0; }
+.fields thead th { background: var(--buoy-panel); font-weight: 600; font-size: calc(16.5 * var(--u)); }
+.fields thead th:first-child { border-top-left-radius: calc(12 * var(--u)); } .fields thead th:last-child { border-top-right-radius: calc(12 * var(--u)); }
+.fields tbody th { font-weight: 500; }
+.fields s { color: #8b8e9c; text-decoration-thickness: 1.5px; }
+.by-buoy { display: inline-block; padding: calc(4 * var(--u)) calc(14 * var(--u)); border-radius: calc(8 * var(--u)); background: var(--buoy-plum-soft); color: var(--buoy-plum-deep); font-weight: 650; }
+.mapping { white-space: nowrap; }
+.map { display: inline-block; margin-right: calc(8 * var(--u)); padding: calc(4 * var(--u)) calc(10 * var(--u)); border-radius: calc(8 * var(--u)); font-size: calc(15.5 * var(--u)); }
+.map.green { background: var(--buoy-green-soft); color: var(--buoy-green-ink); } .map.amber { background: var(--buoy-amber-soft); color: var(--buoy-amber-ink); } .map.red { background: var(--buoy-red-soft); color: var(--buoy-red-ink); }
+.parallel { margin-top: calc(16 * var(--u)); color: #4b4e5b; font-size: calc(16.5 * var(--u)); }
+.returning { width: fit-content; margin-top: calc(14 * var(--u)); padding: calc(12 * var(--u)) calc(24 * var(--u)); border-radius: 999px; background: var(--buoy-green-soft); color: #156b38; font-size: calc(18 * var(--u)); font-weight: 500; }
+.returning .tick { color: inherit; }
+.brought { display: flex; align-items: center; flex-wrap: wrap; gap: calc(8 * var(--u)) calc(8 * var(--u)); color: #3d3f4b; font-size: calc(14.5 * var(--u)); }
+.brought ul { display: contents; }
+.brought li { padding: calc(6 * var(--u)) calc(9 * var(--u)); border: 1px solid var(--buoy-line); border-radius: calc(8 * var(--u)); background: #fff; color: #2b2c38; white-space: nowrap; }
+@media (max-width: 1179px) {
+  .terminal { padding: 14px 16px 16px; rotate: -1deg; }
+  .terminal pre { font-size: 14px; }
+  .also { font-size: 15px; }
+  .cutover-plan { padding: 18px 14px; }
+  .plan-title { font-size: 26px; }
+  .cutover-plan .card-sub { font-size: 15px; }
+  .fields, .fields tbody, .fields tr { display: block; border: 0; }
+  .fields thead { display: none; }
+  .fields tr { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px 10px; padding: 12px 0; border-bottom: 1px solid var(--buoy-line); }
+  .fields th, .fields td { padding: 0; border: 0 !important; font-size: 14.5px; }
+  .fields tbody th { grid-column: 1 / -1; font-weight: 650; font-size: 16px; }
+  .fields .mapping, .fields td:last-child { grid-column: 1 / -1; white-space: normal; }
+  .map { margin: 2px 6px 2px 0; font-size: 13.5px; }
+  .parallel { font-size: 14.5px; }
+  .returning { font-size: 15px; border-radius: 12px; }
+  .brought { font-size: 14px; }
+  .brought p { flex-basis: 100%; }
+}

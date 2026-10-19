@@ -10,7 +10,7 @@ prepared playbooks, approved open/completed tasks, and renewed/deferred/churned
 decisions. Dates are relative to the start. Stable account IDs and proposal lookups make the hook idempotent; it never
 fetches. Accounts, proposals, approvals and task completions go through Buoy’s
 domain functions, with their real validation, revisions and audit trail. Maya
-Patel owns the sample workspace at maya@harbourstudio.example. Harbour Studio
+Patel owns the sample workspace at maya@harbourstudio.example. Harbor Studio
 shows completed and open work, an agreed renewal extension and a current draft. The manual move-in fixture provides
 the account shape; these expanded examples live only in demo state.
 

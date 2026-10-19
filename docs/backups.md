@@ -47,4 +47,4 @@ Deleting an account removes its live work, decisions and retained normalized imp
 
 Keep old archives under your team’s retention policy. Restoring an older archive into a different empty installation restores its historical contents, including records that existed at the time of export.
 
-The repository’s [local operations guide](https://github.com/just-every/run-buoy/blob/main/RUN-LOCALLY.md) explains supported transfer paths, private state and reset behaviour.
+The repository’s [local operations guide](https://github.com/just-every/run-buoy/blob/main/RUN-LOCALLY.md) explains supported transfer paths, private state and reset behavior.

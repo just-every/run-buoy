@@ -30,13 +30,13 @@ The response contains the installation’s accounts, including dates, current he
 
 ### Prepare a playbook
 
-Use an account ID returned by the list command. This example uses `harbour` as an illustrative ID; replace it with your account’s actual ID and choose a real action and date.
+Use an account ID returned by the list command. This example uses `harbor` as an illustrative ID; replace it with your account’s actual ID and choose a real action and date.
 
 ```json
 {
   "command": "playbook.prepare",
   "input": {
-    "accountId": "harbour",
+    "accountId": "harbor",
     "payload": {
       "title": "Review unresolved incident with the customer",
       "dueDate": "2027-01-15"
@@ -53,7 +53,7 @@ The account must have a defined at-risk signal. Preparation returns the proposal
 {
   "command": "renewal.prepare",
   "input": {
-    "accountId": "harbour",
+    "accountId": "harbor",
     "payload": {
       "outcome": "renewed",
       "reason": "Customer accepted another year",

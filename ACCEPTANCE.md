@@ -23,7 +23,7 @@ HTTP-001 ships the fixed read/preparation scope described in CONTRACT.md; invali
 5. **ERASE-001 — Owner erasure with tombstones** (`done`). As a member, attempt erasure and receive 403; as the owner, erase an imported account with work, then read state, the import journal and history; nothing names the account, and re-creating the same ID returns 409.
 6. **RESTORE-001 — Portable installation archives** (`partial`). Export an installation with accounts, approved decisions, an agent token and an erased account; restore into an empty copy, then attempt a second restore and a damaged archive; state matches, the agent token is refused, the tombstone holds and both bad restores fail.
 7. **SITE-001 — Public run site** (`done`). Build with `rer build --site` and crawl the output through Cloudflare's static-asset server; the homepage reaches `/run` and `/docs`, every guide renders and unknown paths return the 404.
-8. **STYLE-001 — One theme at every width** (`partial`). Open setup, sign-in, the account list, an account and the import screen at 1440 and 390 pixels; fonts load from the installation, no content or control is clipped and every form remains usable.
+8. **STYLE-001 — One theme at every width** (`partial`). Open the homepage, `/run`, `/docs`, setup, sign-in, the account list, an account and the import screen at 1440 and 390 pixels; fonts load from the installation, the mark and the 16 and 32 pixel favicons show, no content or control is clipped and every form remains usable.
 
 ## Accounts, people and the customer record
 

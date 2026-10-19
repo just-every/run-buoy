@@ -1,0 +1,26 @@
+/* 07 The interlude: the mark large over the Q4 renewal band (page-07). */
+.quarter-card { height: calc(853 * var(--u)); border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: 0 1px 2px rgba(11, 11, 31, 0.04), 0 26px 50px -30px rgba(40, 24, 72, 0.2); }
+.quarter-ring { height: auto; z-index: 2; }
+.q-total { padding: calc(20 * var(--u)) calc(22 * var(--u)); border: 1px solid var(--buoy-line); border-radius: calc(12 * var(--u)); background: #fff; box-shadow: var(--buoy-card-shadow-soft); color: #2b2c38; font: 600 calc(22 * var(--u))/1.2 var(--buoy-font); text-align: center; white-space: nowrap; z-index: 2; }
+.band { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; font-family: var(--buoy-font); }
+.band .axis { stroke: #2b2c38; stroke-width: 2; } .band .rule { stroke: #d9dbe4; } .band .tick { stroke: #2b2c38; stroke-width: 1.6; }
+.band .month { fill: #3d3f4b; font-size: 18px; letter-spacing: 0.16em; font-weight: 500; } .band .day { fill: #3d3f4b; font-size: 17px; }
+.band .d.g { fill: var(--buoy-green); } .band .d.a { fill: var(--buoy-amber); } .band .d.r { fill: var(--buoy-red); }
+.band .stem { stroke: var(--buoy-plum); stroke-width: 3.4; stroke-dasharray: 0.5 6.5; stroke-linecap: round; }
+.band .foot.amber { fill: var(--buoy-amber); stroke: #fff; stroke-width: 2; } .band .foot.green { fill: var(--buoy-green); stroke: #fff; stroke-width: 2; }
+.q-tags { display: contents; }
+.q-tag { display: flex; align-items: center; gap: calc(14 * var(--u)); min-height: calc(68 * var(--u)); padding: calc(10 * var(--u)) calc(16 * var(--u)); border: 1px solid var(--buoy-line); border-radius: calc(10 * var(--u)); background: #fff; box-shadow: var(--buoy-card-shadow-soft); z-index: 2; }
+.q-tag .dot { width: calc(20 * var(--u)); height: calc(20 * var(--u)); }
+.q-tag p { display: grid; align-content: start; line-height: 1.3; }
+.q-tag b { font-size: calc(16.5 * var(--u)); font-weight: 650; white-space: nowrap; }
+.q-tag span { color: #3d3f4b; font-size: calc(16 * var(--u)); }
+@media (max-width: 1179px) {
+  .quarter-card { display: none; }
+  .quarter-ring { align-self: center; width: min(180px, 46vw); }
+  .q-total { font-size: 18px; padding: 14px 16px; }
+  .q-tags { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .q-tag { min-height: 0; padding: 10px 12px; }
+  .q-tag b { font-size: 15px; white-space: normal; } .q-tag span { font-size: 14px; }
+  .q-total { white-space: normal; }
+  .q-tag:last-child { order: -1; grid-column: 1 / -1; }
+}
