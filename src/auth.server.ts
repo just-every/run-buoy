@@ -1,4 +1,4 @@
-import { auditRecord } from './buoy/audit-records'
+import { auditedAccessChange } from './buoy/access-audit'
 import { rejectedResponse } from './base/rejected-response'
 import { createDependencies } from './modules/dependencies/index.mjs'
 import { createIdpOwnerClaimHandler, createOwnerClaimHandler } from './modules/owner-claim/index.mjs'
@@ -45,9 +45,7 @@ export interface Bindings {
 export const runtimeBindings = (env: Bindings): Bindings => env.RER_DEV_ORIGIN && env.AUTH_LOCAL === 'true' ? { ...env, AUTH_ORIGIN: env.RER_DEV_ORIGIN } : env
 export const authConfig = (env: Bindings): AuthConfig => ({ dependencies: true, origin: env.AUTH_ORIGIN, local: env.AUTH_LOCAL === 'true', OWNER_EMAIL: env.OWNER_EMAIL, SESSION_SECRET: env.SESSION_SECRET, SETUP_TOKEN: env.SETUP_TOKEN, MAIL_FROM: env.MAIL_FROM, branding: { productName: branding.name, accentColor: branding.primaryColor, signInPath: '/signin', theme: theme.href } })
 export function operatorAuth(env: Bindings) {
- return createOperatorAuth({ db: env.DB, config: authConfig(env), mailSender: operatorMail(env), clientIp: request => request.headers.get('CF-Connecting-IP') ?? '', hooks: { async afterConfirm({operator, method}) {
-  await auditRecord(env.DB, {kind: 'person', id: operator.id}, 'auth.signed-in', `person:${operator.id}`, method).run()
- } } })
+ return createOperatorAuth({ db: env.DB, config: authConfig(env), mailSender: operatorMail(env), clientIp: request => request.headers.get('CF-Connecting-IP') ?? '' })
 }
 
 
@@ -75,7 +73,11 @@ async function handleAuthResponse(request: Request, original: Bindings): Promise
   })(request)
   if (page) return fontDocumentResponse(page)
  }
- if (url.pathname.startsWith('/auth/')) return fontDocumentResponse(await createAuthHandler(operatorAuth(env))(request))
+ if (url.pathname.startsWith('/auth/')) {
+  // AUDIT-001: sign-ins are recorded by every session insert (migration 0021); access changes here.
+  const auth = operatorAuth(env)
+  return fontDocumentResponse(await auditedAccessChange(request, env.DB, auth, createAuthHandler(auth)))
+ }
  if (url.pathname === '/setup' || url.pathname === '/app' || url.pathname.startsWith('/app/')) {
   const setup = await firstRunResponse(request, env, operatorAuth(env), { theme })
   if (setup) return setup

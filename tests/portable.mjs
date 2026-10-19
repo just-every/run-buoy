@@ -38,15 +38,22 @@ try{
  await call(`/proposals/${proposal.id}/approve`,'POST',{})
  const token=await call('/agent-tokens','POST',{label:'Portable preparation assistant'})
  assert.equal((await running.request('/api/buoy/accounts/'+accountId,{method:'PUT',body:{},token:token.token})).status,403)
+ assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,200)
  const erased={...fixture.accounts[0],id:'erase-before-backup',name:'Retired account'}
  await call('/accounts','POST',erased)
  await call('/accounts/erase-before-backup','DELETE',{confirmation:'Retired account'})
+ assert.equal((await running.request('/auth/invite',{method:'POST',cookie:running.cookie,body:{email:'analyst@example.test',displayName:'Ana Lyst',role:'member'}})).status,202)
+ const analyst=(await (await running.request('/auth/operators',{cookie:running.cookie})).json()).find(p=>p.email==='analyst@example.test')
+ assert.equal((await running.request('/auth/operator/role',{method:'POST',cookie:running.cookie,body:{operatorId:analyst.id,role:'admin'}})).status,200)
  const before=await call('/state'), beforeAudit=(await call('/audit')).entries
- assert.ok(beforeAudit.length,'AUDIT-001 archive starts with real recorded actions')
+ for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
+ assert.doesNotMatch(JSON.stringify(beforeAudit),/Retired account|erase-before-backup|example\.test|Ana Lyst|Harbour CS owner/,'AUDIT-001 erased account and people stay unnamed')
  const screen=await (await running.request('/app/audit',{cookie:running.cookie})).text()
  assert.equal((screen.match(/<article class="record">/g)??[]).length,beforeAudit.length,'AUDIT-001 screen lists the exported entries')
  for(const entry of beforeAudit){assert.ok(screen.includes(entry.action));assert.ok(screen.includes(entry.subject));assert.ok(screen.includes(entry.occurredAt))}
  await running.close();running=null
+ // The first export's own record is taken with its snapshot; the next export carries it.
+ await command(source,['export','--output',join(parent,'first.rer')])
  await command(source,['export','--output',archive])
  await command(destination,['import','--input',archive,'--yes'])
  await command(destination,['import','--input',archive,'--yes'],1)
@@ -55,7 +62,11 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,directory:join(destination,'.wrangler/state'),keep:true})
  const after=await call('/state')
- assert.deepEqual((await call('/audit')).entries,beforeAudit,'AUDIT-001 archive preserves exactly the audit entries shown before export')
+ const restored=(await call('/audit')).entries, added=restored.filter(entry=>!beforeAudit.some(prior=>prior.id===entry.id))
+ assert.deepEqual(restored.filter(entry=>!added.includes(entry)),beforeAudit,'AUDIT-001 archive preserves exactly the audit entries shown before export')
+ assert.deepEqual(added.map(entry=>[entry.action,entry.actor.replace(/[0-9a-f-]{36}$/,'id'),entry.detail]),[['auth.signed-in','person:id','native session issued'],['data.exported','portability:direct','Installation archive snapshot taken; delivery of the file is not recorded.']],'AUDIT-001 the export is recorded, and the destination records its own bootstrap sign-in')
+ assert.match(added[1].subject,/^archive:[0-9a-f-]+$/)
+ assert.match(await (await running.request('/app/audit?action=data.exported',{cookie:running.cookie})).text(),/portability:direct/)
  assert.deepEqual(after.accounts,before.accounts)
  assert.deepEqual(after.proposals,before.proposals)
  assert.deepEqual(after.decisions,before.decisions)

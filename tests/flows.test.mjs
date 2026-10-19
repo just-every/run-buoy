@@ -11,15 +11,16 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
  async function json(response,status=200){assert.equal(response.status,status,await response.clone().text());return response.json()}
  let member,token,proposal,task
  try {
-  await t.test('AUDIT-001 native sign-in records an opaque actor; unauthenticated data refusal and CSRF',async()=>{
+  await t.test('AUDIT-001 bootstrap and email-link sign-ins record an opaque actor; unauthenticated data refusal and CSRF',async()=>{
    assert.equal((await request('/api/buoy/state')).status,401)
    assert.equal((await call('/accounts','POST',account(),{headers:{origin:'https://other.invalid'}})).status,403)
    assert.equal((await request('/__dev/outbox')).status,404)
    const signedIn=await signIn('owner@example.test')
    assert.equal((await request('/api/buoy/state',{cookie:signedIn})).status,200)
    const signins=(await json(await call('/audit?action=auth.signed-in'))).entries
-   assert.equal(signins.length,1);assert.match(signins[0].actor,/^person:[0-9a-f-]+$/)
-   assert.equal(signins[0].subject,signins[0].actor);assert.ok(Date.parse(signins[0].occurredAt));assert.doesNotMatch(JSON.stringify(signins),/owner@example|Harbour CS owner/)
+   assert.equal(signins.length,2,'AUDIT-001 the bootstrap door and the email link each record a sign-in')
+   for(const entry of signins){assert.match(entry.actor,/^person:[0-9a-f-]+$/);assert.equal(entry.subject,entry.actor);assert.equal(entry.actor,signins[0].actor);assert.equal(entry.detail,'native session issued');assert.ok(Date.parse(entry.occurredAt))}
+   assert.doesNotMatch(JSON.stringify(signins),/owner@example|Harbour CS owner/)
   })
   await t.test('billing evidence, renewal date and honest unknown health',async()=>{
    await json(await call('/accounts','POST',account()),201)
@@ -224,6 +225,30 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.deepEqual((await json(await call('/audit?actor='+agent.id))).entries.filter(e=>e.action==='agent.refused'),retained.filter(e=>e.action==='agent.refused'))
    assert.ok(!(await json(await call('/state'))).accounts.some(a=>a.id===privateId))
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
+  })
+  await t.test('AUDIT-001 invitations, role and status changes record actor, person and change; refused or unchanged ones add nothing',async()=>{
+   const owner=(await json(await call('/audit?action=auth.signed-in'))).entries.at(-1).actor
+   const operators=async()=>json(await request('/auth/operators',{cookie}))
+   const access=(path,body,as=cookie)=>request(path,{method:'POST',cookie:as,body})
+   await json(await access('/auth/invite',{email:'analyst@example.test',displayName:'Ana Lyst',role:'member'}),202)
+   await json(await access('/auth/invite',{email:'pending@example.test',displayName:'Pen Ding',role:'member'}),202)
+   const analystSession=await signIn('analyst@example.test')
+   const people=await operators(), analyst=people.find(p=>p.email==='analyst@example.test'), pending=people.find(p=>p.email==='pending@example.test')
+   const read=async id=>(await json(await call('/audit?subject=person:'+id))).entries
+   assert.deepEqual((await read(analyst.id)).map(e=>[e.action,e.actor,e.detail]),[['auth.signed-in','person:'+analyst.id,'native session issued'],['auth.invited',owner,'invited as member']],'AUDIT-001 an accepted invitation is a recorded sign-in')
+   assert.equal((await access('/auth/operator/role',{operatorId:analyst.id,role:'admin'},member)).status,403)
+   await json(await access('/auth/operator/role',{operatorId:analyst.id,role:'admin'}))
+   await json(await access('/auth/operator/role',{operatorId:analyst.id,role:'admin'}))
+   await json(await access('/auth/operator/status',{operatorId:analyst.id,status:'inactive'}))
+   assert.equal((await request('/api/buoy/state',{cookie:analystSession})).status,401)
+   await json(await access('/auth/operator/status',{operatorId:analyst.id,status:'active'}))
+   await json(await access('/auth/invite/cancel',{operatorId:pending.id}))
+   const changes=(await read(analyst.id)).filter(e=>e.action!=='auth.signed-in'&&e.action!=='auth.invited')
+   assert.deepEqual(changes.map(e=>[e.action,e.detail]),[['auth.status-changed','inactive -> active'],['auth.status-changed','active -> inactive'],['auth.role-changed','member -> admin']])
+   for(const entry of changes){assert.equal(entry.actor,owner);assert.equal(entry.subject,'person:'+analyst.id);assert.ok(Date.parse(entry.occurredAt))}
+   assert.deepEqual((await read(pending.id)).map(e=>[e.action,e.actor,e.detail]),[['auth.invitation-cancelled',owner,'invited -> inactive'],['auth.invited',owner,'invited as member']])
+   assert.doesNotMatch(JSON.stringify([...await read(analyst.id),...await read(pending.id)]),/example\.test|Ana Lyst|Pen Ding/)
+   assert.match(await (await request('/app/audit?action=auth.role-changed',{cookie})).text(),/member -&gt; admin/)
   })
   await t.test('AUDIT-001 agent reads and invalid commands record attempts without claiming outcomes',async()=>{
    const agent=await json(await call('/agent-tokens','POST',{label:'Portfolio assistant'}),201), as={cookie:undefined,token:agent.token}
