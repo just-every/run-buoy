@@ -1,5 +1,6 @@
 import { operatorAuth, runtimeBindings, type Bindings } from '../auth.server'
 import { insist, id, text, object, stmt, requirePerson, type Actor } from './core'
+import { refuse } from './audit'
 export async function digest(value: string) {
  return [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))].map(x => x.toString(16).padStart(2, '0')).join('')
 }
@@ -9,10 +10,11 @@ export async function actorFor(request: Request, original: Bindings): Promise<Ac
  const bearer = request.headers.get('authorization')
  if (bearer) {
   insist(bearer.startsWith('Bearer '), 'Invalid agent credential.', 401)
-  insist(url.pathname === '/api/buoy/commands', 'Agents can only use the preparation commands.', 403)
   const token = await stmt(env.DB, "SELECT t.id,t.label FROM buoy_agent_tokens t JOIN oa_operators o ON o.id=t.owner_id WHERE t.token_hash=? AND t.revoked_at IS NULL AND t.expires_at>? AND o.status='active' AND o.role='owner' AND o.version=t.owner_version", await digest(bearer.slice(7)), Date.now()).first<{id: string; label: string}>()
   insist(token, 'Agent credential expired or revoked.', 401)
-  return {id: token.id, tokenId: token.id, kind: 'agent', role: 'agent', displayName: token.label}
+  const agent: Actor = {id: token.id, tokenId: token.id, kind: 'agent', role: 'agent', displayName: token.label}
+  if (url.pathname !== '/api/buoy/commands') await refuse(env.DB, agent, `${request.method} ${url.pathname}`, 'Agents can only use the preparation commands.')
+  return agent
  }
  const session = await operatorAuth(env).getSession(request)
  insist(session, 'Sign in to continue.', 401)

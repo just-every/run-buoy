@@ -149,5 +149,23 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.equal((await json(await call('/state'))).proposals.find(p=>p.id===draft.id).snapshot.billing.allocatedMinor,0,'earlier work keeps the earlier revision')
    assert.equal((await call(`/proposals/${draft.id}/approve`,'POST',{})).status,409)
   })
+  await t.test('BOUNDARY-004 agent commercial changes are refused with their reason and recorded; mail is sign-in only',async()=>{
+   const agent=await json(await call('/agent-tokens','POST',{label:'Discount probe'}),201), as={cookie:undefined,token:agent.token}
+   const before=(await json(await call('/state'))).accounts.find(a=>a.id==='harbour')
+   const attempts=[
+    [await call('/commands','POST',{command:'renewal.prepare',input:{accountId:'harbour',payload:{outcome:'renewed',reason:'Offer 20% off to close',evidence:'Agent draft',discountPercent:20}}},as),403,'account harbour',/^Agents cannot set discountPercent\. A preparation carries only outcome, reason, evidence; prices, discounts and other commercial terms change only by a person/],
+    [await call('/commands','POST',{command:'renewal.discount',input:{accountId:'harbour',percent:20}},as),400,'command renewal.discount',/^Unknown command\. Agents can prepare; people approve\.$/],
+    [await call('/accounts/harbour','PUT',{...account(),renewalDate:'2028-03-31',revision:before.revision},as),403,'PUT /api/buoy/accounts/harbour',/^Agents can only use the preparation commands\.$/]]
+   for(const [response,status,,reason] of attempts){assert.equal(response.status,status);assert.match((await response.json()).error,reason)}
+   const after=(await json(await call('/state'))).accounts.find(a=>a.id==='harbour')
+   assert.equal(after.revision,before.revision,'no term changed');assert.ok(!(await json(await call('/state'))).proposals.some(p=>p.payload.reason==='Offer 20% off to close'))
+   assert.equal((await call('/audit','GET',undefined,{cookie:member})).status,403)
+   const recorded=(await json(await call('/audit'))).entries.filter(e=>e.actor===`agent:${agent.id}:Discount probe`)
+   assert.deepEqual(recorded.map(e=>e.action),['agent.refused','agent.refused','agent.refused'])
+   for(const [,,subject,reason] of attempts){const entry=recorded.find(e=>e.subject===subject);assert.ok(entry,`${subject} is recorded`);assert.match(entry.detail,reason);assert.ok(Date.parse(entry.occurredAt))}
+   await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
+   // No journey, campaign or other one-to-many send exists: every message the installation sent is a sign-in link to the one person who asked for it.
+   assert.ok(worker.mails.length);for(const mail of worker.mails){assert.equal([mail.to].flat().length,1);assert.match(mail.html,/\/auth\/confirm\?token=/)}
+  })
  }finally{await worker.close()}
 })
