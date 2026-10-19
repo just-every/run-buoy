@@ -23,7 +23,7 @@ export function playbook(): string {
     + `<article class="card zoom place" style="${at(925, 703, 557)}"><header class="zoom-head">${initials('RT', 'plum')}<div><h3 class="card-title">Zoom ${sep} Thu Oct 8, 2:00–2:30 pm</h3><p class="card-sub">Rob Tanaka, Jordan Hale ${sep} summary with cited lines</p></div></header><ul class="cited">`
     + `<li class="quote"><span>“Exports have to be back before our holiday peak.”</span><span class="stamp">04:12</span></li>`
     + `<li class="ok"><span><b>Proposed task:</b> Daily ENG-912 status to Rob until fixed ${sep} <span class="green">accepted by Jordan ${check}</span></span></li>`
-    + `<li class="warn"><span><b>Risk mention:</b> “We're looking at a backup routing tool.” <span class="stamp">17:40</span> ${sep} flagged as competitor risk</span></li>`
+    + `<li class="warn"><span><b>Risk mention:</b> “We're looking at a backup routing tool.” <span class="nowrap"><span class="stamp">17:40</span> ${sep}</span> flagged as competitor risk</span></li>`
     + `<li class="ok"><span><b>Proposed plan update:</b> <b>Goal 1</b> route exports automated for all 6 depots (measured in Segment) ${sep} <b>Goal 2</b> dispatch planning under 30 minutes a day (confirmed by Rob) ${sep} <span class="green">accepted ${check}</span></span></li></ul></article>`
     + cursor('Maya', at(60, 398))
     + cursor('Jordan', at(1080, 640))

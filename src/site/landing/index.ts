@@ -45,10 +45,10 @@ const tokens = [
 const keepTokens = (text: string) => tokens.reduce((out, pattern) => out.replace(pattern, token => token.replace(/ /g, '\u00a0')), text)
 
 /** Separators, arrows and range dashes stay on the line of the word before them (no line starts with one), a
- * dash-joined token (a time range, a score band, a money band) never breaks at its dash, a check mark stays with the
- * word before it, and dates, times, durations and counts never break inside. Styles are left alone. */
+ * dash-joined token (a time range, a score band, a money band) or an ID ("ENG-912") never breaks at its dash, a check
+ * mark stays with the word before it, and dates, times, durations and counts never break inside. Styles are left alone. */
 export const keepSeparators = (html: string) => html.split(/(<style>[\s\S]*?<\/style>)/).map(part => part.startsWith('<style>') ? part
-  : part.replace(/>[^<]+</g, text => keepTokens(text).replace(/ ([·→–—])/g, '\u00a0$1').replace(/[^\s>]+–[^\s<]+/g, token => `<span class="nowrap">${token}</span>`)).replace(/ <span class="(sep|tick)"/g, '\u00a0<span class="$1"')).join('')
+  : part.replace(/>[^<]+</g, text => keepTokens(text).replace(/ ([·→–—])/g, '\u00a0$1').replace(/[^\s>]+–[^\s<]+|\b[A-Z]{2,}-\d+\b/g, token => `<span class="nowrap">${token}</span>`)).replace(/ <span class="(sep|tick)"/g, '\u00a0<span class="$1"')).join('')
 
 export function landingHtml(): string {
   return keepSeparators(siteHead({
