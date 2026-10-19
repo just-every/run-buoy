@@ -6,6 +6,7 @@ import { saveAccount, account, state } from './accounts'
 import { prepare, approve, completeTask } from './work'
 import { recordSentiment, healthOn, today } from './sentiment'
 import { setStaleness } from './settings'
+import { auditRecord } from './audit-records'
 import { audit, refuse } from './audit'
 import * as imports from './imports/index'
 
@@ -14,7 +15,12 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  c.header('cache-control', 'no-store')
  c.header('x-content-type-options', 'nosniff')
  c.header('referrer-policy', 'no-referrer')
- c.set('actor', await actorFor(c.req.raw, c.env))
+ const actor = await actorFor(c.req.raw, c.env)
+ c.set('actor', actor)
+ // AUDIT-001: record receipt before dispatch, including reads and invalid bodies.
+ // This is an attempt, never a claim that the command completed. Preparations
+ // record their actual effect atomically in core.commit. No body or credential is retained.
+ if (actor.kind === 'agent') await auditRecord(c.env.DB, actor, 'agent.requested', `agent:${actor.id}`, `${['GET','POST'].includes(c.req.method) ? c.req.method : 'Other method'} commands request received; outcome not recorded.`).run()
  await next()
 })
 buoyApi.onError((error, c) => {
