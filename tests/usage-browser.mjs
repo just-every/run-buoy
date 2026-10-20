@@ -92,5 +92,5 @@ try{
  }
  assert.deepEqual(failures,[],'USAGE-001 inherited A11Y-001 checks')
  for(const entry of manual)for(const rule of entry.rules)assert.equal(rule.id,'color-contrast','Every other accessibility incomplete fails: '+JSON.stringify(entry))
- console.log('USAGE-001 real native forms, authenticated buyer relay, pending exact source identities, revocation and A11Y-001 passed at 1440/390.')
+ console.log('USAGE-001 real forms, authenticated buyer relay, exact mapping review/approval, retained/new attribution, account evidence, revocation and A11Y-001 passed at 1440/390.')
 }finally{if(browser)await browser.close();await app.close()}
