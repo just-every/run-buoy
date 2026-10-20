@@ -9,7 +9,7 @@ const fixtureKey=['rk','test','browserFixtureCustomerRead'].join('_')
 let fail=false
 const app=await startWorker({secure:false,providerFetch:async request=>{
  assert.equal(request.method,'GET');assert.equal(new URL(request.url).pathname,'/v1/customers')
- if(live)return fetch(request)
+ if(live)return fetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual'})
  if(fail)return Response.json({error:{message:'private provider error'}},{status:401})
  return Response.json({data:[{id:'cus_browserFixture',object:'customer',created:1700000000,livemode:false}],has_more:false})
 }})
