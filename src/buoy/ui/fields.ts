@@ -79,7 +79,7 @@ function valueForm(data: FieldsPage, account: FieldsPage['accounts'][number], va
   const current = Object.fromEntries(manual.filter(definition => Object.hasOwn(account.values, definition.key)).map(definition => [definition.key, account.values[definition.key]]));
   const v = (name: string, initial: unknown = '') => valueOf(mine, name, initial);
   return disclosure('Edit field values', 'Record manual values with a source reference.',
-    form(`field-values-${account.id}`, '/app/fields', hidden('action', 'field-values') + hidden('accountId', account.id) + hidden('revision', v('revision', account.revision))
+    form(`field-values-${account.id}`, `/app/fields?account=${pathId(account.id)}`, hidden('action', 'field-values') + hidden('accountId', account.id) + hidden('revision', v('revision', account.revision))
       + '<p>Enter manual fields as a JSON object keyed by field key. Preserve JSON types: numbers, booleans and arrays for multi-select choices. Formula fields are read-only.</p>'
       + `<p>Manual field keys: ${manual.map(definition => `<code>${escape(definition.key)}</code> (${escape(labels[definition.type])})`).join(', ')}.</p>`
       + textarea('values', `Manual field values for ${account.name} (JSON object)`, v('values', json(current)), true, 'spellcheck="false"')
@@ -98,12 +98,15 @@ function history(data: FieldsPage): string {
   return section('Field value history', entries ? `<ol class="journal">${entries}</ol>` : '<p>No field value changes recorded.</p>');
 }
 
-export function fieldsPage(data: FieldsPage, state: State, fields?: Fields, preview?: unknown): string {
+export function fieldsPage(data: FieldsPage, state: State, fields?: Fields, preview?: unknown, selectedAccountId?:string): string {
   const manage = canManage(state);
   const result = preview as Preview | undefined;
+  const selected=data.accounts.find(a=>a.id===selectedAccountId)??data.accounts[0];
+  const selection=`<form method="get" action="/app/fields"><label>Account<select name="account">${data.accounts.map(a=>`<option value="${escape(a.id)}"${a.id===selected?.id?' selected':''}>${escape(a.name)}</option>`).join('')}</select></label>${button('Open account fields')}</form>`;
+  const accountData={...data,accounts:selected?[selected]:[],history:data.history.filter(h=>h.accountId===selected?.id)};
   return section('Custom field definitions', '<p>Typed account fields keep manual evidence and calculated values together. Formula explanations show how each calculated value was derived.</p>'
     + (data.definitions.length ? `<ul class="journal">${data.definitions.map(definition => `<li class="record"><h3>${escape(definition.label)}</h3>${definitionDetails(definition)}</li>`).join('')}</ul>` : '<p>No custom fields defined yet.</p>'))
     + (manage ? definitionForm(fields) + previewForm(fields, result) + (result ? previewResult(data, result) : '') : '')
-    + section('Account field values', data.accounts.length ? `<ul class="journal">${data.accounts.map(account => `<li class="record"><h3>${accountLink(account.id, account.name)}</h3>${valueList(data.definitions, account)}${manage ? valueForm(data, account, fields) : ''}</li>`).join('')}</ul>` : '<p>No accessible accounts.</p>')
-    + history(data);
+    + section('Account field values', selection + (accountData.accounts.length ? `<ul class="journal">${accountData.accounts.map(account => `<li class="record"><h3>${accountLink(account.id, account.name)}</h3>${valueList(data.definitions, account)}${manage ? valueForm(data, account, fields) : ''}</li>`).join('')}</ul>` : '<p>No accessible accounts.</p>'))
+    + history(accountData);
 }

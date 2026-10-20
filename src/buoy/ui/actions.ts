@@ -40,7 +40,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     }
     if(action==='field-values'){
       await send(`/api/buoy/accounts/${encodeURIComponent(fields.accountId)}/fields`,{values:parse(fields.values),revision:fields.revision,source:fields.source},'PUT');
-      return {redirect:path,message:'Field values saved.',saved:`field-values-${fields.accountId}`};
+      return {redirect:`${path}?account=${encodeURIComponent(fields.accountId)}`,message:'Field values saved.',saved:`field-values-${fields.accountId}`};
     }
   }
   if(path==='/app/audit') {
