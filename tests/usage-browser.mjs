@@ -6,7 +6,7 @@ import {chromium} from '@playwright/test'
 import {startWorker} from './worker.mjs'
 import {BuoyUsage} from '../sdk/usage.mjs'
 import {startUsageRelay} from './usage-relay.mjs'
-import {scan,failures,manual,openForms,submit} from './a11y-checks.mjs'
+import {scan,failures,manual,openForms,submit,focused} from './a11y-checks.mjs'
 const app=await startWorker({secure:false})
 let browser
 try{
@@ -64,6 +64,7 @@ try{
    await claim.getByLabel('Account',{exact:true}).selectOption(account.id)
    await claim.getByLabel('Customer contact or user',{exact:true}).selectOption(customer.id)
    await submit(page,claim.getByRole('button',{name:'Preview exact mapping',exact:true}))
+   await focused(page,page.locator('#usage-mapping-preview pre'),'USAGE-001 exact identity claims keyboard focus');
    const shown=JSON.parse(await page.locator('#usage-mapping-preview pre').textContent());assert.equal(shown.sourceId,source.id);assert.equal(shown.userId,' Raw/User '+width+' ');assert.equal(shown.groupId,' Raw/Group '+width+' ');
    assert.equal((await call()).mappings.filter(m=>m.sourceId===source.id).length,0)
    await scan(page,`USAGE-001 exact mapping preview ${width}`)
