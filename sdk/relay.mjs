@@ -36,7 +36,7 @@ export function createUsageRelay({client,authenticate}) {
   })
   try{
    const receipt=await client.batch(trusted),safe={}
-   for(const key of ['received','accepted','duplicates','review']){if(!Number.isSafeInteger(receipt?.[key])||receipt[key]<0)return reply(503,'Usage intake returned an invalid receipt.');safe[key]=receipt[key]}
+   for(const key of ['received','accepted','duplicates','stored']){if(!Number.isSafeInteger(receipt?.[key])||receipt[key]<0)return reply(503,'Usage intake returned an invalid receipt.');safe[key]=receipt[key]}
    return Response.json(safe,{status:202,headers:{'Cache-Control':'no-store'}})
   }catch(error){
    if(error instanceof UsageError&&error.status>=400&&error.status<=599)return reply(error.status,'Usage intake refused the request.')
