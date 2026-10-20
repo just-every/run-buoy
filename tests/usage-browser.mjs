@@ -35,7 +35,7 @@ try{
    const sdk=new BuoyUsage({origin:app.origin,sourceId:source.id,credential})
    const direct=await sdk.track({messageId:'direct-'+width,event:'Report downloaded',userId:' Raw/User '+width+' ',groupId:' Raw/Group '+width+' '})
    assert.equal(direct.accepted,1)
-   await page.reload({waitUntil:'networkidle'});assert.equal(await page.getByLabel('Ingestion credential',{exact:true}).count(),0)
+   await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});assert.equal(await page.getByLabel('Ingestion credential',{exact:true}).count(),0)
    assert.ok((await page.locator('#usage-review').innerText()).includes('Raw/User '+width))
    buyer=await startUsageRelay(sdk,{userId:' Trusted/User '+width+' ',groupId:' Trusted/Group '+width+' '})
    const product=await context.newPage();await product.goto(buyer.origin)
