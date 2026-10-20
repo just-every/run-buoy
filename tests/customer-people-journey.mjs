@@ -159,6 +159,15 @@ export async function customerPeopleJourney({call,json,request,cookie,member,acc
  // SEGMENT-001 consumes typed related records and refreshes after value or membership changes.
  const segmentInput=(name,conditions)=>({name,mode:'dynamic',rules:{match:'all',conditions},accountIds:[],tier:null,stage:null,playbook:null})
  const report=async id=>(await json(await call(`/segments/${id}/report`))).accounts.map(a=>a.accountId).sort()
+ const anyConditions=[{field:'people.contact.custom.utilization',op:'gt',value:.6},{field:'id',op:'eq',value:accountIds[9]}]
+ const anySegment=await json(await call('/segments','POST',{...segmentInput('SEGMENT-001 related or native match',anyConditions),rules:{match:'any',conditions:anyConditions}}),201)
+ assert.deepEqual(await report(anySegment.id),[...accountIds.slice(0,2),accountIds[9]].sort(),'SEGMENT-001 any-rules combine a matching related record with native account conditions')
+ const incomplete=fixture('contact',9)
+ await save(incomplete.id,{...values(incomplete),reference:null})
+ const missingSegment=await json(await call('/segments','POST',segmentInput('SEGMENT-001 missing customer evidence',[{field:'people.contact.custom.reference',op:'is-missing'}])),201)
+ assert.deepEqual(await report(missingSegment.id),[accountIds[9]],'SEGMENT-001 related missing checks match an explicit customer with missing input; absent related records never become invented customers')
+ await save(incomplete.id,values(incomplete))
+ assert.deepEqual(await report(missingSegment.id),[],'SEGMENT-001 filling related evidence exits a missing-input rule')
  for(const kind of ['contact','user']){
   const field=key=>`people.${kind}.custom.${key}`
   const conditions=[
