@@ -38,6 +38,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
    await checkRequest(c.env.DB, actor, reservation, c.req.raw)
    await next()
    status = c.res.status
+   if(c.req.method!=='GET'&&status<400) await flushNotifications(c.env)
   } catch (error) { status = error instanceof Problem ? error.status : 500; throw error }
   finally { await finishRequest(c.env.DB, actor, status) }
   return

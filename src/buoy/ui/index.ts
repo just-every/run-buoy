@@ -1,3 +1,4 @@
+import {agentsPage,type AgentPage,type AgentCredential} from './agents';
 import { outcomesPage, type OutcomesPage } from './outcomes';
 import { segmentsPage, type SegmentsPage } from './segments';
 import type { Bindings } from '../../auth.server';
@@ -35,6 +36,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && path !== '/app/team' && path !== '/app/segments' && path !== '/app/outcomes' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
   if (path === '/app/imports' && state.operator.role !== 'owner') return shell({ title: 'Owner access required', body: section('Owner access required', '<p>Only the owner can import accounts or manage Business imports.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
   if ((path === '/app/audit' || path === '/app/team') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
+  let agentCredential:AgentCredential|undefined;
   let fields: Fields | undefined, error: string | undefined, teamPreview: TeamPreview | undefined, status = 200;
   if (request.method === 'POST') {
     try {
@@ -44,6 +46,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
       for (const [key, value] of data) { if (typeof value !== 'string') throw new ApiError('Use the import upload control for account files. This form accepts text fields only.'); fields[key] = value; }
       const result = await mutate(api, request, path, fields, account?.id);
       teamPreview = result.teamPreview;
+      agentCredential=result.agentCredential;
       if (result.redirect) {
         const target = new URL(result.redirect, request.url);
         target.searchParams.set('success', result.message ?? 'Change saved.');
@@ -71,6 +74,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     title = 'Audit';
     try {
       body = auditPage(await apiCall<AuditPage>(api, request, '/api/buoy/audit?' + url.searchParams.toString()), url.searchParams);
+      if(state.operator.role==='owner') body=agentsPage(await apiCall<AgentPage>(api,request,'/api/buoy/agents'),fields,agentCredential)+body;
     } catch (caught) {
       status = caught instanceof ApiError ? caught.status : 503;
       body = section('Audit unavailable', `<p>${escape(caught instanceof Error ? caught.message : 'Reload to read the audit.')}</p><p><a href="/app/audit">Clear filters and reload</a></p>`);
@@ -95,7 +99,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   }
   // Success messages are selected from known server outcomes, not arbitrary
   // text supplied in a link to this private page.
-  const messages = new Set(['Tier names saved.', 'Outcome tracking started.', 'Segment saved.', 'Account classification saved.', 'Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
+  const messages = new Set(['Agent switch saved.', 'Agent credential revoked.', 'Tier names saved.', 'Outcome tracking started.', 'Segment saved.', 'Account classification saved.', 'Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
   const success = url.searchParams.get('success') ?? '';
   const response = await shell({ title, head, body, style, state, current: account ? '/app' : path, status, error, success: messages.has(success) ? success : undefined, backToAccounts: !!account, importDoor: path === '/app/imports' && state.operator.role === 'owner' });
   return request.method === 'HEAD' ? new Response(null, { status: response.status, headers: response.headers }) : response;

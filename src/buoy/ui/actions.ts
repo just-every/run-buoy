@@ -1,3 +1,4 @@
+import type { AgentCredential } from './agents';
 import { mutateTeam } from './team-actions';
 import type { TeamPreview } from './team';
 import { accountBody } from './account-form';
@@ -22,7 +23,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -30,6 +31,15 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(path==='/app/audit') {
+    if(action==='agent-issue') {
+      const scopes=[['scopeList','renewals.list'],['scopePlaybook','playbook.prepare'],['scopeRenewal','renewal.prepare']].filter(([name])=>fields[name]==='on').map(([,value])=>value);
+      const dataClasses=[['classAccount','account'],['classBilling','billing'],['classSupport','support'],['classSentiment','sentiment']].filter(([name])=>fields[name]==='on').map(([,value])=>value);
+      return {agentCredential:await send<AgentCredential>('/api/buoy/agent-tokens',{label:fields.label,scopes,dataClasses,expiresDays:Number(fields.expiresDays),requestsPerMinute:Number(fields.requestsPerMinute),budgetMinor:Number(fields.budgetMinor)})};
+    }
+    if(action==='agent-switch'){await send('/api/buoy/agents/settings',{disabled:fields.disabled==='on'},'PUT');return {redirect:path,message:'Agent switch saved.',saved:action};}
+    if(action==='agent-revoke'){await send(`/api/buoy/agent-tokens/${encodeURIComponent(fields.id)}`,{},'DELETE');return {redirect:path,message:'Agent credential revoked.'};}
+  }
   if(path==='/app/outcomes'&&action==='outcome-start'){
     await send('/api/buoy/outcomes',{name:fields.name,segmentId:fields.segmentId,kind:fields.kind,windowDays:Number(fields.windowDays),taskIds:fields.taskIds.split(',').map(s=>s.trim()).filter(Boolean),operationKey:fields.operationKey});
     return {redirect:path,message:'Outcome tracking started.',saved:'outcome-start-form'};

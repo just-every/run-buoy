@@ -54,6 +54,8 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok((await json(await call('/state'))).tasks[0].completedAt)
   })
   await t.test('agents prepare decisions, cannot approve; revoked tokens stop',async()=>{
+   await json(await call('/agents'))
+   await json(await call('/agents/settings','PUT',{disabled:false}))
    token=await json(await call('/agent-tokens','POST',{label:'Renewal assistant'}),201)
    const prepared=await json(await call('/commands','POST',{command:'renewal.prepare',input:{accountId:'harbour',payload:{outcome:'renewed',reason:'Customer accepted renewal',evidence:'Signed renewal order R-17'}}},{token:token.token}),201)
    assert.equal((await call(`/proposals/${prepared.id}/approve`,'POST',{}, {token:token.token})).status,403)
@@ -174,7 +176,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.equal(after.revision,before.revision,'no term changed');assert.ok(!(await json(await call('/state'))).proposals.some(p=>p.payload.reason==='Offer 20% off to close'))
    assert.equal((await call('/audit','GET',undefined,{cookie:member})).status,403)
    const recorded=(await json(await call('/audit'))).entries.filter(e=>e.actor===`agent:${agent.id}`&&e.action==='agent.refused')
-   assert.equal((await json(await call('/audit?actor='+agent.id+'&action=agent.requested'))).entries.length,2,'AUDIT-001 commands attempts are distinct from their refusal outcomes');
+   assert.equal((await json(await call('/audit?actor='+agent.id+'&action=agent.requested'))).entries.length,3,'GOVERN-001 AUDIT-001 every authenticated request, including another route, records its attempt separately from refusal');
    assert.deepEqual(recorded.map(e=>e.action),['agent.refused','agent.refused','agent.refused']);for(const e of recorded)assert.equal(e.actor,`agent:${agent.id}`,'AUDIT-001 retains the agent id without its display name')
    for(const [,,subject,reason] of attempts){const entry=recorded.find(e=>e.subject===subject);assert.ok(entry,`${subject} is recorded`);assert.match(entry.detail,reason);assert.ok(Date.parse(entry.occurredAt))}
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
