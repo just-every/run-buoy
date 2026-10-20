@@ -63,7 +63,7 @@ try{
  assert.equal((await read()).summary.metrics.current.eventCount,expected.eventCount+2,'ADOPT-001 includes exact UTC start, excludes next UTC midnight')
  assert.equal((await read('&personId='+people[0].id)).people[0].metrics.firstValue.meanSeconds,3600)
  await api('/adoption/seats','PUT',{accountId:accounts[0].id,seats:20,reference:'Customer-approved license schedule',observedAt:'2026-10-01',staleDays:30})
- const csv=await app.request('/api/buoy/adoption/report.csv?on='+adoptionOn+'&accountId='+accounts[0].id,{cookie:app.cookie});assert.equal(csv.status,200);assert.match(await csv.text(),/Harbour Software/)
+ const csv=await app.request('/api/buoy/adoption/report.csv?on='+adoptionOn+'&accountId='+accounts[0].id,{cookie:app.cookie});assert.equal(csv.status,200);const csvText=await csv.text();assert.match(csvText,/Harbour Software/);const csvMetrics=(await read('&accountId='+accounts[0].id)).summary.metrics;assert.ok(csvText.includes(`"${csvMetrics.weeklyChange}","${csvMetrics.weeklyDrop}"`),'ADOPT-001 CSV preserves the negative numeric trend shown in the report')
  await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'adoption-member@example.test',displayName:'CS colleague',role:'member'}})
  const member=await app.signIn('adoption-member@example.test')
  assert.equal((await app.request('/api/buoy/adoption?on='+adoptionOn,{cookie:member})).status,200)

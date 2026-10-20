@@ -2,7 +2,10 @@ import type { AdoptionReport } from './read'
 import type { AdoptionSubject } from './types'
 
 export function adoptionCsv(report:AdoptionReport){
- const cell=(value:unknown)=>'"'+String(value??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"'
+ const cell=(value:unknown)=>{
+  const raw=String(value??''),safe=typeof value==='number'?raw:raw.replace(/^[=+@\-\t\r]/,"'$&")
+  return '"'+safe.replaceAll('"','""')+'"'
+ }
  const rows:unknown[][]=[['On','Scope','ID','Name','Account IDs','Seats','Period','DAU','WAU','MAU','Events (30d)','Depth','Breadth','Utilization','Definition kind','Definition key','Definition name','Adopting people (30d)','Adoption fraction','Weekly change','Weekly drop','First value people','Mean first value seconds','Seat evidence','Seat history','Coverage','Interpretation']]
  const append=(scope:string,subject:AdoptionSubject)=>{
   for(const period of ['current','previous'] as const){
