@@ -56,6 +56,8 @@ try{
    assert.equal(state.sources.find(s=>s.id===source.id).eventCount,2)
    await product.close();await page.reload({waitUntil:'networkidle'});await openForms(page);await scan(page,`USAGE-001 pending raw identities ${width}`)
    const account=await api('/accounts','POST',{id:'usage-browser-'+width,name:'Northstar Analytics '+width,renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Confirmed license agreement',billing:null,support:null})
+   await page.goto(app.origin+'/app/accounts/'+account.id,{waitUntil:'networkidle'});await scan(page,`USAGE-001 account missing usage ${width}`);
+   if(evidence)await page.screenshot({path:join(evidence,`usage-account-missing-${width}.png`),fullPage:true});
    const customer=await api('/customer-people','POST',{kind:'user',name:'Morgan customer '+width,accountIds:[account.id],source:'Customer product membership directory'})
    await page.reload({waitUntil:'networkidle'})
    const claim=page.locator('#usage-review > li').filter({hasText:'Raw/User '+width}).locator('form')

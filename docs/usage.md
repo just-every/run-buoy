@@ -2,7 +2,7 @@
 
 Buoy receives Segment track, identify and group messages and native events,
 deduplicates them and retains unknown or conflicting claims for administrator review.
-[Customer contacts and users](people.md) have typed fields, formulas, previews,
+[Customer contacts and users](https://github.com/just-every/run-buoy/blob/main/docs/people.md) have typed fields, formulas, previews,
 explanations, history and segment inputs. Create their explicit account memberships
 before reviewing a source identity. Staff sign-ins are separate and never targets.
 

@@ -52,6 +52,6 @@ adds custom objects. Each must carry these types, formulas, preview, explanation
 history and segment-input obligations through its new record kinds before shipping.
 
 Customer contacts and product users use the same field types, formula semantics,
-explanations and change history through [Customer people](people.md). Their typed
+explanations and change history through [Customer people](https://github.com/just-every/run-buoy/blob/main/docs/people.md). Their typed
 segment paths are `people.contact.*` and `people.user.*`; conjunctions for one kind
 must be satisfied by the same related record, including currency and amount.
