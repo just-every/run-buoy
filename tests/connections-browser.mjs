@@ -25,9 +25,10 @@ try{
    await scan(page,`CONNECT-001 usage entry ${width}`)
    if(process.env.BUOY_PROOF_DIR){await mkdir(process.env.BUOY_PROOF_DIR,{recursive:true});await page.screenshot({path:process.env.BUOY_PROOF_DIR+`/usage-${width}-entry.png`,fullPage:true})}
    await page.getByRole('link',{name:'Provider connections',exact:true}).click();await page.waitForLoadState('networkidle')
-   const snap=async label=>{if(process.env.BUOY_PROOF_DIR){await mkdir(process.env.BUOY_PROOF_DIR,{recursive:true});await page.screenshot({path:process.env.BUOY_PROOF_DIR+`/connections-${width}-${label}.png`,fullPage:true,mask:[page.locator('[data-secret]')]})}}
+   const snap=async label=>{if(process.env.BUOY_PROOF_DIR){await mkdir(process.env.BUOY_PROOF_DIR,{recursive:true});await page.screenshot({path:process.env.BUOY_PROOF_DIR+`/connections-${width}-${label}.png`,fullPage:true,mask:[page.locator('[data-secret]:visible')]})}}
    const show=async id=>{const panel=page.locator('#'+id);if(!await panel.evaluate(e=>e.open))await panel.locator('summary').click()}
    await show('connection-add-panel');let form=page.locator('#connection-add')
+   await scan(page,`CONNECT-001 add form ${width}`);await snap('add-form')
    await form.getByLabel('Connection name',{exact:true}).fill('Harbour Stripe sandbox '+width)
    await form.getByLabel('Stripe test key',{exact:true}).fill(live??fixtureKey)
    // Password fields and credential-bearing forms have no local draft storage.
@@ -49,6 +50,7 @@ try{
    assert.ok((await page.locator('#connection-'+connection.id).innerText()).includes('Stripe refused'))
    await scan(page,`CONNECT-001 failed ${width}`);await snap('failed')
    await show('connection-key-panel-'+connection.id);form=page.locator('#connection-key-'+connection.id)
+   await scan(page,`CONNECT-001 reconnect form ${width}`);await snap('reconnect-form')
    await form.getByLabel('Stripe test key',{exact:true}).fill(live??fixtureKey)
    await submit(page,form.getByRole('button',{name:'Reconnect '+connection.name,exact:true}));fail=false
    const previous=(await read()).connections.find(c=>c.id===connection.id).cursor
