@@ -61,6 +61,11 @@ try{
    await page.getByRole('button',{name:'Read adoption report',exact:true}).focus();await focused(page,page.getByRole('button',{name:'Read adoption report',exact:true}),`ADOPT-001 keyboard report filter ${width}`);await page.keyboard.press('Enter');await page.waitForLoadState('networkidle')
    await page.setViewportSize({width:320,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'ADOPT-001 reflows to 320')
    await page.setViewportSize({width,height:1000})
+   const invalid=await page.goto(app.origin+'/app/adoption?on=2026-02-30',{waitUntil:'networkidle'});assert.equal(invalid.status(),400)
+   assert.equal(await page.getByRole('heading',{name:'Adoption report unavailable',exact:true}).count(),1)
+   await scan(page,`ADOPT-001 invalid report recovery ${width}`)
+   if(evidence)await page.screenshot({path:join(evidence,`adoption-invalid-report-${width}.png`)})
+   await page.getByRole('link',{name:'Clear report filters',exact:true}).click();assert.equal(await page.locator('#adoption-summary').count(),1)
    await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});await scan(page,`ADOPT-001 usage entry link ${width}`)
    if(evidence){await page.locator('#work > section').first().screenshot({path:join(evidence,`adoption-usage-link-${width}.png`)})}
   }finally{await context.close()}
