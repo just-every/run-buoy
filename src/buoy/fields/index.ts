@@ -5,7 +5,7 @@ export const FIELD_SNAPSHOT=`SELECT json_object(
  'accounts',json((SELECT json_group_array(json_object('id',a.id,'name',json_extract(a.document,'$.name'),'revision',a.revision,'document',a.document,'manual',json(COALESCE(v.document,'{}')),'previous',json(COALESCE(r.document,'{}')))) FROM buoy_accounts a LEFT JOIN buoy_field_values v ON v.account_id=a.id LEFT JOIN buoy_field_results r ON r.account_id=a.id ORDER BY a.id))
  ) AS snapshot`
 export async function image(db:D1Database){const row=await db.prepare(FIELD_SNAPSHOT).first<{snapshot:string}>();insist(row,'Custom fields unavailable.',503);return {raw:row.snapshot,value:JSON.parse(row.snapshot) as Image}}
-export function changes(db:D1Database,actor:Actor,data:Image,source:string){
+export function changes(db:D1Database,actor:Actor,data:Image,source:string,sourceAccountId:string|null=null){
  const results=evaluate(data),stamp=now(),history:Record<string,unknown>[]=[],rows:Record<string,unknown>[]=[]
  for(const result of results){
   const before=data.accounts.find(a=>a.id===result.id)!.previous
@@ -20,7 +20,7 @@ export function changes(db:D1Database,actor:Actor,data:Image,source:string){
  // Set-based writes keep a portfolio rollup within D1's query budget even when
  // all 500 current accounts change. The snapshot fence still covers every input.
  return [
-  stmt(db,"INSERT INTO buoy_field_history(id,account_id,field_key,old_value,new_value,actor,source,recorded_at) SELECT json_extract(value,'$.id'),json_extract(value,'$.accountId'),json_extract(value,'$.key'),json_extract(value,'$.oldValue'),json_extract(value,'$.newValue'),?,?,? FROM json_each(?)",`${actor.kind}:${actor.id}`,source,stamp,JSON.stringify(history)),
+  stmt(db,"INSERT INTO buoy_field_history(id,account_id,field_key,old_value,new_value,actor,source,recorded_at,source_account_id) SELECT json_extract(value,'$.id'),json_extract(value,'$.accountId'),json_extract(value,'$.key'),json_extract(value,'$.oldValue'),json_extract(value,'$.newValue'),?,?,?,? FROM json_each(?)",`${actor.kind}:${actor.id}`,source,stamp,sourceAccountId,JSON.stringify(history)),
   stmt(db,"INSERT INTO buoy_field_results(account_id,document) SELECT json_extract(value,'$.accountId'),json_extract(value,'$.document') FROM json_each(?) WHERE true ON CONFLICT(account_id) DO UPDATE SET document=excluded.document",documents),
   stmt(db,"UPDATE buoy_accounts SET revision=(SELECT json_extract(value,'$.revision') FROM json_each(?) WHERE json_extract(value,'$.accountId')=buoy_accounts.id) WHERE id IN (SELECT json_extract(value,'$.accountId') FROM json_each(?))",documents,documents),
   stmt(db,"INSERT OR IGNORE INTO buoy_audit_subjects(account_id,subject) SELECT json_extract(value,'$.accountId'),lower(hex(randomblob(16))) FROM json_each(?)",documents),
@@ -63,7 +63,7 @@ export async function saveValues(db:D1Database,actor:Actor,accountId:string,inpu
  const raw=object(input.values),values:Record<string,unknown>={},source=text(input.source,'Field source reference',1000)
  for(const [key,value] of Object.entries(raw)){const d=data.value.definitions.find(x=>x.key===key);insist(d,'Unknown custom field.');values[key]=fieldValue(d,value)}
  const next={...data.value,accounts:data.value.accounts.map(a=>a.id===accountId?{...a,manual:values}:a)}
- await write(db,actor,data.raw,[stmt(db,'INSERT INTO buoy_field_values(account_id,document) VALUES(?,?) ON CONFLICT(account_id) DO UPDATE SET document=excluded.document',accountId,JSON.stringify(values)),...changes(db,actor,next,source)])
+ await write(db,actor,data.raw,[stmt(db,'INSERT INTO buoy_field_values(account_id,document) VALUES(?,?) ON CONFLICT(account_id) DO UPDATE SET document=excluded.document',accountId,JSON.stringify(values)),...changes(db,actor,next,source,accountId)])
  return {accountId}
 }
 /** Standard source refreshes preserve their own transaction and append dependent

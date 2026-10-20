@@ -92,6 +92,9 @@ export async function fieldJourney({call,json,request,cookie,member,account,sign
  assert.equal((await call('/fields/preview','POST',{key:'admin_preview',label:'Admin calculation',type:'formula',formula:'noticeDays + 1'},{cookie:admin})).status,200)
  assert.equal((await request('/app/fields',{cookie})).status,200)
  assert.equal((await call('/fields/preview','POST',formula,{cookie:member})).status,403)
+ await define({key:'portfolio_seat_count',label:'Portfolio accounts with seats',type:'formula',formula:'count(custom.seats_used)'})
+ const confidential={...values(0)};delete confidential.seats_used
+ await save('field-0',confidential,'Field customer 0 private license reference')
  await json(await call('/accounts/field-0','DELETE',{confirmation:'Field customer 0'}))
- state=await read();assert.ok(!state.accounts.some(a=>a.id==='field-0'));assert.ok(!state.history.some(h=>h.accountId==='field-0'))
+ state=await read();assert.ok(!state.accounts.some(a=>a.id==='field-0'));assert.ok(!state.history.some(h=>h.accountId==='field-0'));assert.equal(JSON.stringify(state).includes('Field customer 0 private license reference'),false,'ACCOUNT-004 ERASE-001 portfolio history retains no erased source details')
 }

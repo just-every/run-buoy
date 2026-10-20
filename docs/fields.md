@@ -38,7 +38,8 @@ and source. Changes recalculate dependent values, including portfolio rollups,
 and advance affected account revisions so earlier approvals become stale. Native
 source refreshes recalculate before their successful response. Definitions,
 values and history travel in installation archives. Account erasure removes its
-values and history. Calculated results are regenerated from remaining accounts.
+values and history, and redacts its source references in other accounts’ calculation
+history. Calculated results are regenerated from remaining accounts.
 
 Segments accept `custom.<key>` as typed inputs, including fractional numeric
 comparisons. Booleans use 1/0; multi-selects compare their JSON array text. A
