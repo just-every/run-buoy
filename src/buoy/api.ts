@@ -10,13 +10,16 @@ import { prepare, approve, completeTask } from './work'
 import { recordSentiment, healthOn, today } from './sentiment'
 import { setStaleness, setTaskTiming } from './settings'
 import { assignAccount, setManager, setAway, tasksOn } from './tasks'
-import { auditRecord, auditIfChanged } from './audit-records'
-import { audit, refuse } from './audit'
+import { auditIfChanged } from './audit-records'
+import { audit } from './audit'
 import { teamState, saveTeamSettings, previewAssignment, applyAssignment } from './team'
 import { inbox, setPreferences, markRead, mention } from './notify'
 import { flushNotifications } from './notify-mail'
 import { reconcile, segmentState, setTiers, saveSegment, setClassification, segmentReport, reportCsv } from './segments'
 import * as imports from './imports/index'
+import { COMMANDS, requireCommand, projectAccounts, type AgentCommand } from './agent-policy/policy'
+import { beginRequest, checkRequest, finishRequest, refuseRequest } from './agent-policy/requests'
+import { agentState, setAgentSettings } from './agent-policy/owner'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
 buoyApi.use('/api/buoy/*', async (c, next) => {
@@ -25,10 +28,20 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  c.header('referrer-policy', 'no-referrer')
  const actor = await actorFor(c.req.raw, c.env)
  c.set('actor', actor)
- // AUDIT-001: record receipt before dispatch, including reads and invalid bodies.
- // This is an attempt, never a claim that the command completed. Preparations
- // record their actual effect atomically in core.commit. No body or credential is retained.
- if (actor.kind === 'agent') await auditRecord(c.env.DB, actor, 'agent.requested', `agent:${actor.id}`, `${['GET','POST'].includes(c.req.method) ? c.req.method : 'Other method'} commands request received; outcome not recorded.`).run()
+ // An authenticated agent always consumes one atomic minute reservation and
+ // leaves an attempt and an outcome, including malformed or forbidden requests.
+ if (actor.kind === 'agent') {
+  const reservation = await beginRequest(c.env.DB, actor, c.req.raw)
+  let status = 500
+  try {
+   if (reservation.requests > actor.agentPolicy!.requestsPerMinute) c.header('Retry-After', String(reservation.retryAfter))
+   await checkRequest(c.env.DB, actor, reservation, c.req.raw)
+   await next()
+   status = c.res.status
+  } catch (error) { status = error instanceof Problem ? error.status : 500; throw error }
+  finally { await finishRequest(c.env.DB, actor, status) }
+  return
+ }
  await reconcile(c.env.DB, actor)
  await observeOutcomes(c.env.DB,actor)
  await next()
@@ -87,6 +100,8 @@ buoyApi.delete('/api/buoy/accounts/:id', async c => {
 buoyApi.get('/api/buoy/imports', async c => {requirePerson(c.get('actor'), true); return c.json(await imports.history(c.env.DB, c.get('actor')))})
 buoyApi.get('/api/buoy/imports/:id', async c => {requirePerson(c.get('actor'), true); return c.json(await imports.job(c.env.DB, c.get('actor'), c.req.param('id')))})
 buoyApi.post('/api/buoy/imports/:id/undo', async c => {requirePerson(c.get('actor'), true); await jsonBody(c.req.raw); return c.json(await imports.undo(c.env.DB, c.get('actor'), c.req.param('id')))})
+buoyApi.get('/api/buoy/agents', async c => c.json(await agentState(c.env.DB, c.get('actor'))))
+buoyApi.put('/api/buoy/agents/settings', async c => c.json(await setAgentSettings(c.env.DB, c.get('actor'), await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/agent-tokens', async c => c.json(await mintAgent(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.delete('/api/buoy/agent-tokens/:id', async c => {
  const actor = c.get('actor'); requirePerson(actor, true)
@@ -95,18 +110,25 @@ buoyApi.delete('/api/buoy/agent-tokens/:id', async c => {
   auditIfChanged(c.env.DB, actor, 'agent.credential-revoked', `agent:${c.req.param('id')}`)])
  return c.json({status: 'revoked'})
 })
-buoyApi.get('/api/buoy/commands', c => c.json({commands: ['renewals.list','playbook.prepare','renewal.prepare'], approval: 'An active owner or admin reviews and approves in the app.'}))
+buoyApi.get('/api/buoy/commands', c => c.json({commands: c.get('actor').agentPolicy?.scopes ?? COMMANDS, approval: 'An active owner or admin reviews and approves in the app.'}))
 // BOUNDARY-004: a preparation carries only these fields; anything else (a price,
 // discount, credit or term change) is refused and, for an agent, recorded.
 const PREPARATION: Record<string, string[]> = {'playbook.prepare': ['title', 'dueDate'], 'renewal.prepare': ['outcome', 'reason', 'evidence']}
 buoyApi.post('/api/buoy/commands', async c => {
  const body = await jsonBody(c.req.raw), actor = c.get('actor'), db = c.env.DB
- if (body.command === 'renewals.list') return c.json({accounts: (await state(db, actor)).accounts})
+ if (actor.kind === 'agent' && COMMANDS.includes(body.command as AgentCommand)) {
+  actor.agentRequest!.command = body.command as AgentCommand
+  requireCommand(actor.agentPolicy!, body.command as AgentCommand)
+ }
+ if (body.command === 'renewals.list') {
+  const accounts = (await state(db, actor)).accounts
+  return c.json({accounts: actor.agentPolicy ? projectAccounts(accounts, actor.agentPolicy) : accounts})
+ }
  const fields = Object.hasOwn(PREPARATION, String(body.command)) ? PREPARATION[String(body.command)] : undefined
- if (!fields) return refuse(db, actor, `command ${String(body.command)}`, 'Unknown command. Agents can prepare; people approve.', 400)
+ if (!fields) return refuseRequest(db, actor, `command ${String(body.command)}`, 'Unknown command. Agents can prepare; people approve.', 400)
  const input = object(body.input), payload = object(input.payload)
  const extra = [...Object.keys(input).filter(key => key !== 'accountId' && key !== 'payload'), ...Object.keys(payload).filter(key => !fields.includes(key))]
- if (extra.length) return refuse(db, actor, `account ${String(input.accountId)}`, `Agents cannot set ${extra.join(', ')}. A preparation carries only ${fields.join(', ')}; prices, discounts and other commercial terms change only by a person in the billing system.`)
+ if (extra.length) return refuseRequest(db, actor, `account ${String(input.accountId)}`, `Agents cannot set ${extra.join(', ')}. A preparation carries only ${fields.join(', ')}; prices, discounts and other commercial terms change only by a person in the billing system.`)
  return c.json(await prepare(db, actor, {...input, kind: body.command === 'playbook.prepare' ? 'playbook' : 'renewal'}), 201)
 })
 buoyApi.get('/api/buoy/audit', async c => c.json(await audit(c.env.DB, c.get('actor'), new URL(c.req.url).searchParams)))
