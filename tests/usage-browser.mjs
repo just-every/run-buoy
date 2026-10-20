@@ -66,18 +66,18 @@ try{
    await submit(page,claim.getByRole('button',{name:'Preview exact mapping',exact:true}))
    assert.equal((await call()).mappings.filter(m=>m.sourceId===source.id).length,0)
    await scan(page,`USAGE-001 exact mapping preview ${width}`)
-   if(evidence)await page.screenshot({path:join(evidence,`usage-preview-${width}.png`),fullPage:true})
+   if(evidence){await page.screenshot({path:join(evidence,`usage-preview-${width}.png`),fullPage:true});await page.locator('#usage-mapping-preview').screenshot({path:join(evidence,`usage-preview-panel-${width}.png`)})}
    await submit(page,page.locator('#usage-map-approve').getByRole('button',{name:'Approve exact mapping',exact:true}))
    assert.equal((await call()).attribution.find(a=>a.personId===customer.id).eventCount,1)
    assert.match(await page.locator('#usage-attribution').innerText(),/Morgan customer/)
    await sdk.track({messageId:'later-'+width,event:'Dashboard viewed',userId:' Raw/User '+width+' ',groupId:' Raw/Group '+width+' '})
    assert.equal((await call()).attribution.find(a=>a.personId===customer.id).eventCount,2)
    await page.reload({waitUntil:'networkidle'});await openForms(page);await scan(page,`USAGE-001 approved attribution ${width}`)
-   if(evidence)await page.screenshot({path:join(evidence,`usage-attributed-${width}.png`),fullPage:true})
+   if(evidence){await page.screenshot({path:join(evidence,`usage-attributed-${width}.png`),fullPage:true});await page.locator('#usage-attribution').screenshot({path:join(evidence,`usage-attributed-panel-${width}.png`)})}
    await page.goto(app.origin+'/app/accounts/'+account.id,{waitUntil:'networkidle'})
    assert.match(await page.locator('#work').innerText(),/2 observations/)
    await scan(page,`USAGE-001 account usage evidence ${width}`)
-   if(evidence)await page.screenshot({path:join(evidence,`usage-account-${width}.png`),fullPage:true})
+   if(evidence){await page.screenshot({path:join(evidence,`usage-account-${width}.png`),fullPage:true});await page.getByRole('heading',{name:'Product usage evidence',exact:true}).locator('..').screenshot({path:join(evidence,`usage-account-panel-${width}.png`)})}
    await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});await openForms(page)
    form=page.locator('#usage-source-'+source.id);await form.getByLabel('Stale after (UTC days)',{exact:true}).fill('7')
    await submit(page,form.getByRole('button',{name:'Save source',exact:true}));assert.equal((await call()).sources.find(s=>s.id===source.id).staleDays,7)

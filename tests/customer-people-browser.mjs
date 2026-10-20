@@ -29,7 +29,7 @@ try{
    const page=await context.newPage()
    const show=async id=>{const panel=page.locator('#'+id);if(!await panel.evaluate(element=>element.open))await panel.locator('summary').click()}
    const save=async(form,label)=>{await submit(page,form.getByRole('button',{name:label,exact:true}));assert.equal(await page.locator('[role=alert]').count(),0,await page.locator('#work').innerText())}
-   const proof=async label=>{await scan(page,`${label} ${width}`);await page.screenshot({path:join(evidence,`${label.toLowerCase().replaceAll(/[^a-z0-9]+/g,'-')}-${width}.png`),fullPage:true})}
+   const proof=async label=>{await scan(page,`${label} ${width}`);const stem=label.toLowerCase().replaceAll(/[^a-z0-9]+/g,'-');await page.screenshot({path:join(evidence,`${stem}-${width}.png`),fullPage:true});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:join(evidence,`${stem}-viewport-${width}.png`)});const record=page.locator('#customer-record');if(await record.count())await record.screenshot({path:join(evidence,`${stem}-record-${width}.png`)})}
    await page.goto(app.origin+'/app/customer-people',{waitUntil:'networkidle'})
    const createField=async(key,label,type,options='',formula='')=>{
     await show('create-customer-field');const form=page.locator('#customer-field-definition')
