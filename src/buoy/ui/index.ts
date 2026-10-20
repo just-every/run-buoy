@@ -75,7 +75,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   const open = url.searchParams.has('open') ? (url.searchParams.get('open') === 'none' ? null : url.searchParams.get('open')) : undefined;
   const today = new Date().toISOString().slice(0, 10);
   let title = 'Renewals', body: string, head: string | undefined, style: string | undefined;
-  if(path==='/app/adoption'){title='Product adoption';body=adoptionPage(await apiCall<AdoptionReport>(api,request,'/api/buoy/adoption?'+url.searchParams.toString()),state,fields);
+  if(path==='/app/adoption'){title='Product adoption';const query=new URLSearchParams([...url.searchParams].filter(([key])=>['on','accountId','personId','segmentId'].includes(key)));body=adoptionPage(await apiCall<AdoptionReport>(api,request,'/api/buoy/adoption?'+query.toString()),state,fields);
   } else if(path==='/app/connections'){title='Connections';body=connectionsPage(await apiCall<ConnectionsPage>(api,request,'/api/buoy/connections'));
   } else if(path==='/app/customer-people'){title='Customer contacts and users';body=customerPeoplePage(await apiCall<CustomerPeoplePage>(api,request,'/api/buoy/customer-people'),state,fields,customerFieldPreview,url.searchParams.get('person')??fields?.personId);
   } else if(path==='/app/usage'){title='Usage intake';const data=await apiCall<UsagePage>(api,request,'/api/buoy/usage');const people=await apiCall<CustomerPeoplePage>(api,request,'/api/buoy/customer-people');body=usagePage({...data,customerPeople:people.records},state,fields,usageCredential,usageMappingPreview);

@@ -34,6 +34,20 @@ try{
  const group={sourceId:source.id,userId:null,groupId:'group-0',accountId:accounts[0].id,personId:null}
  const preview=await api('/usage/mappings/preview','POST',group);await api('/usage/mappings','POST',{...group,fingerprint:preview.fingerprint})
  assert.equal((await read()).summary.metrics.current.mau,expected.mau);assert.equal((await read()).summary.metrics.current.eventCount,expected.eventCount)
+ // A second reviewed source for the same customer adds an event, never an extra active person.
+ const second=await api('/usage/sources','POST',{name:'Product backend',kind:'native',reference:'Backend telemetry',staleDays:30})
+ const credential=await api('/usage/sources/'+second.id+'/credentials','POST',{label:'Backend',scope:['event']})
+ const mapping={sourceId:second.id,userId:'backend-customer',groupId:'backend-account',accountId:accounts[0].id,personId:people[0].id}
+ const secondReview=await api('/usage/mappings/preview','POST',mapping);await api('/usage/mappings','POST',{...mapping,fingerprint:secondReview.fingerprint})
+ const extra={type:'event',messageId:'cross-source',userId:'backend-customer',groupId:'backend-account',event:'Report generated',timestamp:shift(0)}
+ const intake=body=>app.dispatch(new Request(app.origin+'/api/buoy/usage/intake/'+second.id,{method:'POST',headers:{authorization:'Bearer '+credential.secret,'content-type':'application/json'},body:JSON.stringify(body)}))
+ assert.equal((await intake(extra)).status,202)
+ assert.equal((await read()).summary.metrics.current.mau,expected.mau)
+ assert.equal((await read()).summary.metrics.current.eventCount,expected.eventCount+1)
+ const atStart={...extra,messageId:'start-boundary',timestamp:shift(-29,0)},atEnd={...extra,messageId:'end-boundary',timestamp:shift(1,0)}
+ assert.equal((await intake({batch:[atStart,atEnd]})).status,202)
+ assert.equal((await read()).summary.metrics.current.eventCount,expected.eventCount+2,'ADOPT-001 includes exact UTC start, excludes next UTC midnight')
+ assert.equal((await read('&personId='+people[0].id)).people[0].metrics.firstValue.meanSeconds,3600)
  await api('/adoption/seats','PUT',{accountId:accounts[0].id,seats:20})
  const csv=await app.request('/api/buoy/adoption/report.csv?on='+adoptionOn+'&accountId='+accounts[0].id,{cookie:app.cookie});assert.equal(csv.status,200);assert.match(await csv.text(),/Harbour Software/)
  await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'adoption-member@example.test',displayName:'CS colleague',role:'member'}})
