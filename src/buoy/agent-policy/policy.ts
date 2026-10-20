@@ -1,7 +1,7 @@
 import { insist } from '../core'
 export const COMMANDS = ['renewals.list', 'playbook.prepare', 'renewal.prepare'] as const
 export const DATA_CLASSES = ['account', 'billing', 'support', 'sentiment'] as const
-export const COST_LABEL = 'No paid or external action'
+export const COST_LABEL = 'No metered agent charge; internal notification mail may use your provider. Provider fees are outside this budget.'
 export type AgentCommand = typeof COMMANDS[number]
 export type DataClass = typeof DATA_CLASSES[number]
 export interface AgentPolicy {scopes: AgentCommand[]; dataClasses: DataClass[]; requestsPerMinute: number; budgetMinor: number}

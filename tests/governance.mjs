@@ -66,6 +66,12 @@ try {
  for(const [path,method,body]of [['/agents','GET'],['/agents/settings','PUT',{disabled:true}],['/agent-tokens','POST',{label:'Denied'}]])assert.equal((await owner(path,method,body,{cookie:member})).status,403,'GOVERN-001 policy administration is owner-only')
  assert.equal((await app.request('/api/buoy/agents')).status,401)
  assert.equal((await owner('/agents/settings','PUT',{disabled:true},{headers:{origin:'https://other.invalid'}})).status,403)
+ // Base requires a fresh app-local owner proof before granting a second owner.
+ await json(await app.request('/auth/step-up',{method:'POST',cookie:app.cookie,body:{action:'owner:transfer'}}),202)
+ const proof=app.mails.findLast(mail=>mail.to.includes('owner@example.test'))
+ const proofUrl=new URL(proof.html.match(/href="([^"]*\/auth\/confirm\?token=[^"]+)"/)[1].replaceAll('&amp;','&'))
+ assert.equal((await app.request(proofUrl.pathname+proofUrl.search,{cookie:app.cookie})).status,200)
+ assert.equal((await app.request('/auth/confirm',{method:'POST',cookie:app.cookie,body:{token:proofUrl.searchParams.get('token')}})).status,303)
  // A second real owner changes the issuing owner's status; reactivation cannot revive old grants.
  await json(await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'second-owner@example.test',displayName:'Second owner',role:'owner'}}),202)
  const second=await app.signIn('second-owner@example.test'), ownerId=stateBefore.operator.id
