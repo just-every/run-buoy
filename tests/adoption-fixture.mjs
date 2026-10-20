@@ -7,7 +7,7 @@ export async function adoptionFixture(app,{count=30,users=10,days=90}={}){
  const api=async(path,method='GET',body,cookie=app.cookie)=>{const r=await app.request('/api/buoy'+path,{cookie,method,body});assert.ok(r.ok,await r.clone().text());return r.json()}
  const source=await api('/usage/sources','POST',{name:'Customer product telemetry',kind:'native',reference:'Reviewed production workspace export',staleDays:30})
  const issued=await api('/usage/sources/'+source.id+'/credentials','POST',{label:'Product server',scope:['track','identify','group','event']})
- const sdk=new BuoyUsage({origin:app.origin,sourceId:source.id,credential:issued.secret,fetch:app.dispatch})
+ const sdk=new BuoyUsage({origin:app.origin,sourceId:source.id,credential:issued.secret,fetch:(url,init)=>app.dispatch(new Request(url,init))})
  const accounts=[],people=[],events=[]
  const names=['Harbour Software','Cedar Logistics','Coastline Analytics','Juniper Health','Northstar Labs','Brightwater Group','Summit Design','Riverbank Systems','Golden Gate Studio','Maple Services']
  for(let a=0;a<count;a++){
