@@ -58,7 +58,7 @@ try{
    await submit(page,form.getByRole('button',{name:'Save event set',exact:true}));assert.equal(await page.locator('[role=alert]').count(),0)
    await page.goto(app.origin+'/app/adoption?on='+adoptionOn,{waitUntil:'networkidle'});await openForms(page)
    if(evidence)await page.locator('#adoption-define').screenshot({path:join(evidence,`adoption-configuration-${width}.png`)})
-   await page.getByRole('button',{name:'Read adoption report',exact:true}).focus();await focused(page,page.getByRole('button',{name:'Read adoption report',exact:true}),`ADOPT-001 keyboard report filter ${width}`);await page.keyboard.press('Enter');await page.waitForLoadState('networkidle')
+   await page.getByRole('button',{name:'Read adoption report',exact:true}).focus();await focused(page,page.getByRole('button',{name:'Read adoption report',exact:true}),`ADOPT-001 keyboard report filter ${width}`);await submit(page,page.getByRole('button',{name:'Read adoption report',exact:true}))
    await page.setViewportSize({width:320,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'ADOPT-001 reflows to 320')
    await page.setViewportSize({width,height:1000})
    await show('adoption-seat-settings');form=page.locator('#adoption-seats')
