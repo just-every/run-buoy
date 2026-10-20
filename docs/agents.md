@@ -4,21 +4,21 @@ Give an assistant a credential to list renewals and prepare proposals. People ap
 
 ## Create a credential
 
-Credential management uses the installation’s HTTP API. There is no credential-management form in the account screen. As a signed-in owner, send a JSON request to `POST /api/buoy/agent-tokens`:
+The owner opens **Audit → Issue an agent credential** to choose commands, data classes, expiry, rate and budget. The same owner-only door is `POST /api/buoy/agent-tokens`:
 
 ```json
-{"label":"Renewal assistant"}
+{"label":"Renewal reader","scopes":["renewals.list"],"dataClasses":["account"],"expiresDays":7,"requestsPerMinute":60,"budgetMinor":0}
 ```
 
 Person requests use a current native session cookie. Writes also need an `Origin` header matching the installation origin and `Content-Type: application/json`.
 
-Save the returned `id`, `token` and `expiresAt` privately. Buoy stores only the token hash; the token expires after seven days and stops working if the issuing owner loses authority. Credentials are excluded from backups. Give the token only to the assistant that needs the scope.
+Save the returned `id`, `token` and `expiresAt` privately. Buoy stores only the token hash; expiry is the issue instant plus 1–365 whole 24-hour days (7 by default), and the grant stops working if the issuing owner loses authority. Omitting the new policy fields retains all three current commands, all four data classes, a 60-request minute cap and a USD0 budget. Empty or unknown command/data-class lists are refused. Credentials are excluded from backups. Give the token only to the assistant that needs the scope.
 
 ## Use the command endpoint
 
 Send agent requests to the installed app’s origin, with `Authorization: Bearer <credential>`. Send JSON with `Content-Type: application/json`. Never put a credential in a URL or a log.
 
-`GET /api/buoy/commands` lists the supported commands. Send the following bodies with `POST /api/buoy/commands`.
+`GET /api/buoy/commands` lists only the grant’s commands. The available names are `renewals.list`, `playbook.prepare` and `renewal.prepare`. Data classes are `account`, `billing`, `support` and `sentiment`. Send the following bodies with `POST /api/buoy/commands`.
 
 ### List renewal accounts
 
@@ -26,7 +26,7 @@ Send agent requests to the installed app’s origin, with `Authorization: Bearer
 {"command":"renewals.list"}
 ```
 
-The response contains the installation’s accounts, including dates, current health, evidence and revisions, ordered by renewal date. This credential can read the team’s account evidence; scope access accordingly.
+With all four classes, the response retains the full existing account representation, ordered by renewal date. A partial grant returns account ID/revision plus only the selected class fields; derived health, reasons, segments and outlook are omitted so excluded sources cannot leak. Preparation requires all four classes because the reviewed snapshot contains them. This is a data-class grant over the current team portfolio, not a new record-scope role.
 
 ### Prepare a playbook
 
@@ -78,3 +78,15 @@ Every refused agent request (another route, an unknown command or an extra prepa
 The owner sends `DELETE /api/buoy/agent-tokens/:id` with a native person session and the matching Origin header. Use the credential ID saved when it was created. Revocation ends its access immediately; obtain a new credential deliberately when needed.
 
 See the repository’s [command reference](https://github.com/just-every/run-buoy/blob/main/COMMANDS.md) for the person-only API operations and approval rules.
+
+## Rate limits, ledger and pause
+
+Every authenticated request consumes one atomic reservation in its UTC epoch minute, including malformed or forbidden requests. The owner chooses 1–10,000 requests per minute (60 by default); excess requests return 429 and `Retry-After` seconds to the next minute. Requests do not carry over.
+
+The Audit screen shows current grants and the latest 100 durable attempt/outcome/refusal entries. The ledger stores enum commands, token IDs, time, result and actual metered USD cost, without a credential or request payload. The existing audit retains its subject/reason semantics. `GET /api/buoy/agents` returns the same owner-only policy and ledger.
+
+**Pause all agents** stops every current token before dispatch and is rechecked atomically before a preparation can commit. Resume keeps the original scopes and expiry; it revives neither a revoked token nor an old issuing-owner version. The API is `PUT /api/buoy/agents/settings` with `{"disabled":true}` or `{"disabled":false}`. Only a current owner session and exact Origin can manage these settings.
+
+## Metered USD budget
+
+No metered agent charge; internal notification mail may use your provider. Today's three local commands record USD0 in metered agent operations, including with a zero budget. Automatic NOTIFY-001/PLAY-002 internal team notices retain the owner's provider and preferences; provider fees are not measured or included in this budget. This budget does not authorize a customer send, model call or field/commercial change. Every future paid, send or update scope inherits GOVERN-001 reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before shipping (EMAIL-001/002/003, JOURNEY-001 and AI-001/002/003).

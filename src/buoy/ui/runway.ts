@@ -114,6 +114,16 @@ function header(axis: Axis, sheet: Sheet, count: number): string {
   return `<div class="rw-head"><div class="rw-cols"><span>Account (${count})</span><span>Invoice</span><span>Health</span></div><div class="rw-scale"><div class="rw-axis"><p class="rw-today ${today}"><strong>Today</strong> ${day(axis.today)}</p>${months.join('')}${weeks.join('')}</div></div></div>`;
 }
 
+/** The visual runway's data in reading order, including projected changes. */
+function textTable(accounts: Account[]): string {
+  const rows = accounts.map(account => {
+    const changes = turns(account).map(turn => `<li><time datetime="${escape(turn.at)}">${date(turn.at)}</time>: ${escape([...turn.reasons, `health would read ${healthLabel(turn.status)} until newer evidence is recorded`].join('; '))}</li>`).join('');
+    const sources = account.health.evidence.map(item => `${item.kind}: ${item.missing ? 'missing' : item.stale ? 'stale' : 'current'}`).join('; ');
+    return `<tr><th scope="row">${escape(account.name)}</th><td>${account.billing ? money(account.billing.totalMinor, account.billing.currency) : 'No invoice'}</td><td>${healthLabel(account.health.status)}. ${escape(account.health.reasons.join('; '))}</td><td><time datetime="${escape(account.renewalDate)}">${date(account.renewalDate)}</time></td><td><time datetime="${escape(account.noticeDate)}">${date(account.noticeDate)}</time> (${account.noticeDays} days)</td><td>${escape(sources)}${changes ? `<ul>${changes}</ul>` : '; no projected health changes before renewal'}</td></tr>`;
+  }).join('');
+  return `<div class="sr-only"><table><caption>Renewal runway data</caption><thead><tr>${['Account', 'Invoice', 'Health and reasons', 'Renewal date', 'Notice date', 'Evidence and projected changes'].map(label => `<th scope="col">${label}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
 export interface RunwayView { html: string; css: string }
 /** `open` names the one account expanded in place; by default the first at risk. */
 export function runway(state: State, accounts: Account[], today: string, open: string | null | undefined, self = '/app', empty = ''): RunwayView {
@@ -126,7 +136,7 @@ export function runway(state: State, accounts: Account[], today: string, open: s
     const inNotice = account.noticeDate < today && account.renewalDate >= today;
     return `<li class="rw-lane ${account.health.status}${isOpen ? ' is-open' : ''}${inNotice ? ' in-notice' : ''}" id="lane-${escape(account.id)}">${lane(account, sheet, axis, isOpen, toggle)}${isOpen ? band(state, account, sheet, today) : ''}</li>`;
   }).join('');
-  const html = `<section class="rw" id="accounts" aria-label="Renewal runway"><div class="rw-scroll" data-scroll-x tabindex="0" aria-label="Runway, scrolls sideways"><div class="rw-inner">${header(axis, sheet, accounts.length)}<div class="rw-body"><div class="rw-rules" aria-hidden="true"><div class="rw-axis"><i class="rw-rule ${rule}"></i></div></div>${accounts.length ? `<ol class="rw-lanes">${lanes}</ol>` : empty}</div></div></div></section>`;
+  const html = `<section class="rw" id="accounts" aria-label="Renewal runway">${textTable(accounts)}<div class="rw-scroll" data-scroll-x role="region" tabindex="0" aria-label="Runway, scrolls sideways"><div class="rw-inner">${header(axis, sheet, accounts.length)}<div class="rw-body"><div class="rw-rules" aria-hidden="true"><div class="rw-axis"><i class="rw-rule ${rule}"></i></div></div>${accounts.length ? `<ol class="rw-lanes">${lanes}</ol>` : empty}</div></div></div></section>`;
   return { html, css: sheet.css };
 }
 

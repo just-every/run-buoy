@@ -44,6 +44,14 @@ export const browserScript = `(() => {
     const dialog = document.getElementById(opener.dataset.open);
     opener.addEventListener('click', () => { dialog.showModal(); dialog.querySelector('button').focus(); });
     dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('keydown', event => {
+      if (event.key !== 'Tab' || event.ctrlKey || event.altKey || event.metaKey) return;
+      const controls = [...dialog.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(element => element.getClientRects().length && !element.hidden && element.type !== 'hidden');
+      const first = controls[0], last = controls[controls.length - 1];
+      if (first && ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last))) {
+        event.preventDefault(); (event.shiftKey ? last : first).focus();
+      }
+    });
     dialog.addEventListener('close', () => opener.focus());
   }
 })();`;

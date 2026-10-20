@@ -6,14 +6,16 @@ import { canManage, personName, type Account, type Fields, type State } from './
 export interface View { head: string; body: string; style?: string }
 
 /** "$1,037,500": the invoices on the runway, one total per currency. */
-function totals(accounts: Account[]): string {
+function totals(accounts: Account[]): string[] {
   const sums = new Map<string, number>();
   for (const account of accounts) if (account.billing) sums.set(account.billing.currency, (sums.get(account.billing.currency) ?? 0) + account.billing.totalMinor);
-  return [...sums].map(([currency, minor]) => money(minor, currency)).join(' + ');
+  return [...sums].map(([currency, minor]) => money(minor, currency));
 }
 
 export function runwayHead(title: string, accounts: Account[], today: string): string {
-  const strong = [0, 2], facts = [quarters(axisFor(accounts, today)), `${accounts.length} account${accounts.length === 1 ? '' : 's'}`, totals(accounts)].filter(Boolean);
+  // Each native-currency total is one fact, so mixed currencies can wrap at phone widths.
+  const amounts = totals(accounts), strong = [0, ...amounts.map((_, index) => index + 2)];
+  const facts = [quarters(axisFor(accounts, today)), `${accounts.length} account${accounts.length === 1 ? '' : 's'}`, ...amounts];
   return titleLine(escape(title), facts, strong);
 }
 
