@@ -16,8 +16,22 @@ export async function fieldJourney({call,json,request,cookie,member,account,sign
   const a=(await read()).accounts.find(a=>a.id===id)
   return json(await call('/accounts/'+id+'/fields','PUT',{revision:a.revision,values,source}))
  }
+ const existing=(await read()).accounts.find(a=>a.id==='field-0')
+ const writeInput={revision:existing.revision,values:{seats_used:12},source:'License source'}
+ for(const [path,method,body] of [['/fields','GET'],['/fields','POST',defs[0]],['/fields/preview','POST',defs[0]],['/accounts/field-0/fields','PUT',writeInput]]){
+  assert.equal((await request('/api/buoy'+path,{method,body})).status,401)
+  if(method!=='GET'){
+   assert.equal((await call(path,method,body,{headers:{origin:'https://foreign.invalid'}})).status,403)
+   assert.equal((await call(path,method,body,{cookie:member})).status,403)
+  }
+ }
+ const agent=await json(await call('/agent-tokens','POST',{label:'ACCOUNT-004 scope probe'}),201)
+ for(const [path,method,body] of [['/fields','GET'],['/fields','POST',defs[0]],['/fields/preview','POST',defs[0]],['/accounts/field-0/fields','PUT',writeInput]])assert.equal((await call(path,method,body,{token:agent.token})).status,403)
+ await json(await call('/agent-tokens/'+agent.id,'DELETE'))
  const values=i=>({seats_used:20+i,seats_purchased:40,plan:'Enterprise',contract:{currency:'USD',amountMinor:1200000},start:'2026-01-01',modules:['Billing'],active:true,reference:'License statement confirmed by customer'})
  for(let i=0;i<10;i++)await save('field-'+i,values(i))
+ assert.equal((await call('/fields','POST',{key:'plan',label:'Package',type:'picklist',options:['Starter']})).status,400,'ACCOUNT-004 a used option cannot be removed')
+ assert.equal((await call('/fields','POST',{key:'seats_used',label:'Seats',type:'text'})).status,400,'ACCOUNT-004 a used field type cannot change')
  const formula={key:'utilization',label:'Seats used divided by purchased',type:'formula',formula:'custom.seats_used / custom.seats_purchased'}
  const before=await read(),preview=await json(await call('/fields/preview','POST',formula))
  assert.equal(preview.accounts.filter(a=>a.id.startsWith('field-')).length,10,'ACCOUNT-004 preview uses ten actual accounts')
@@ -55,6 +69,8 @@ export async function fieldJourney({call,json,request,cookie,member,account,sign
  }
  await save('field-0',{...values(0),seats_purchased:0});a=(await read()).accounts.find(a=>a.id==='field-0');assert.equal(a.values.utilization,null);assert.match(a.explanations.utilization,/zero/)
  await save('field-0',{...values(0),seats_purchased:null});a=(await read()).accounts.find(a=>a.id==='field-0');assert.equal(a.values.utilization,null);assert.match(a.explanations.utilization,/Missing/)
+ const missingStart={...values(0)};delete missingStart.start
+ await save('field-0',missingStart);assert.equal((await read()).accounts.find(a=>a.id==='field-0').values.days,null,'ACCOUNT-004 omitted keys explicitly clear their values')
  await save('field-0',{...values(0),seats_used:30})
  const segment=await json(await call('/segments','POST',{name:'ACCOUNT-004 seats over half',mode:'dynamic',rules:{match:'all',conditions:[{field:'custom.utilization',op:'gt',value:.7}]},accountIds:[],tier:null,stage:null,playbook:null}),201)
  const moneySegment={name:'ACCOUNT-004 USD contract',mode:'dynamic',rules:{match:'all',conditions:[{field:'custom.contract.amountMinor',op:'gte',value:1200000}]},accountIds:[],tier:null,stage:null,playbook:null}
