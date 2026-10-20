@@ -1,3 +1,6 @@
+import {mutateCustomerPeople} from './customer-people';
+import type {CustomerFieldPreview} from './customer-people';
+import type {MappingPreview} from './usage';
 import {mutateUsage} from './usage-actions';
 import type {UsageCredential} from './usage';
 import type { AgentCredential } from './agents';
@@ -25,7 +28,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -41,6 +44,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     else throw new ApiError('This connection action is not available.');
     return {redirect:path,message:action==='connection-sync'?'Sync attempt recorded. Check its result below.':'Connection updated.'};
   }
+  if(path==='/app/customer-people')return mutateCustomerPeople(api,request,fields);
   if(path==='/app/usage')return mutateUsage(api,request,fields);
   if(path==='/app/fields') {
     const parse=(value:string)=>{try{return JSON.parse(value)}catch{throw new ApiError('Enter valid JSON.')}};

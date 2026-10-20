@@ -10,6 +10,7 @@ export const FIELDS: Record<string, 'text' | 'number'> = {
  openTasks:'number',completedTasks:'number',daysToRenewal:'number',noticeDate:'text'
 }
 export type Values = Record<string, string | number | null>
+export type RelatedPeople = {contact:Values[];user:Values[]}
 export interface Condition {field:string;op:string;value?:string|number}
 export interface Rules {match:'all'|'any';conditions:Condition[]}
 export interface Segment {id:string;name:string;mode:'static'|'dynamic';rules:Rules;accountIds:string[];tier:string|null;stage:string|null;playbook:{title:string;dueDays:number}|null;revision:string;createdAt:string}
@@ -30,11 +31,12 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
   insist(kind,'Choose a supported rule field.')
   insist(['eq','ne','is-missing',...(kind==='number'?['gt','gte','lt','lte']:['contains','gt','gte','lt','lte'])].includes(op),'Choose a supported rule operator.')
   if(op==='is-missing'){insist(c.value===undefined,'Missing checks take no value.');return {field,op}}
-  insist(typeof c.value===(kind==='text'?'string':'number')&&(kind!=='number'||(field.startsWith('custom.')?Number.isFinite(c.value):Number.isSafeInteger(c.value))),`Rule value must be ${kind==='number'?(field.startsWith('custom.')?'a finite number':'a safe whole number'):'text'}.`)
+  const customNumber=field.startsWith('custom.')||/^people\.(contact|user)\.custom\./.test(field)
+  insist(typeof c.value===(kind==='text'?'string':'number')&&(kind!=='number'||(customNumber?Number.isFinite(c.value):Number.isSafeInteger(c.value))),`Rule value must be ${kind==='number'?(customNumber?'a finite number':'a safe whole number'):'text'}.`)
   if(kind==='text')insist(String(c.value).length<=1000,'Rule text is too long.')
   return {field,op,value:c.value as string|number}
  })
- for(const c of conditions)if(c.field.startsWith('custom.')&&c.field.endsWith('.amountMinor')&&c.op!=='is-missing'){
+ for(const c of conditions)if((c.field.startsWith('custom.')||/^people\.(contact|user)\.custom\./.test(c.field))&&c.field.endsWith('.amountMinor')&&c.op!=='is-missing'){
   const currency=c.field.replace(/\.amountMinor$/,'.currency')
   insist(rules.match==='all'&&conditions.some(other=>other.field===currency&&other.op==='eq'),'A custom money comparison needs an all-rule with its exact currency.')
  }
@@ -46,13 +48,21 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
  if(input.playbook!==null&&input.playbook!==undefined){const p=object(input.playbook);keys(p,['title','dueDays']);insist(Number.isInteger(p.dueDays)&&Number(p.dueDays)>=0&&Number(p.dueDays)<=365,'Entry task is due in 0 to 365 whole days.');playbook={title:text(p.title,'Entry task title',500),dueDays:Number(p.dueDays)}}
  return {name:text(input.name,'Segment name',100),mode:input.mode,rules:{match:rules.match,conditions},accountIds:ids,tier:classify(input.tier??null,'tier',tiers),stage:classify(input.stage??null,'stage'),playbook} as Omit<Segment,'id'|'revision'|'createdAt'>
 }
-export function matches(rules:Rules,values:Values) {
- const tests=rules.conditions.map(c=>{
+function conditionMatches(c:Condition,values:Values){
   const v=values[c.field]??null
   if(c.op==='is-missing')return v===null
   if(v===null)return false
   switch(c.op){case'eq':return v===c.value;case'ne':return v!==c.value;case'contains':return String(v).includes(String(c.value));case'gt':return v>c.value!;case'gte':return v>=c.value!;case'lt':return v<c.value!;case'lte':return v<=c.value!;default:return false}
- })
+}
+export function matches(rules:Rules,values:Values,people:RelatedPeople={contact:[],user:[]}) {
+ const native=rules.conditions.filter(c=>!/^people\.(contact|user)\./.test(c.field))
+ const tests=native.map(c=>conditionMatches(c,values))
+ for(const kind of ['contact','user'] as const){
+  const prefix=`people.${kind}.`,conditions=rules.conditions.filter(c=>c.field.startsWith(prefix)).map(c=>({...c,field:c.field.slice(prefix.length)}))
+  // Conjunctions bind to the same related record, including money's exact
+  // currency. Two different people cannot jointly satisfy one person predicate.
+  if(conditions.length)tests.push(people[kind].some(person=>rules.match==='all'?conditions.every(c=>conditionMatches(c,person)):conditions.some(c=>conditionMatches(c,person))))
+ }
  return rules.match==='all'?tests.every(Boolean):tests.some(Boolean)
 }
-export const includes = (segment:Segment,id:string,values:Values) => segment.mode==='static'?segment.accountIds.includes(id):matches(segment.rules,values)
+export const includes = (segment:Segment,id:string,values:Values,people?:RelatedPeople) => segment.mode==='static'?segment.accountIds.includes(id):matches(segment.rules,values,people)

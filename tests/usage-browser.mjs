@@ -1,5 +1,7 @@
 // USAGE-001 receiver and inherited A11Y-001 through native UI and actual buyer HTTP.
 import assert from 'node:assert/strict'
+import {mkdir} from 'node:fs/promises'
+import {join} from 'node:path'
 import {chromium} from '@playwright/test'
 import {startWorker} from './worker.mjs'
 import {BuoyUsage} from '../sdk/usage.mjs'
@@ -9,6 +11,8 @@ const app=await startWorker({secure:false})
 let browser
 try{
  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+ const evidence=process.env.EVIDENCE_DIR; if(evidence)await mkdir(evidence,{recursive:true});
+ const api=async(path,method='GET',body)=>{const r=await app.request('/api/buoy'+path,{cookie:app.cookie,method,body});assert.ok(r.ok,await r.clone().text());return r.json()};
  const call=async()=>{const response=await app.request('/api/buoy/usage',{cookie:app.cookie});assert.equal(response.status,200);return response.json()}
  for(const width of [1440,390]){
   const context=await browser.newContext({viewport:{width,height:1000}})
@@ -51,6 +55,28 @@ try{
    assert.ok(!JSON.stringify(review).includes('spoofed'));assert.ok(review.every(row=>!('accountId'in row)&&!('contactId'in row)&&!('personId'in row)))
    assert.equal(state.sources.find(s=>s.id===source.id).eventCount,2)
    await product.close();await page.reload({waitUntil:'networkidle'});await openForms(page);await scan(page,`USAGE-001 pending raw identities ${width}`)
+   const account=await api('/accounts','POST',{id:'usage-browser-'+width,name:'Northstar Analytics '+width,renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Confirmed license agreement',billing:null,support:null})
+   const customer=await api('/customer-people','POST',{kind:'user',name:'Morgan customer '+width,accountIds:[account.id],source:'Customer product membership directory'})
+   await page.reload({waitUntil:'networkidle'})
+   const claim=page.locator('#usage-review > li').filter({hasText:'Raw/User '+width}).locator('form')
+   await claim.getByLabel('Account',{exact:true}).selectOption(account.id)
+   await claim.getByLabel('Customer contact or user',{exact:true}).selectOption(customer.id)
+   await submit(page,claim.getByRole('button',{name:'Preview exact mapping',exact:true}))
+   assert.equal((await call()).mappings.filter(m=>m.sourceId===source.id).length,0)
+   await scan(page,`USAGE-001 exact mapping preview ${width}`)
+   if(evidence)await page.screenshot({path:join(evidence,`usage-preview-${width}.png`),fullPage:true})
+   await submit(page,page.locator('#usage-map-approve').getByRole('button',{name:'Approve exact mapping',exact:true}))
+   assert.equal((await call()).attribution.find(a=>a.personId===customer.id).eventCount,1)
+   assert.match(await page.locator('#usage-attribution').innerText(),/Morgan customer/)
+   await sdk.track({messageId:'later-'+width,event:'Dashboard viewed',userId:' Raw/User '+width+' ',groupId:' Raw/Group '+width+' '})
+   assert.equal((await call()).attribution.find(a=>a.personId===customer.id).eventCount,2)
+   await page.reload({waitUntil:'networkidle'});await openForms(page);await scan(page,`USAGE-001 approved attribution ${width}`)
+   if(evidence)await page.screenshot({path:join(evidence,`usage-attributed-${width}.png`),fullPage:true})
+   await page.goto(app.origin+'/app/accounts/'+account.id,{waitUntil:'networkidle'})
+   assert.match(await page.locator('#work').innerText(),/2 observations/)
+   await scan(page,`USAGE-001 account usage evidence ${width}`)
+   if(evidence)await page.screenshot({path:join(evidence,`usage-account-${width}.png`),fullPage:true})
+   await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});await openForms(page)
    form=page.locator('#usage-source-'+source.id);await form.getByLabel('Stale after (UTC days)',{exact:true}).fill('7')
    await submit(page,form.getByRole('button',{name:'Save source',exact:true}));assert.equal((await call()).sources.find(s=>s.id===source.id).staleDays,7)
    const issued=(await call()).credentials.find(c=>c.sourceId===source.id)

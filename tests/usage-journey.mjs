@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {BuoyUsage} from '../sdk/usage.mjs'
-// USAGE-001 partial: public Worker transport. No contact/user carriers or attribution.
+// USAGE-001: public Worker intake, complete carrier and reviewed attribution.
 export async function usageJourney({call,json,request,cookie,member,signIn,dispatch,origin}) {
  const read=async()=>json(await call('/usage')),post=async(path,body)=>json(await call('/usage'+path,'POST',body),201)
  const before=(await json(await call('/state'))).accounts
@@ -20,7 +20,7 @@ export async function usageJourney({call,json,request,cookie,member,signIn,dispa
  let accepted=0,duplicates=0
  for(let offset=0;offset<100000;offset+=500){
   const receipt=await sdk.batch(Array.from({length:500},(_,j)=>{const n=(offset+j)%99000,i=n%50;return message('volume-'+n,n%3===0?'identify':n%3===1?'group':'track','user-'+i,'group-'+i)}))
-  accepted+=receipt.accepted;duplicates+=receipt.duplicates;assert.equal(receipt.review,receipt.accepted)
+  accepted+=receipt.accepted;duplicates+=receipt.duplicates;assert.equal(receipt.stored,receipt.accepted)
  }
  assert.equal(accepted,99000);assert.equal(duplicates,1000)
  let state=await read(),review=state.review.filter(r=>r.sourceId===source.id)
@@ -68,7 +68,64 @@ export async function usageJourney({call,json,request,cookie,member,signIn,dispa
  await json(await call(`/usage/credentials/${native.credential.id}`,'DELETE',{}, {cookie:admin}))
  const stamp=Date.now();await assert.rejects(()=>nativeSdk.event(message('revoked','event')),error=>error.status===401);assert.ok(Date.now()-stamp<60000)
  await json(await call(`/usage/credentials/${issued.credential.id}`,'DELETE',{}));await json(await call('/agent-tokens/'+agent.id,'DELETE'))
- for(const path of ['/usage/contacts',`/usage/sources/${source.id}/groups`,`/usage/sources/${source.id}/users`])assert.equal((await call(path,'POST',{})).status,404,'USAGE-001 record creation and mappings do not ship')
- assert.deepEqual((await json(await call('/state'))).accounts,before,'USAGE-001 intake neither links staff nor changes account observations/revisions')
- console.log('USAGE-001 partial: 100000 deliveries/99000 unique, 50 source claim pairs; all pending, exact IDs, atomic validation, provenance, credentials/scopes/revocation passed.')
+ assert.deepEqual((await json(await call('/state'))).accounts,before,'USAGE-001 unmapped intake neither links staff nor changes account observations/revisions')
+ // Complete the original 100,000-delivery/50-account acceptance through reviewed exact mappings.
+ const people=[]
+ const claim=(i)=>({sourceId:source.id,userId:'user-'+i,groupId:'group-'+i,accountId:'usage-account-'+i,personId:people[i].id})
+ for(let i=0;i<50;i++){
+  await json(await call('/accounts','POST',{id:'usage-account-'+i,name:'Usage customer '+i,renewalDate:'2027-10-01',noticeDays:30,renewalEvidence:'Reviewed license agreement '+i,billing:null,support:null}),201)
+  people.push(await json(await call('/customer-people','POST',{kind:i%2?'contact':'user',name:'Product customer '+i,accountIds:['usage-account-'+i],source:'Reviewed product membership '+i}),201))
+ }
+ assert.equal((await call('/usage/mappings','POST',claim(0))).status,409,'USAGE-001 no mapping without the exact review fingerprint')
+ const denied={...claim(0),personId:people[1].id}
+ assert.equal((await call('/usage/mappings/preview','POST',denied)).status,409,'USAGE-001 mismatched membership never implicitly merged')
+ let stale=await json(await call('/usage/mappings/preview','POST',claim(0)))
+ // A reviewed target revision is fenced; use a real account source refresh with its supported payload.
+ const current=(await json(await call('/state'))).accounts.find(a=>a.id==='usage-account-0')
+ await json(await call('/accounts/usage-account-0','PUT',{id:current.id,name:current.name,renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,billing:null,support:null,revision:current.revision}))
+ assert.equal((await call('/usage/mappings','POST',{...claim(0),fingerprint:stale.fingerprint})).status,409)
+ for(let i=0;i<50;i++){
+  const preview=await json(await call('/usage/mappings/preview','POST',claim(i)))
+  assert.equal(preview.claims.eventCount,i===0?1981:1980)
+  assert.equal((await read()).mappings.length,i,'USAGE-001 preview changes no mapping')
+  await json(await call('/usage/mappings','POST',{...claim(i),fingerprint:preview.fingerprint}),201)
+ }
+ state=await read()
+ assert.equal(state.attribution.filter(a=>a.sourceId===source.id).reduce((n,a)=>n+a.eventCount,0),99001)
+ for(let i=0;i<50;i++){
+  const attribution=state.attribution.find(a=>a.accountId==='usage-account-'+i&&a.personId===people[i].id)
+  assert.equal(attribution.eventCount,i===0?1981:1980)
+  const page=await json(await call('/usage/events?accountId=usage-account-'+i+'&limit=2'))
+  assert.ok(page.events.every(e=>e.status==='attributed'&&e.accountId==='usage-account-'+i&&e.personId===people[i].id&&e.userId==='user-'+i&&e.groupId==='group-'+i))
+ }
+ review=state.review.filter(r=>r.sourceId===source.id)
+ assert.ok(review.some(r=>r.groupId==='unknown-group'));assert.ok(review.some(r=>r.groupId==='different-group'))
+ assert.ok(review.some(r=>r.userId===' user-0 '),'USAGE-001 exact IDs never inherit trimmed mapping')
+ // Reissue a credential and check later events plus duplicate replay and conflicting claims.
+ const live=await post(`/sources/${source.id}/credentials`,{label:'Mapped source',scope:['track','identify','group']})
+ const mappedSdk=new BuoyUsage({origin,sourceId:source.id,credential:live.secret,fetch:(url,options)=>dispatch(new Request(url,options))})
+ const beforeRevision=(await json(await call('/state'))).accounts.find(a=>a.id==='usage-account-1').revision
+ await mappedSdk.track(message('after-mapping','track','user-1','group-1'))
+ const afterRevision=(await json(await call('/state'))).accounts.find(a=>a.id==='usage-account-1').revision
+ assert.notEqual(afterRevision,beforeRevision,'USAGE-001 connected observations advance the account revision')
+ await mappedSdk.track(message('after-mapping','track','user-1','group-1'))
+ assert.equal((await json(await call('/state'))).accounts.find(a=>a.id==='usage-account-1').revision,afterRevision,'USAGE-001 duplicate has no observation refresh')
+ let mapped=await json(await call('/usage/events?sourceId='+source.id+'&messageId=after-mapping'))
+ assert.equal(mapped.events[0].personId,people[1].id)
+ await mappedSdk.track(message('unknown-after-mapping','track','user-1','unreviewed-group'))
+ assert.equal((await json(await call('/usage/events?sourceId='+source.id+'&messageId=unknown-after-mapping'))).events[0].status,'review')
+ const accountEvidence=await json(await call('/accounts/usage-account-1/usage'))
+ assert.equal(accountEvidence.sources[0].eventCount,1981);assert.equal(accountEvidence.sources[0].sourceSystem,'segment');assert.equal(accountEvidence.sources[0].sourceReference,'Segment workspace Northstar / web')
+ assert.equal(accountEvidence.sources[0].freshness,'current');assert.ok(Date.parse(accountEvidence.sources[0].receivedAt))
+ assert.equal((await request('/app/accounts/usage-account-1',{cookie})).status,200)
+ for(const route of ['/usage/mappings/preview','/usage/mappings']){
+  assert.equal((await request('/api/buoy'+route,{method:'POST',body:claim(0)})).status,401)
+  assert.equal((await call(route,'POST',claim(0),{cookie:member})).status,403)
+  assert.equal((await call(route,'POST',claim(0),{headers:{origin:'https://foreign.invalid'}})).status,403)
+ }
+ // Reviewed targets and their attributed raw payloads share the account's erasure custody.
+ await json(await call('/accounts/usage-account-1','DELETE',{confirmation:'Usage customer 1'}))
+ assert.equal((await json(await call('/usage/events?sourceId='+source.id+'&messageId=after-mapping'))).events.length,0)
+ assert.ok(!(await read()).mappings.some(m=>m.accountId==='usage-account-1'))
+ console.log('USAGE-001 100000 deliveries/99000 unique across 50 reviewed account/customer identities, retained/new attribution, exact unknown/conflicting review, revision/erasure custody and authenticated scope/revocation passed.')
 }

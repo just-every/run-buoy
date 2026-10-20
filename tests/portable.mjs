@@ -51,6 +51,14 @@ try{
  const usageCredential=await call('/usage/sources/'+usageSource.id+'/credentials','POST',{label:'Portable source key',scope:['event']})
  const usageIntake=()=>fetch(running.origin+'/api/buoy/usage/intake/'+usageSource.id,{method:'POST',headers:{authorization:'Bearer '+usageCredential.secret,'content-type':'application/json'},body:JSON.stringify({type:'event',messageId:'portable-usage',event:'License opened',userId:'product-user',groupId:'product-company'})})
  assert.equal((await usageIntake()).status,202)
+ const usagePerson=await call('/customer-people','POST',{kind:'user',name:'Portable customer user',accountIds:[accountId],source:'Reviewed license directory'});
+ await call('/customer-fields','POST',{key:'portable_seats',label:'Portable seats',type:'number'});
+ let personState=await call('/customer-people');
+ await call('/customer-people/'+usagePerson.id+'/fields','PUT',{revision:personState.records.find(p=>p.id===usagePerson.id).revision,values:{portable_seats:12},source:'Confirmed license schedule'});
+ await call('/customer-fields','POST',{key:'portable_ratio',label:'Portable ratio',type:'formula',formula:'custom.portable_seats / 20'});
+ const mapping={sourceId:usageSource.id,userId:'product-user',groupId:'product-company',accountId,personId:usagePerson.id};
+ const review=await call('/usage/mappings/preview','POST',mapping);await call('/usage/mappings','POST',{...mapping,fingerprint:review.fingerprint});
+ personState=await call('/customer-people');
  const usageEvents=await call('/usage/events')
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
@@ -71,6 +79,8 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,directory:join(destination,'.wrangler/state'),keep:true})
  const after=await call('/state')
+ assert.deepEqual(await call('/customer-people'),personState,'USAGE-001 ACCOUNT-004 customer records, memberships, typed fields, calculations and source history restore exactly');
+ assert.equal((await call('/usage')).mappings[0].personId,usagePerson.id,'USAGE-001 reviewed mapping survives restore without an intake credential');
  const restoredConnection=(await call('/connections')).connections.find(row=>row.id===connection.id)
  assert.equal(restoredConnection.name,'Portable Stripe source')
  assert.equal(restoredConnection.freshness,'Reconnect required','CONNECT-001 restores retain metadata without credential authority')

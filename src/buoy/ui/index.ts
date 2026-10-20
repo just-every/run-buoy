@@ -1,3 +1,5 @@
+import {customerPeoplePage,type CustomerPeoplePage,type CustomerFieldPreview} from './customer-people';
+import type {MappingPreview} from './usage';
 import { connectionsPage,type ConnectionsPage } from './connections';
 import {usagePage,type UsagePage,type UsageCredential} from './usage';
 import {fieldsPage,type FieldsPage} from './fields';
@@ -36,11 +38,12 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   let accountId: string | undefined;
   try { accountId = match ? decodeURIComponent(match[1]) : undefined; } catch { /* The shell below renders a 404. */ }
   const account = accountId ? state.accounts.find(item => item.id === accountId) : undefined;
-  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && path !== '/app/team' && path !== '/app/segments' && path !== '/app/outcomes' && path !== '/app/fields' && path !== '/app/usage' && path !== '/app/connections' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
+  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && path !== '/app/team' && path !== '/app/segments' && path !== '/app/outcomes' && path !== '/app/customer-people' && path !== '/app/fields' && path !== '/app/usage' && path !== '/app/connections' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
   if (path === '/app/imports' && state.operator.role !== 'owner') return shell({ title: 'Owner access required', body: section('Owner access required', '<p>Only the owner can import accounts or manage Business imports.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
   if ((path === '/app/audit' || path === '/app/team' || path === '/app/usage' || path === '/app/connections') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
   let usageCredential:UsageCredential|undefined;
   let fieldPreview:unknown;
+  let customerFieldPreview:CustomerFieldPreview|undefined,usageMappingPreview:MappingPreview|undefined;
   let agentCredential:AgentCredential|undefined;
   let fields: Fields | undefined, error: string | undefined, teamPreview: TeamPreview | undefined, status = 200;
   if (request.method === 'POST') {
@@ -52,6 +55,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
       const result = await mutate(api, request, path, fields, account?.id);
       teamPreview = result.teamPreview;
       fieldPreview=result.fieldPreview;
+      customerFieldPreview=result.customerFieldPreview;usageMappingPreview=result.usageMappingPreview;
       usageCredential=result.usageCredential;
       agentCredential=result.agentCredential;
       if (result.redirect) {
@@ -70,7 +74,8 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   const today = new Date().toISOString().slice(0, 10);
   let title = 'Renewals', body: string, head: string | undefined, style: string | undefined;
   if(path==='/app/connections'){title='Connections';body=connectionsPage(await apiCall<ConnectionsPage>(api,request,'/api/buoy/connections'));
-  } else if(path==='/app/usage'){title='Usage intake';body=usagePage(await apiCall<UsagePage>(api,request,'/api/buoy/usage'),state,fields,usageCredential);
+  } else if(path==='/app/customer-people'){title='Customer contacts and users';body=customerPeoplePage(await apiCall<CustomerPeoplePage>(api,request,'/api/buoy/customer-people'),state,fields,customerFieldPreview,url.searchParams.get('person')??fields?.personId);
+  } else if(path==='/app/usage'){title='Usage intake';const data=await apiCall<UsagePage>(api,request,'/api/buoy/usage');const people=await apiCall<CustomerPeoplePage>(api,request,'/api/buoy/customer-people');body=usagePage({...data,customerPeople:people.records},state,fields,usageCredential,usageMappingPreview);
   } else if(path==='/app/fields'){title='Custom fields';body=fieldsPage(await apiCall<FieldsPage>(api,request,'/api/buoy/fields'),state,fields,fieldPreview,url.searchParams.get('account')??fields?.accountId);
   } else if(path==='/app/outcomes') {
     title='Playbook outcomes';body=outcomesPage(await apiCall<OutcomesPage>(api,request,'/api/buoy/outcomes'),state,fields);
@@ -102,6 +107,8 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     title = 'Backups'; body = backupsPage(state.operator.role === 'owner');
   } else if (account) {
     title = account.name; ({ head, body, style } = accountPage(state, account, fields, open, today));
+    const usage=await apiCall<{sources:{name:string;sourceSystem:string;sourceReference:string;eventCount:number;observedAt:string;receivedAt:string;freshness:string;staleDays:number}[]}>(api,request,`/api/buoy/accounts/${encodeURIComponent(account.id)}/usage`);
+    body+=section('Product usage evidence',usage.sources.length?`<ul class="records">${usage.sources.map(s=>`<li class="record"><h3>${escape(s.name)}</h3><p>${s.eventCount} observations · ${escape(s.freshness)} · stale after ${s.staleDays} UTC days</p><p>Source: ${escape(s.sourceSystem)} · reference: ${escape(s.sourceReference)}</p><p>Last observed ${escape(s.observedAt)} · received ${escape(s.receivedAt)}</p></li>`).join('')}</ul>`:'<p>Missing: no usage observation has an explicitly reviewed mapping to this account.</p>');
   } else {
     ({ head, body, style } = workPage(state, fields, open, today));
     if (url.searchParams.get('intro') === 'hidden') body = body.replace('<div data-introduction>', '<div data-introduction hidden>');
@@ -109,7 +116,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   }
   // Success messages are selected from known server outcomes, not arbitrary
   // text supplied in a link to this private page.
-  const messages = new Set(['Usage source saved.', 'Ingestion credential revoked.', 'Field saved.', 'Field values saved.', 'Agent switch saved.', 'Agent credential revoked.', 'Tier names saved.', 'Outcome tracking started.', 'Segment saved.', 'Account classification saved.', 'Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
+  const messages = new Set(['Customer record saved.','Customer field saved.','Customer field values saved.','Exact identity mapping approved.','Usage source saved.', 'Ingestion credential revoked.', 'Field saved.', 'Field values saved.', 'Agent switch saved.', 'Agent credential revoked.', 'Tier names saved.', 'Outcome tracking started.', 'Segment saved.', 'Account classification saved.', 'Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
   const success = url.searchParams.get('success') ?? '';
   const response = await shell({ title, head, body, style, state, current: account ? '/app' : path, status, error, success: messages.has(success) ? success : undefined, backToAccounts: !!account, importDoor: path === '/app/imports' && state.operator.role === 'owner' });
   return request.method === 'HEAD' ? new Response(null, { status: response.status, headers: response.headers }) : response;

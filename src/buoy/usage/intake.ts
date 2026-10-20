@@ -1,3 +1,4 @@
+import { MAPPED_JOIN, ATTRIBUTED } from './mappings'
 import { Hono } from 'hono'
 import { runtimeBindings, type Bindings } from '../../auth.server'
 import { jsonBody } from '../access'
@@ -36,9 +37,10 @@ usageIngest.post('/api/buoy/usage/intake/:sourceId',async(c,next)=>{
   guard(env.DB,'EXISTS(SELECT 1 FROM buoy_usage_credentials c JOIN buoy_usage_sources s ON s.id=c.source_id WHERE c.id=? AND c.token_hash=? AND c.source_id=? AND c.revoked_at IS NULL AND c.scope=? AND s.kind=? AND s.reference=?)',authentication.id,hash,sourceId,authentication.scope,authentication.kind,authentication.reference),
   stmt(env.DB,`INSERT OR IGNORE INTO buoy_usage_events(id,source_id,message_id,type,event,user_id,group_id,observed_at,received_at,source_reference,source_system,payload)
    SELECT json_extract(value,'$.id'),?,json_extract(value,'$.messageId'),json_extract(value,'$.type'),json_extract(value,'$.event'),json_extract(value,'$.userId'),json_extract(value,'$.groupId'),json_extract(value,'$.observedAt'),?,?,?,json_extract(value,'$.payload') FROM json_each(?) ORDER BY CAST(key AS INTEGER)`,sourceId,stamp,authentication.reference,authentication.kind,serialized),
+  stmt(env.DB,`UPDATE buoy_accounts SET revision=lower(hex(randomblob(16))) WHERE changes()>0 AND id IN (SELECT m.account_id FROM buoy_usage_events e ${MAPPED_JOIN} WHERE ${ATTRIBUTED} AND e.source_id=? AND e.received_at=? AND e.message_id IN (SELECT json_extract(value,'$.messageId') FROM json_each(?)))`,sourceId,stamp,serialized),
   stmt(env.DB,'UPDATE buoy_usage_credentials SET last_used_at=? WHERE id=?',stamp,authentication.id),
   stmt(env.DB,'DELETE FROM buoy_assertions')
  ])
  const accepted=results[1].meta.changes
- return c.json({received:events.length,accepted,duplicates:events.length-accepted,review:accepted},202)
+ return c.json({received:events.length,accepted,duplicates:events.length-accepted,stored:accepted},202)
 })

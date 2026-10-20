@@ -1,3 +1,4 @@
+import {peopleApi,refreshPeople} from './people'
 import { connectionsApi } from './connectors'
 import {usageIngest,usageAdmin} from './usage';
 import {fieldsState,saveField,saveValues,previewField,refreshFields} from './fields'
@@ -47,11 +48,12 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
   finally { await finishRequest(c.env.DB, actor, status) }
   return
  }
+ await refreshPeople(c.env.DB,actor)
  await refreshFields(c.env.DB,actor)
  await reconcile(c.env.DB, actor)
  await observeOutcomes(c.env.DB,actor)
  await next()
- if(c.req.method!=='GET'&&c.res.status<400){await refreshFields(c.env.DB,actor);await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
+ if(c.req.method!=='GET'&&c.res.status<400){await refreshPeople(c.env.DB,actor);await refreshFields(c.env.DB,actor);await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
  if (c.req.method !== 'GET' && c.res.status < 400) await flushNotifications(c.env)
 })
 buoyApi.onError((error, c) => {
@@ -64,6 +66,7 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.route('/',peopleApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',connectionsApi)
 buoyApi.get('/api/buoy/fields',async c=>c.json(await fieldsState(c.env.DB)))

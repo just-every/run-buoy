@@ -1,5 +1,8 @@
 import {FIELD_SNAPSHOT} from '../fields'
 import {evaluate,ruleValues,type Image as FieldImage} from '../fields/model'
+import { PEOPLE_SNAPSHOT } from '../people/snapshot'
+import type { PeopleImage } from '../people/snapshot'
+import { evaluatePeople, personRuleValues } from '../people/model'
 import { guard, insist } from '../core'
 import { health, noticeDate, type Account, type Sentiment } from '../health'
 import { DEFAULT_STALENESS } from '../settings'
@@ -15,18 +18,20 @@ export const SNAPSHOT = `SELECT json_object(
  'tasks',json((SELECT json_group_array(json_object('accountId',account_id,'completedAt',completed_at)) FROM (SELECT * FROM buoy_tasks ORDER BY id))),
  'entries',json((SELECT json_group_array(json_object('id',id,'segmentId',segment_id,'accountId',account_id,'enteredAt',entered_at,'exitedAt',exited_at,'proposalId',proposal_id)) FROM (SELECT * FROM buoy_segment_entries ORDER BY entered_at,id))),
  'custom',json((${FIELD_SNAPSHOT})),
+ 'people',json((${PEOPLE_SNAPSHOT})),
  'tiers',(SELECT document FROM buoy_tiers WHERE singleton=1),
  'staleness',(SELECT value FROM buoy_settings WHERE key='staleness')
  ) AS snapshot`
 interface Row {id:string;document:string;revision:string;createdAt:string}
 interface Classification {accountId:string;tier:string|null;stage:string|null;tierManual:number;stageManual:number}
-export interface Image {accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage}
+export interface Image {accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage;people:PeopleImage}
 export async function snapshot(db:D1Database){const row=await db.prepare(SNAPSHOT).first<{snapshot:string}>();insist(row,'Segment data unavailable.',503);return {raw:row.snapshot,value:JSON.parse(row.snapshot) as Image}}
 export const fence=(db:D1Database,raw:string)=>guard(db,`(${SNAPSHOT})=?`,raw)
 export const tierNames=(image:Image):string[]=>image.tiers?JSON.parse(image.tiers):TIERS
 export const definitions=(image:Image):Segment[]=>image.segments.map(row=>({...JSON.parse(row.document),id:row.id,revision:row.revision,createdAt:row.createdAt}))
 export function accountValues(image:Image,on:string) {
  const custom=evaluate(image.custom)
+ const people=evaluatePeople(image.people)
  const limits=image.staleness?JSON.parse(image.staleness):DEFAULT_STALENESS
  return image.accounts.map(row=>{
   const a=JSON.parse(row.document) as Account,sentiment=image.sentiments.findLast(s=>s.accountId===a.id)??null,h=health(a,on,sentiment,limits),classification=image.classifications.find(c=>c.accountId===a.id)
@@ -35,6 +40,7 @@ export function accountValues(image:Image,on:string) {
   if(a.billing)values['billing.balanceMinor']=a.billing.totalMinor-a.billing.creditsMinor-a.billing.allocatedMinor
   for(const e of h.evidence){values[`health.${e.kind}Missing`]=Number(e.missing);values[`health.${e.kind}Stale`]=Number(e.stale)}
   if(sentiment)for(const key of ['rating','reason','recordedBy','recordedAt','expiresOn'] as const)values[`sentiment.${key}`]=sentiment[key]
-  return {account:{...a,revision:row.revision},values,classification,assessment:h}
+  const related={contact:people.filter(person=>person.kind==='contact'&&person.accountIds.includes(a.id)).map(person=>personRuleValues(image.people.definitions,person)),user:people.filter(person=>person.kind==='user'&&person.accountIds.includes(a.id)).map(person=>personRuleValues(image.people.definitions,person))}
+  return {account:{...a,revision:row.revision},values,people:related,classification,assessment:h}
  })
 }

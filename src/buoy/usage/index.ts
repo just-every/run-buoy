@@ -1,3 +1,4 @@
+import { previewMapping, approveMapping, accountUsage } from './mappings'
 import { Hono } from 'hono'
 import type { Bindings } from '../../auth.server'
 import { jsonBody } from '../access'
@@ -14,3 +15,7 @@ usageAdmin.post('/api/buoy/usage/sources',async c=>c.json(await saveSource(c.env
 usageAdmin.put('/api/buoy/usage/sources/:id',async c=>c.json(await saveSource(c.env.DB,c.get('actor'),await jsonBody(c.req.raw),c.req.param('id'))))
 usageAdmin.post('/api/buoy/usage/sources/:id/credentials',async c=>c.json(await issueCredential(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
 usageAdmin.delete('/api/buoy/usage/credentials/:id',async c=>{await jsonBody(c.req.raw);return c.json(await revokeCredential(c.env.DB,c.get('actor'),c.req.param('id')))})
+
+usageAdmin.post('/api/buoy/usage/mappings/preview',async c=>c.json(await previewMapping(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
+usageAdmin.post('/api/buoy/usage/mappings',async c=>c.json(await approveMapping(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+usageAdmin.get('/api/buoy/accounts/:id/usage',async c=>c.json(await accountUsage(c.env.DB,c.get('actor'),c.req.param('id'))))
