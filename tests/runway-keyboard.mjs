@@ -1,5 +1,5 @@
-// A11Y-001 partial: semantic runway data and real keyboard operation.
-// The all-screen axe/keyboard acceptance remains required before DONE.
+// A11Y-001: native-currency semantic runway data and real keyboard operation.
+// The complementary all-screen axe/contrast/keyboard journey is tests/a11y.mjs.
 import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
 import { chromium } from '@playwright/test'
@@ -88,7 +88,7 @@ try {
   } finally { await context.close() }
  }
  assert.deepEqual(failures, [], 'A11Y-001 visible, unobscured keyboard focus')
- console.log('A11Y-001 partial: native-currency semantic table, current/missing/stale health, projected dates, keyboard scrolling/expansion and dialog focus at 1440/390 passed. Full all-screen axe/keyboard acceptance remains outstanding.')
+ console.log('A11Y-001: native-currency semantic table, current/missing/stale health, projected dates, keyboard scrolling/expansion and dialog focus at 1440/390 passed. Complementary all-screen checks are in tests/a11y.mjs.')
 } finally {
  await browser?.close()
  await app.close()

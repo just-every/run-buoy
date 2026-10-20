@@ -281,8 +281,8 @@ Judged from the code and tests at commit `66ab1c0eeab84a690367365a19c63ecdfb442d
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 7 | 1 | 0 | 8 |
-| Target and push further | 12 | 19 | 64 | 95 |
-| All | 19 | 20 | 64 | 103 |
+| Target and push further | 13 | 18 | 64 | 95 |
+| All | 20 | 19 | 64 | 103 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -369,7 +369,7 @@ Judged from the code and tests at commit `66ab1c0eeab84a690367365a19c63ecdfb442d
 | `MIGRATE-006` | Parallel run and delta re-import | target | missing |  | No delta re-import, conflict preview or cutover record. |
 | `MIGRATE-007` | Health history carried over | target | missing |  | No health history import. |
 | `MOBILE-001` | Mobile apps | target | partial | `src/buoy/ui/`; `public/buoy.css`: server-rendered screens are built for phone widths | Native apps, push and offline use are absent. |
-| `A11Y-001` | Accessibility | target | partial | `src/buoy/ui/runway.ts`; `src/buoy/ui/work.ts`; `src/buoy/ui/browser.ts`; `src/buoy/ui/html.ts`; `tests/runway-keyboard.mjs` (A11Y-001 named public HTTP/browser journey): semantic runway table covers every account, invoice, health reason, source coverage, renewal/notice date and projected change; real keyboard scrolling, expansion and modal focus trapping/return pass at 1440/390, with separate native-currency header totals and no page overflow down to 320 | Current-screen axe contrast failures remain in br-owned styling, including muted/green text and white chrome labels; br’s repair is awaiting the owner’s chrome-gradient choice. The all-screen axe/keyboard acceptance remains required; PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 inherit it before shipping. |
+| `A11Y-001` | Accessibility | target | done | `src/buoy/ui/runway.ts`; `src/buoy/ui/work.ts`; `src/buoy/ui/browser.ts`; `src/buoy/ui/html.ts`; `tests/a11y.mjs`; `tests/a11y-auth.mjs`; `tests/a11y-import.mjs`; `tests/a11y-governance.mjs`; `tests/a11y-checks.mjs`; `tests/a11y-contrast.mjs`; `tests/runway-keyboard.mjs`: named public Worker/browser journeys assert every current screen and auth/import/agent end state at 1440/390, 320 reflow, zero axe violations, computed text contrast over grid/gradient backgrounds, visible unobscured focus, labeled and symbolic controls, sign-in/setup, scrolling/expansion, modal focus/return, validation recovery, preparation/approval/completion and keyboard CSV export; semantic runway values include native-currency invoices, current/missing/stale health, reasons, dates and projected changes | PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 inherit this acceptance before their new screens ship. |
 | `SCALE-001` | Scale for a growing book | target | missing |  | src/buoy/accounts.ts caps an installation at 500 accounts; no volume test. |
 | `AI-001` | Cited account summaries and questions | target | missing |  | No cited account questions or briefs. |
 | `AI-002` | Conversation and meeting summaries with proposed work | target | missing |  | No conversation summaries or proposed work. |

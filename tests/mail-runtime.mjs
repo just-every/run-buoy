@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 
-export async function mailWorker({ root = process.cwd(), bindings = () => ({}) } = {}) {
+export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true } = {}) {
  const require = createRequire(await realpath(join(root, 'node_modules/wrangler/package.json')))
  const { Miniflare, convertV4MiniflareOptions } = require('miniflare')
  const { unstable_splitSqlQuery: splitSql } = require('wrangler')
@@ -42,7 +42,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}) }
   const boot=await request('/auth/bootstrap',{method:'POST',body:{token:vars.SETUP_TOKEN,displayName:'Harbour CS owner'}})
   assert.equal(boot.status,303,await boot.clone().text())
   const cookie=boot.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
-  await mf.dispatchFetch(origin+'/setup',{method:'POST',redirect:'manual',headers:{origin,cookie,'content-type':'application/x-www-form-urlencoded'},body:'confirm=yes'})
+  if (completeSetup) await mf.dispatchFetch(origin+'/setup',{method:'POST',redirect:'manual',headers:{origin,cookie,'content-type':'application/x-www-form-urlencoded'},body:'confirm=yes'})
   async function signIn(email) {
    assert.equal((await request('/auth/magic-link',{method:'POST',body:{email}})).status,202)
    const message=mails.findLast(mail=>mail.to.includes(email))
