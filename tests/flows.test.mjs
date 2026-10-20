@@ -1,3 +1,4 @@
+import {usageJourney} from './usage-journey.mjs'
 import {fieldJourney} from './field-journey.mjs'
 import { importClient } from './import-door-client.mjs'
 import test from 'node:test'
@@ -442,6 +443,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok(!(await read()).items.some(i=>i.accountId===a.id),'account erasure clears inbox content')
    assert.doesNotMatch(worker.mails.findLast(m=>m.subject==='Buoy weekly digest').text,/NOTIFY-001 inbox only/)
   })
+  await t.test('USAGE-001 receiver credentials, relay-only intake and unassigned review queue (partial)',async()=>usageJourney({call,json,request,cookie,member,signIn,dispatch:worker.dispatch,origin:worker.origin}))
   await t.test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>teamJourney({call,json,request,cookie,member,signIn,account}))
   await t.test('SEGMENT-001 rules, classification, intervals, proposals, reports and erasure',async()=>segmentJourney({call,json,request,cookie,member,account,scheduled}))
   await t.test('PLAY-004 frozen cohorts, 40 playbooks, outcomes, observed times and comparison',async()=>outcomeJourney({call,json,request,cookie,member,account,scheduled}))

@@ -13,6 +13,7 @@ import renewals from '../../docs/renewals.md?raw'
 import agents from '../../docs/agents.md?raw'
 import moveIn from '../../docs/move-in.md?raw'
 import backups from '../../docs/backups.md?raw'
+import usage from '../../docs/usage.md?raw'
 import providers from '../../docs/providers.md?raw'
 
 const guides = [
@@ -24,6 +25,7 @@ const guides = [
   { slug: 'agents', title: 'Agents', description: 'Use scoped agent credentials to list renewals and prepare proposals for people to approve.', source: agents, file: 'agents.md' },
   { slug: 'move-in', title: 'Move in', description: 'Preview, apply and undo your account JSON imports in Buoy.', source: moveIn, file: 'move-in.md' },
   { slug: 'backups', title: 'Backup and restore', description: 'Export Buoy domain records and restore an empty installation.', source: backups, file: 'backups.md' },
+  { slug: 'usage', title: 'Product usage intake', description: 'Configure server credentials, authenticated product relays and unassigned observation review.', source: usage, file: 'usage.md' },
   { slug: 'providers', title: 'Providers and data flows', description: 'Every provider a Buoy installation talks to, the data each receives and the terms that govern it.', source: providers, file: 'providers.md' },
 ]
 

@@ -1,3 +1,4 @@
+import {usageIngest,usageAdmin} from './usage';
 import {fieldsState,saveField,saveValues,previewField,refreshFields} from './fields'
 import { startOutcome } from './outcomes'
 import { observeOutcomes } from './outcomes/observe'
@@ -23,6 +24,7 @@ import { beginRequest, checkRequest, finishRequest, refuseRequest } from './agen
 import { agentState, setAgentSettings } from './agent-policy/owner'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
+buoyApi.route('/',usageIngest)
 buoyApi.use('/api/buoy/*', async (c, next) => {
  c.header('cache-control', 'no-store')
  c.header('x-content-type-options', 'nosniff')
@@ -61,6 +63,7 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.route('/',usageAdmin)
 buoyApi.get('/api/buoy/fields',async c=>c.json(await fieldsState(c.env.DB)))
 buoyApi.post('/api/buoy/fields',async c=>c.json(await saveField(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.post('/api/buoy/fields/preview',async c=>c.json(await previewField(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))

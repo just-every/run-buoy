@@ -6,7 +6,7 @@ Buoy is self-hosted on your own Cloudflare account. No Buoy service sits between
 
 SOC 2 or similar attestations cover your deployment, not the Buoy source code. Prepare them with Evidence or your auditor. Each provider's network, terms and data-processing agreement still apply to the data it handles, so include the providers you enable in that scope.
 
-Local use on your computer talks to none of these providers. Sign-in links appear in the local outbox instead of being sent.
+Local sign-in on your computer talks to none of the sign-in providers. Sign-in links appear in the local outbox instead of being sent.
 
 ## Hosting
 
@@ -84,3 +84,12 @@ When the owner links an OpenID sign-in provider during setup, people can sign in
 ## Not connected yet
 
 Buoy connects to no billing, CRM, support, product-usage, mailbox, calendar, chat, survey or model provider yet. Billing and support evidence is entered by hand or moved in from a file. Each connector adds its section to this guide, with its data flows and terms, before it ships.
+
+## Incoming product observations
+
+### Segment
+
+- **When:** your Segment server source or authenticated product relay sends track, identify or group observations to the configured receiver. There is no outbound Segment request or provider verification.
+- **Sends:** the source sends message IDs, product user/group claims, event names, timestamps, properties and traits to your Worker and D1. All observations remain unassigned in review; no contact/user records or staff links are created.
+- **Receives:** the sender receives storage, duplicate and review counts or an error. Browser clients send only to the buyer's authenticated product relay; its server holds the intake secret.
+- **Terms:** [Twilio Segment terms](https://segment.com/legal/terms/) and [Twilio data protection addendum](https://www.twilio.com/en-us/legal/data-protection-addendum). Source and relay copies remain external holders.

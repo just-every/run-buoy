@@ -7,19 +7,19 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 
-export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true } = {}) {
+export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true, secure = true } = {}) {
  const require = createRequire(await realpath(join(root, 'node_modules/wrangler/package.json')))
  const { Miniflare, convertV4MiniflareOptions } = require('miniflare')
  const { unstable_splitSqlQuery: splitSql } = require('wrangler')
  const config = JSON.parse(await readFile(join(root, 'dist/server/wrangler.json'), 'utf8'))
  const socket=createServer(); await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve)); const port=socket.address().port; await new Promise(resolve=>socket.close(resolve))
- const origin = `https://127.0.0.1:${port}`, directory = await mkdtemp(join(tmpdir(), 'buoy-mail-'))
+ const origin = `${secure?'https':'http'}://127.0.0.1:${port}`, directory = await mkdtemp(join(tmpdir(), 'buoy-mail-'))
  const secret = () => randomBytes(32).toString('base64url'), mails = [], outbound = []
  const vars = { AUTH_LOCAL: 'false', AUTH_ORIGIN: origin, OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
  Object.assign(vars, bindings(origin))
  let mailStatus = 200
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
-  host:'127.0.0.1', port, https:true,
+  host:'127.0.0.1', port, https:secure,
   modulesRoot: join(root, 'dist/server'),
   modules: [config.main, ...(await readdir(join(root, 'dist/server/assets'))).filter(file => file.endsWith('.js')).map(file => `assets/${file}`)].map(file => ({type:'ESModule',path:join(root,'dist/server',file)})),
   compatibilityDate: config.compatibility_date, compatibilityFlags: config.compatibility_flags,
@@ -56,6 +56,6 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   }
   // The Cron Trigger door, as Cloudflare calls it.
   const scheduled=async(cron='0 * * * *',scheduledTime=Date.now())=>(await mf.getWorker()).scheduled({cron,scheduledTime})
-  return {origin,directory,request,cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){await mf.dispose();await rm(directory,{recursive:true,force:true})}}
+  return {origin,directory,request,dispatch:async request=>mf.dispatchFetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()})}),cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){await mf.dispose();await rm(directory,{recursive:true,force:true})}}
  }catch(error){await mf.dispose();await rm(directory,{recursive:true,force:true});throw error}
 }

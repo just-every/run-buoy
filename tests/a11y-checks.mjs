@@ -86,7 +86,7 @@ export async function scan(page, label) {
  })
  scans++
  await mkdir('../screens', { recursive: true })
- await page.screenshot({ path: `../screens/scan-${label.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}.png`, fullPage: true, mask: [page.getByRole('textbox', { name: 'Agent credential', exact: true })] })
+ await page.screenshot({ path: `../screens/scan-${label.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}.png`, fullPage: true, mask: [page.locator('[data-secret]'),page.getByRole('textbox', { name: 'Agent credential', exact: true })] })
  if (result.violations.length) failures.push(`${label} axe: ${JSON.stringify(result.violations)}`)
  if (result.incomplete.length) manual.push({ screen: label, rules: result.incomplete })
 }

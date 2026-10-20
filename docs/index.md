@@ -17,6 +17,7 @@ There is no preloaded business data. Enter your own confirmed terms and observat
 ## Owner guides
 
 - [Getting started](/docs/getting-started) — launch locally, finish setup and sign in.
+- [Product usage intake](/docs/usage) — server credentials, authenticated relays and pending review (partial).
 - [Accounts and evidence](/docs/accounts) — record terms, understand health and refresh sources.
 - [Playbooks](/docs/playbooks) — prepare, approve and complete follow-up work.
 - [Renewal decisions](/docs/renewals) — retain the outcome, reason, evidence and approver.
