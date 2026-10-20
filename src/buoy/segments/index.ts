@@ -1,3 +1,4 @@
+import {ruleFields} from '../fields/model'
 import { HEALTH_INTERPRETATION } from '../health'
 import { observeOutcomes } from '../outcomes/observe'
 import { accountAudit } from '../audit-records'
@@ -43,7 +44,7 @@ export async function reconcile(db:D1Database,actor:Actor,at=new Date()) {
 }
 export async function segmentState(db:D1Database) {
  const image=(await snapshot(db)).value,accounts=evaluated(image,new Date().toISOString().slice(0,10))
- return {fields:FIELDS,tiers:tierNames(image),segments:definitions(image).map(s=>({...s,
+ return {fields:{...FIELDS,...ruleFields(image.custom.definitions)},tiers:tierNames(image),segments:definitions(image).map(s=>({...s,
   members:image.entries.filter(e=>e.segmentId===s.id&&!e.exitedAt).map(e=>{const a=accounts.find(a=>a.account.id===e.accountId)!;return {accountId:e.accountId,name:a.account.name,health:a.values['health.status'] as string,assessment:a.assessment,tier:a.tier,stage:a.stage,enteredAt:e.enteredAt}}),
   history:image.entries.filter(e=>e.segmentId===s.id).map(e=>({accountId:e.accountId,enteredAt:e.enteredAt,exitedAt:e.exitedAt,proposalId:e.proposalId}))})),
   classifications:accounts.map(a=>({accountId:a.account.id,tier:a.tier,stage:a.stage,tierManual:!!a.classification?.tierManual,stageManual:!!a.classification?.stageManual}))}
@@ -53,7 +54,7 @@ export async function saveSegment(db:D1Database,actor:Actor,input:Record<string,
  const image=await snapshot(db),existing=input.id?image.value.segments.find(s=>s.id===input.id):undefined
  if(input.id)insist(existing&&input.revision===existing.revision,'Segment changed. Reload before saving.',409)
  else insist(image.value.segments.length<50,'At most 50 segments are supported.')
- const value=segmentInput(input,new Set(image.value.accounts.map(a=>a.id)),tierNames(image.value)),segmentId=existing?.id??id()
+ const value=segmentInput(input,new Set(image.value.accounts.map(a=>a.id)),tierNames(image.value),{...FIELDS,...ruleFields(image.value.custom.definitions)}),segmentId=existing?.id??id()
  await db.batch([authority(db,actor,true),fence(db,image.raw),stmt(db,'INSERT INTO buoy_segments(id,document,revision,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',segmentId,JSON.stringify(value),id(),existing?.createdAt??now()),auditRecord(db,actor,'segment.saved',`segment:${segmentId}`),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:segmentId}
 }

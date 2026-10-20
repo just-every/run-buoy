@@ -1,3 +1,4 @@
+import {fieldsState,saveField,saveValues,previewField,refreshFields} from './fields'
 import { startOutcome } from './outcomes'
 import { observeOutcomes } from './outcomes/observe'
 import { outcomeState, outcomeReport, outcomeCsv } from './outcomes/report'
@@ -43,10 +44,11 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
   finally { await finishRequest(c.env.DB, actor, status) }
   return
  }
+ await refreshFields(c.env.DB,actor)
  await reconcile(c.env.DB, actor)
  await observeOutcomes(c.env.DB,actor)
  await next()
- if(c.req.method!=='GET'&&c.res.status<400){await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
+ if(c.req.method!=='GET'&&c.res.status<400){await refreshFields(c.env.DB,actor);await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
  if (c.req.method !== 'GET' && c.res.status < 400) await flushNotifications(c.env)
 })
 buoyApi.onError((error, c) => {
@@ -59,6 +61,10 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.get('/api/buoy/fields',async c=>c.json(await fieldsState(c.env.DB)))
+buoyApi.post('/api/buoy/fields',async c=>c.json(await saveField(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+buoyApi.post('/api/buoy/fields/preview',async c=>c.json(await previewField(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
+buoyApi.put('/api/buoy/accounts/:id/fields',async c=>c.json(await saveValues(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
 buoyApi.get('/api/buoy/outcomes',async c=>c.json(await outcomeState(c.env.DB)))
 buoyApi.post('/api/buoy/outcomes',async c=>c.json(await startOutcome(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/outcomes/:id/report',async c=>c.json(await outcomeReport(c.env.DB,c.req.param('id'))))

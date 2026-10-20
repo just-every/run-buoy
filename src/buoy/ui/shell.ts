@@ -16,7 +16,7 @@ export interface ShellPage {
 
 const sha = async (text: string) => btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))));
 let scriptHash: Promise<string> | undefined;
-const views = [['/app', 'Accounts'], ['/app/imports', 'Imports'], ['/app/backups', 'Backups'], ['/app/notifications', 'Inbox'], ['/app/segments','Segments'], ['/app/outcomes','Outcomes']] as const;
+const views = [['/app', 'Accounts'], ['/app/imports', 'Imports'], ['/app/backups', 'Backups'], ['/app/notifications', 'Inbox'], ['/app/segments','Segments'], ['/app/outcomes','Outcomes'], ['/app/fields','Fields']] as const;
 
 export async function shell(page: ShellPage): Promise<Response> {
   const { title, state, current, status = 200, error, success, style } = page;

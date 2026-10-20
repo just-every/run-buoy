@@ -23,7 +23,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -31,6 +31,18 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(path==='/app/fields') {
+    const parse=(value:string)=>{try{return JSON.parse(value)}catch{throw new ApiError('Enter valid JSON.')}};
+    if(action==='field-preview')return {fieldPreview:await send('/api/buoy/fields/preview',parse(fields.definition))};
+    if(action==='field-definition'){
+      await send('/api/buoy/fields',{key:fields.key,label:fields.label,type:fields.type,...(['picklist','multi-select'].includes(fields.type)?{options:fields.options.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)}:{}),...(fields.type==='formula'?{formula:fields.formula}:{})});
+      return {redirect:path,message:'Field saved.',saved:'field-definition'};
+    }
+    if(action==='field-values'){
+      await send(`/api/buoy/accounts/${encodeURIComponent(fields.accountId)}/fields`,{values:parse(fields.values),revision:fields.revision,source:fields.source},'PUT');
+      return {redirect:path,message:'Field values saved.',saved:`field-values-${fields.accountId}`};
+    }
+  }
   if(path==='/app/audit') {
     if(action==='agent-issue') {
       const scopes=[['scopeList','renewals.list'],['scopePlaybook','playbook.prepare'],['scopeRenewal','renewal.prepare']].filter(([name])=>fields[name]==='on').map(([,value])=>value);

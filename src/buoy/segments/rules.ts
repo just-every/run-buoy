@@ -18,7 +18,7 @@ export function classify(value:unknown,kind:'tier'|'stage',tiers=TIERS) {
  insist(value === null || (kind==='tier'?tiers:STAGES).includes(String(value)), `Choose a valid ${kind}.`)
  return value as string|null
 }
-export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>,tiers=TIERS) {
+export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>,tiers=TIERS,fields=FIELDS) {
  keys(input,['id','revision','name','mode','rules','accountIds','tier','stage','playbook'])
  insist(input.mode==='dynamic'||input.mode==='static','Choose dynamic or static membership.')
  const rules=object(input.rules);keys(rules,['match','conditions'])
@@ -26,11 +26,11 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
  insist(Array.isArray(rules.conditions)&&rules.conditions.length<=32,'Use at most 32 conditions.')
  const conditions=rules.conditions.map(value=>{
   const c=object(value);keys(c,['field','op','value'])
-  const field=text(c.field,'Rule field',100),op=String(c.op),kind=FIELDS[field]
+  const field=text(c.field,'Rule field',100),op=String(c.op),kind=fields[field]
   insist(kind,'Choose a supported rule field.')
   insist(['eq','ne','is-missing',...(kind==='number'?['gt','gte','lt','lte']:['contains','gt','gte','lt','lte'])].includes(op),'Choose a supported rule operator.')
   if(op==='is-missing'){insist(c.value===undefined,'Missing checks take no value.');return {field,op}}
-  insist(typeof c.value===(kind==='text'?'string':'number')&&(kind!=='number'||Number.isSafeInteger(c.value)),`Rule value must be ${kind==='number'?'a safe whole number':'text'}.`)
+  insist(typeof c.value===(kind==='text'?'string':'number')&&(kind!=='number'||(field.startsWith('custom.')?Number.isFinite(c.value):Number.isSafeInteger(c.value))),`Rule value must be ${kind==='number'?(field.startsWith('custom.')?'a finite number':'a safe whole number'):'text'}.`)
   if(kind==='text')insist(String(c.value).length<=1000,'Rule text is too long.')
   return {field,op,value:c.value as string|number}
  })
