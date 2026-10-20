@@ -6,7 +6,7 @@ let fail=false,invalid=false, hold, started
 const calls=[]
 const app=await startWorker({providerFetch:async request=>{
  const url=new URL(request.url);calls.push({method:request.method,path:url.pathname,cursor:url.searchParams.get('starting_after')})
- assert.equal(request.method,'GET');assert.equal(url.pathname,'/v1/customers')
+ assert.equal(request.method,'GET','BOUNDARY-001 Stripe transport is read-only');assert.equal(url.pathname,'/v1/customers','BOUNDARY-001 fixed customer-list endpoint')
  if(hold){started();await hold}
  if(fail)return Response.json({error:{message:'private provider response '+fixtureKey}},{status:401})
  const row=(id)=>({id,object:'customer',created:1700000000,livemode:false})
