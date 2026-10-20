@@ -63,6 +63,7 @@ try{
  await call('/adoption/definitions','POST',{kind:'feature',key:'license',name:'License opened',events:['License opened']});
  await call('/adoption/seats','PUT',{accountId,seats:20,reference:'Customer-approved license schedule',observedAt:'2026-10-01',staleDays:30});
  const adoptionBefore=await call('/adoption');
+ personState=await call('/customer-people'); // Include the intended account revision from the new seat observation.
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
  const before=await call('/state'), beforeAudit=(await call('/audit')).entries
