@@ -48,7 +48,7 @@ function definitionForm(values?: Fields): string {
   return disclosure('Create a field', 'Define the value type, available choices or formula.',
     form('field-definition', '/app/fields', hidden('action', 'field-definition')
       + `<div class="form-grid">${field('key', 'Field key', v('key'))}${field('label', 'Field label', v('label'))}`
-      + `<label>Field type<select name="type" required>${Object.entries(labels).map(([type, label]) => `<option value="${escape(type)}"${v('type') === type ? ' selected' : ''}>${escape(label)}</option>`).join('')}</select></label></div>`
+      + `<div><label for="field-type">Field type</label><select id="field-type" name="type" required>${Object.entries(labels).map(([type, label]) => `<option value="${escape(type)}"${v('type') === type ? ' selected' : ''}>${escape(label)}</option>`).join('')}</select></div></div>`
       + textarea('options', 'Options (one per line; picklist and multi-select)', v('options'), false)
       + textarea('formula', 'Formula (formula fields only)', v('formula'), false, 'spellcheck="false"')
       + '<p>Formula values are calculated from account evidence and include an explanation. They cannot be edited as manual values.</p>'
@@ -102,7 +102,7 @@ export function fieldsPage(data: FieldsPage, state: State, fields?: Fields, prev
   const manage = canManage(state);
   const result = preview as Preview | undefined;
   const selected=data.accounts.find(a=>a.id===selectedAccountId)??data.accounts[0];
-  const selection=`<form method="get" action="/app/fields"><label>Account<select name="account">${data.accounts.map(a=>`<option value="${escape(a.id)}"${a.id===selected?.id?' selected':''}>${escape(a.name)}</option>`).join('')}</select></label>${button('Open account fields')}</form>`;
+  const selection=`<form method="get" action="/app/fields"><label for="field-account">Account</label><select id="field-account" name="account">${data.accounts.map(a=>`<option value="${escape(a.id)}"${a.id===selected?.id?' selected':''}>${escape(a.name)}</option>`).join('')}</select>${button('Open account fields')}</form>`;
   const accountData={...data,accounts:selected?[selected]:[],history:data.history.filter(h=>h.accountId===selected?.id)};
   return section('Custom field definitions', '<p>Typed account fields keep manual evidence and calculated values together. Formula explanations show how each calculated value was derived.</p>'
     + (data.definitions.length ? `<ul class="journal">${data.definitions.map(definition => `<li class="record"><h3>${escape(definition.label)}</h3>${definitionDetails(definition)}</li>`).join('')}</ul>` : '<p>No custom fields defined yet.</p>'))
