@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { contrast } from './a11y-contrast.mjs'
+import { resolveSymbolicLabelReviews } from './symbolic-labels.mjs'
 import { mkdir, readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
@@ -84,6 +85,7 @@ export async function scan(page, label) {
    nodes: rule.nodes.map(node => ({ target: node.target, reason: node.failureSummary })) })),
    incomplete: report.incomplete.map(rule => ({ id: rule.id, targets: rule.nodes.map(node => node.target) })) }
  })
+ result.incomplete=await resolveSymbolicLabelReviews(page,result.incomplete)
  scans++
  await mkdir('../screens', { recursive: true })
  await page.screenshot({ path: `../screens/scan-${label.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}.png`, fullPage: true, mask: [page.locator('[data-secret]'),page.getByRole('textbox', { name: 'Agent credential', exact: true })] })
