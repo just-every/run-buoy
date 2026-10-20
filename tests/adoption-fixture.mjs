@@ -12,7 +12,7 @@ export async function adoptionFixture(app,{count=30,users=10,days=90}={}){
  const names=['Harbour Software','Cedar Logistics','Coastline Analytics','Juniper Health','Northstar Labs','Brightwater Group','Summit Design','Riverbank Systems','Golden Gate Studio','Maple Services']
  for(let a=0;a<count;a++){
   const account=await api('/accounts','POST',{id:'adoption-'+a,name:names[a%names.length]+(a>=10?' '+(Math.floor(a/10)+1):''),renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Customer-approved license schedule',billing:null,support:null});accounts.push(account)
-  await api('/adoption/seats','PUT',{accountId:account.id,seats:20})
+  await api('/adoption/seats','PUT',{accountId:account.id,seats:20,reference:'Customer-approved license schedule',observedAt:'2026-10-01',staleDays:30})
   for(let u=0;u<users;u++){
    const person=await api('/customer-people','POST',{kind:'user',name:['Avery','Morgan','Casey','Jordan','Riley','Quinn','Alex','Sam','Taylor','Robin'][u]+' · '+account.name,accountIds:[account.id],source:'Reviewed customer product directory'});people.push({...person,accountId:account.id,u})
    const mapping={sourceId:source.id,userId:'user-'+a+'-'+u,groupId:'group-'+a,accountId:account.id,personId:person.id}

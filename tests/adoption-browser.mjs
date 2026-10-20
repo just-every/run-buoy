@@ -34,7 +34,7 @@ try{
     assert.equal(await page.locator('[role=alert]').count(),0)
    }
    await show('adoption-seat-settings');let form=page.locator('#adoption-seats')
-   await form.getByLabel('Seat account',{exact:true}).selectOption(accounts[0].id);await form.getByLabel('Purchased seats',{exact:true}).fill('5')
+   await form.getByLabel('Seat account',{exact:true}).selectOption(accounts[0].id);await form.getByLabel('Purchased seats',{exact:true}).fill('5');await form.getByLabel('Seat source reference',{exact:true}).fill('Customer-confirmed five-seat schedule');await form.getByLabel('Seats observed on (UTC)',{exact:true}).fill(adoptionOn);await form.getByLabel('Seat evidence stale after (UTC days)',{exact:true}).fill('30')
    await submit(page,form.getByRole('button',{name:'Save purchased seats',exact:true}))
    assert.equal((await api('/adoption?on='+adoptionOn+'&accountId='+accounts[0].id)).summary.metrics.current.utilization,2,'ADOPT-001 purchased-seat utilization is not clamped at 100%')
    await page.goto(app.origin+'/app/adoption?on='+adoptionOn+'&accountId='+accounts[0].id,{waitUntil:'networkidle'})

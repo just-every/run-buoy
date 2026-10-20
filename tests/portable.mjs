@@ -61,7 +61,7 @@ try{
  personState=await call('/customer-people');
  const usageEvents=await call('/usage/events')
  await call('/adoption/definitions','POST',{kind:'feature',key:'license',name:'License opened',events:['License opened']});
- await call('/adoption/seats','PUT',{accountId,seats:20});
+ await call('/adoption/seats','PUT',{accountId,seats:20,reference:'Customer-approved license schedule',observedAt:'2026-10-01',staleDays:30});
  const adoptionBefore=await call('/adoption');
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});

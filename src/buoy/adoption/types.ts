@@ -13,5 +13,12 @@ export interface AdoptionSubject {
  id:string;name:string;accountIds:string[];seats:number|null;metrics:AdoptionMetrics
 }
 export interface AdoptionPerson extends AdoptionSubject {kind:'contact'|'user'}
+export interface AdoptionSeatEvidence {
+ accountId:string;seats:number;sourceSystem:'manual';reference:string;observedAt:string;staleDays:number;freshness:'current'|'stale'
+}
+export interface AdoptionSeatHistory {
+ id:string;accountId:string;seats:number|null;cleared:boolean;sourceSystem:'manual';reference:string|null;
+ observedAt:string|null;staleDays:number|null;recordedBy:string;recordedAt:string
+}
 export interface AdoptionWindow {start:string;end:string}
 export interface AdoptionWindows {current:{day:AdoptionWindow;week:AdoptionWindow;month:AdoptionWindow};previous:{day:AdoptionWindow;week:AdoptionWindow;month:AdoptionWindow}}
