@@ -34,6 +34,10 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
   if(kind==='text')insist(String(c.value).length<=1000,'Rule text is too long.')
   return {field,op,value:c.value as string|number}
  })
+ for(const c of conditions)if(c.field.startsWith('custom.')&&c.field.endsWith('.amountMinor')&&c.op!=='is-missing'){
+  const currency=c.field.replace(/\.amountMinor$/,'.currency')
+  insist(rules.match==='all'&&conditions.some(other=>other.field===currency&&other.op==='eq'),'A custom money comparison needs an all-rule with its exact currency.')
+ }
  insist(input.mode==='static'||conditions.length>0,'Dynamic segments need a condition.')
  insist(Array.isArray(input.accountIds)&&input.accountIds.length<=500,'Static membership must be an account-id array.')
  const ids=input.accountIds.map(v=>text(v,'Static account',100));insist(new Set(ids).size===ids.length&&ids.every(v=>accountIds.has(v)),'Static account ids must be unique existing accounts.')

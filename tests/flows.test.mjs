@@ -445,7 +445,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   await t.test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>teamJourney({call,json,request,cookie,member,signIn,account}))
   await t.test('SEGMENT-001 rules, classification, intervals, proposals, reports and erasure',async()=>segmentJourney({call,json,request,cookie,member,account,scheduled}))
   await t.test('PLAY-004 frozen cohorts, 40 playbooks, outcomes, observed times and comparison',async()=>outcomeJourney({call,json,request,cookie,member,account,scheduled}))
-  await t.test('ACCOUNT-004 typed fields, formulas, preview, history and segments',async()=>fieldJourney({call,json,request,cookie,member,account}))
+  await t.test('ACCOUNT-004 typed fields, formulas, preview, history and segments',async()=>fieldJourney({call,json,request,cookie,member,account,signIn}))
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))

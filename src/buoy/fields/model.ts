@@ -31,7 +31,7 @@ export function fieldValue(d:Definition,value:unknown):unknown {
   case 'currency':{
    const money=object(value);insist(Object.keys(money).length===2&&Object.hasOwn(money,'currency')&&Object.hasOwn(money,'amountMinor'),'Currency fields need currency and amountMinor.')
    insist(typeof money.currency==='string'&&minorUnitDigits(money.currency)!==undefined,'Use a supported ISO 4217 currency code.')
-   insist(Number.isSafeInteger(money.amountMinor),'Currency amountMinor must be a safe whole number.');return money
+   insist(Number.isSafeInteger(money.amountMinor)&&Number(money.amountMinor)>=0,'Currency amountMinor must be a nonnegative safe whole number.');return money
   }
   default:insist(false,'Calculated values cannot be entered by hand.')
  }
