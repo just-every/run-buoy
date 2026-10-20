@@ -83,7 +83,7 @@ When the owner links an OpenID sign-in provider during setup, people can sign in
 
 ## Not connected yet
 
-Buoy connects to no billing, CRM, support, product-usage, mailbox, calendar, chat, survey or model provider yet. Billing and support evidence is entered by hand or moved in from a file. Each connector adds its section to this guide, with its data flows and terms, before it ships.
+Buoy makes no outbound calls to billing, CRM, support, product-usage, mailbox, calendar, chat, survey or model providers yet. Incoming product observations are described below. Billing and support evidence is entered by hand or moved in from a file. Each connector adds its section to this guide, with its data flows and terms, before it ships.
 
 ## Incoming product observations
 
