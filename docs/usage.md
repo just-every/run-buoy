@@ -70,9 +70,8 @@ const usage = new BuoyUsage({ relay: '/product-usage' })
 await usage.track({ event: 'Report downloaded' })
 ```
 
-Install `sdk/relay.mjs` on your product backend. `createUsageRelay({ client,
-authenticate })` returns a standard Fetch request handler. Pass the server SDK as
-`client`. Your `authenticate(request)` must check your real product session and
+Install `sdk/relay.mjs` on your product backend. `createUsageRelay` returns a standard Fetch request handler. Pass the server SDK
+as its `client` option and your session checker as its `authenticate` option. Your `authenticate(request)` must check your real product session and
 return its authorized `{ userId, groupId }` membership (groupId can be omitted for
 an ungrouped user), or null for an unauthenticated request. These are product IDs,
 not Buoy staff sessions. Mount the handler at your browser client's relay path.
@@ -91,14 +90,14 @@ counts, without claiming attribution or delivery.
 
 Owner/admin management uses the installation's existing session and exact Origin:
 
-| Door under `/api/buoy` | Purpose |
-| --- | --- |
-| `GET /usage` | Sources, credential metadata and first 200 pending claim groups; any limit is labelled |
-| `POST /usage/sources` | Add name, kind (`segment`/`native`), reference and staleDays |
-| `PUT /usage/sources/:id` | Edit the source configuration |
-| `POST /usage/sources/:id/credentials` | Issue label and allowed type scope, returning the secret once |
-| `DELETE /usage/credentials/:id` | Revoke intake authority |
-| `GET /usage/events` | Paginated original observations and per-event freshness |
+All paths below are under `/api/buoy`:
+
+- `GET /usage`: sources, credential metadata and first 200 pending claim groups; any limit is labelled.
+- `POST /usage/sources`: add name, kind (segment/native), reference and staleDays.
+- `PUT /usage/sources/:id`: edit source configuration.
+- `POST /usage/sources/:id/credentials`: issue label and allowed type scope, returning the secret once.
+- `DELETE /usage/credentials/:id`: revoke intake authority.
+- `GET /usage/events`: paginated original observations and per-event freshness.
 
 Event filters are sourceId, userId, groupId and messageId; `limit` is 1–200 and
 `cursor` continues the returned page. All rows have review status. Members and
