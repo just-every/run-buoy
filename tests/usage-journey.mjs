@@ -114,6 +114,9 @@ export async function usageJourney({call,json,request,cookie,member,signIn,dispa
  assert.equal(mapped.events[0].personId,people[1].id)
  await mappedSdk.track(message('unknown-after-mapping','track','user-1','unreviewed-group'))
  assert.equal((await json(await call('/usage/events?sourceId='+source.id+'&messageId=unknown-after-mapping'))).events[0].status,'review')
+ const incompatible={...claim(2),groupId:'group-0'};
+ assert.equal((await call('/usage/mappings/preview','POST',incompatible)).status,409,'USAGE-001 reviewed source groups cannot split across accounts');
+ assert.ok((await json(await call('/audit?action=account.usage-refreshed'))).entries.some(e=>e.actor==='usage-source:'+source.id),'AUDIT-001 attributed source refresh records its source actor');
  const accountEvidence=await json(await call('/accounts/usage-account-1/usage'))
  assert.equal(accountEvidence.sources[0].eventCount,1981);assert.equal(accountEvidence.sources[0].sourceSystem,'segment');assert.equal(accountEvidence.sources[0].sourceReference,'Segment workspace Northstar / web')
  assert.equal(accountEvidence.sources[0].freshness,'current');assert.ok(Date.parse(accountEvidence.sources[0].receivedAt))

@@ -27,6 +27,11 @@ CREATE TABLE buoy_customer_value_sources (
  field_key TEXT NOT NULL, account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,
  PRIMARY KEY(person_id,field_key,account_id)
 );
+CREATE TABLE buoy_customer_result_accounts (
+ person_id TEXT NOT NULL REFERENCES buoy_customer_people(id) ON DELETE CASCADE,
+ field_key TEXT NOT NULL, account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,
+ PRIMARY KEY(person_id,field_key,account_id)
+);
 CREATE TABLE buoy_customer_history (
  id TEXT PRIMARY KEY, person_id TEXT NOT NULL REFERENCES buoy_customer_people(id) ON DELETE CASCADE,
  field_key TEXT NOT NULL, old_value TEXT NOT NULL CHECK(json_valid(old_value)),
@@ -62,7 +67,7 @@ CREATE TRIGGER buoy_customer_account_erasure BEFORE DELETE ON buoy_accounts BEGI
   SELECT json_group_object(j.key,CASE WHEN j.type IN ('array','object') THEN json(j.value)
    WHEN j.type='true' THEN json('true') WHEN j.type='false' THEN json('false') ELSE j.value END)
   FROM json_each(buoy_customer_results.document) j
-  WHERE NOT EXISTS (SELECT 1 FROM buoy_customer_fields f WHERE f.key=j.key AND json_extract(f.document,'$.type')='formula')
+  WHERE NOT EXISTS (SELECT 1 FROM buoy_customer_result_accounts r WHERE r.person_id=buoy_customer_results.person_id AND r.field_key=j.key AND r.account_id=OLD.id)
    AND NOT EXISTS (SELECT 1 FROM buoy_customer_value_sources s WHERE s.person_id=buoy_customer_results.person_id AND s.field_key=j.key AND s.account_id=OLD.id)
  );
  UPDATE buoy_customer_people SET revision=lower(hex(randomblob(16)))

@@ -17,7 +17,7 @@ export async function savePerson(db:D1Database,actor:Actor,input:Record<string,u
  accountIds.sort()
  // Kind is an identity boundary for explicit reviewed product mappings.
  if(prior)insist(prior.kind===input.kind,'A customer person kind cannot change; create the other kind explicitly.')
- const person:PersonRow={id:prior?.id??id(),kind:input.kind,name,accountIds,revision:id(),createdAt:prior?.createdAt??now(),manual:prior?.manual??{},previous:prior?.previous??{}}
+ const person:PersonRow={id:prior?.id??id(),kind:input.kind,name,accountIds,revision:id(),createdAt:prior?.createdAt??now(),manual:prior?.manual??{},previous:prior?.previous??{},valueAccounts:prior?.valueAccounts,previousAccounts:prior?.previousAccounts}
  const image={...data.value,records:[...data.value.records.filter(item=>item.id!==person.id),person].sort((a,b)=>a.id.localeCompare(b.id))}
  const history:HistoryChange[]=[],custody=[...new Set([...accountIds,...prior?.accountIds??[]])]
  for(const key of ['kind','name','accountIds'] as const){

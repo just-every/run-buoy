@@ -1,11 +1,10 @@
 # Product usage intake
 
-USAGE-001 is **partial**. Buoy receives Segment track, identify and group messages
-and native events, deduplicates them and retains them for administrator review.
-Every observation is currently unassigned. Contact/user records, mapping approvals
-and account attribution remain unavailable until their ACCOUNT-004 typed fields,
-formulas, real-account preview, explanations, history and segment inputs ship.
-No raw identity claim becomes a lighter contact or user record.
+Buoy receives Segment track, identify and group messages and native events,
+deduplicates them and retains unknown or conflicting claims for administrator review.
+[Customer contacts and users](people.md) have typed fields, formulas, previews,
+explanations, history and segment inputs. Create their explicit account memberships
+before reviewing a source identity. Staff sign-ins are separate and never targets.
 
 ## Configure a server source
 
@@ -16,8 +15,8 @@ source and those types only; it grants no account read, staff session or agent
 command. The page records creator, type scope, creation and last-use times. Revoke
 it on the same page to stop the next intake transaction, within one minute.
 Credentials, including their stored hashes, are excluded from installation
-archives; restored installations need newly issued credentials. Source settings
-and queued observations survive archives.
+archives; restored installations need newly issued credentials. Source settings, customer records, fields, history, reviewed mappings and observations
+survive archives.
 
 The receiver accepts a JSON message or `{ "batch": [messages] }` at
 `POST /api/buoy/usage/intake/:sourceId`, with the source credential in the HTTP
@@ -83,10 +82,10 @@ replace the callback with permissive identity or cookie-presence checks.
 The receiver itself refuses Origin and browser site/destination/user metadata;
 server Fetch's `Sec-Fetch-Mode` alone is allowed. The browser module refuses raw
 intake URLs and credential options. The server relay holds the secret and forwards
-using a fresh server request. A receipt reports received/accepted/duplicate/review
-counts, without claiming attribution or delivery.
+using a fresh server request. A receipt reports received, accepted, duplicate and stored counts. Storage does not
+claim delivery. Read the reviewed attribution separately.
 
-## Inspect the pending queue
+## Review and attribute identities
 
 Owner/admin management uses the installation's existing session and exact Origin:
 
@@ -97,9 +96,23 @@ All paths below are under `/api/buoy`:
 - `PUT /usage/sources/:id`: edit source configuration.
 - `POST /usage/sources/:id/credentials`: issue label and allowed type scope, returning the secret once.
 - `DELETE /usage/credentials/:id`: revoke intake authority.
-- `GET /usage/events`: paginated original observations and per-event freshness.
+- `GET /usage/events`: paginated original observations, per-event freshness and reviewed attribution.
+- `POST /usage/mappings/preview`: review an exact sourceId/userId/groupId claim with accountId and personId (null for a group-only claim); returns the target, retained event count and fingerprint without writing.
+- `POST /usage/mappings`: approve that exact input and fingerprint. Changed targets, membership or retained evidence require another preview.
+- `GET /accounts/:id/usage`: staff-readable account evidence with source/reference, observation and receipt instants, count and freshness.
 
-Event filters are sourceId, userId, groupId and messageId; `limit` is 1–200 and
-`cursor` continues the returned page. All rows have review status. Members and
-agents cannot read or manage this queue. No contact/user or mapping mutation door
-is shipped. Original copies remain with the source/relay; Buoy does not erase them.
+Event filters are sourceId, userId, groupId, messageId, accountId and personId; `limit` is 1–200 and
+`cursor` continues the returned page. Rows are review or attributed. Members and agents cannot manage this queue;
+staff read account-level usage under the existing account read rules. On **Usage**,
+choose an account and an explicitly linked customer person for a pending claim,
+preview it, inspect its exact IDs and target, then approve it. This assigns retained
+and future observations with that exact combination. The same source user cannot
+map to different people and the same source group cannot map to different accounts.
+Different source/user/group combinations require separate review, even when another
+combination is already known. No mapping creates or changes a person or membership.
+Removing membership puts its observations back in review; explicit membership must
+hold for attribution. New attributed observations advance the account revision;
+duplicates retain the first payload without refreshing it. Account pages distinguish
+missing usage from current/stale evidence. Account erasure removes its reviewed
+mappings and their attributed raw observations. Original copies remain with the
+source/relay; Buoy does not erase those external copies.

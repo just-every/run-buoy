@@ -27,8 +27,9 @@ function formulaInputs(person:PersonRow,values:Record<string,unknown>){
  }
  return flat
 }
-export function evaluatePeople(image:PeopleImage){
+export function calculatePeople(image:PeopleImage){
  const formulas=orderedPeople(image.definitions)
+ const custody:Record<string,Record<string,string[]>>=Object.fromEntries(image.records.map(person=>[person.id,Object.fromEntries(image.definitions.filter(d=>d.type!=='formula').map(d=>[d.key,person.valueAccounts?.[d.key]??person.accountIds]))]))
  const records=image.records.map(person=>({id:person.id,kind:person.kind,name:person.name,accountIds:person.accountIds,revision:person.revision,createdAt:person.createdAt,
   values:Object.fromEntries(image.definitions.filter(d=>d.type!=='formula').map(d=>[d.key,person.manual[d.key]??null])),explanations:{} as Record<string,string>}))
  for(const d of formulas){
@@ -36,10 +37,19 @@ export function evaluatePeople(image:PeopleImage){
   for(let index=0;index<records.length;index++){
    const result=evaluateFormula(d.formula!,portfolio[index],portfolio)
    records[index].values[d.key]=result.value;records[index].explanations[d.key]=result.explanation
+   const accounts=new Set(image.records[index].accountIds)
+   for(const [path,input] of Object.entries(result.inputs)){
+    const aggregate=/^portfolio\.(sum|avg|count)\(([^)]+)\)$/.exec(path)
+    const sources=aggregate&&Array.isArray(input)?input.map(row=>image.records.find(person=>person.id===(row as {accountId?:string}).accountId)).filter((person):person is PersonRow=>!!person):[image.records[index]]
+    const field=(aggregate?.[2]??path).split('.')
+    for(const source of sources)for(const accountId of field[0]==='custom'?custody[source.id][field[1]]??source.accountIds:source.accountIds)accounts.add(accountId)
+   }
+   custody[records[index].id][d.key]=[...accounts]
   }
  }
- return records
+ return {records,custody}
 }
+export function evaluatePeople(image:PeopleImage){return calculatePeople(image).records}
 export function withPersonDefinition(image:PeopleImage,input:Record<string,unknown>){
  const d=definition(input),prior=image.definitions.find(item=>item.key===d.key)
  insist(prior||image.definitions.length<100,'At most 100 customer fields are supported.')

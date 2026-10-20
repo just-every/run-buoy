@@ -50,3 +50,8 @@ Current account fields are complete. ACCOUNT-001 adds users and contacts plus
 hierarchy/relationship rollups; RENEW-001/RENEW-002 add opportunities; ACCOUNT-006
 adds custom objects. Each must carry these types, formulas, preview, explanation,
 history and segment-input obligations through its new record kinds before shipping.
+
+Customer contacts and product users use the same field types, formula semantics,
+explanations and change history through [Customer people](people.md). Their typed
+segment paths are `people.contact.*` and `people.user.*`; conjunctions for one kind
+must be satisfied by the same related record, including currency and amount.

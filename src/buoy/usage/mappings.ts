@@ -8,7 +8,7 @@ export const MAPPED_JOIN=`LEFT JOIN buoy_usage_mappings m ON m.source_id=e.sourc
 export const ATTRIBUTED=`m.account_id IS NOT NULL AND (e.user_id IS NULL OR (p.id IS NOT NULL AND cm.person_id IS NOT NULL))`
 export const CLAIM_KEY=(userId:string|null,groupId:string|null)=>JSON.stringify([userId,groupId])
 function claimId(value:unknown,label:string){
- insist(value===null||(typeof value==='string'&&value.length>0&&value.length<=500&&!/[\u0000-\u001f]/.test(value)),`${label} must be an exact source ID or null.`)
+ insist(value===null||(typeof value==='string'&&value.trim().length>0&&value.length<=200),`${label} must be an exact source ID or null.`)
  return value as string|null
 }
 async function mappingImage(db:D1Database,input:Record<string,unknown>){

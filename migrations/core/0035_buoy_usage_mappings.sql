@@ -14,3 +14,9 @@ CREATE TRIGGER buoy_usage_account_erasure BEFORE DELETE ON buoy_accounts BEGIN
    AND m.user_id IS buoy_usage_events.user_id AND m.group_id IS buoy_usage_events.group_id AND m.account_id=OLD.id
  );
 END;
+-- Cascading customer deletion and account erasure retire raw mapped custody
+-- regardless of the order in which account BEFORE DELETE triggers run.
+CREATE TRIGGER buoy_usage_mapping_erasure BEFORE DELETE ON buoy_usage_mappings BEGIN
+ DELETE FROM buoy_usage_events WHERE source_id=OLD.source_id
+  AND user_id IS OLD.user_id AND group_id IS OLD.group_id;
+END;

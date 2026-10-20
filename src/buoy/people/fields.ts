@@ -14,7 +14,7 @@ export async function savePersonField(db:D1Database,actor:Actor,input:Record<str
  const data=await peopleImage(db),next=withPersonDefinition(data.value,input)
  await writePeople(db,actor,data.raw,[
   stmt(db,'INSERT INTO buoy_customer_fields(key,document,revision) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET document=excluded.document,revision=excluded.revision',next.definition.key,JSON.stringify(next.definition),id()),
-  ...peopleChanges(db,actor,next.image,`Customer field definition ${next.definition.key}`),auditRecord(db,actor,'customer-field.saved',`customer-field:${next.definition.key}`)
+  ...peopleChanges(db,actor,next.image,`Customer field definition ${next.definition.key}`,undefined,undefined,true),auditRecord(db,actor,'customer-field.saved',`customer-field:${next.definition.key}`)
  ])
  return {key:next.definition.key}
 }
@@ -29,11 +29,12 @@ export async function savePersonValues(db:D1Database,actor:Actor,personId:string
  for(const [key,value] of Object.entries(raw)){
   const d=data.value.definitions.find(item=>item.key===key);insist(d,'Unknown customer field.');values[key]=fieldValue(d,value)
  }
- const image={...data.value,records:data.value.records.map(item=>item.id===personId?{...item,manual:values}:item)}
  const custody=sourceAccountId?[sourceAccountId]:person.accountIds
+ const image={...data.value,records:data.value.records.map(item=>item.id===personId?{...item,manual:values,valueAccounts:Object.fromEntries(Object.keys(values).map(key=>[key,custody]))}:item)}
  const sources=Object.keys(values).flatMap(key=>custody.map(accountId=>({key,accountId})))
  await writePeople(db,actor,data.raw,[
   stmt(db,'INSERT INTO buoy_customer_values(person_id,document) VALUES(?,?) ON CONFLICT(person_id) DO UPDATE SET document=excluded.document',personId,JSON.stringify(values)),
+  stmt(db,'UPDATE buoy_customer_people SET revision=? WHERE id=?',id(),personId),
   stmt(db,'DELETE FROM buoy_customer_value_sources WHERE person_id=?',personId),
   stmt(db,"INSERT INTO buoy_customer_value_sources(person_id,field_key,account_id) SELECT ?,json_extract(value,'$.key'),json_extract(value,'$.accountId') FROM json_each(?)",personId,JSON.stringify(sources)),
   ...peopleChanges(db,actor,image,source,personId,sourceAccountId),auditRecord(db,actor,'customer-person.fields-changed',`customer-person:${personId}`)
