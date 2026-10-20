@@ -59,11 +59,12 @@ try{
    await page.goto(app.origin+'/app/accounts/'+account.id,{waitUntil:'networkidle'});await scan(page,`USAGE-001 account missing usage ${width}`);
    if(evidence)await page.screenshot({path:join(evidence,`usage-account-missing-${width}.png`),fullPage:true});
    const customer=await api('/customer-people','POST',{kind:'user',name:'Morgan customer '+width,accountIds:[account.id],source:'Customer product membership directory'})
-   await page.reload({waitUntil:'networkidle'})
+   await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'})
    const claim=page.locator('#usage-review > li').filter({hasText:'Raw/User '+width}).locator('form')
    await claim.getByLabel('Account',{exact:true}).selectOption(account.id)
    await claim.getByLabel('Customer contact or user',{exact:true}).selectOption(customer.id)
    await submit(page,claim.getByRole('button',{name:'Preview exact mapping',exact:true}))
+   const shown=JSON.parse(await page.locator('#usage-mapping-preview pre').textContent());assert.equal(shown.sourceId,source.id);assert.equal(shown.userId,' Raw/User '+width+' ');assert.equal(shown.groupId,' Raw/Group '+width+' ');
    assert.equal((await call()).mappings.filter(m=>m.sourceId===source.id).length,0)
    await scan(page,`USAGE-001 exact mapping preview ${width}`)
    if(evidence){await page.screenshot({path:join(evidence,`usage-preview-${width}.png`),fullPage:true});await page.locator('#usage-mapping-preview').screenshot({path:join(evidence,`usage-preview-panel-${width}.png`)})}
