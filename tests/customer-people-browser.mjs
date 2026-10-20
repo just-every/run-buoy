@@ -111,7 +111,7 @@ try{
    await show('create-segment');form=page.locator('#segment-create')
    const segmentName='Customer license utilization '+width
    await form.getByLabel('Segment name',{exact:true}).fill(segmentName)
-   await form.getByLabel('Rule conditions (JSON array; dynamic mode)',{exact:true}).fill(JSON.stringify([{field:'people.contact.custom.'+ratio.key,op:'gt',value:.7}]))
+   await form.locator('[name=conditions]').fill(JSON.stringify([{field:'people.contact.custom.'+ratio.key,op:'gt',value:.7}]))
    await save(form,'Create segment')
    const segment=(await call('/segments')).segments.find(item=>item.name===segmentName)
    assert.deepEqual(segment.members.map(item=>item.accountId).sort(),[accounts[0].id,accounts[1].id].sort(),'ACCOUNT-004 SEGMENT-001 real form consumes fractional contact formula inputs')
