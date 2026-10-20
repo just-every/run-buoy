@@ -448,6 +448,12 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   await t.test('SEGMENT-001 rules, classification, intervals, proposals, reports and erasure',async()=>segmentJourney({call,json,request,cookie,member,account,scheduled}))
   await t.test('PLAY-004 frozen cohorts, 40 playbooks, outcomes, observed times and comparison',async()=>outcomeJourney({call,json,request,cookie,member,account,scheduled}))
   await t.test('ACCOUNT-004 typed fields, formulas, preview, history and segments',async()=>fieldJourney({call,json,request,cookie,member,account,signIn}))
+  await t.test('CONNECT-001 disconnected source lifecycle never reaches a provider',async()=>{
+   const source=await json(await call('/connections','POST',{name:'Disconnected test inventory',key:['rk','test','flowFixtureOnly'].join('_')}),201)
+   await json(await call('/connections/'+source.id+'/credential','PUT',{key:['rk','test','flowReplacementOnly'].join('_')}))
+   await json(await call('/connections/'+source.id,'DELETE',{}))
+   assert.equal((await call('/connections/'+source.id+'/sync','POST',{})).status,409)
+  })
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))

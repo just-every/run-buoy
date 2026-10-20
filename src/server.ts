@@ -1,3 +1,4 @@
+import { scheduledConnections } from './buoy/connectors/sync'
 import { importDoorResponse } from './buoy/imports/door'
 import { scheduledSegments } from './buoy/segments'
 import { withDemo } from './modules/demo/index.mjs'
@@ -51,6 +52,7 @@ export default withDemo({
   // PLAY-002: hourly task reminders and escalations (triggers.crons in wrangler.jsonc and deploy.json).
   async scheduled(controller, env) {
     const at = new Date(controller.scheduledTime)
+    await scheduledConnections(runtimeBindings(env))
     await scheduledSegments(env.DB, at)
     await runReminders(runtimeBindings(env), at)
     await runNotifications(runtimeBindings(env), at)

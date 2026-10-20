@@ -52,6 +52,8 @@ try{
  const usageIntake=()=>fetch(running.origin+'/api/buoy/usage/intake/'+usageSource.id,{method:'POST',headers:{authorization:'Bearer '+usageCredential.secret,'content-type':'application/json'},body:JSON.stringify({type:'event',messageId:'portable-usage',event:'License opened',userId:'product-user',groupId:'product-company'})})
  assert.equal((await usageIntake()).status,202)
  const usageEvents=await call('/usage/events')
+ // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
+ const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
  const before=await call('/state'), beforeAudit=(await call('/audit')).entries
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
  assert.doesNotMatch(JSON.stringify(beforeAudit),/Retired account|erase-before-backup|example\.test|Ana Lyst|Harbour CS owner/,'AUDIT-001 erased account and people stay unnamed')
@@ -69,6 +71,10 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,directory:join(destination,'.wrangler/state'),keep:true})
  const after=await call('/state')
+ const restoredConnection=(await call('/connections')).connections.find(row=>row.id===connection.id)
+ assert.equal(restoredConnection.name,'Portable Stripe source')
+ assert.equal(restoredConnection.freshness,'Reconnect required','CONNECT-001 restores retain metadata without credential authority')
+ assert.equal((await running.request('/api/buoy/connections/'+connection.id+'/sync',{cookie:running.cookie,method:'POST',body:{}})).status,409)
  const restored=(await call('/audit')).entries, added=restored.filter(entry=>!beforeAudit.some(prior=>prior.id===entry.id))
  assert.deepEqual(restored.filter(entry=>!added.includes(entry)),beforeAudit,'AUDIT-001 archive preserves exactly the audit entries shown before export')
  assert.deepEqual(added.map(entry=>[entry.action,entry.actor.replace(/[0-9a-f-]{36}$/,'id'),entry.detail]),[['auth.signed-in','person:id','native session issued'],['data.exported','portability:direct','Installation archive snapshot taken; delivery of the file is not recorded.']],'AUDIT-001 the export is recorded, and the destination records its own bootstrap sign-in')

@@ -1,3 +1,4 @@
+import { connectionsPage,type ConnectionsPage } from './connections';
 import {usagePage,type UsagePage,type UsageCredential} from './usage';
 import {fieldsPage,type FieldsPage} from './fields';
 import {agentsPage,type AgentPage,type AgentCredential} from './agents';
@@ -35,9 +36,9 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   let accountId: string | undefined;
   try { accountId = match ? decodeURIComponent(match[1]) : undefined; } catch { /* The shell below renders a 404. */ }
   const account = accountId ? state.accounts.find(item => item.id === accountId) : undefined;
-  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && path !== '/app/team' && path !== '/app/segments' && path !== '/app/outcomes' && path !== '/app/fields' && path !== '/app/usage' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
+  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && path !== '/app/team' && path !== '/app/segments' && path !== '/app/outcomes' && path !== '/app/fields' && path !== '/app/usage' && path !== '/app/connections' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
   if (path === '/app/imports' && state.operator.role !== 'owner') return shell({ title: 'Owner access required', body: section('Owner access required', '<p>Only the owner can import accounts or manage Business imports.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
-  if ((path === '/app/audit' || path === '/app/team' || path === '/app/usage') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
+  if ((path === '/app/audit' || path === '/app/team' || path === '/app/usage' || path === '/app/connections') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
   let usageCredential:UsageCredential|undefined;
   let fieldPreview:unknown;
   let agentCredential:AgentCredential|undefined;
@@ -68,7 +69,8 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   const open = url.searchParams.has('open') ? (url.searchParams.get('open') === 'none' ? null : url.searchParams.get('open')) : undefined;
   const today = new Date().toISOString().slice(0, 10);
   let title = 'Renewals', body: string, head: string | undefined, style: string | undefined;
-  if(path==='/app/usage'){title='Usage intake';body=usagePage(await apiCall<UsagePage>(api,request,'/api/buoy/usage'),state,fields,usageCredential);
+  if(path==='/app/connections'){title='Connections';body=connectionsPage(await apiCall<ConnectionsPage>(api,request,'/api/buoy/connections'));
+  } else if(path==='/app/usage'){title='Usage intake';body=usagePage(await apiCall<UsagePage>(api,request,'/api/buoy/usage'),state,fields,usageCredential);
   } else if(path==='/app/fields'){title='Custom fields';body=fieldsPage(await apiCall<FieldsPage>(api,request,'/api/buoy/fields'),state,fields,fieldPreview,url.searchParams.get('account')??fields?.accountId);
   } else if(path==='/app/outcomes') {
     title='Playbook outcomes';body=outcomesPage(await apiCall<OutcomesPage>(api,request,'/api/buoy/outcomes'),state,fields);

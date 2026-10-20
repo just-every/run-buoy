@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 
-export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true, secure = true } = {}) {
+export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true, secure = true, providerFetch } = {}) {
  const require = createRequire(await realpath(join(root, 'node_modules/wrangler/package.json')))
  const { Miniflare, convertV4MiniflareOptions } = require('miniflare')
  const { unstable_splitSqlQuery: splitSql } = require('wrangler')
@@ -27,6 +27,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   d1Databases: {DB:'foundation'}, bindings:vars,
   outboundService: async request => {
    outbound.push(request.url)
+   if(providerFetch&&new URL(request.url).hostname==='api.stripe.com')return providerFetch(request)
    assert.equal(request.url, 'https://api.resend.com/emails')
    mails.push(await request.json())
    return Response.json(mailStatus === 200 ? {id:`provider-receipt-${mails.length}`} : {error:'test provider failure'}, {status:mailStatus})

@@ -1,3 +1,4 @@
+import { connectionsApi } from './connectors'
 import {usageIngest,usageAdmin} from './usage';
 import {fieldsState,saveField,saveValues,previewField,refreshFields} from './fields'
 import { startOutcome } from './outcomes'
@@ -64,6 +65,7 @@ buoyApi.onError((error, c) => {
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
 buoyApi.route('/',usageAdmin)
+buoyApi.route('/',connectionsApi)
 buoyApi.get('/api/buoy/fields',async c=>c.json(await fieldsState(c.env.DB)))
 buoyApi.post('/api/buoy/fields',async c=>c.json(await saveField(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.post('/api/buoy/fields/preview',async c=>c.json(await previewField(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))

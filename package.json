@@ -17,7 +17,7 @@
     "test:email-link": "rer queue test:email-link -- sh -c \"node tests/email-link.mjs\"",
     "onboard": "node scripts/install.mjs",
     "build:app": "rer queue build:app -- sh -c \"vite build\"",
-    "verify:app": "pnpm run build && pnpm run build:site && pnpm run typecheck && pnpm run test:site && pnpm run test:style && pnpm run test:flows && pnpm run test:notifications && pnpm run test:teams && pnpm run test:segments && pnpm run test:outcomes && pnpm run test:runway-keyboard && pnpm run test:governance && pnpm run test:governance-browser && pnpm run test:a11y && pnpm run test:fields-browser && pnpm run test:usage-browser && pnpm run test:boundary && pnpm run test:email-link && pnpm run test:portable",
+    "verify:app": "pnpm run build && pnpm run build:site && pnpm run typecheck && pnpm run test:site && pnpm run test:style && pnpm run test:flows && pnpm run test:notifications && pnpm run test:teams && pnpm run test:segments && pnpm run test:outcomes && pnpm run test:runway-keyboard && pnpm run test:governance && pnpm run test:governance-browser && pnpm run test:a11y && pnpm run test:fields-browser && pnpm run test:connections && pnpm run test:connections-browser && pnpm run test:usage-browser && pnpm run test:boundary && pnpm run test:email-link && pnpm run test:portable",
     "reset": "rer reset",
     "export": "rer export",
     "import": "rer import",
@@ -43,7 +43,9 @@
     "test:governance-browser": "node tests/governance-browser.mjs",
     "test:fields-browser": "node tests/fields-browser.mjs",
     "test:a11y": "node tests/a11y.mjs",
-    "test:usage-browser": "node tests/usage-browser.mjs"
+    "test:usage-browser": "node tests/usage-browser.mjs",
+    "test:connections": "node tests/connections.mjs",
+    "test:connections-browser": "node tests/connections-browser.mjs"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.41",

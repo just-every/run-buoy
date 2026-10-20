@@ -83,7 +83,7 @@ When the owner links an OpenID sign-in provider during setup, people can sign in
 
 ## Not connected yet
 
-Buoy makes no outbound calls to billing, CRM, support, product-usage, mailbox, calendar, chat, survey or model providers yet. Incoming product observations are described below. Billing and support evidence is entered by hand or moved in from a file. Each connector adds its section to this guide, with its data flows and terms, before it ships.
+Except for the Stripe test-mode customer-ID inventory below, Buoy makes no outbound calls to billing, CRM, support, product-usage, mailbox, calendar, chat, survey or model providers yet. Incoming product observations are described below. Billing and support evidence is entered by hand or moved in from a file. Each connector adds its section to this guide, with its data flows and terms, before it ships.
 
 ## Incoming product observations
 
@@ -93,3 +93,13 @@ Buoy makes no outbound calls to billing, CRM, support, product-usage, mailbox, c
 - **Sends:** the source sends message IDs, product user/group claims, event names, timestamps, properties and traits to your Worker and D1. All observations remain unassigned in review; no contact/user records or staff links are created.
 - **Receives:** the sender receives storage, duplicate and review counts or an error. Browser clients send only to the buyer's authenticated product relay; its server holds the intake secret.
 - **Terms:** [Twilio Segment terms](https://segment.com/legal/terms/) and [Twilio data protection addendum](https://www.twilio.com/en-us/legal/data-protection-addendum). Source and relay copies remain external holders.
+
+## Stripe test-mode inventory
+
+### Stripe
+
+- **When:** an owner or administrator adds a test-mode connection at `/app/connections`, starts a page sync, or its hourly reconciliation runs. Use a restricted test key with customer-read permission.
+- **Sends:** a GET request to Stripe’s customer-list API with the server-held credential, page size and saved pagination cursor. No write request reaches Stripe.
+- **Receives:** test customer IDs and creation instants. Buoy stores only those source references, run counts, cursor, errors and last-success time; it creates no accounts, contacts, billing observations or identity mappings. The page honestly labels failed, disconnected, never-synced and stale sources. This is a partial CONNECT-001 implementation: webhooks, notices and account-confidence propagation remain unavailable.
+- **Credential custody:** AES-GCM ciphertext uses a domain-separated key derived from the installation session secret and the connection ID as authenticated context. The credential table is excluded from archives; restores and session-secret rotation require reconnecting. Keys are never echoed by forms, status reads, audit or run errors. Disconnect deletes local ciphertext; it does not revoke the key at Stripe.
+- **Terms:** [Stripe Services Agreement](https://stripe.com/legal/ssa), [Stripe Data Processing Agreement](https://stripe.com/legal/dpa), [customer-list API](https://docs.stripe.com/api/customers/list).

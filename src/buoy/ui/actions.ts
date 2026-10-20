@@ -33,6 +33,14 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(path==='/app/connections'){
+    if(action==='connection-add')await send('/api/buoy/connections',{name:fields.name,key:fields.key});
+    else if(action==='connection-key')await send('/api/buoy/connections/'+encodeURIComponent(fields.id)+'/credential',{key:fields.key},'PUT');
+    else if(action==='connection-sync')await send('/api/buoy/connections/'+encodeURIComponent(fields.id)+'/sync',{});
+    else if(action==='connection-disconnect')await send('/api/buoy/connections/'+encodeURIComponent(fields.id),{},'DELETE');
+    else throw new ApiError('This connection action is not available.');
+    return {redirect:path,message:action==='connection-sync'?'Sync attempt recorded. Check its result below.':'Connection updated.'};
+  }
   if(path==='/app/usage')return mutateUsage(api,request,fields);
   if(path==='/app/fields') {
     const parse=(value:string)=>{try{return JSON.parse(value)}catch{throw new ApiError('Enter valid JSON.')}};
