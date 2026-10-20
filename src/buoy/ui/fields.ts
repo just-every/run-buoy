@@ -18,7 +18,7 @@ const labels: Record<FieldType, string> = {
   'multi-select': 'Multi-select', boolean: 'Boolean', formula: 'Formula',
 };
 const json = (value: unknown) => JSON.stringify(value, null, 2);
-const accountLink = (id: string, name: string) => `<a href="/app/accounts/${pathId(id)}">${escape(name)}</a>`;
+const accountLink = (id: string, name: string, target = false) => `<a${target ? ' class="button secondary"' : ''} href="/app/accounts/${pathId(id)}">${escape(name)}</a>`;
 const timestamp = (value: string) => `<time datetime="${escape(value)}">${escape(value)}</time>`;
 const rawValue = (value: unknown) => value === undefined ? 'Not recorded' : `<code>${escape(JSON.stringify(value))}</code>`;
 
@@ -107,6 +107,6 @@ export function fieldsPage(data: FieldsPage, state: State, fields?: Fields, prev
   return section('Custom field definitions', '<p>Typed account fields keep manual evidence and calculated values together. Formula explanations show how each calculated value was derived.</p>'
     + (data.definitions.length ? `<ul class="journal">${data.definitions.map(definition => `<li class="record"><h3>${escape(definition.label)}</h3>${definitionDetails(definition)}</li>`).join('')}</ul>` : '<p>No custom fields defined yet.</p>'))
     + (manage ? definitionForm(fields) + previewForm(fields, result) + (result ? previewResult(data, result) : '') : '')
-    + section('Account field values', selection + (accountData.accounts.length ? `<ul class="journal">${accountData.accounts.map(account => `<li class="record"><h3>${accountLink(account.id, account.name)}</h3>${valueList(data.definitions, account)}${manage ? valueForm(data, account, fields) : ''}</li>`).join('')}</ul>` : '<p>No accessible accounts.</p>'))
+    + section('Account field values', selection + (accountData.accounts.length ? `<ul class="journal">${accountData.accounts.map(account => `<li class="record"><h3>${accountLink(account.id, account.name, true)}</h3>${valueList(data.definitions, account)}${manage ? valueForm(data, account, fields) : ''}</li>`).join('')}</ul>` : '<p>No accessible accounts.</p>'))
     + history(accountData);
 }
