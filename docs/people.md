@@ -2,7 +2,7 @@
 
 Open **Customer people** at `/app/customer-people`. An owner or administrator creates a customer contact or product user, selects its account memberships, and records a source reference. These are customer records; team members and their access are managed in Team. Memberships are explicit and may span more than one account. Creating a customer record does not approve any usage identity mapping.
 
-Select a customer in **Customer record** to read its values, formula explanations and history. **Edit customer record** changes its name, kind or memberships with a fresh source reference. Writes use the displayed revision: if another write changes the record, reload the current record before saving again.
+Select a customer in **Customer record** to read its values, formula explanations and history. **Edit customer record** changes its name or memberships with a fresh source reference. Its kind is fixed when created; create the other record kind explicitly when needed. Writes use the displayed revision: if another write changes the record, reload the current record before saving again.
 
 ## Typed fields
 
@@ -74,4 +74,4 @@ Customer records and account memberships provide the carrier for USAGE-001 mappi
 
 `tests/customer-people-browser.mjs` drives native forms against the real public Worker at 1440 and 390 pixels. It creates a contact and a user with explicit memberships, saves every manual field type, previews the utilization formula over ten real accounts, saves it, verifies missing/zero explanations, changes an input and reads actor/time/source old–new history. It also edits memberships and proves an unsafe formula is refused while preserving the entered definition.
 
-The journey reuses the inherited axe, keyboard, reflow and painted-background contrast checks. Named ACCOUNT-004 / USAGE-001 screenshots are written beneath `EVIDENCE_DIR` (default `../evidence/customer-people`, outside the repository). Run the journey through the parent session's approved heavy-job runner after the Worker build; it is not a provider delivery or certification claim.
+The journey reuses the inherited axe, keyboard, reflow and painted-background contrast checks. Named ACCOUNT-004 / USAGE-001 screenshots are written beneath `EVIDENCE_DIR` (default `../evidence/customer-people`, outside the repository). After building the Worker, run `pnpm run test:customer-people-browser`. The journey establishes native behavior, not provider delivery or certification.
