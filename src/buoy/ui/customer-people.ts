@@ -46,7 +46,7 @@ function personForm(data: CustomerPeoplePage, person?: CustomerPerson, fields?: 
   const id = person ? `customer-person-${person.id}` : 'customer-person-create';
   return disclosure(person ? 'Edit customer record' : 'Create a contact or user', 'Record a customer and explicit account memberships.',
     action(id, hidden('action', 'customer-person-save') + (person ? hidden('personId', person.id) + hidden('revision', v('revision', person.revision)) : '')
-      + `<div class="form-grid">${field('name', 'Customer name', v('name', person?.name))}<label>Record kind<select name="kind" required>${[['contact', 'Contact'], ['user', 'User']].map(([key, label]) => `<option value="${key}"${v('kind', person?.kind ?? 'contact') === key ? ' selected' : ''}>${label}</option>`).join('')}</select></label></div>`
+      + `<div class="form-grid">${field('name', 'Customer name', v('name', person?.name))}<label>Record kind<select name="kind" aria-label="Record kind" required>${[['contact', 'Contact'], ['user', 'User']].map(([key, label]) => `<option value="${key}"${v('kind', person?.kind ?? 'contact') === key ? ' selected' : ''}>${label}</option>`).join('')}</select></label></div>`
       + memberships(data.accounts, mine, person?.accountIds)
       + field('source', 'Source reference', v('source')) + button(person ? 'Save customer record' : 'Create customer record'), person ? personPath(person.id) : path),
     person ? `edit-customer-person-${person.id}` : 'create-customer-person', !!mine);
@@ -55,7 +55,7 @@ function definitionForm(fields?: Fields): string {
   const mine = fields?.action === 'customer-field-definition' ? fields : undefined;
   const v = (name: string) => valueOf(mine, name);
   return disclosure('Create a customer field', 'Typed fields apply to customer contacts and users.', action('customer-field-definition', hidden('action', 'customer-field-definition')
-    + `<div class="form-grid">${field('key', 'Field key', v('key'))}${field('label', 'Field label', v('label'))}<label>Field type<select name="type" required>${Object.entries(labels).map(([type, label]) => `<option value="${type}"${v('type') === type ? ' selected' : ''}>${label}</option>`).join('')}</select></label></div>`
+    + `<div class="form-grid">${field('key', 'Field key', v('key'))}${field('label', 'Field label', v('label'))}<label>Field type<select name="type" aria-label="Field type" required>${Object.entries(labels).map(([type, label]) => `<option value="${type}"${v('type') === type ? ' selected' : ''}>${label}</option>`).join('')}</select></label></div>`
     + textarea('options', 'Options (one per line; picklist and multi-select)', v('options'), false)
     + textarea('formula', 'Formula (formula fields only)', v('formula'), false, 'spellcheck="false"')
     + '<p>Use <code>custom.field_key</code> for customer field inputs. Arithmetic, comparisons, lazy <code>if</code>, UTC date differences and explicit portfolio rollups calculate read-only values with explanations. Missing inputs and division by zero produce no value.</p>'
@@ -90,7 +90,7 @@ function history(data: CustomerPeoplePage, person: CustomerPerson | undefined): 
 }
 export function customerPeoplePage(data: CustomerPeoplePage, state: State, fields?: Fields, preview?: CustomerFieldPreview, selectedPersonId?: string): string {
   const manage = canManage(state), selected = data.records.find(record => record.id === selectedPersonId) ?? data.records[0];
-  const selection = data.records.length ? `<form method="get" action="${path}"><label>Customer record<select name="person">${data.records.map(record => `<option value="${escape(record.id)}"${selected?.id === record.id ? ' selected' : ''}>${escape(record.name)} · ${escape(record.kind)}</option>`).join('')}</select></label>${button('Open customer record')}</form>` : '<p>No customer contacts or users recorded.</p>';
+  const selection = data.records.length ? `<form method="get" action="${path}"><label>Customer record<select name="person" aria-label="Customer record">${data.records.map(record => `<option value="${escape(record.id)}"${selected?.id === record.id ? ' selected' : ''}>${escape(record.name)} · ${escape(record.kind)}</option>`).join('')}</select></label>${button('Open customer record')}</form>` : '<p>No customer contacts or users recorded.</p>';
   return section('Customer contacts and users', '<p>Customer records carry explicit account memberships, typed evidence and calculated field explanations. Staff access remains managed in Team.</p>' + selection
     + (selected ? `<article class="record" id="customer-record"><h3>${escape(selected.name)} · ${escape(selected.kind)}</h3><p>Account memberships: ${selected.accountIds.map(id => data.accounts.find(account => account.id === id)).filter((account): account is AccountPreview => !!account).map(accountLink).join(', ') || 'None recorded'}</p>${valueList(data.definitions, selected)}${manage ? personForm(data, selected, fields) + valuesForm(data, selected, fields) : ''}</article>` : ''))
     + (manage ? personForm(data, undefined, fields) : '')
