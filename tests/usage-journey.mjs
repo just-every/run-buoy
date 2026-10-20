@@ -121,6 +121,29 @@ export async function usageJourney({call,json,request,cookie,member,signIn,dispa
  const accountEvidence=await json(await call('/accounts/usage-account-1/usage'))
  assert.equal(accountEvidence.sources[0].eventCount,1981);assert.equal(accountEvidence.sources[0].sourceSystem,'segment');assert.equal(accountEvidence.sources[0].sourceReference,'Segment workspace Northstar / web')
  assert.equal(accountEvidence.sources[0].freshness,'current');assert.ok(Date.parse(accountEvidence.sources[0].receivedAt))
+ assert.deepEqual(await json(await call('/accounts/usage-account-1/usage','GET',undefined,{cookie:member})),accountEvidence,'USAGE-001 staff see usage through the existing account read authority')
+ const splitUser={...claim(1),userId:'user-0',groupId:'not-reviewed'}
+ assert.equal((await call('/usage/mappings/preview','POST',splitUser)).status,409,'USAGE-001 one source user never splits into different customer people')
+ const nativeMapping={sourceId:second.id,userId:'user-0',groupId:'group-0',accountId:'usage-account-49',personId:people[49].id}
+ let nativeReview=await json(await call('/usage/mappings/preview','POST',nativeMapping))
+ await json(await call('/usage/mappings','POST',{...nativeMapping,fingerprint:nativeReview.fingerprint}),201)
+ assert.equal((await json(await call(`/usage/events?sourceId=${second.id}&personId=${people[49].id}`))).events[0].accountId,'usage-account-49','USAGE-001 source namespaces permit separate explicitly reviewed external identities')
+ await json(await call(`/usage/sources/${second.id}`,'PUT',{name:'Native backend',kind:'native',reference:'Updated setup reference',staleDays:1}))
+ assert.equal((await json(await call('/accounts/usage-account-49/usage'))).sources.find(s=>s.sourceId===second.id).freshness,'stale')
+ await json(await call(`/usage/sources/${second.id}`,'PUT',{name:'Native backend',kind:'native',reference:'Updated setup reference',staleDays:365}))
+ assert.equal((await json(await call('/accounts/usage-account-49/usage'))).sources.find(s=>s.sourceId===second.id).freshness,'current')
+ await mappedSdk.track(message('group-only','track',null,'group-49'))
+ const groupMapping={sourceId:source.id,userId:null,groupId:'group-49',accountId:'usage-account-49',personId:null}
+ const groupReview=await json(await call('/usage/mappings/preview','POST',groupMapping))
+ await json(await call('/usage/mappings','POST',{...groupMapping,fingerprint:groupReview.fingerprint}),201)
+ const groupEvent=(await json(await call(`/usage/events?sourceId=${source.id}&messageId=group-only`))).events[0]
+ assert.equal(groupEvent.accountId,'usage-account-49');assert.equal(groupEvent.personId,null,'USAGE-001 group-only claims need no invented customer person')
+ let moved=(await json(await call('/customer-people'))).records.find(p=>p.id===people[49].id)
+ await json(await call('/customer-people/'+moved.id,'PUT',{kind:moved.kind,name:moved.name,revision:moved.revision,accountIds:['usage-account-48'],source:'Explicit membership correction'}))
+ assert.equal((await json(await call(`/usage/events?sourceId=${source.id}&userId=user-49&groupId=group-49&limit=1`))).events[0].status,'review','USAGE-001 a removed membership invalidates attribution rather than inferring a replacement')
+ moved=(await json(await call('/customer-people'))).records.find(p=>p.id===people[49].id)
+ await json(await call('/customer-people/'+moved.id,'PUT',{kind:moved.kind,name:moved.name,revision:moved.revision,accountIds:['usage-account-49'],source:'Explicit membership restored'}))
+ assert.equal((await json(await call(`/usage/events?sourceId=${source.id}&userId=user-49&groupId=group-49&limit=1`))).events[0].status,'attributed')
  assert.equal((await request('/app/accounts/usage-account-1',{cookie})).status,200)
  for(const route of ['/usage/mappings/preview','/usage/mappings']){
   assert.equal((await request('/api/buoy'+route,{method:'POST',body:claim(0)})).status,401)
