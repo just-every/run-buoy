@@ -107,6 +107,17 @@ try{
    assert.equal(await page.locator('[role=alert]').count(),1,'Unsafe formula is refused with a native form error')
    assert.match(await form.locator('[name=definition]').inputValue(),/globalThis/)
    await proof('ACCOUNT-004 USAGE-001 invalid formula refusal')
+   await page.goto(app.origin+'/app/segments',{waitUntil:'networkidle'})
+   await show('create-segment');form=page.locator('#segment-create')
+   const segmentName='Customer license utilization '+width
+   await form.getByLabel('Segment name',{exact:true}).fill(segmentName)
+   await form.getByLabel('Rule conditions (JSON array; dynamic mode)',{exact:true}).fill(JSON.stringify([{field:'people.contact.custom.'+ratio.key,op:'gt',value:.7}]))
+   await save(form,'Create segment')
+   const segment=(await call('/segments')).segments.find(item=>item.name===segmentName)
+   assert.deepEqual(segment.members.map(item=>item.accountId).sort(),[accounts[0].id,accounts[1].id].sort(),'ACCOUNT-004 SEGMENT-001 real form consumes fractional contact formula inputs')
+   await openForms(page);await proof('ACCOUNT-004 USAGE-001 typed segment report')
+   await page.locator('#segment-'+segment.id).screenshot({path:join(evidence,`customer-segment-report-${width}.png`)})
+
   }finally{await context.close()}
  }
  assert.deepEqual(failures,[],'ACCOUNT-004 USAGE-001 inherited A11Y-001 checks')
