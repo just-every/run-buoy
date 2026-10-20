@@ -60,6 +60,9 @@ try{
  const review=await call('/usage/mappings/preview','POST',mapping);await call('/usage/mappings','POST',{...mapping,fingerprint:review.fingerprint});
  personState=await call('/customer-people');
  const usageEvents=await call('/usage/events')
+ await call('/adoption/definitions','POST',{kind:'feature',key:'license',name:'License opened',events:['License opened']});
+ await call('/adoption/seats','PUT',{accountId,seats:20});
+ const adoptionBefore=await call('/adoption');
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
  const before=await call('/state'), beforeAudit=(await call('/audit')).entries
@@ -79,6 +82,7 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,directory:join(destination,'.wrangler/state'),keep:true})
  const after=await call('/state')
+ assert.deepEqual(await call('/adoption'),adoptionBefore,'ADOPT-001 definitions, seats, current identities, metrics and gaps survive the real installation archive');
  assert.deepEqual(await call('/customer-people'),personState,'USAGE-001 ACCOUNT-004 customer records, memberships, typed fields, calculations and source history restore exactly');
  assert.equal((await call('/usage')).mappings[0].personId,usagePerson.id,'USAGE-001 reviewed mapping survives restore without an intake credential');
  const restoredConnection=(await call('/connections')).connections.find(row=>row.id===connection.id)

@@ -1,4 +1,5 @@
 import {peopleApi,refreshPeople} from './people'
+import { adoptionState, saveDefinition, saveSeats, adoptionCsv } from './adoption'
 import { connectionsApi } from './connectors'
 import {usageIngest,usageAdmin} from './usage';
 import {fieldsState,saveField,saveValues,previewField,refreshFields} from './fields'
@@ -69,6 +70,10 @@ buoyApi.onError((error, c) => {
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',connectionsApi)
+buoyApi.get('/api/buoy/adoption',async c=>c.json(await adoptionState(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)))
+buoyApi.get('/api/buoy/adoption/report.csv',async c=>c.body(adoptionCsv(await adoptionState(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=adoption.csv'}))
+buoyApi.post('/api/buoy/adoption/definitions',async c=>c.json(await saveDefinition(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+buoyApi.put('/api/buoy/adoption/seats',async c=>c.json(await saveSeats(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
 buoyApi.get('/api/buoy/fields',async c=>c.json(await fieldsState(c.env.DB)))
 buoyApi.post('/api/buoy/fields',async c=>c.json(await saveField(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.post('/api/buoy/fields/preview',async c=>c.json(await previewField(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))

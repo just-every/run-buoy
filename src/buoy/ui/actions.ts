@@ -44,6 +44,12 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     else throw new ApiError('This connection action is not available.');
     return {redirect:path,message:action==='connection-sync'?'Sync attempt recorded. Check its result below.':'Connection updated.'};
   }
+  if(path==='/app/adoption') {
+    if(action==='adoption-definition')await send('/api/buoy/adoption/definitions',{kind:fields.kind,key:fields.key,name:fields.name,events:fields.events.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)});
+    else if(action==='adoption-seats')await send('/api/buoy/adoption/seats',{accountId:fields.accountId,seats:fields.seats===''?null:Number(fields.seats)},'PUT');
+    else throw new ApiError('This adoption action is not available.');
+    return {redirect:path,message:'Adoption configuration saved.',saved:action};
+  }
   if(path==='/app/customer-people')return mutateCustomerPeople(api,request,fields);
   if(path==='/app/usage')return mutateUsage(api,request,fields);
   if(path==='/app/fields') {

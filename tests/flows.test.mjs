@@ -456,6 +456,12 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    await json(await call('/connections/'+source.id,'DELETE',{}))
    assert.equal((await call('/connections/'+source.id+'/sync','POST',{})).status,409)
   })
+  await t.test('ADOPT-001 configuration doors retain ordinary authority and do not call a provider',async()=>{
+   await json(await call('/adoption/definitions','POST',{kind:'feature',key:'reports',name:'Reports',events:['Report generated']}),201)
+   await json(await call('/adoption/seats','PUT',{accountId:'harbour',seats:20}))
+   const report=await json(await call('/adoption?accountId=harbour'))
+   assert.equal(report.accounts.length,1);assert.equal(report.accounts[0].seats,20)
+  })
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))

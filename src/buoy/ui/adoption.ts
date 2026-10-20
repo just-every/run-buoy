@@ -1,0 +1,32 @@
+import type {AdoptionReport} from '../adoption'
+import {escape,section,field,textarea,hidden,form,button,disclosure,valueOf} from './html'
+import {canManage,type State,type Fields} from './types'
+
+const number=(v:number|null|undefined)=>v===null||v===undefined?'Not available':new Intl.NumberFormat('en-US',{maximumFractionDigits:4}).format(v)
+const percent=(v:number|null|undefined)=>v===null||v===undefined?'Not available':new Intl.NumberFormat('en-US',{style:'percent',maximumFractionDigits:2}).format(v)
+type Metrics=AdoptionReport['summary']['metrics']
+function metrics(data:Metrics){
+ const a=data.current,b=data.previous
+ const items:[string,string,string][]=[['Daily active users',number(a.dau),number(b.dau)],['Weekly active users',number(a.wau),number(b.wau)],['Monthly active users',number(a.mau),number(b.mau)],['Active events (30 days)',number(a.eventCount),number(b.eventCount)],['Depth: events per monthly active user',number(a.depth),number(b.depth)],['Breadth: event sets used',percent(a.breadth),percent(b.breadth)],['License utilization',percent(a.utilization),percent(b.utilization)]]
+ return `<dl>${items.map(([label,current,previous])=>`<dt>${escape(label)}</dt><dd>${escape(current)} <span>(previous: ${escape(previous)})</span></dd>`).join('')}<dt>Weekly change</dt><dd>${escape(percent(data.weeklyChange))}${data.weeklyDrop?' · Weekly active users dropped at least 30%':''}</dd><dt>Time to first value</dt><dd>${escape(number(data.firstValue.meanSeconds))} seconds · ${data.firstValue.people} people with an observed baseline and value event</dd></dl>`
+  + [...a.features.map(f=>({...f,kind:'Feature'})),...a.modules.map(f=>({...f,kind:'Module'}))].map(f=>`<p>${escape(f.kind)}: <strong>${escape(f.name)}</strong> · ${f.people} monthly active users · ${escape(percent(f.fraction))} adoption</p>`).join('')
+}
+export function adoptionPage(data:AdoptionReport,state:State,fields?:Fields){
+ const val=(key:string,fallback:unknown='')=>valueOf(fields,key,fallback)
+ const choice=(name:string,label:string,options:{id:string;name:string}[],selected:string|null|undefined)=>`<label>${escape(label)}<select name="${escape(name)}"><option value="">All</option>${options.map(o=>`<option value="${escape(o.id)}"${o.id===selected?' selected':''}>${escape(o.name)}</option>`).join('')}</select></label>`
+ const filters=new URLSearchParams(Object.entries(data.filters).filter((entry):entry is [string,string]=>typeof entry[1]==='string'))
+ filters.set('on',data.on)
+ let body=section('Measurement and coverage',`<p>Reviewed customer usage only. Active users are distinct customer people with track or event observations. Identify and group messages do not count as activity. Each UTC window includes the selected day: 1, 7 or 30 days, compared with the immediately preceding window of the same length.</p><p>Feature and module adoption is the fraction of monthly active users using each configured event set. Depth is events per monthly active user; breadth is event sets used divided by configured sets. Utilization is monthly active users divided by purchased seats. Missing or zero seats, a zero previous count, or absent first-value evidence remain unavailable. Person-level utilization has no purchased-seat denominator.</p><p>Time to first value is elapsed seconds from a person's first identify observation to their first subsequent configured value event. It describes retained observations, not an inferred signup date. Missing deliveries and incomplete source history can change these figures. A decline is observational, not a churn prediction or proof of causation.</p><p>Health measures, routed alerts and playbook triggers do not consume these metrics yet.</p><p><a href="/app/usage">Usage sources and mapping review</a> · <a href="/api/buoy/adoption/report.csv?${escape(filters.toString())}">Export this report as CSV</a></p>`)
+ body+=`<form method="get" action="/app/adoption" id="adoption-filter">${field('on','Through UTC date',data.on,'date')}${choice('accountId','Account filter',state.accounts,data.filters.accountId)}${choice('personId','Customer person filter',data.people,data.filters.personId)}${choice('segmentId','Segment filter',data.segments,data.filters.segmentId)}${button('Read adoption report')}</form>`
+ body+=section('Selected portfolio',metrics(data.summary.metrics),'adoption-summary')
+ body+=section('Accounts',data.accounts.length?data.accounts.map(a=>disclosure(a.name,`Purchased seats: ${a.seats===null?'not set':a.seats}`,metrics(a.metrics),'adoption-account-'+a.id)).join(''):'<p>No accounts match these filters.</p>')
+ body+=section('Customer people',data.people.length?data.people.map(p=>disclosure(p.name,'Distinct reviewed customer identity',metrics(p.metrics),'adoption-person-'+p.id)).join(''):'<p>No customer people match these filters.</p>')
+ body+=section('Segments',data.segments.length?data.segments.map(s=>disclosure(s.name,'Current membership; historical events are not historical segment membership',metrics(s.metrics),'adoption-segment-'+s.id)).join(''):'<p>No segments configured.</p>')
+ if(canManage(state)){
+  const definition=form('adoption-definition','/app/adoption',hidden('action','adoption-definition')+`<label>Event set kind<select name="kind"><option value="feature">Feature</option><option value="module">Module</option></select></label>`+field('key','Event set key',val('key'),'text',true,'maxlength="64"')+field('name','Event set name',val('name'),'text',true,'maxlength="100"')+textarea('events','Exact event names (one per line)',val('events'))+button('Save event set'))
+  body+=disclosure('Define a feature or module','Exact event names; saving an existing kind and key replaces its set',definition,'adoption-define',fields?.action==='adoption-definition')
+  body+=section('Configured event sets',data.definitions.length?`<ul>${data.definitions.map(d=>`<li>${escape(d.kind)} · ${escape(d.key)} · ${escape(d.name)}: ${d.events.map(escape).join(', ')}</li>`).join('')}</ul>`:'<p>No value event sets defined. Adoption, breadth and first value are unavailable.</p>')
+  body+=disclosure('Set purchased seats','Per-account seats; blank clears the denominator',form('adoption-seats','/app/adoption',hidden('action','adoption-seats')+choice('accountId','Seat account',state.accounts,String(val('accountId')))+field('seats','Purchased seats',val('seats'),'number',false,'min="0" step="1"')+button('Save purchased seats')),'adoption-seat-settings',fields?.action==='adoption-seats')
+ }
+ return body
+}
