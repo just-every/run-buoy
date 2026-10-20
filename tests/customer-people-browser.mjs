@@ -1,4 +1,4 @@
-// ACCOUNT-004 and USAGE-001 carrier: native forms against the public Worker.
+// ACCOUNT-004, USAGE-001 and SEGMENT-001 carrier: native forms against the public Worker.
 import assert from 'node:assert/strict'
 import {mkdir} from 'node:fs/promises'
 import {resolve,join} from 'node:path'
@@ -122,5 +122,5 @@ try{
  }
  assert.deepEqual(failures,[],'ACCOUNT-004 USAGE-001 inherited A11Y-001 checks')
  for(const entry of manual)for(const rule of entry.rules)assert.equal(rule.id,'color-contrast','Every other incomplete accessibility check fails; scan resolves contrast with painted-background measurement')
- console.log('ACCOUNT-004 USAGE-001 customer contact/user carrier: all typed native forms, explicit memberships, ten real accounts, calculation explanations/history and A11Y-001 at 1440/390 passed.')
+ console.log('ACCOUNT-004 USAGE-001 SEGMENT-001 customer contact/user carrier: all typed native forms, explicit memberships, ten real accounts, calculation explanations/history and A11Y-001 at 1440/390 passed.')
 }finally{if(browser)await browser.close();await app.close()}
