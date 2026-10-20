@@ -19,13 +19,13 @@ export async function usageJourney({call,json,request,cookie,member,signIn,dispa
  assert.equal((await read()).sources[0].freshness,'missing')
  let accepted=0,duplicates=0
  for(let offset=0;offset<100000;offset+=500){
-  const receipt=await sdk.batch(Array.from({length:500},(_,j)=>{const n=(offset+j)%99000,i=n%50;return message('volume-'+n,n%3===0?'identify':n%3===1?'group':'track','user-'+i,'group-'+i)}))
+  const receipt=await sdk.batch(Array.from({length:500},(_,j)=>{const n=(offset+j)%99000,i=n%50;return message('volume-'+n,n%3===0?'identify':n%3===1?'group':'track','user-'+i,n===98999?'unknown-volume-group':'group-'+i)}))
   accepted+=receipt.accepted;duplicates+=receipt.duplicates;assert.equal(receipt.stored,receipt.accepted)
  }
  assert.equal(accepted,99000);assert.equal(duplicates,1000)
  let state=await read(),review=state.review.filter(r=>r.sourceId===source.id)
- assert.equal(review.length,50);assert.equal(review.reduce((n,r)=>n+r.eventCount,0),99000)
- for(let i=0;i<50;i++)assert.equal(review.find(r=>r.userId==='user-'+i&&r.groupId==='group-'+i).eventCount,1980)
+ assert.equal(review.length,51);assert.equal(review.reduce((n,r)=>n+r.eventCount,0),99000)
+ for(let i=0;i<50;i++)assert.equal(review.find(r=>r.userId==='user-'+i&&r.groupId==='group-'+i).eventCount,i===49?1979:1980)
  assert.ok(review.every(r=>!('accountId' in r)&&!('contactId' in r)&&!('personId' in r)),'USAGE-001 claims are not lighter identity anchors')
  let events=await json(await call(`/usage/events?sourceId=${source.id}&limit=2`));assert.equal(events.events.length,2);assert.ok(events.nextCursor)
  const next=await json(await call(`/usage/events?sourceId=${source.id}&limit=2&cursor=${encodeURIComponent(events.nextCursor)}`));assert.ok(!next.events.some(e=>events.events.some(old=>e.id===old.id)))
@@ -86,19 +86,20 @@ export async function usageJourney({call,json,request,cookie,member,signIn,dispa
  assert.equal((await call('/usage/mappings','POST',{...claim(0),fingerprint:stale.fingerprint})).status,409)
  for(let i=0;i<50;i++){
   const preview=await json(await call('/usage/mappings/preview','POST',claim(i)))
-  assert.equal(preview.claims.eventCount,i===0?1981:1980)
+  assert.equal(preview.claims.eventCount,i===0?1981:i===49?1979:1980)
   assert.equal((await read()).mappings.length,i,'USAGE-001 preview changes no mapping')
   await json(await call('/usage/mappings','POST',{...claim(i),fingerprint:preview.fingerprint}),201)
  }
  state=await read()
- assert.equal(state.attribution.filter(a=>a.sourceId===source.id).reduce((n,a)=>n+a.eventCount,0),99001)
+ assert.equal(state.attribution.filter(a=>a.sourceId===source.id).reduce((n,a)=>n+a.eventCount,0),99000)
  for(let i=0;i<50;i++){
   const attribution=state.attribution.find(a=>a.accountId==='usage-account-'+i&&a.personId===people[i].id)
-  assert.equal(attribution.eventCount,i===0?1981:1980)
+  assert.equal(attribution.eventCount,i===0?1981:i===49?1979:1980)
   const page=await json(await call('/usage/events?accountId=usage-account-'+i+'&limit=2'))
   assert.ok(page.events.every(e=>e.status==='attributed'&&e.accountId==='usage-account-'+i&&e.personId===people[i].id&&e.userId==='user-'+i&&e.groupId==='group-'+i))
  }
  review=state.review.filter(r=>r.sourceId===source.id)
+ assert.ok(review.some(r=>r.groupId==='unknown-volume-group'&&r.eventCount===1),'USAGE-001 the original 100000-delivery volume includes an unknown group retained for mapping');
  assert.ok(review.some(r=>r.groupId==='unknown-group'));assert.ok(review.some(r=>r.groupId==='different-group'))
  assert.ok(review.some(r=>r.userId===' user-0 '),'USAGE-001 exact IDs never inherit trimmed mapping')
  // Reissue a credential and check later events plus duplicate replay and conflicting claims.
