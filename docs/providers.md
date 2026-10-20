@@ -90,8 +90,8 @@ Except for the Stripe test-mode customer-ID inventory below, Buoy makes no outbo
 ### Segment
 
 - **When:** your Segment server source or authenticated product relay sends track, identify or group observations to the configured receiver. There is no outbound Segment request or provider verification.
-- **Sends:** the source sends message IDs, product user/group claims, event names, timestamps, properties and traits to your Worker and D1. All observations remain unassigned in review; no contact/user records or staff links are created.
-- **Receives:** the sender receives storage, duplicate and review counts or an error. Browser clients send only to the buyer's authenticated product relay; its server holds the intake secret.
+- **Sends:** the source sends message IDs, product user/group claims, event names, timestamps, properties and traits to your Worker and D1. Unknown or conflicting claims remain in review. An administrator explicitly reviews mappings to existing customer contacts/users and their account memberships; retained and future exact claims then attribute to those records. Intake itself creates no customer records or staff links.
+- **Receives:** the sender receives received, accepted, duplicate and stored counts or an error; a storage receipt does not claim provider identity or delivery. Browser clients send only to the buyer's authenticated product relay; its server holds the intake secret.
 - **Terms:** [Twilio Segment terms](https://segment.com/legal/terms/) and [Twilio data protection addendum](https://www.twilio.com/en-us/legal/data-protection-addendum). Source and relay copies remain external holders.
 
 ## Stripe test-mode inventory

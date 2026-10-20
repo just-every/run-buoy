@@ -11,7 +11,12 @@ jobs:
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [http, browser, archive]
     env:
+      BUOY_VERIFY_SUITE: ${{ matrix.suite }}
       CI: 'true'
       WRANGLER_SEND_METRICS: 'false'
     steps:
