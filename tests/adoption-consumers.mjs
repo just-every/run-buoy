@@ -1,3 +1,4 @@
+import {signalDismissal} from './signal-dismissal-journey.mjs'
 import {relatedHealth} from './related-health-journey.mjs'
 import {scorecardCustody} from './scorecard-custody-journey.mjs'
 import {surveyScorecards} from './survey-scorecard-journey.mjs'
@@ -23,6 +24,6 @@ try{
  await currentAdoption(fixture,'consumer-shard-'+mode)
  assert.equal((await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'consumer-member@example.test',displayName:'CS colleague',role:'member'}})).status,202)
  const member=await app.signIn('consumer-member@example.test')
- if(mode==='health'){const result=await healthScorecards(app,fixture,member);await healthScorecardBrowser(app,fixture,result);const revenue=await revenueHealth(app,fixture,member,result);await revenueHealthBrowser(app,fixture,revenue);const survey=await surveyScorecards(app,fixture,member,result,revenue);const related=await relatedHealth(app,fixture,member,survey);await surveyScorecardBrowser(app,fixture,related);await scorecardCustody(app,fixture)}
+ if(mode==='health'){const result=await healthScorecards(app,fixture,member);await healthScorecardBrowser(app,fixture,result);const revenue=await revenueHealth(app,fixture,member,result);await revenueHealthBrowser(app,fixture,revenue);const survey=await surveyScorecards(app,fixture,member,result,revenue);const related=await relatedHealth(app,fixture,member,survey);await surveyScorecardBrowser(app,fixture,related);await scorecardCustody(app,fixture);await signalDismissal(app,fixture,member)}
  else await (mode==='account'?adoptionConsumers:adoptionAggregateAlerts)(app,fixture,member)
 }finally{await app.close()}

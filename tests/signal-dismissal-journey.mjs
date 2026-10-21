@@ -6,7 +6,7 @@ import {scan,submit,failures} from './a11y-checks.mjs'
 export async function signalDismissal(app,fixture,member){
  const {api,accounts}=fixture,accountId=accounts[0].id,otherId=accounts[1].id,on=new Date().toISOString().slice(0,10)
  const owner=(await api('/state')).operator.id
- for(const id of [accountId,otherId])await api('/accounts/'+id+'/owner','PUT',{ownerId:owner})
+ for(const id of [accountId,otherId]){await api('/accounts/'+id+'/owner','PUT',{ownerId:owner});await api('/adoption/seats','PUT',{accountId:id,seats:20,reference:'Customer-confirmed dismissal review seats',observedAt:on})}
  const preferences=(await api('/notifications')).preferences
  await api('/notifications/preferences','PUT',{frequency:'daily',modes:{...preferences.modes,signal:'digest'}})
  const rule=await api('/adoption/consumers','POST',{name:'Dismissed adoption review',scope:'account',metric:'adoption.current.utilization',op:'lte',value:.5,health:true,alert:true,enabled:true})
