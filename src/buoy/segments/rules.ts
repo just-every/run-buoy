@@ -31,7 +31,7 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
   insist(kind,'Choose a supported rule field.')
   insist(['eq','ne','is-missing',...(kind==='number'?['gt','gte','lt','lte']:['contains','gt','gte','lt','lte'])].includes(op),'Choose a supported rule operator.')
   if(op==='is-missing'){insist(c.value===undefined,'Missing checks take no value.');return {field,op}}
-  const customNumber=field.startsWith('custom.')||/^people\.(contact|user)\.custom\./.test(field)
+  const customNumber=field.startsWith('custom.')||field.startsWith('adoption.')||/^people\.(contact|user)\.(custom|adoption)\./.test(field)
   insist(typeof c.value===(kind==='text'?'string':'number')&&(kind!=='number'||(customNumber?Number.isFinite(c.value):Number.isSafeInteger(c.value))),`Rule value must be ${kind==='number'?(customNumber?'a finite number':'a safe whole number'):'text'}.`)
   if(kind==='text')insist(String(c.value).length<=1000,'Rule text is too long.')
   return {field,op,value:c.value as string|number}

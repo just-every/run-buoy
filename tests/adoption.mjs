@@ -1,5 +1,6 @@
 // ADOPT-001: 90-day, 30-account public HTTP acceptance; no direct database writes.
 import assert from 'node:assert/strict'
+import {adoptionSegments} from './adoption-segment-journey.mjs'
 import {startWorker} from './worker.mjs'
 import {adoptionFixture,defineAdoption,expectedAdoption,adoptionOn,shift} from './adoption-fixture.mjs'
 const app=await startWorker()
@@ -75,6 +76,7 @@ try{
  assert.equal((await app.request('/api/buoy/adoption?unknown=yes',{cookie:app.cookie})).status,400)
  for(const evidence of [{reference:'',observedAt:'2026-10-01'},{reference:'License evidence',observedAt:'2026-02-30'},{reference:'License evidence',observedAt:'2026-10-01',staleDays:0}])assert.equal((await app.request('/api/buoy/adoption/seats',{cookie:app.cookie,method:'PUT',body:{accountId:accounts[0].id,seats:20,...evidence}})).status,400)
  for(const seats of [-1,1.2])assert.equal((await app.request('/api/buoy/adoption/seats',{cookie:app.cookie,method:'PUT',body:{accountId:accounts[0].id,seats}})).status,400)
+ await adoptionSegments(app,fixture)
  await api('/accounts/'+accounts[0].id,'DELETE',{confirmation:accounts[0].name})
  report=await read();assert.equal(report.accounts.length,29);assert.equal(report.summary.metrics.current.mau,290)
  assert.ok(!JSON.stringify(report).includes('Harbour Software"'),'ADOPT-001 erased source identity is absent from reports')

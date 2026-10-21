@@ -1,13 +1,9 @@
+import { metricReader, type SubjectRow, type CountRow, type DefinitionRow, type FirstRow } from './metrics'
 import { authority, insist, stmt, type Actor } from '../core'
 import { ATTRIBUTED, MAPPED_JOIN } from '../usage/mappings'
 import { BASE, COUNTS, DEFINITIONS, FIRST_VALUE, SUBJECTS, selection } from './queries'
-import type { AdoptionDefinition, AdoptionFraction, AdoptionMetrics, AdoptionPeriod, AdoptionPerson, AdoptionSeatEvidence, AdoptionSeatHistory, AdoptionSubject } from './types'
+import type { AdoptionDefinition, AdoptionPerson, AdoptionSeatEvidence, AdoptionSeatHistory, AdoptionSubject } from './types'
 
-type Scope='summary'|'account'|'person'|'segment'
-type SubjectRow={scope:Scope;id:string;name:string;kind:'contact'|'user'|null;accountIds:string;seats:number|null}
-type CountRow={scope:Scope;id:string;period:'current'|'previous';dau:number;wau:number;mau:number;eventCount:number}
-type DefinitionRow={scope:Scope;id:string;period:'current'|'previous';kind:'feature'|'module';key:string;name:string;people:number}
-type FirstRow={scope:Scope;id:string;people:number;meanSeconds:number}
 export interface AdoptionSource {id:string;name:string;kind:string;reference:string;eventCount:number;attributedEventCount:number;lastObservedAt:string|null}
 const PROVENANCE=`${BASE}
  SELECT s.id,s.name,s.kind,s.reference,count(e.id) AS eventCount,max(e.observed_at) AS lastObservedAt,
@@ -30,23 +26,7 @@ export async function adoptionState(db:D1Database,actor:Actor,query:URLSearchPar
   sql(`${BASE} SELECT h.id,h.account_id AS accountId,h.document,h.recorded_by AS recordedBy,h.recorded_at AS recordedAt FROM buoy_adoption_seat_history h JOIN selected_accounts a ON a.id=h.account_id ORDER BY h.recorded_at DESC,h.id DESC`),stmt(db,'DELETE FROM buoy_assertions')])
  const subjects=results[1].results as unknown as SubjectRow[],counts=results[2].results as unknown as CountRow[],definitionsUsed=results[3].results as unknown as DefinitionRow[],first=results[4].results as unknown as FirstRow[]
  const definitions=(results[5].results as unknown as (Omit<AdoptionDefinition,'events'>&{events:string})[]).map(row=>({...row,events:JSON.parse(row.events) as string[]}))
- const bySubject=<T extends {scope:Scope;id:string}>(rows:T[])=>{
-  const map=new Map<string,T[]>()
-  for(const row of rows){const key=JSON.stringify([row.scope,row.id]),list=map.get(key)??[];list.push(row);map.set(key,list)}
-  return (subject:SubjectRow)=>map.get(JSON.stringify([subject.scope,subject.id]))??[]
- }
- const subjectCounts=bySubject(counts),subjectDefinitions=bySubject(definitionsUsed),subjectFirst=bySubject(first)
- const metrics=(subject:SubjectRow):AdoptionMetrics=>{
-  const period=(which:'current'|'previous'):AdoptionPeriod=>{
-   const count=subjectCounts(subject).find(row=>row.period===which)!,used=subjectDefinitions(subject).filter(row=>row.period===which)
-   const fractions=(kind:'feature'|'module'):AdoptionFraction[]=>used.filter(row=>row.kind===kind).map(({key,name,people})=>({key,name,people,fraction:count.mau?people/count.mau:null}))
-   return {dau:count.dau,wau:count.wau,mau:count.mau,eventCount:count.eventCount,depth:count.mau?count.eventCount/count.mau:null,
-    breadth:definitions.length?used.filter(row=>row.people>0).length/definitions.length:null,
-    utilization:subject.seats?count.mau/subject.seats:null,features:fractions('feature'),modules:fractions('module')}
-  }
-  const current=period('current'),previous=period('previous'),weeklyChange=previous.wau?(current.wau-previous.wau)/previous.wau:null,firstValue=subjectFirst(subject)[0]
-  return {current,previous,weeklyChange,weeklyDrop:weeklyChange!==null&&weeklyChange<=-0.3,firstValue:{people:firstValue?.people??0,meanSeconds:firstValue?Math.round(firstValue.meanSeconds*1000)/1000:null}}
- }
+ const metrics=metricReader(counts,definitionsUsed,first,definitions)
  const subject=(row:SubjectRow):AdoptionSubject=>({id:row.id,name:row.name,accountIds:JSON.parse(row.accountIds) as string[],seats:row.seats,metrics:metrics(row)})
  const accounts=subjects.filter(row=>row.scope==='account').map(subject),people=subjects.filter(row=>row.scope==='person').map(row=>({...subject(row),kind:row.kind!} as AdoptionPerson)),segments=subjects.filter(row=>row.scope==='segment').map(subject)
  const gaps=results[7].results[0] as unknown as {unattributedEvents:number;groupOnlyEvents:number}

@@ -1,4 +1,5 @@
 // ADOPT-001 native report/configuration/filter/export with inherited A11Y-001.
+import {adoptionSegmentBrowser} from './adoption-segment-browser.mjs'
 import assert from 'node:assert/strict'
 import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
@@ -71,6 +72,7 @@ try{
    await scan(page,`ADOPT-001 invalid report recovery ${width}`)
    if(evidence)await page.screenshot({path:join(evidence,`adoption-invalid-report-${width}.png`)})
    await page.getByRole('link',{name:'Clear report filters',exact:true}).click();assert.equal(await page.locator('#adoption-summary').count(),1)
+   await adoptionSegmentBrowser({page,api,accounts,width,evidence,origin:app.origin})
    await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});await scan(page,`ADOPT-001 usage entry link ${width}`)
    if(evidence){await page.locator('#work > section').first().screenshot({path:join(evidence,`adoption-usage-link-${width}.png`)})}
   }finally{await context.close()}

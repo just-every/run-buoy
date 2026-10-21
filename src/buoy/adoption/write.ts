@@ -14,6 +14,7 @@ export async function saveDefinition(db:D1Database,actor:Actor,input:Record<stri
  await db.batch([authority(db,actor,true),
   stmt(db,`INSERT INTO buoy_adoption_definitions(kind,key,name,events,updated_at) VALUES(?,?,?,?,?)
    ON CONFLICT(kind,key) DO UPDATE SET name=excluded.name,events=excluded.events,updated_at=excluded.updated_at`,definition.kind,key,name,JSON.stringify(events),updatedAt),
+  stmt(db,'UPDATE buoy_accounts SET revision=lower(hex(randomblob(16)))'),
   auditRecord(db,actor,'adoption.definition-saved',`adoption:${definition.kind}:${key}`),stmt(db,'DELETE FROM buoy_assertions')])
  return definition
 }
