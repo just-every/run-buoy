@@ -7,7 +7,7 @@ export interface RenewalPage {settings:{revision:string;leadDays:number;stages:s
 export interface RenewalPreview {definition:Definition;records:FieldRecord[];accounts:{id:string;name:string;records:FieldRecord[]}[];totalRecords:number;totalAccounts:number;unsaved:boolean}
 const path='/app/renewals',json=(value:unknown)=>JSON.stringify(value,null,2)
 const option=(value:string,label:string,selected:unknown)=>`<option value="${escape(value)}"${selected===value?' selected':''}>${escape(label)}</option>`
-const select=(name:string,label:string,values:string[],chosen:unknown)=>`<label>${escape(label)}<select name="${escape(name)}">${values.map(v=>option(v,v,chosen)).join('')}</select></label>`
+const select=(name:string,label:string,values:string[],chosen:unknown)=>`<label>${escape(label)}<select aria-label="${escape(label)}" name="${escape(name)}">${values.map(v=>option(v,v,chosen)).join('')}</select></label>`
 function fieldValues(record:FieldRecord,definitions:Definition[]){return '<dl>'+definitions.map(d=>'<dt>'+escape(d.label)+' · '+escape(d.type)+'</dt><dd><code>'+escape(json(record.values[d.key]??null))+'</code>'+(record.explanations[d.key]?'<p>'+escape(record.explanations[d.key])+'</p>':'')+'</dd>').join('')+'</dl>'}
 export function renewalsPage(data:RenewalPage,state:State,fields?:Fields,preview?:RenewalPreview,selectedId?:string){
  const manage=canManage(state),selected=data.records.find(r=>r.id===selectedId)??data.records[0],mine=fields?.renewalId===selected?.id?fields:undefined
