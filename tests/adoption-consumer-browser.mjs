@@ -37,6 +37,8 @@ export async function adoptionConsumerBrowser({page,api,accounts,people,sdk,widt
  await proof('account-risk',page.locator('main'))
  await page.goto(origin+'/app?intro=hidden',{waitUntil:'networkidle'});assert.match(await page.locator('main').innerText(),/Review low product adoption/)
  await proof('runway-risk',page.locator('main'))
+ await page.goto(origin+'/app/segments',{waitUntil:'networkidle'});assert.match(await page.locator('main').innerText(),/Review low product adoption/)
+ const memberSegment=(await api('/segments')).segments.find(s=>s.members.some(m=>m.accountId===accountId));await proof('segment-risk',page.locator('#segment-'+memberSegment.id))
  await page.goto(origin+'/app/notifications',{waitUntil:'networkidle'});assert.match(await page.locator('main').innerText(),new RegExp('Review low product adoption '+width))
  await proof('owner-inbox',page.locator('main'))
  await page.goto(origin+'/app/adoption',{waitUntil:'networkidle'});await show('adoption-consumer-'+consumer.id);form=page.locator('#adoption-consumer-'+consumer.id+' form')
