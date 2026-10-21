@@ -18,7 +18,7 @@ export async function seedRecordPortability(call,fixture,personId){
  await call('/renewals/'+renewal.id+'/fields','PUT',{revision:renewal.revision,values:{portable_risk:true},source:'Confirmed portable renewal review'})
  let r=(await call('/renewals')).records.find(r=>r.id===renewal.id)
  await call('/renewals/'+r.id,'PUT',{revision:r.revision,stage:'Negotiation',forecast:'commit',ownerId:operator,riskReasons:['Customer procurement review']})
- const proposal=await call('/proposals','POST',{accountId:child,kind:'renewal',payload:{renewalId:renewal.id,outcome:'renewed-with-expansion',expectedArrMinor:180000,reason:'customer-confirmed',evidence:'Signed portable expansion'}})
+ const proposal=await call('/proposals','POST',{accountId:child,kind:'renewal',payload:{renewalId:renewal.id,outcome:'renewed-with-expansion',resultArrMinor:180000,reason:'customer-confirmed',evidence:'Signed portable expansion'}})
  await call('/proposals/'+proposal.id+'/approve','POST',{})
  const view=await call('/workspace/views','POST',{view:{name:'Portable shared product view',kind:'account',shared:true,rules:{match:'all',conditions:[{field:'hierarchy.kind',op:'eq',value:'relationship'}]},columns:['name','hierarchy.parentId','custom.portable_tree'],sort:{field:'name',direction:'asc'}}})
  const input={kind:'account',recordIds:[child],action:'assign',ownerId:operator,note:'Explicit portable reviewed book handover',operationKey:'synthetic-buoy-1402'},review=await call('/workspace/bulk/preview','POST',input)
