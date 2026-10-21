@@ -58,6 +58,18 @@ try{
  await call('/customer-fields','POST',{key:'portable_ratio',label:'Portable ratio',type:'formula',formula:'custom.portable_seats / 20'});
  const mapping={sourceId:usageSource.id,userId:'product-user',groupId:'product-company',accountId,personId:usagePerson.id};
  const review=await call('/usage/mappings/preview','POST',mapping);await call('/usage/mappings','POST',{...mapping,fingerprint:review.fingerprint});
+ // ERASE-002: export and erase a separate source-linked customer before the archive.
+ const privacyPerson=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-370',accountIds:[accountId],source:'Reviewed customer privacy register'});
+ const privacyIdentity={type:'event',event:'Privacy archive fixture',messageId:'synthetic-buoy-371',userId:'synthetic-buoy-372',groupId:'synthetic-buoy-373'};
+ const privacyIntake=secret=>fetch(running.origin+'/api/buoy/usage/intake/'+usageSource.id,{method:'POST',headers:{authorization:'Bearer '+secret,'content-type':'application/json'},body:JSON.stringify(privacyIdentity)});
+ assert.equal((await privacyIntake(usageCredential.secret)).status,202);
+ const privacyMapping={sourceId:usageSource.id,userId:privacyIdentity.userId,groupId:privacyIdentity.groupId,accountId,personId:privacyPerson.id};
+ const privacyPreview=await call('/usage/mappings/preview','POST',privacyMapping);await call('/usage/mappings','POST',{...privacyMapping,fingerprint:privacyPreview.fingerprint});
+ const privacyBody={revision:(await call('/customer-people')).records.find(p=>p.id===privacyPerson.id).revision,confirmation:'synthetic-buoy-370'};
+ const privacyExport=await call('/customer-people/'+privacyPerson.id+'/privacy/export','POST',privacyBody);
+ const privacyErased=await call('/customer-people/'+privacyPerson.id+'/privacy/erase','POST',privacyBody);
+ const privacyReceiptsBefore=await call('/privacy/receipts');
+ assert.equal(privacyExport.receipt.subject,privacyErased.receipt.subject);
  personState=await call('/customer-people');
  // INAPP-001 real archive: messages and receipts survive; dedicated authority does not.
  const inappSegment=await call('/segments','POST',{name:'Portable launch customers',mode:'static',accountIds:[accountId],rules:{match:'all',conditions:[]},tier:null,stage:null,playbook:null});
@@ -153,8 +165,17 @@ try{
  assert.deepEqual((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name),freshAlerts,'ADOPT-001 unchanged restored evidence does not duplicate the new recipient’s episode');
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
  assert.equal((await usageIntake()).status,401,'USAGE-001 archived ingestion credentials cannot authorize restored intake')
+ assert.equal((await call('/usage')).credentials.length,0,'No archived ingestion credentials restore');
+ assert.deepEqual(await call('/privacy/receipts'),privacyReceiptsBefore,'ERASE-002 opaque receipts restore exactly without exported customer contents');
+ assert.ok(restored.some(e=>e.action==='customer.exported'&&e.subject===privacyErased.receipt.subject));
+ assert.ok(restored.some(e=>e.action==='customer.erased'&&e.subject===privacyErased.receipt.subject));
+ assert.ok(!(await call('/customer-people')).records.some(p=>p.id===privacyPerson.id),'ERASE-002 erased customer stays absent after restore');
+
  assert.deepEqual(await call('/usage/events'),usageEvents,'USAGE-001 queued payload/provenance survives the real archive')
  const usageAfter=await call('/usage');assert.equal(usageAfter.sources[0].id,usageSource.id);assert.equal(usageAfter.sources[0].eventCount,3);assert.equal(usageAfter.credentials.length,0)
+ const freshUsage=await call('/usage/sources/'+usageSource.id+'/credentials','POST',{label:'Restored privacy replay probe',scope:['event']});
+ assert.equal((await privacyIntake(freshUsage.secret)).status,409,'ERASE-002 restored digest custody refuses erased source replay with fresh authority');
+ await call('/usage/credentials/'+freshUsage.credential.id,'DELETE',{});
  assert.equal((await running.request('/api/buoy/accounts',{method:'POST',body:erased,cookie:running.cookie})).status,409,'restored erasure tombstone prevents recreation')
  const inappAfter=await call('/inapp');
  assert.deepEqual(inappAfter,{...inappBefore,credentials:[]},'INAPP-001 campaigns portable, hash/credential table excluded');
