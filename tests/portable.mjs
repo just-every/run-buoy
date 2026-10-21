@@ -77,6 +77,8 @@ try{
  await call('/accounts/'+accountId+'/owner','PUT',{ownerId:(await call('/state')).operator.id});
  const portableMeasure=await call('/adoption/consumers','POST',{name:'Portable license adoption measure',scope:'account',metric:'adoption.current.feature.license',op:'gte',value:1,health:true,alert:true,enabled:true});
  const portableAggregate=await call('/adoption/consumers','POST',{name:'Portable segment adoption health and alert',scope:'segment',segmentId:inappSegment.id,metric:'adoption.current.feature.license',op:'gte',value:1,health:true,alert:true,enabled:true});
+ const portableNotice=(await call('/notifications')).items.find(i=>i.adoptionRuleId===portableMeasure.id);
+ await call('/notifications/'+portableNotice.id+'/dismiss','POST',{reason:'Customer archive review is scheduled.',until:new Date(Date.now()+86400000).toISOString()});
  const consumersBefore=await call('/adoption/consumers');
  assert.equal(consumersBefore.evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===portableAggregate.id).matched,true,'ADOPT-001 segment aggregate alert measures are present before archive export');
  const adoptionAlertsBefore=(await call('/notifications')).items.filter(i=>i.title===portableMeasure.name);assert.equal(adoptionAlertsBefore.length,1,'ADOPT-001 source installation has one routed alert episode');
@@ -145,6 +147,8 @@ try{
  assert.equal((await call('/notifications')).items.filter(i=>i.title===portableAggregate.name).length,1,'ADOPT-001 restored segment aggregate routes one fresh-owner alert');
  assert.equal(freshAlerts.length,1,'ADOPT-001 explicit restored-account reassignment routes one alert to the new recipient');
  assert.notEqual(freshAlerts[0].id,adoptionAlertsBefore[0].id);
+ assert.equal(freshAlerts[0].dismissal,null,'SIGNAL-001 restored prior-recipient dismissal never suppresses the new owner');
+ assert.ok(restored.some(e=>e.action==='signal.dismissed'),'SIGNAL-001 opaque dismissal audit survives archive restore');
  await call('/notifications/preferences','PUT',{frequency:'off',modes:{mention:'immediate',assignment:'immediate',signal:'immediate',approval:'immediate'}});
  assert.deepEqual((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name),freshAlerts,'ADOPT-001 unchanged restored evidence does not duplicate the new recipient’s episode');
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
