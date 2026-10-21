@@ -46,7 +46,7 @@ export async function adoptionConsumers(app,fixture,member){
  await api('/proposals/'+proposal.id+'/approve','POST',{});await api('/proposals/'+proposal.id+'/approve','POST',{})
  assert.equal((await api('/state')).tasks.filter(t=>t.proposalId===proposal.id).length,1,'ADOPT-001 adoption health can drive one human-approved task')
  const stale=await api('/proposals','POST',{accountId,kind:'playbook',payload:{title:'Review changed configuration',dueDate:on}})
- const updated=await api('/adoption/consumers','POST',{...rule,value:.1})
+ let updated=await api('/adoption/consumers','POST',{...rule,value:.1})
  assert.equal((await api('/state')).accounts.find(a=>a.id===accountId).health.status,'healthy','ADOPT-001 editing a threshold removes the old health reason')
  assert.equal((await app.request('/api/buoy/proposals/'+stale.id+'/approve',{cookie:app.cookie,method:'POST',body:{}})).status,409,'ADOPT-001 changed measure configuration invalidates old work')
  assert.equal((await app.request('/api/buoy/adoption/consumers',{cookie:app.cookie,method:'POST',body:{...rule,value:.2}})).status,409,'ADOPT-001 stale measure edit is refused')
@@ -67,7 +67,9 @@ export async function adoptionConsumers(app,fixture,member){
  assert.equal(personMeasure.matched,true);assert.ok(personMeasure.personLicenses.some(l=>l.reference==='Reviewed person entitlement'))
  // Reuse a disabled parity rule so every related-person numeric field is also
  // asserted without multiplying configurations or adding a separate test case.
- let related=(await api('/adoption/consumers')).rules.find(r=>!r.enabled)
+ updated=await api('/adoption/consumers','POST',{...updated,enabled:false})
+ assert.equal((await api('/state')).accounts.find(a=>a.id===accountId).health.status,'healthy')
+ let related=(await api('/adoption/consumers')).rules.find(r=>!r.enabled&&r.id!==updated.id)
  const userReport=(await api('/adoption?personId='+people[0].id)).people[0]
  for(const [metric,value] of Object.entries(metricValues(userReport.metrics))){
   related=await api('/adoption/consumers','POST',{...related,name:'Related product-user parity',scope:'user',metric,op:value===null?'is-missing':'eq',value,health:true,alert:false,enabled:true})
@@ -81,6 +83,8 @@ export async function adoptionConsumers(app,fixture,member){
  const contactMeasure=(await api('/adoption/consumers')).evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===related.id)
  assert.equal(contactMeasure.subjects.length,1);assert.equal(contactMeasure.subjects[0].id,contact.id);assert.equal(contactMeasure.matched,true,'ADOPT-001 contacts and product users do not share a scope')
  related=await api('/adoption/consumers','POST',{...related,enabled:false})
+ assert.equal((await api('/state')).accounts.find(a=>a.id===accountId).health.status,'healthy','ADOPT-001 disabling the only health measure removes its risk')
+ updated=await api('/adoption/consumers','POST',{...updated,enabled:true})
  // Existing recipient preferences and reassignment keep ownership meaningful.
  const modes={mention:'immediate',assignment:'immediate',signal:'digest',approval:'immediate'}
  await api('/notifications/preferences','PUT',{frequency:'daily',modes})
