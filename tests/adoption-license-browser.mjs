@@ -7,9 +7,11 @@ export async function adoptionLicenseBrowser({page,api,accounts,people,width,evi
  const show=async id=>{const panel=page.locator('#'+id);if(!await panel.evaluate(e=>e.open))await panel.locator('summary').click()}
  const proof=async label=>{
   await scan(page,`ADOPT-001 individual license ${label} ${width}`)
-  if(evidence){await page.locator('#adoption-license-evidence').screenshot({path:join(evidence,`individual-license-${label}-${width}.png`)});if(await page.locator('#adoption-license-settings').evaluate(e=>e.open))await page.locator('#adoption-license-settings').screenshot({path:join(evidence,`individual-license-${label}-form-${width}.png`)})}
+  if(evidence){const metricPanel=page.locator('#adoption-person-'+people[0].id);if(await metricPanel.count()&&await metricPanel.evaluate(e=>e.open))await metricPanel.screenshot({path:join(evidence,`individual-license-${label}-metrics-${width}.png`)});await page.locator('#adoption-license-evidence').screenshot({path:join(evidence,`individual-license-${label}-${width}.png`)});if(await page.locator('#adoption-license-settings').evaluate(e=>e.open))await page.locator('#adoption-license-settings').screenshot({path:join(evidence,`individual-license-${label}-form-${width}.png`)})}
  }
  await page.goto(origin+'/app/adoption?on='+adoptionOn,{waitUntil:'networkidle'})
+ const malformed=await page.request.post(origin+'/app/adoption',{headers:{origin},form:{action:'adoption-person-license',licenseAccountId:accounts[0].id,licensePersonId:people[0].id,licensed:'invalid',licenseReference:'Invalid native choice',licenseObservedAt:adoptionOn,licenseStaleDays:'30'}})
+ assert.equal(malformed.status(),400,'ADOPT-001 malformed native license selection cannot become not-licensed')
  await show('adoption-license-settings')
  let form=page.locator('#adoption-person-license')
  await form.getByLabel('License account',{exact:true}).selectOption(accounts[0].id)
