@@ -29,7 +29,7 @@ export async function inappJourney(app){
  }
  assert.notEqual((await api('/state')).accounts.find(a=>a.id===accounts[0].id).revision,before)
  assert.equal((await read()).credentials[0].lastUsedAt!==null,true)
- const timeline=await api('/customer-people/'+people[0].id+'/timeline');assert.equal(timeline.events.length,8);assert.equal(timeline.events.filter(e=>e.kind==='completion').length,3)
+ const timeline=await api('/customer-people/'+people[0].id+'/timeline');assert.equal(timeline.events.length,8);assert.equal(timeline.events.filter(e=>e.kind==='completion').length,3);assert.equal((await read()).receipts.filter(r=>r.personId===people[0].id).length,8)
  assert.deepEqual((await client.deliver(identity)).messages,[],'INAPP-001 receipts enforce cap/terminal suppression server-side')
  // Separate sources and credentials cannot see content or inject arbitrary account/person identities.
  const second=await api('/usage/sources','POST',{name:'Other source',kind:'native',reference:'Second product'})
@@ -46,13 +46,34 @@ export async function inappJourney(app){
  const relayRequest=(body,headers={})=>new Request('https://product.example.test/inapp-relay',{method:'POST',headers:{origin:'https://product.example.test','content-type':'application/json',...headers},body:JSON.stringify(body)})
  assert.equal((await relay(relayRequest({action:'deliver'}))).status,401)
  assert.equal((await relay(relayRequest({action:'deliver'},{cookie:'product-session=valid',origin:'https://foreign.invalid'}))).status,403)
+ // Two different people in one account have separate caps; a second reviewed
+ // source identity for the original person shares that person's existing cap.
+ const colleague=await api('/customer-people','POST',{kind:'user',name:'Harbour product colleague',accountIds:[accounts[0].id],source:'Reviewed customer product directory'})
+ for(const [userId,personId]of [['colleague',colleague.id],['alias',people[0].id]]){
+  const claim={sourceId:source.id,userId,groupId:identity.groupId,accountId:accounts[0].id,personId},preview=await api('/usage/mappings/preview','POST',claim)
+  await api('/usage/mappings','POST',{...claim,fingerprint:preview.fingerprint})
+ }
+ assert.equal((await client.deliver({userId:'colleague',groupId:identity.groupId})).messages.length,4,'INAPP-001 caps belong to people rather than whole accounts')
+ assert.equal((await client.deliver({userId:'alias',groupId:identity.groupId})).messages.length,0,'INAPP-001 reviewed aliases share a person cap')
  const fresh=await f.create('banner',{title:'Relay identity proof',maxViews:2})
  const spoof=await (await relay(relayRequest({action:'deliver',userId:outside.userId,groupId:outside.groupId},{cookie:'product-session=valid'}))).json()
  assert.equal(spoof.messages[0].id,fresh.id,'INAPP-001 relay overwrites browser-supplied identity')
  await api('/inapp/campaigns/'+fresh.id,'PUT',{enabled:false});assert.deepEqual((await client.deliver(identity)).messages,[])
- for(const [path,method,body]of [['/inapp/campaigns','POST',{}],['/inapp/campaigns/'+fresh.id,'PUT',{enabled:true}],['/inapp/credentials','POST',{sourceId:source.id,label:'Denied'}],['/inapp/credentials/'+issued.credential.id,'DELETE',{}]]){
+ await app.request('/auth/invite',{cookie:app.cookie,method:'POST',body:{email:'inapp-colleague@example.test',displayName:'Product colleague',role:'member'}})
+ const member=await app.signIn('inapp-colleague@example.test'),agent=await api('/agent-tokens','POST',{label:'In-app refusal proof'})
+ assert.equal((await app.request('/api/buoy/inapp',{cookie:member})).status,403)
+ assert.equal((await app.request('/api/buoy/inapp')).status,401)
+ assert.equal((await app.request('/api/buoy/inapp',{token:agent.token})).status,403)
+ assert.equal((await app.request('/api/buoy/customer-people/'+people[0].id+'/timeline',{cookie:member})).status,200)
+ assert.equal((await app.request('/api/buoy/customer-people/'+people[0].id+'/timeline')).status,401)
+ assert.equal((await app.request('/api/buoy/customer-people/'+people[0].id+'/timeline',{token:agent.token})).status,403)
+ assert.equal((await raw('deliver',identity,agent.token)).status,403)
+ assert.equal((await raw('receipts',{...identity,campaignId:fresh.id,kind:'view',messageId:'denied-agent'},agent.token)).status,403)
+ for(const [path,method,body]of [['/inapp/campaigns' ,'POST',{}],['/inapp/campaigns/'+fresh.id,'PUT',{enabled:true}],['/inapp/credentials','POST',{sourceId:source.id,label:'Denied'}],['/inapp/credentials/'+issued.credential.id,'DELETE',{}]]){
   assert.equal((await app.request('/api/buoy'+path,{cookie:app.cookie,method,body,headers:{origin:'https://foreign.invalid'}})).status,403)
   assert.equal((await app.request('/api/buoy'+path,{method,body})).status,401)
+  assert.equal((await app.request('/api/buoy'+path,{cookie:member,method,body})).status,403)
+  assert.equal((await app.request('/api/buoy'+path,{token:agent.token,method,body})).status,403)
  }
  await api('/inapp/credentials/'+issued.credential.id,'DELETE',{})
  await assert.rejects(()=>client.deliver(identity),e=>e.status===401)

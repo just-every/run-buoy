@@ -52,7 +52,7 @@ try{
    const timeline=await api('/customer-people/'+people[0].id+'/timeline');assert.equal(timeline.events.filter(e=>e.kind==='view').length,4);assert.equal(timeline.events.filter(e=>e.kind==='completion').length,3);assert.equal(timeline.events.filter(e=>e.kind==='dismissal').length,1)
    await page.goto(app.origin+'/app/customer-people?person='+people[0].id,{waitUntil:'networkidle'});assert.match(await page.locator('#customer-usage-timeline').innerText(),/In-app completion/);await proof('timeline')
    if(evidence)await page.locator('#customer-usage-timeline').screenshot({path:join(evidence,`inapp-timeline-panel-${width}.png`)})
-   await page.goto(app.origin+'/app/inapp',{waitUntil:'networkidle'});await submit(page,page.getByRole('button',{name:'Disable Reporting workspace banner',exact:true}));await proof('disabled')
+   await page.goto(app.origin+'/app/inapp',{waitUntil:'networkidle'});await submit(page,page.getByRole('button',{name:'Disable Reporting workspace banner',exact:true}));await proof('disabled');assert.equal((await api('/inapp')).receipts.filter(r=>r.personId===people[0].id).length,timeline.events.length)
   }catch(error){if(evidence)for(const [i,p]of context.pages().entries())await p.screenshot({path:join(evidence,`inapp-failure-${width}-${i}.png`),fullPage:true,mask:[p.locator('[data-secret]')]});throw error}finally{await context.close();await buyer.close()}
  }
  assert.deepEqual(failures,[],'INAPP-001 A11Y-001 all native and snippet screens/ends at 1440/390 and reflow320')
