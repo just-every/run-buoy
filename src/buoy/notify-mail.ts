@@ -6,7 +6,7 @@ import { localTime, taskTiming } from './settings'
 import { preferences, recordHealthAlerts, type NoticeType } from './notify'
 import { escape } from './ui/html'
 
-export const emailLabel = (status: string) => ({pending:'Email waiting', reserved:'Email outcome unconfirmed; will not resend automatically', accepted:'Email accepted by the mail provider', failed:'Email refused by the mail provider', uncertain:'Email outcome unconfirmed; will not resend automatically', development:'Email not sent: development mailer', 'no-provider':'Email not sent: no mail provider', 'no-recipient':'Email not sent: person inactive', digest:'Email included in digest', none:'Email disabled', queued:'Email waiting for digest'}[status] ?? status)
+export const emailLabel = (status: string) => ({dismissed:'Email cancelled: alert dismissed', pending:'Email waiting', reserved:'Email outcome unconfirmed; will not resend automatically', accepted:'Email accepted by the mail provider', failed:'Email refused by the mail provider', uncertain:'Email outcome unconfirmed; will not resend automatically', development:'Email not sent: development mailer', 'no-provider':'Email not sent: no mail provider', 'no-recipient':'Email not sent: person inactive', digest:'Email included in digest', none:'Email disabled', queued:'Email waiting for digest'}[status] ?? status)
 async function send(env: Bindings, deliveryId: string, personId: string, subject: string, content: string) {
  const recipient = await stmt(env.DB, "SELECT email FROM oa_operators WHERE id=? AND status='active'", personId).first<{email:string}>()
  if (!recipient) return 'no-recipient'
@@ -43,7 +43,7 @@ export async function runDigests(env: Bindings, at = new Date()) {
   const reservation = stmt(db, "INSERT OR IGNORE INTO buoy_digests(id,person_id,period,frequency,created_at,email) SELECT ?,?,?,?,?,'reserved' WHERE EXISTS(SELECT 1 FROM buoy_notification_preferences WHERE person_id=? AND frequency=? AND modes=?)", digestId, personId, date, p.frequency, now(), personId, p.frequency, JSON.stringify(p.modes))
   const claimed = await db.batch([reservation, ...items.map(item => stmt(db, "UPDATE buoy_inbox SET digest_id=?,email='digest' WHERE id=? AND digest_id IS NULL AND email IN ('queued','pending') AND EXISTS(SELECT 1 FROM buoy_digests WHERE id=?)", digestId, item.id, digestId)), stmt(db, 'UPDATE buoy_notification_preferences SET book_cursor=? WHERE person_id=? AND EXISTS(SELECT 1 FROM buoy_digests WHERE id=?)', cursor, personId, digestId)])
   if (claimed[0].meta.changes !== 1) continue
-  const text = [`Your ${p.frequency} Buoy digest`, ...items.map(item => `${item.type}: ${item.title} — ${item.accountName}\n${item.body}\n${env.AUTH_ORIGIN}/app/accounts/${encodeURIComponent(item.accountId)}`), ...changes.map(row => `${row.name}: ${row.count} recorded book change(s). ${env.AUTH_ORIGIN}/app/accounts/${encodeURIComponent(row.id)}`), `${env.AUTH_ORIGIN}/app/notifications`].join('\n\n')
+  const text = [`Your ${p.frequency} Buoy digest`, ...items.filter((_,index)=>claimed[index+1].meta.changes===1).map(item => `${item.type}: ${item.title} — ${item.accountName}\n${item.body}\n${env.AUTH_ORIGIN}/app/accounts/${encodeURIComponent(item.accountId)}`), ...changes.map(row => `${row.name}: ${row.count} recorded book change(s). ${env.AUTH_ORIGIN}/app/accounts/${encodeURIComponent(row.id)}`), `${env.AUTH_ORIGIN}/app/notifications`].join('\n\n')
   await stmt(db, 'UPDATE buoy_digests SET email=? WHERE id=?', await send(env, digestId, personId, `Buoy ${p.frequency} digest`, text), digestId).run()
  }
 }

@@ -30,7 +30,7 @@ export async function recordAdoptionAlerts(db:D1Database){
    SELECT 1 FROM json_each(?) j WHERE json_extract(j.value,'$.ruleId')=rule_id AND json_extract(j.value,'$.accountId')=account_id AND json_extract(j.value,'$.personId')=person_id
     AND (json_extract(j.value,'$.matched')=1 OR json_extract(j.value,'$.missing')=1))`,payload),
   stmt(db,`INSERT INTO buoy_adoption_alert_state(rule_id,account_id,person_id,episode,active)
-   SELECT json_extract(value,'$.ruleId'),json_extract(value,'$.accountId'),json_extract(value,'$.personId'),?,1 FROM json_each(?) WHERE json_extract(value,'$.matched')=1
+   SELECT json_extract(value,'$.ruleId'),json_extract(value,'$.accountId'),json_extract(value,'$.personId'),?,1 FROM json_each(?) j WHERE json_extract(value,'$.matched')=1 AND NOT EXISTS (SELECT 1 FROM buoy_adoption_dismissals d WHERE d.rule_id=json_extract(j.value,'$.ruleId') AND d.account_id=json_extract(j.value,'$.accountId') AND d.person_id=json_extract(j.value,'$.personId') AND julianday(d.until)>julianday('now'))
    ON CONFLICT(rule_id,account_id,person_id) DO UPDATE SET episode=excluded.episode,active=1 WHERE buoy_adoption_alert_state.active=0`,episode,payload),
   // Only the transaction that opened this episode can create its inbox record.
   stmt(db,`INSERT OR IGNORE INTO buoy_inbox(id,person_id,account_id,type,source,title,body,created_at)

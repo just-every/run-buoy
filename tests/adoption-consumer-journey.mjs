@@ -1,5 +1,6 @@
 // ADOPT-001: configured health and routed alerts use the public report's metrics.
 import assert from 'node:assert/strict'
+import {signalDismissal} from './signal-dismissal-journey.mjs'
 export async function adoptionConsumers(app,fixture,member){
  const {api,accounts,people}=fixture,on=new Date().toISOString().slice(0,10),accountId=accounts[0].id
  const report=await api('/adoption'),base={scope:'account',op:'eq',health:false,alert:true,enabled:true}
@@ -108,5 +109,6 @@ export async function adoptionConsumers(app,fixture,member){
  for(const r of (await api('/adoption/consumers')).rules)if(r.enabled)await api('/adoption/consumers','POST',{...r,enabled:false})
  await api('/notifications/preferences','PUT',{frequency:'off',modes:{...modes,signal:'immediate'}})
  await api('/adoption/seats','PUT',{accountId,seats:20,reference:'Restored reviewed license schedule',observedAt:on})
+ await signalDismissal(app,fixture,member)
  console.log('ADOPT-001 every account metric parity, configurable health, missing evidence, owner alerts, dedup/recovery, recipient preferences/reassignment, guarded playbook approval, configuration invalidation and authority passed.')
 }

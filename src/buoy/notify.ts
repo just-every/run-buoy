@@ -22,8 +22,8 @@ export async function setPreferences(db: D1Database, actor: Actor, input: Record
 }
 export async function inbox(db: D1Database, actor: Actor) {
  personal(actor)
- const {results} = await stmt(db, `SELECT n.id,n.type,n.title,n.body,n.created_at AS createdAt,n.read_at AS readAt,n.email,n.account_id AS accountId,json_extract(a.document,'$.name') AS accountName FROM buoy_inbox n JOIN buoy_accounts a ON a.id=n.account_id WHERE n.person_id=? ORDER BY n.created_at DESC,n.id`, actor.id).all()
- return {items: results, reminders: await notifications(db, actor), preferences: await preferences(db, actor.id), digests: (await stmt(db, 'SELECT id,period,frequency,email FROM buoy_digests WHERE person_id=? ORDER BY created_at DESC', actor.id).all()).results}
+ const {results} = await stmt(db, `SELECT n.id,n.type,n.title,n.body,n.created_at AS createdAt,n.read_at AS readAt,n.email,n.account_id AS accountId,json_extract(a.document,'$.name') AS accountName,r.rule_id AS adoptionRuleId,CASE WHEN d.rule_id IS NULL THEN NULL ELSE json_object('reason',d.reason,'until',d.until,'createdAt',d.created_at) END AS dismissal FROM buoy_inbox n JOIN buoy_accounts a ON a.id=n.account_id LEFT JOIN buoy_adoption_alert_notices r ON r.notice_id=n.id LEFT JOIN buoy_adoption_dismissals d ON d.rule_id=r.rule_id AND d.account_id=r.account_id AND d.person_id=r.person_id WHERE n.person_id=? ORDER BY n.created_at DESC,n.id`, actor.id).all()
+ return {items: results.map(row=>({...row,dismissal:typeof row.dismissal==='string'?JSON.parse(row.dismissal):null})), reminders: await notifications(db, actor), preferences: await preferences(db, actor.id), digests: (await stmt(db, 'SELECT id,period,frequency,email FROM buoy_digests WHERE person_id=? ORDER BY created_at DESC', actor.id).all()).results}
 }
 export async function markRead(db: D1Database, actor: Actor, noticeId: string) {
  personal(actor)

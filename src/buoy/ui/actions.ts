@@ -114,6 +114,10 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   }
   if (path === '/app/team') return mutateTeam(api,request,fields);
   if (path === '/app/notifications') {
+    if (action === 'notification-dismiss') {
+      await send(`/api/buoy/notifications/${encodeURIComponent(fields.id)}/dismiss`, {reason:fields.reason,until:fields.until});
+      return {redirect:path,message:'Signal dismissed until your chosen UTC instant.'};
+    }
     if (action === 'notification-preferences') {
       await send('/api/buoy/notifications/preferences', {frequency: fields.frequency, modes: {mention:fields.mention,assignment:fields.assignment,signal:fields.signal,approval:fields.approval}}, 'PUT');
       return {redirect:path,message:'Your notification preferences saved.',saved:action};
