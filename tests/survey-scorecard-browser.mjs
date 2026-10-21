@@ -33,6 +33,7 @@ export async function surveyScorecardBrowser(app,{api},{accountId,personId,confi
    await page.goto(app.origin+'/app',{waitUntil:'networkidle'});await show('scorecard-configure');const editor=page.locator('#scorecard-editor')
    for(const [i,m] of config.measures.entries()){
     await show('scorecard-measure-'+i)
+    if(m.aggregate)await editor.getByLabel(`Related values for measure ${i+1}`,{exact:true}).selectOption(m.aggregate)
     await editor.getByLabel(`Category values for measure ${i+1} (optional JSON)`,{exact:true}).fill(m.categoryValues?JSON.stringify(m.categoryValues):'')
    }
    await editor.getByLabel('Category values for measure 1 (optional JSON)',{exact:true}).fill('{invalid')

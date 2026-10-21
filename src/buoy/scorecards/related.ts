@@ -21,7 +21,7 @@ export async function relatedInputs(db:D1Database,image:PeopleImage){
   account(accountId:string,field:ScorecardField){
    const [,kind,,key,part]=field.key.split('.'),definition=image.definitions.find(d=>d.key===key)!
    const members=people.filter(p=>p.kind===kind&&p.accountIds.includes(accountId))
-   const values:RelatedScorecardValue[]=members.map(p=>{const raw=p.values[key],value=part&&raw&&typeof raw==='object'&&!Array.isArray(raw)?(raw as Record<string,unknown>)[part]:raw;return {personId:p.id,revision:p.revision,value:scalar(value)}})
+   const values:RelatedScorecardValue[]=members.map(p=>{const raw=p.values[key],value=part&&raw&&typeof raw==='object'&&!Array.isArray(raw)?(raw as Record<string,unknown>)[part]:raw;return {personId:p.id,revision:p.revision,value:scalar(value),...(part==='amountMinor'&&raw&&typeof raw==='object'&&!Array.isArray(raw)?{currency:(raw as {currency:string}).currency}: {})}})
    const evidence:SourceEvidence[]=members.map(p=>{
     const raw=values.find(v=>v.personId===p.id)!.value,source=sources.find(s=>s.personId===p.id&&s.key===key),currency=p.values[key]
     return {kind:'customer-field',label:p.name+' · '+definition.label,freshness:raw===null?'missing':'untracked',observedAt:source?.recordedAt??null,reference:source?.source??null,details:{personId:p.id,revision:p.revision,rawValue:raw,definition,explanation:p.explanations[key]??null,...(definition.type==='currency'&&currency&&typeof currency==='object'&&!Array.isArray(currency)?{currency:(currency as {currency?:string}).currency}: {})}}

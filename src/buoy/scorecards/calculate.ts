@@ -27,12 +27,13 @@ export function calculate(config:ScorecardConfig,inputs:RetainedInputs,identity:
  const override=config.segments.find(s=>inputs.segments.some(member=>member.id===s.segmentId)),selectedSegment=override?inputs.segments.find(s=>s.id===override.segmentId)!:null
  const breakdown=config.measures.map(measure=>{
   const related=measure.aggregate?inputs.relatedValues?.[measure.field]??[]:undefined
-  const mapped=related?.map(row=>numericValue(row.value,measure.categoryValues)),present=mapped?.filter((value):value is number=>value!==null)
+  const mixedCurrencies=related!==undefined&&new Set(related.flatMap(row=>row.currency?[row.currency]:[])).size>1
+  const mapped=related?.map(row=>mixedCurrencies?null:numericValue(row.value,measure.categoryValues)),present=mapped?.filter((value):value is number=>value!==null)
   const missing=related!==undefined&&(!related.length||present!.length!==related.length)
   const raw=related===undefined?inputs.values[measure.field]??null:!present!.length||(missing&&measure.missing==='unknown')?null:aggregate(present!,measure.aggregate!)
   const value=related===undefined?numericValue(raw,measure.categoryValues):raw as number|null,weight=override?.weights[measure.key]??measure.weight
   const normalized=value===null?null:linear(value,measure.min,measure.max),score=normalized===null?null:measure.direction==='lower'?100-normalized:normalized
-  return {...measure,rawValue:raw,...(related===undefined?{}:{relatedValues:related}),value,score,effectiveWeight:weight,included:value!==null,missingTreatment:value===null?measure.missing:missing?'exclude':'present' as const,sources:inputs.sources[measure.field]??inputs.sources[measure.field.split('.')[0]]??[]}
+  return {...measure,...(mixedCurrencies?{unavailableReason:'Related monetary values use different currencies; no conversion or aggregate is inferred.'}: {}),rawValue:raw,...(related===undefined?{}:{relatedValues:related}),value,score,effectiveWeight:weight,included:value!==null,missingTreatment:value===null?measure.missing:missing?'exclude':'present' as const,sources:inputs.sources[measure.field]??inputs.sources[measure.field.split('.')[0]]??[]}
  })
  return {...identity,inputs,selectedSegment,breakdown,bands:{...config.bands},...summarizeBreakdown(breakdown,config.bands)}
 }

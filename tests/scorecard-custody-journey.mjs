@@ -1,3 +1,4 @@
+import {importClient} from './import-door-client.mjs'
 import assert from 'node:assert/strict'
 export async function scorecardCustody(app,{api}){
  const prior=(await api('/scorecards')).published.config,on=new Date().toISOString().slice(0,10)
@@ -33,6 +34,12 @@ export async function scorecardCustody(app,{api}){
  assert.equal((await app.request('/api/buoy/scorecards/preview',{cookie:app.cookie,method:'POST',body:{historyId}})).status,404,'Erasing the departed respondent removes retained person-backed score copies')
  assert.ok(!JSON.stringify(await api('/scorecards')).includes('Private departing respondent observation'))
  await api('/accounts/'+a.id,'DELETE',{confirmation:a.name})
+ await publish(card('billing.allocatedMinor'))
+ const imported={id:'synthetic-buoy-import-health',name:'Reviewed imported customer',renewalDate:'2027-12-31',noticeDays:30,renewalEvidence:'Confirmed imported order',billing:{observedAt:on,reference:'Customer invoice allocation',currency:'USD',totalMinor:100,creditsMinor:0,allocatedMinor:50,dueDate:on},support:null}
+ const door=importClient(app.request,app.cookie),plan=await door.plan({accounts:[imported]});await door.apply(plan);const appliedAt=Date.now()
+ const importedCard=(await api('/scorecards')).accounts.find(r=>r.accountId===imported.id)
+ assert.equal(importedCard.score,50);assert.ok(Date.parse(importedCard.calculatedAt)<=appliedAt,'The Business import source recalculates its score before its successful response, not on the next read')
+ await api('/accounts/'+imported.id,'DELETE',{confirmation:imported.name})
  await publish(prior)
  console.log('Scorecard erasure: portfolio-source and departed-person snapshots withdraw atomically, current scores recalculate, and private source references disappear.')
 }

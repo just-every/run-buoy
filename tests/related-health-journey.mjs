@@ -52,6 +52,10 @@ export async function relatedHealth(app,fixture,member,surveyResult){
  const currentPeople=(await read()).records
  for(const p of users){const input=retainedRows.find(r=>r.personId===p.id);assert.ok(input);assert.equal(input.revision,currentPeople.find(r=>r.id===p.id).revision);assert.equal(input.value,indices[users.indexOf(p)]);assert.ok(numericResult.breakdown[0].sources.some(s=>s.reference===source&&s.details.personId===p.id&&s.details.revision===input.revision))}
  assert.ok(typedResult.breakdown.some(m=>m.sources.some(s=>s.reference===source)),'The card retains actual related-person field provenance')
+ await save(users[0].id,{related_money:{currency:'EUR',amountMinor:1000}})
+ const mixed=row(await preview(card([typed[2]]))).breakdown[0];assert.equal(mixed.value,null);assert.match(mixed.unavailableReason,/different currencies/)
+ assert.equal(row(await preview(card([{...typed[2],missing:'exclude'}]))).score,null,'Mixed monetary units cannot be silently aggregated even when missing inputs are excluded')
+ await save(users[0].id,{related_money:{currency:'USD',amountMinor:1000}})
  await save(users[0].id,{related_index:null,related_note:'70'})
  assert.equal(row(await preview(card([numeric]))).score,null,'Any missing related numeric input makes the required aggregate unknown')
  close(row(await preview(card([{...numeric,missing:'exclude'}]))).breakdown[0].value,indices.slice(1).reduce((a,b)=>a+b,0)/(users.length-1),'Exclude removes only the missing person before aggregation')
@@ -60,7 +64,7 @@ export async function relatedHealth(app,fixture,member,surveyResult){
  assert.equal(row(await preview(card([{...numeric,missing:'exclude'}])),otherId).score,null,'All missing related values remain unknown')
  assert.equal(row(await preview(card([{...measure('empty',field('related_index','contact')),missing:'exclude'}])),otherId).score,null,'No related people is unknown even with exclusion')
  await save(users[0].id,{related_index:indices[0],related_note:'Ready'})
- const config=card([surveyResult.config.measures.find(m=>m.field==='survey.nps'),surveyResult.config.measures.find(m=>m.field==='custom.'+surveyResult.fieldKey),numeric,category,surveyResult.config.measures.find(m=>m.field==='custom.survey_double')])
+ const config=card([surveyResult.config.measures.find(m=>m.field==='survey.nps'),surveyResult.config.measures.find(m=>m.field==='survey.csat'),numeric,category,surveyResult.config.measures.find(m=>m.field==='custom.survey_double')])
  assert.ok(config.measures.every(Boolean))
  const published=await api('/scorecards/publish','POST',{revision:(await cards()).revision,config}),initial=row(published)
  assert.ok(Number.isFinite(initial.score));assert.equal(row(published,otherId).score,null)

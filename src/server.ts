@@ -37,7 +37,10 @@ export default withDemo({
     const asset = await staticAssetResponse(request, env)
     if (asset) return asset
     const door = await importDoorResponse(request, env)
-    if (door) return door
+    if (door) {
+      if(!['GET','HEAD'].includes(request.method)&&door.ok)await recalculateScorecards(env.DB)
+      return door
+    }
     const auth = await authResponse(request, env)
     if (auth) return auth
     // The installed variant: the Lobby at / and the public claim state it reads.
