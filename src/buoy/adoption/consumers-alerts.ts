@@ -18,7 +18,7 @@ export async function recordAdoptionAlerts(db:D1Database){
   await db.prepare(`UPDATE buoy_adoption_alert_state SET active=0 WHERE active=1 AND (NOT ${activeOwner} OR NOT ${alertRule})`).run()
   return
  }
- const snapshot=await consumerImage(db),owners=new Map(snapshot.value.owners.map(owner=>[owner.accountId,owner.personId])),episode=id(),at=now()
+ const snapshot=await consumerImage(db,undefined,true),owners=new Map(snapshot.value.owners.map(owner=>[owner.accountId,owner.personId])),episode=id(),at=now()
  const measures=[...measuredConsumers({...snapshot.value,rules:snapshot.value.rules.filter(rule=>rule.alert)},new Set(owners.keys()))].flatMap(([accountId,evaluations])=>{
   const personId=owners.get(accountId)
   return personId?evaluations.filter(measure=>measure.alert).map(measure=>({ruleId:measure.ruleId,accountId,personId,matched:measure.matched,missing:measure.missing,title:measure.name,body:explanation(measure)})):[]
