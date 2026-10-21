@@ -9,7 +9,7 @@ import {healthScorecardBrowser} from './health-scorecard-browser.mjs'
 import {adoptionAggregateAlerts} from './adoption-aggregate-journey.mjs'
 const mode=process.argv[2]
 assert.ok(['account','segment','health'].includes(mode),'Select an adoption consumer shard.')
-const app=await startWorker({secure:mode!=='health'})
+const app=await startWorker()
 try{
  const fixture=await adoptionFixture(app,{count:mode==='health'?2:30})
  await defineAdoption(fixture.api)
