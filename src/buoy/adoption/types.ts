@@ -22,3 +22,11 @@ export interface AdoptionSeatHistory {
 }
 export interface AdoptionWindow {start:string;end:string}
 export interface AdoptionWindows {current:{day:AdoptionWindow;week:AdoptionWindow;month:AdoptionWindow};previous:{day:AdoptionWindow;week:AdoptionWindow;month:AdoptionWindow}}
+
+export interface AdoptionPersonLicense {
+ accountId:string;personId:string;licensed:boolean;sourceSystem:'manual';reference:string;observedAt:string;staleDays:number;freshness:'current'|'stale'
+}
+export interface AdoptionPersonLicenseHistory {
+ id:string;accountId:string;personId:string;oldValue:{licensed:boolean|null;reference:string|null};newValue:{licensed:boolean|null;reference:string|null};licensed:boolean|null;cleared:boolean;sourceSystem:'manual';reference:string|null;
+ observedAt:string|null;staleDays:number|null;recordedBy:string;recordedAt:string
+}

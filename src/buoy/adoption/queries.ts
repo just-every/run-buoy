@@ -48,8 +48,9 @@ export const BASE=`WITH filter AS (SELECT ? AS accountId,? AS personId,? AS segm
 export const SUBJECTS=`${BASE}
  SELECT s.scope,s.id,s.name,s.kind,
   COALESCE((SELECT json_group_array(accountId) FROM (SELECT DISTINCT accountId FROM scope_accounts WHERE scope=s.scope AND id=s.id ORDER BY accountId)),'[]') AS accountIds,
-  CASE WHEN s.scope='person' THEN NULL WHEN count(sa.accountId)>0 AND count(seats.seats)=count(sa.accountId) THEN sum(seats.seats) ELSE NULL END AS seats
+  CASE WHEN s.scope='person' THEN CASE WHEN count(sa.accountId)>0 AND count(licenses.licensed)=count(sa.accountId) THEN max(licenses.licensed) ELSE NULL END WHEN count(sa.accountId)>0 AND count(seats.seats)=count(sa.accountId) THEN sum(seats.seats) ELSE NULL END AS seats
  FROM scopes s LEFT JOIN scope_accounts sa ON sa.scope=s.scope AND sa.id=s.id LEFT JOIN buoy_adoption_seats seats ON seats.account_id=sa.accountId
+ LEFT JOIN buoy_adoption_person_licenses licenses ON s.scope='person' AND licenses.person_id=s.id AND licenses.account_id=sa.accountId
  GROUP BY s.scope,s.id ORDER BY s.scope,s.name,s.id`
 export const COUNTS=`${BASE}
  SELECT s.scope,s.id,p.period,

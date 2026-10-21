@@ -72,7 +72,11 @@ try{
  const usageEvents=await call('/usage/events')
  await call('/adoption/definitions','POST',{kind:'feature',key:'license',name:'License opened',events:['License opened']});
  await call('/adoption/seats','PUT',{accountId,seats:20,reference:'Customer-approved license schedule',observedAt:'2026-10-01',staleDays:30});
+ await call('/adoption/person-licenses','PUT',{accountId,personId:usagePerson.id,licensed:false,reference:'Prior individual register',observedAt:'2026-09-01'});
+ await call('/adoption/person-licenses','PUT',{accountId,personId:usagePerson.id,licensed:true,reference:'Customer-approved individual register',observedAt:'2026-10-01'});
  const adoptionBefore=await call('/adoption');
+ assert.equal(adoptionBefore.people.find(p=>p.id===usagePerson.id).metrics.current.utilization,1);
+ assert.equal(adoptionBefore.personLicenseHistory.length,2);
  personState=await call('/customer-people'); // Include the intended account revision from the new seat observation.
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});

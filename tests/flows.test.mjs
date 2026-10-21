@@ -460,6 +460,8 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   await t.test('ADOPT-001 configuration doors retain ordinary authority and do not call a provider',async()=>{
    await json(await call('/adoption/definitions','POST',{kind:'feature',key:'reports',name:'Reports',events:['Report generated']}),201)
    await json(await call('/adoption/seats','PUT',{accountId:'harbour',seats:20,reference:'Customer-approved license schedule',observedAt:'2026-10-01',staleDays:30}))
+   const licensePerson=await json(await call('/customer-people','POST',{kind:'user',name:'Licensed customer',accountIds:['harbour'],source:'Customer license register'}),201)
+   await json(await call('/adoption/person-licenses','PUT',{accountId:'harbour',personId:licensePerson.id,licensed:true,reference:'Customer-approved individual license',observedAt:'2026-10-01'}))
    const report=await json(await call('/adoption?accountId=harbour'))
    assert.equal(report.accounts.length,1);assert.equal(report.accounts[0].seats,20)
    assert.equal((await request('/api/buoy/adoption/report.csv')).status,401)

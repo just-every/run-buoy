@@ -26,8 +26,8 @@ export async function savePerson(db:D1Database,actor:Actor,input:Record<string,u
  }
  await writePeople(db,actor,data.raw,[
   stmt(db,'INSERT INTO buoy_customer_people(id,kind,name,revision,created_at) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,revision=excluded.revision',person.id,person.kind,person.name,person.revision,person.createdAt),
-  stmt(db,'DELETE FROM buoy_customer_memberships WHERE person_id=?',person.id),
-  stmt(db,'INSERT INTO buoy_customer_memberships(person_id,account_id) SELECT ?,value FROM json_each(?)',person.id,JSON.stringify(accountIds)),
+  stmt(db,'DELETE FROM buoy_customer_memberships WHERE person_id=? AND account_id NOT IN (SELECT value FROM json_each(?))',person.id,JSON.stringify(accountIds)),
+  stmt(db,'INSERT OR IGNORE INTO buoy_customer_memberships(person_id,account_id) SELECT ?,value FROM json_each(?)',person.id,JSON.stringify(accountIds)),
   ...historyStatements(db,actor,source,history),...peopleChanges(db,actor,image,source,person.id),
   ...accountRevisionStatements(db,custody),auditRecord(db,actor,'customer-person.saved',`customer-person:${person.id}`)
  ])
