@@ -76,7 +76,7 @@ try{
  await call('/adoption/person-licenses','PUT',{accountId,personId:usagePerson.id,licensed:true,reference:'Customer-approved individual register',observedAt:'2026-10-01'});
  await call('/accounts/'+accountId+'/owner','PUT',{ownerId:(await call('/state')).operator.id});
  const portableMeasure=await call('/adoption/consumers','POST',{name:'Portable license adoption measure',scope:'account',metric:'adoption.current.feature.license',op:'gte',value:1,health:true,alert:true,enabled:true});
- const portableAggregate=await call('/adoption/consumers','POST',{name:'Portable segment adoption alert',scope:'segment',segmentId:inappSegment.id,metric:'adoption.current.feature.license',op:'gte',value:1,health:false,alert:true,enabled:true});
+ const portableAggregate=await call('/adoption/consumers','POST',{name:'Portable segment adoption health and alert',scope:'segment',segmentId:inappSegment.id,metric:'adoption.current.feature.license',op:'gte',value:1,health:true,alert:true,enabled:true});
  const consumersBefore=await call('/adoption/consumers');
  assert.equal(consumersBefore.evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===portableAggregate.id).matched,true,'ADOPT-001 segment aggregate alert measures are present before archive export');
  const adoptionAlertsBefore=(await call('/notifications')).items.filter(i=>i.title===portableMeasure.name);assert.equal(adoptionAlertsBefore.length,1,'ADOPT-001 source installation has one routed alert episode');
@@ -87,6 +87,7 @@ try{
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
  const before=await call('/state'), beforeAudit=(await call('/audit')).entries
+ assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
  assert.doesNotMatch(JSON.stringify(beforeAudit),/Retired account|erase-before-backup|example\.test|Ana Lyst|Harbour CS owner/,'AUDIT-001 erased account and people stay unnamed')
  const screen=await (await running.request('/app/audit',{cookie:running.cookie})).text()
