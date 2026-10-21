@@ -85,7 +85,7 @@ function credentialSections(data: InappPage, fields?: Fields, issued?: InappCred
 }
 
 function receiptList(data: InappPage, state: State): string {
-  return section('Observed campaign receipts', '<p>These are recorded render, completion and dismissal observations. A campaign fetch, stored campaign or reservation is not a view. See <a href="/app/customer-people">customer timelines</a> for person evidence.</p>'
+  return section('Observed campaign receipts', '<p>The newest 200 recorded render, completion and dismissal observations appear here. A campaign fetch, stored campaign or reservation is not a view. See <a href="/app/customer-people">customer timelines</a> for person evidence.</p>'
     + (data.receipts === undefined ? '' : data.receipts.length ? `<ul class="journal">${data.receipts.map(receipt => `<li class="record"><h3>${escape(data.campaigns.find(campaign => campaign.id === receipt.campaignId)?.title ?? receipt.campaignId)}</h3>`
       + `<p>${escape(receipt.kind)} · Customer person ${escape(receipt.personId)} · <a href="/app/accounts/${pathId(receipt.accountId)}">${escape(state.accounts.find(account => account.id === receipt.accountId)?.name ?? receipt.accountId)}</a></p>`
       + `<p>Observed (UTC): ${timestamp(receipt.observedAt)}</p></li>`).join('')}</ul>` : '<p>No observed campaign receipts.</p>'));

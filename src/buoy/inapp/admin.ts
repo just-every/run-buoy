@@ -1,11 +1,12 @@
 import type { Actor } from '../core'
+import {MAPPED_JOIN,ATTRIBUTED} from '../usage/mappings'
 import { authority, requirePerson } from '../core'
 import { auditRecord, auditIfChanged } from '../audit-records'
 import { digest } from '../usage/model'
 import { adminRead, adminWrite, CAMPAIGN_COLUMNS, id, insist, now, only, source, stmt, text } from './model'
 export async function inappState(db:D1Database,actor:Actor){
- const rows=await adminRead(db,actor,[stmt(db,`SELECT ${CAMPAIGN_COLUMNS} FROM buoy_inapp_campaigns ORDER BY created_at,id`),stmt(db,'SELECT id,name FROM buoy_usage_sources ORDER BY name'),stmt(db,"SELECT id,json_extract(document,'$.name') AS name FROM buoy_segments ORDER BY name"),stmt(db,'SELECT id,source_id AS sourceId,label,creator_id AS creatorId,created_at AS createdAt,last_used_at AS lastUsedAt,revoked_at AS revokedAt FROM buoy_inapp_credentials ORDER BY created_at,id')])
- return {campaigns:(rows[0].results as Record<string,unknown>[]).map(c=>({...c,steps:JSON.parse(String(c.steps)),enabled:!!c.enabled})),sources:rows[1].results,segments:rows[2].results,credentials:(rows[3].results as Record<string,unknown>[]).map(c=>({...c,scope:['inapp']}))}
+ const rows=await adminRead(db,actor,[stmt(db,`SELECT ${CAMPAIGN_COLUMNS} FROM buoy_inapp_campaigns ORDER BY created_at,id`),stmt(db,'SELECT id,name FROM buoy_usage_sources ORDER BY name'),stmt(db,"SELECT id,json_extract(document,'$.name') AS name FROM buoy_segments ORDER BY name"),stmt(db,'SELECT id,source_id AS sourceId,label,creator_id AS creatorId,created_at AS createdAt,last_used_at AS lastUsedAt,revoked_at AS revokedAt FROM buoy_inapp_credentials ORDER BY created_at,id'),stmt(db,`SELECT r.campaign_id AS campaignId,r.kind,m.person_id AS personId,m.account_id AS accountId,e.observed_at AS observedAt FROM buoy_inapp_receipts r JOIN buoy_usage_events e ON e.id=r.event_id ${MAPPED_JOIN} WHERE ${ATTRIBUTED} ORDER BY e.received_at DESC,e.id DESC LIMIT 200`)])
+ return {campaigns:(rows[0].results as Record<string,unknown>[]).map(c=>({...c,steps:JSON.parse(String(c.steps)),enabled:!!c.enabled})),sources:rows[1].results,segments:rows[2].results,receipts:rows[4].results,credentials:(rows[3].results as Record<string,unknown>[]).map(c=>({...c,scope:['inapp']}))}
 }
 export async function saveCampaign(db:D1Database,actor:Actor,input:Record<string,unknown>){
  requirePerson(actor);only(input,['sourceId','segmentId','kind','title','body','steps','maxViews','windowHours','enabled'])
