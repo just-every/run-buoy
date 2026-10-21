@@ -59,7 +59,7 @@ export async function scan(page, label) {
     name: element.getAttribute('aria-label') || (element.getAttribute('aria-labelledby') || '').split(/\s+/).map(id => document.getElementById(id)?.textContent || '').join(' ').trim(),
     description: element.getAttribute('aria-describedby')?.split(/\s+/).map(id => document.getElementById(id)?.textContent || '').join(' ').trim() }))
   }))
-  for (const pill of alternatives.pills) assert.match(pill, /At risk|Healthy|Unknown/, 'Health color has a text label')
+  for (const pill of alternatives.pills) assert.match(pill, /At risk|Watch|Healthy|Unknown/, 'Health color has a text label')
   if(alternatives.lanes.length) { const table=page.getByRole('table',{name:'Renewal runway data',exact:true}); assert.equal(await table.count(),1,'A11Y-001 runway has a semantic text table'); assert.equal(await table.locator('tbody tr').count(),alternatives.lanes.length,'A11Y-001 table covers every account lane') }
   for (const toggle of await page.locator('.rw-open').all()) {
    const expanded = await toggle.getAttribute('aria-expanded')
@@ -70,7 +70,7 @@ export async function scan(page, label) {
   }
   for (const lane of alternatives.lanes) {
    assert.ok(lane.description?.includes(lane.name), 'Runway names the account in its text alternative')
-   assert.match(lane.description, /At risk|Healthy|Unknown/)
+   assert.match(lane.description, /At risk|Watch|Healthy|Unknown/)
    assert.match(lane.description, /renews .*notice /, 'Renewal and notice dates have a text alternative')
    for (const marker of lane.markers) assert.ok(marker?.includes(lane.name) && marker.includes('health would read'), 'Projected changes describe their date, account and effect')
   }
