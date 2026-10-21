@@ -82,7 +82,7 @@ export async function searchJourney({call,json,request,cookie,member,account,sig
  console.log('ACCOUNT-005 native HTTP search: account/domain/external ID, contact/user email, task text, live edits/erasure, shared membership, pagination and staff/agent boundaries passed.')
 }
 
-if(import.meta.url===pathToFileURL(process.argv[1]).href){
+export async function searchHttpJourney(){
  const {startWorker}=await import('./worker.mjs'),app=await startWorker()
  try{
   const call=(path,method='GET',body,extra={})=>app.request('/api/buoy'+path,{cookie:app.cookie,method,body,...extra})
@@ -94,3 +94,5 @@ if(import.meta.url===pathToFileURL(process.argv[1]).href){
   await searchJourney({call,json,request:app.request,cookie:app.cookie,member,account,signIn:app.signIn})
  }finally{await app.close()}
 }
+
+if(import.meta.url===pathToFileURL(process.argv[1]).href)await searchHttpJourney()

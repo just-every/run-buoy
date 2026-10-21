@@ -1,4 +1,4 @@
-import {searchJourney} from './search-journey.mjs'
+import {searchHttpJourney} from './search-journey.mjs'
 import {inappJourney} from './inapp-journey.mjs'
 import {customerPeopleJourney} from './customer-people-journey.mjs'
 import {usageJourney} from './usage-journey.mjs'
@@ -475,7 +475,6 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    await json(await call('/agent-tokens/'+grant.id,'DELETE'))
   })
   await t.test('INAPP-001 authenticated targeting, caps and receipt custody',async()=>{await inappJourney({...worker,request,dispatch:async req=>{seen.push([req.method,new URL(req.url).pathname]);return worker.dispatch(req)}})})
-  await t.test('ACCOUNT-005 native search, live custody and ordinary staff authority',async()=>searchJourney({call,json,request,cookie,member,account,signIn}))
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))
@@ -494,3 +493,7 @@ test('HTTP-001 IMPORT-001 operator and Business door authority, provisioning, re
  const {importDoorJourney}=await import('./import-door-journey.mjs')
  await importDoorJourney()
 })
+
+// Search owns a fresh public Worker so unrelated field/usage fixtures do not
+// multiply every lookup's reconciliation cost in Verify's 15-minute budget.
+test('ACCOUNT-005 native search, live custody and ordinary staff authority',async()=>searchHttpJourney())
