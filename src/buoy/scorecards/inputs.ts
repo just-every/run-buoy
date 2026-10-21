@@ -1,3 +1,4 @@
+import {parseRevenueImage} from '../revenue/snapshot'
 import {consumerImage} from '../adoption/consumers-image'
 import {adoptionRuleFields,adoptionRuleValues} from '../adoption/segment-inputs'
 import {evaluate,ruleFields} from '../fields/model'
@@ -19,7 +20,9 @@ export async function inputImage(db:D1Database,at:Date){
  insist(sourceRow,'Scorecard source evidence unavailable.',503)
  const sourceImage={sql:SOURCES,raw:sourceRow.snapshot},customSources=JSON.parse(sourceRow.snapshot) as CustomSource[]
  const image={...segmentImage.value,adoption:numericImage.value.adoption},segments=definitions(image),adoption=adoptionRuleValues(image.adoption),computed=evaluate(image.custom)
+ const revenues=parseRevenueImage(JSON.stringify(image.revenue),on)
  const fields:ScorecardField[]=[
+  ...['arrMinor','mrrMinor','seats'].map(key=>({key:`revenue.${key}`,name:`Confirmed recurring ${key}`,kind:'billing' as const,unit:key==='seats'?'purchased units':'native currency minor units'})),
   ...['totalMinor','creditsMinor','allocatedMinor','balanceMinor'].map(key=>({key:`billing.${key}`,name:`Recorded billing ${key} (minor currency units)`,kind:'billing' as const,unit:'minor currency units'})),
   ...['openTickets','urgentTickets'].map(key=>({key:`support.${key}`,name:`Recorded support ${key}`,kind:'support' as const,unit:'tickets'})),
   ...Object.entries(ruleFields(image.custom.definitions)).filter(([,type])=>type==='number').map(([key])=>{
@@ -35,7 +38,10 @@ export async function inputImage(db:D1Database,at:Date){
   for(const field of fields){
    let raw:unknown=field.kind==='adoption'?adoption.get(`account:${account.account.id}`)?.[field.key]:account.values[field.key]
    let evidence:SourceEvidence[]=[]
-   if(field.kind==='billing'||field.kind==='support'){
+   if(field.key.startsWith('revenue.')){
+    const row=revenues.find(r=>r.accountId===account.account.id)!,revenue=row.revenue
+    evidence=[{kind:'recurring-contract',label:'Person-confirmed recurring contract',freshness:revenue.freshness,observedAt:revenue.confirmedOn,reference:revenue.reference,details:{sourceKind:revenue.sourceKind,currency:revenue.currency,status:revenue.status,versionId:row.versionId,contractRevision:row.contractRevision,recordedBy:row.recordedBy,recordedAt:row.recordedAt,contract:row.contract}}]
+   }else if(field.kind==='billing'||field.kind==='support'){
     const kind=field.kind,record=account.account[kind],coverage=account.assessment.evidence.find(e=>e.kind===kind)!
     evidence=[{kind,label:`Manual ${kind} snapshot`,freshness:!record?'missing':coverage.stale?'stale':'current',observedAt:record?.observedAt??null,reference:record?.reference??null,details:{sourceSystem:'manual',staleAfterDays:coverage.staleAfterDays,...(kind==='billing'?{currency:account.account.billing?.currency??null}:{})}}]
    }else if(field.kind==='adoption'){

@@ -86,6 +86,8 @@ try{
  personState=await call('/customer-people'); // Include the intended account revision from the new seat observation.
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
+ const contractBefore=await call('/accounts/'+accountId+'/contract','POST',{revision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,contract:{currency:'USD',contractStart:'2026-01-01',contractEnd:'2027-12-31',lines:[{product:'Portable recurring workspace',quantity:20,amountMinor:6000000,frequency:'annual',entitlements:'20 reporting workspace seats'}],source:{reference:'Confirmed portable customer contract',confirmedOn:new Date().toISOString().slice(0,10)}}});
+ const revenueBefore=await call('/revenue');
  const portableCard=await call('/scorecards/publish','POST',{revision:null,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
  const scorecardBefore=await call('/scorecards');
  const retainedScorecard=await call('/scorecards/preview','POST',{historyId:scorecardBefore.history.find(h=>h.accountId===accountId).id});
@@ -121,6 +123,8 @@ try{
  assert.deepEqual(added.map(entry=>[entry.action,entry.actor.replace(/[0-9a-f-]{36}$/,'id'),entry.detail]),[['auth.signed-in','person:id','native session issued'],['data.exported','portability:direct','Installation archive snapshot taken; delivery of the file is not recorded.']],'AUDIT-001 the export is recorded, and the destination records its own bootstrap sign-in')
  assert.match(added[1].subject,/^archive:[0-9a-f-]+$/)
  assert.match(await (await running.request('/app/audit?action=data.exported',{cookie:running.cookie})).text(),/portability:direct/)
+ assert.deepEqual(await call('/revenue'),revenueBefore,'Confirmed recurring terms, provenance and immutable versions restore exactly');
+ assert.ok(restored.some(e=>e.action==='revenue.contract-confirmed'),'Recurring confirmation audit survives archive restore');
  const scorecardAfter=await call('/scorecards');
  assert.deepEqual(scorecardAfter.versions,scorecardBefore.versions,'Published scorecard versions and their dependency image restore exactly');
  assert.deepEqual(scorecardAfter.history,scorecardBefore.history,'Retained calculation history restores exactly');

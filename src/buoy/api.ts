@@ -1,3 +1,4 @@
+import {revenueState,saveContract} from './revenue'
 import {scorecardState,previewScorecard,publishScorecard,recalculateScorecards} from './scorecards'
 import {search} from './search'
 import {consumerState,saveConsumer} from './adoption/consumers'
@@ -78,6 +79,8 @@ buoyApi.route('/',peopleApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
+buoyApi.get('/api/buoy/revenue',async c=>c.json(await revenueState(c.env.DB,c.get('actor'))))
+buoyApi.post('/api/buoy/accounts/:id/contract',async c=>c.json(await saveContract(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/scorecards',async c=>c.json(await scorecardState(c.env.DB,c.get('actor'))))
 buoyApi.post('/api/buoy/scorecards/preview',async c=>c.json(await previewScorecard(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/scorecards/publish',async c=>c.json(await publishScorecard(c.env.DB,c.get('actor'),await jsonBody(c.req.raw) as Record<string,unknown>&{revision:unknown;config:unknown}),201))

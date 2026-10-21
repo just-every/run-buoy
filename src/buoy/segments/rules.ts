@@ -1,7 +1,8 @@
+import {REVENUE_FIELDS} from '../revenue/model'
 import { insist, object, text } from '../core'
 export const TIERS = ['high-touch', 'scaled', 'digital']
 export const STAGES = ['onboarding', 'adoption', 'expansion', 'renewal', 'churned']
-export const FIELDS: Record<string, 'text' | 'number'> = {
+export const FIELDS: Record<string, 'text' | 'number'> = {...REVENUE_FIELDS,
  id:'text',name:'text',renewalDate:'text',noticeDays:'number',renewalEvidence:'text',revision:'text',createdAt:'text',ownerId:'text',territory:'text',tier:'text',stage:'text',
  'billing.observedAt':'text','billing.reference':'text','billing.currency':'text','billing.totalMinor':'number','billing.creditsMinor':'number','billing.allocatedMinor':'number','billing.dueDate':'text','billing.balanceMinor':'number',
  'support.observedAt':'text','support.reference':'text','support.openTickets':'number','support.urgentTickets':'number',
@@ -36,6 +37,7 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
   if(kind==='text')insist(String(c.value).length<=1000,'Rule text is too long.')
   return {field,op,value:c.value as string|number}
  })
+ for(const c of conditions)if(['revenue.arrMinor','revenue.mrrMinor'].includes(c.field)&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='revenue.currency'&&other.op==='eq'),'A recurring revenue comparison needs an all-rule with its exact currency.')
  for(const c of conditions)if((c.field.startsWith('custom.')||/^people\.(contact|user)\.custom\./.test(c.field))&&c.field.endsWith('.amountMinor')&&c.op!=='is-missing'){
   const currency=c.field.replace(/\.amountMinor$/,'.currency')
   insist(rules.match==='all'&&conditions.some(other=>other.field===currency&&other.op==='eq'),'A custom money comparison needs an all-rule with its exact currency.')
