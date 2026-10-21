@@ -19,7 +19,7 @@ export async function saveRenewalSettings(db:D1Database,actor:Actor,input:Record
 }
 /** Declared hourly Cron and successful source writes use the same idempotent door. */
 export async function generateRenewals(db:D1Database,at=new Date()){
- const on=at.toISOString().slice(0,10),settings=await renewalSettings(db),source=await db.prepare(GENERATION_SQL+' AS snapshot').first<{snapshot:string}>();insist(source,'Recurring source image unavailable.',503)
+ const on=at.toISOString().slice(0,10),settings=await renewalSettings(db),source=await db.prepare('SELECT ('+GENERATION_SQL+') AS snapshot').first<{snapshot:string}>();insist(source,'Recurring source image unavailable.',503)
  const rows=JSON.parse(source.snapshot) as {id:string;document:string;revision:string;ownerId:string|null;versionId:string;contract:string}[]
  const existing=(await db.prepare('SELECT id,account_id AS accountId,period_key AS periodKey,document,revision FROM buoy_renewals').all<{id:string;accountId:string;periodKey:string;document:string;revision:string}>()).results
  const statements:D1PreparedStatement[]=[]
