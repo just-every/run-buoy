@@ -26,8 +26,8 @@ export function money(minor: number, currency: string): string {
   const whole = minor % 10 ** digits === 0;
   return escape(new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'narrowSymbol', minimumFractionDigits: whole ? 0 : digits, maximumFractionDigits: whole ? 0 : digits }).format(Number(majorAmount(minor, currency))));
 }
-export const healthLabel = (status: string) => status === 'at-risk' ? 'At risk' : status === 'healthy' ? 'Healthy' : 'Unknown';
-const glyph: Record<string, string> = { healthy: '✓', 'at-risk': '!', unknown: '?' };
+export const healthLabel = (status: string) => status === 'at-risk' ? 'At risk' : status === 'healthy' ? 'Healthy' : status==='watch'?'Watch':'Unknown';
+const glyph: Record<string, string> = { healthy: '✓', 'at-risk': '!', unknown: '?',watch:'•' };
 /** The health band as an always-labelled pill: a coloured disc, then the band's name. */
 export const pill = (status: string) => `<span class="pill ${escape(status)}"><i aria-hidden="true">${glyph[status] ?? '?'}</i>${healthLabel(status)}</span>`;
 /** A heavy title followed by "· fact" items. Each separator rides at the start of its own fact, in the gap before it,

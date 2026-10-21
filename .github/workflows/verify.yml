@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [http, adoption, adoption-consumers, adoption-aggregates, browser, archive]
+        suite: [http, adoption, adoption-consumers, adoption-aggregates, health, browser, archive]
     env:
       BUOY_VERIFY_SUITE: ${{ matrix.suite }}
       CI: 'true'

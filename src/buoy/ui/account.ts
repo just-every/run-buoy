@@ -1,3 +1,4 @@
+import {scorecardBreakdown} from './scorecards';
 import { accountForm } from './account-form';
 import { actorName } from './band';
 import { button, date, day, details, disclosure, escape, field, form, hidden, money, pathId, personSelect, pill, section, textarea, titleLine, valueOf } from './html';
@@ -25,7 +26,7 @@ export function accountPage(state: State, account: Account, values: Fields | und
 
   const sentiment = account.health.sentiment;
   const judgment = sentiment ? `<div class="judgment"><h3>CSM sentiment</h3><p>A person’s judgment, not source data. ${sentiment.expired ? `Expired after ${date(sentiment.expiresOn)}; the measure is missing.` : `Counts through ${date(sentiment.expiresOn)}.`}</p><dl><dt>Rating</dt><dd>${escape(capital(sentiment.rating))}</dd><dt>Reason</dt><dd>${escape(sentiment.reason)}</dd><dt>Recorded by</dt><dd>${escape(sentiment.by)} on ${date(sentiment.recordedAt)}</dd></dl></div>` : '';
-  const health = section('Health', `<p>${escape(account.health.interpretation)}</p><p>${pill(account.health.status)}</p><ul class="reasons">${account.health.reasons.map(reason => `<li>${escape(reason)}</li>`).join('')}</ul>${judgment}`, 'health');
+  const health = section('Health', `<p>${escape(account.health.interpretation)}</p><p>${pill(account.health.status)}</p><ul class="reasons">${account.health.reasons.map(reason => `<li>${escape(reason)}</li>`).join('')}</ul>${judgment}${account.health.scorecard?scorecardBreakdown(account.health.scorecard):''}<p><a href="/app#health-scorecard">Weighted health configuration and history</a></p>`, 'health');
 
   const proposals = state.proposals.filter(p => p.accountId === account.id);
   const proposalList = proposals.length ? proposals.map(proposal => {

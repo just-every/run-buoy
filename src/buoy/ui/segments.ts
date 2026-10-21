@@ -55,7 +55,7 @@ function classification(data:SegmentsPage,state: State, values?: Fields): string
 
 function report(data:SegmentsPage,segment: SegmentView, state: State, values?: Fields): string {
   const members = segment.members;
-  const counts = ['at-risk', 'healthy', 'unknown'].map(status => `${members.filter(member => member.health === status).length} ${status === 'at-risk' ? 'at risk' : status}`).join(' · ');
+  const counts = ['at-risk', 'watch', 'healthy', 'unknown'].map(status => `${members.filter(member => member.health === status).length} ${status === 'at-risk' ? 'at risk' : status}`).join(' · ');
   const records = members.map(member => `<li class="record"><h3>${accountLink(member.accountId, member.name)}</h3><p>${pill(member.health)}</p><ul class="reasons">${member.assessment.reasons.map(reason => `<li>${escape(reason)}</li>`).join('')}</ul><dl><dt>Tier</dt><dd>${escape(member.tier ?? 'Unset')}</dd><dt>Stage</dt><dd>${escape(member.stage ?? 'Unset')}</dd><dt>Entered (UTC)</dt><dd>${timestamp(member.enteredAt)}</dd></dl></li>`).join('');
   const history = segment.history.map(interval => {
     const name = state.accounts.find(account => account.id === interval.accountId)?.name ?? interval.accountId;

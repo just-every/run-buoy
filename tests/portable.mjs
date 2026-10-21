@@ -86,6 +86,10 @@ try{
  personState=await call('/customer-people'); // Include the intended account revision from the new seat observation.
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
+ const portableCard=await call('/scorecards/publish','POST',{revision:null,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
+ const scorecardBefore=await call('/scorecards');
+ const retainedScorecard=await call('/scorecards/preview','POST',{historyId:scorecardBefore.history.find(h=>h.accountId===accountId).id});
+ personState=await call('/customer-people');
  const before=await call('/state'), beforeAudit=(await call('/audit')).entries
  assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
@@ -117,6 +121,12 @@ try{
  assert.deepEqual(added.map(entry=>[entry.action,entry.actor.replace(/[0-9a-f-]{36}$/,'id'),entry.detail]),[['auth.signed-in','person:id','native session issued'],['data.exported','portability:direct','Installation archive snapshot taken; delivery of the file is not recorded.']],'AUDIT-001 the export is recorded, and the destination records its own bootstrap sign-in')
  assert.match(added[1].subject,/^archive:[0-9a-f-]+$/)
  assert.match(await (await running.request('/app/audit?action=data.exported',{cookie:running.cookie})).text(),/portability:direct/)
+ const scorecardAfter=await call('/scorecards');
+ assert.deepEqual(scorecardAfter.versions,scorecardBefore.versions,'Published scorecard versions and their dependency image restore exactly');
+ assert.deepEqual(scorecardAfter.history,scorecardBefore.history,'Retained calculation history restores exactly');
+ assert.equal(scorecardAfter.published.id,portableCard.versionId);
+ assert.deepEqual(await call('/scorecards/preview','POST',{historyId:scorecardBefore.history.find(h=>h.accountId===accountId).id}),retainedScorecard,'Historical inputs, source evidence and calculation survive archive restore');
+ assert.ok(restored.some(e=>e.action==='health.scorecard-published'&&e.subject==='scorecard:'+portableCard.versionId),'Scorecard publish audit restores with its opaque subject');
  assert.deepEqual(after.accounts,before.accounts)
  assert.deepEqual(after.proposals,before.proposals)
  assert.deepEqual(after.decisions,before.decisions)

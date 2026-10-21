@@ -1,3 +1,4 @@
+import {scorecardsPage,type ScorecardPage,type ScorecardPreview} from './scorecards';
 import type {ConsumerPage} from './adoption-consumers';
 import {inappPage,type InappPage,type InappCredential} from './inapp';
 import {adoptionPage} from './adoption';
@@ -47,7 +48,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   if ((path === '/app/audit' || path === '/app/team' || path === '/app/usage' || path === '/app/connections' || path === '/app/inapp') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
   let usageCredential:UsageCredential|undefined;
   let inappCredential:InappCredential|undefined;
-  let fieldPreview:unknown;
+  let fieldPreview:unknown,scorecardPreview:ScorecardPreview|undefined;
   let customerFieldPreview:CustomerFieldPreview|undefined,usageMappingPreview:MappingPreview|undefined;
   let agentCredential:AgentCredential|undefined;
   let fields: Fields | undefined, error: string | undefined, teamPreview: TeamPreview | undefined, status = 200;
@@ -59,7 +60,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
       for (const [key, value] of data) { if (typeof value !== 'string') throw new ApiError('Use the import upload control for account files. This form accepts text fields only.'); fields[key] = value; }
       const result = await mutate(api, request, path, fields, account?.id);
       teamPreview = result.teamPreview;
-      fieldPreview=result.fieldPreview;
+      fieldPreview=result.fieldPreview;scorecardPreview=result.scorecardPreview;
       customerFieldPreview=result.customerFieldPreview;usageMappingPreview=result.usageMappingPreview;
       usageCredential=result.usageCredential;inappCredential=result.inappCredential;
       agentCredential=result.agentCredential;
@@ -67,7 +68,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
         const target = new URL(result.redirect, request.url);
         target.searchParams.set('success', result.message ?? 'Change saved.');
         if (result.saved) target.searchParams.set('saved', `${path}|${result.saved}`);
-        return new Response(null, { status: 303, headers: { location: target.pathname + target.search, 'cache-control': 'no-store' } });
+        return new Response(null, { status: 303, headers: { location: target.pathname + target.search + target.hash, 'cache-control': 'no-store' } });
       }
     } catch (caught) {
       error = caught instanceof Error ? caught.message : 'This change could not be saved. Try again.';
@@ -125,11 +126,12 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   } else {
     ({ head, body, style } = workPage(state, fields, open, today));
     if (url.searchParams.get('intro') === 'hidden') body = body.replace('<div data-introduction>', '<div data-introduction hidden>');
+    body+=scorecardsPage(await apiCall<ScorecardPage>(api,request,'/api/buoy/scorecards'),state,fields,scorecardPreview);
     if (url.searchParams.get('intro') === 'hidden') body = body.replace('<div class="below">', '<div class="below"><p class="show-intro"><a data-show-introduction href="/app?intro=show#first-use">Show first-use checklist</a></p>');
   }
   // Success messages are selected from known server outcomes, not arbitrary
   // text supplied in a link to this private page.
-  const messages = new Set(['In-app campaign created.','In-app campaign enabled.','In-app campaign disabled.','In-app credential revoked.','Adoption configuration saved.','Customer record saved.','Customer field saved.','Customer field values saved.','Exact identity mapping approved.','Usage source saved.', 'Ingestion credential revoked.', 'Field saved.', 'Field values saved.', 'Agent switch saved.', 'Agent credential revoked.', 'Tier names saved.', 'Outcome tracking started.', 'Segment saved.', 'Account classification saved.', 'Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
+  const messages = new Set(['Scorecard published.','In-app campaign created.','In-app campaign enabled.','In-app campaign disabled.','In-app credential revoked.','Adoption configuration saved.','Customer record saved.','Customer field saved.','Customer field values saved.','Exact identity mapping approved.','Usage source saved.', 'Ingestion credential revoked.', 'Field saved.', 'Field values saved.', 'Agent switch saved.', 'Agent credential revoked.', 'Tier names saved.', 'Outcome tracking started.', 'Segment saved.', 'Account classification saved.', 'Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
   const success = url.searchParams.get('success') ?? '';
   const response = await shell({ title, head, body, style, state, current: account ? '/app' : path, status, error, success: messages.has(success) ? success : undefined, backToAccounts: !!account, importDoor: path === '/app/imports' && state.operator.role === 'owner' });
   return request.method === 'HEAD' ? new Response(null, { status: response.status, headers: response.headers }) : response;

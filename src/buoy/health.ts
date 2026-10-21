@@ -1,3 +1,5 @@
+import type {ScorecardHealth} from './scorecard-health'
+import {scorecardProjectionDates,weightedHealth} from './scorecard-health'
 import {applyConsumerHealth,type ConsumerEvaluation} from './adoption/consumers-model'
 import { usDay } from './core'
 import { majorAmount } from './currencies'
@@ -11,9 +13,9 @@ export interface Account {
  support: null | {observedAt: string; reference: string; openTickets: number; urgentTickets: number};
 }
 export interface Sentiment { rating: 'red' | 'amber' | 'green'; reason: string; recordedBy: string; recordedAt: string; expiresOn: string }
-// HEALTH-002: red sentiment is a risk reason; amber and green are shown as the
-// person's judgment without moving the band. An expired rating is a missing
-// optional measure: it is named but, unlike billing and support, never makes health Unknown.
+// HEALTH-002: native health treats red sentiment as risk and names expired
+// judgment as missing. A numeric card can explicitly weight current sentiment;
+// after expiry its configured missing policy applies to that contribution.
 function judgment(sentiment: Sentiment | null, today: string) {
  if (!sentiment) return null
  const by = sentiment.recordedBy.split(':').slice(2).join(':') || 'A team member', expired = today > sentiment.expiresOn
@@ -24,7 +26,7 @@ function judgment(sentiment: Sentiment | null, today: string) {
 }
 // DATA-001: evidence is stale when its observation date is more than the source
 // kind's threshold in whole UTC days before today. Every observation is a manual snapshot today.
-export function health(account: Account, today = new Date().toISOString().slice(0, 10), sentiment: Sentiment | null = null, limits: Staleness = DEFAULT_STALENESS, adoption: ConsumerEvaluation[] = []) {
+export function health(account: Account, today = new Date().toISOString().slice(0, 10), sentiment: Sentiment | null = null, limits: Staleness = DEFAULT_STALENESS, adoption: ConsumerEvaluation[] = [], scorecard?:ScorecardHealth) {
  const reasons: string[] = [], gaps: string[] = [], judged = judgment(sentiment, today)
  const stale = (observed: string, days: number) => Date.parse(today) - Date.parse(observed) > days * 86400000
  const evidence = (['billing', 'support'] as const).map(kind => {
@@ -45,8 +47,8 @@ export function health(account: Account, today = new Date().toISOString().slice(
  const evidenceRisk = reasons.length > 0
  if (judged && !judged.expired && judged.rating === 'red') reasons.push(judged.line)
  const notes = judged && (judged.expired || judged.rating !== 'red') ? [judged.line] : []
- return applyConsumerHealth({ interpretation: HEALTH_INTERPRETATION, evaluatedOn: today, status: reasons.length ? 'at-risk' : gaps.length ? 'unknown' : 'healthy', reasons: [...reasons, ...gaps, ...(!evidenceRisk && !gaps.length ? ['Current billing and support snapshots show no defined risk signal.'] : []), ...notes],
-  evidence, sentiment: judged && {rating: judged.rating, reason: judged.reason, by: judged.by, recordedAt: judged.recordedAt, expiresOn: judged.expiresOn, expired: judged.expired} }, adoption)
+ return applyConsumerHealth(weightedHealth({ interpretation: HEALTH_INTERPRETATION, evaluatedOn: today, status: reasons.length ? 'at-risk' : gaps.length ? 'unknown' : 'healthy', reasons: [...reasons, ...gaps, ...(!evidenceRisk && !gaps.length ? ['Current billing and support snapshots show no defined risk signal.'] : []), ...notes],
+  evidence, sentiment: judged && {rating: judged.rating, reason: judged.reason, by: judged.by, recordedAt: judged.recordedAt, expiresOn: judged.expiresOn, expired: judged.expired} }, scorecard), adoption)
 }
 // Adapted from Locket's confirmed-term deadline path. Calendar dates use UTC
 // arithmetic, never browser-local parsing; no billing period implies renewal.
@@ -59,12 +61,12 @@ export function noticeDate(account: Account) {
 // values here; no future activity is forecast or historical state invented.
 const DAY = 86400000
 const shift = (value: string, days: number) => new Date(Date.parse(value.slice(0, 10)) + days * DAY).toISOString().slice(0, 10)
-export function outlook(account: Account, today: string, sentiment: Sentiment | null = null, limits: Staleness = DEFAULT_STALENESS, adoption: ConsumerEvaluation[] = []) {
- const turns = [account.billing && shift(account.billing.observedAt, limits.billingDays + 1), account.support && shift(account.support.observedAt, limits.supportDays + 1), sentiment && shift(sentiment.expiresOn, 1)]
- const days = [today, ...turns.filter((day): day is string => !!day && day > today && day < account.renewalDate)].sort()
+export function outlook(account: Account, today: string, sentiment: Sentiment | null = null, limits: Staleness = DEFAULT_STALENESS, adoption: ConsumerEvaluation[] = [], scorecard?:ScorecardHealth) {
+ const turns = [account.billing && shift(account.billing.observedAt, limits.billingDays + 1), account.support && shift(account.support.observedAt, limits.supportDays + 1), sentiment && shift(sentiment.expiresOn, 1),...scorecardProjectionDates(scorecard)]
+ const days = [...new Set([today, ...turns.filter((day): day is string => !!day && day > today && day < account.renewalDate)])].sort()
  const segments: {from: string; status: string}[] = []
  for (const day of days) {
-  const status = health(account, day, sentiment, limits, adoption).status
+  const status = health(account, day, sentiment, limits, adoption, scorecard).status
   if (segments.at(-1)?.status !== status) segments.push({from: day, status})
  }
  return segments

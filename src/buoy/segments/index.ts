@@ -1,3 +1,4 @@
+import {layerOneDependency} from '../scorecards/config'
 import {adoptionRuleFields} from '../adoption/segment-inputs'
 import {ruleFields} from '../fields/model'
 import {relatedPersonFields} from '../people/model'
@@ -58,8 +59,14 @@ export async function saveSegment(db:D1Database,actor:Actor,input:Record<string,
  if(input.id)insist(existing&&input.revision===existing.revision,'Segment changed. Reload before saving.',409)
  else insist(image.value.segments.length<50,'At most 50 segments are supported.')
  const value=segmentInput(input,new Set(image.value.accounts.map(a=>a.id)),tierNames(image.value),fields(image.value)),segmentId=existing?.id??id()
- validateHealthInputs([...definitions(image.value).filter(s=>s.id!==segmentId),{...value,id:segmentId,revision:existing?.revision??'',createdAt:existing?.createdAt??now()}],image.value.consumers)
- await db.batch([authority(db,actor,true),fence(db,image),stmt(db,'INSERT INTO buoy_segments(id,document,revision,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',segmentId,JSON.stringify(value),id(),existing?.createdAt??now()),auditRecord(db,actor,'segment.saved',`segment:${segmentId}`),stmt(db,'DELETE FROM buoy_assertions')])
+ const candidates=[...definitions(image.value).filter(s=>s.id!==segmentId),{...value,id:segmentId,revision:existing?.revision??'',createdAt:existing?.createdAt??now()}]
+ validateHealthInputs(candidates,image.value.consumers)
+ const card=await db.prepare('SELECT c.revision,v.document FROM buoy_scorecard_current c JOIN buoy_scorecard_versions v ON v.id=c.version_id WHERE c.singleton=1').first<{revision:string;document:string}>()
+ if(card)for(const override of JSON.parse(card.document).config.segments){
+  const selected=candidates.find(s=>s.id===override.segmentId);insist(selected,'Scorecard weight segment is unavailable.')
+  const chain=layerOneDependency(selected,candidates);insist(!chain,`Scorecard dependency refused: ${chain?.join(' -> ')}.`)
+ }
+ await db.batch([authority(db,actor,true),fence(db,image),...(card?[guard(db,'EXISTS(SELECT 1 FROM buoy_scorecard_current WHERE revision=?)',card.revision)]:[guard(db,'NOT EXISTS(SELECT 1 FROM buoy_scorecard_current)')]),stmt(db,'INSERT INTO buoy_segments(id,document,revision,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',segmentId,JSON.stringify(value),id(),existing?.createdAt??now()),auditRecord(db,actor,'segment.saved',`segment:${segmentId}`),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:segmentId}
 }
 export async function setClassification(db:D1Database,actor:Actor,accountId:string,input:Record<string,unknown>) {
@@ -72,7 +79,7 @@ export async function setClassification(db:D1Database,actor:Actor,accountId:stri
 }
 export async function segmentReport(db:D1Database,segmentId:string) {
  const segment=(await segmentState(db)).segments.find(s=>s.id===segmentId);insist(segment,'Segment not found.',404)
- return {interpretation:HEALTH_INTERPRETATION,id:segment.id,name:segment.name,count:segment.members.length,health:Object.fromEntries(['at-risk','healthy','unknown'].map(status=>[status,segment.members.filter(a=>a.health===status).length])),accounts:segment.members}
+ return {interpretation:HEALTH_INTERPRETATION,id:segment.id,name:segment.name,count:segment.members.length,health:Object.fromEntries(['at-risk','watch','healthy','unknown'].map(status=>[status,segment.members.filter(a=>a.health===status).length])),accounts:segment.members}
 }
 export function reportCsv(report:Awaited<ReturnType<typeof segmentReport>>) {
  const cell=(v:unknown)=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"'

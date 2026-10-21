@@ -1,3 +1,4 @@
+import {recalculateScorecards} from '../scorecards'
 import { MAPPED_JOIN, ATTRIBUTED } from './mappings'
 import { Hono } from 'hono'
 import { runtimeBindings, type Bindings } from '../../auth.server'
@@ -43,6 +44,7 @@ usageIngest.post('/api/buoy/usage/intake/:sourceId',async(c,next)=>{
   stmt(env.DB,'UPDATE buoy_usage_credentials SET last_used_at=? WHERE id=?',stamp,authentication.id),
   stmt(env.DB,'DELETE FROM buoy_assertions')
  ])
+ await recalculateScorecards(env.DB)
  const accepted=results[1].meta.changes
  return c.json({received:events.length,accepted,duplicates:events.length-accepted,stored:accepted},202)
 })

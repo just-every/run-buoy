@@ -1,3 +1,4 @@
+import type {ScorecardHealth} from '../scorecard-health';
 export interface Billing {
   observedAt: string; reference: string; currency: string; totalMinor: number;
   creditsMinor: number; allocatedMinor: number; dueDate: string;
@@ -8,9 +9,9 @@ export interface Account {
   billing: Billing | null; support: Support | null; revision: string; noticeDate: string; ownerId: string | null;
   tier:string|null;stage:string|null;segments:{id:string;name:string;enteredAt:string}[];
   handovers?: {fromId:string|null;toId:string;note:string;actorId:string;recordedAt:string}[];
-  health: { interpretation: string; evaluatedOn: string; status: 'at-risk' | 'healthy' | 'unknown'; reasons: string[]; sentiment: Sentiment | null; evidence: Evidence[] };
+  health: { score?:number|null;recalculatedAt?:string;scorecard?:ScorecardHealth; interpretation: string; evaluatedOn: string; status: 'at-risk' | 'healthy' | 'unknown' | 'watch'; reasons: string[]; sentiment: Sentiment | null; evidence: Evidence[] };
   /** Today's band, then each later day before renewal on which today's evidence projects a new band. */
-  outlook: { from: string; status: 'at-risk' | 'healthy' | 'unknown' }[];
+  outlook: { from: string; status: 'at-risk' | 'healthy' | 'unknown' | 'watch' }[];
 }
 export interface Evidence { kind: 'billing' | 'support'; sourceSystem: 'manual' | null; staleAfterDays: number; missing: boolean; stale: boolean }
 export interface Sentiment { rating: 'red' | 'amber' | 'green'; reason: string; by: string; recordedAt: string; expiresOn: string; expired: boolean }

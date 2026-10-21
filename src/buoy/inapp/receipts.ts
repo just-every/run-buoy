@@ -1,3 +1,4 @@
+import {recalculateScorecards} from '../scorecards'
 import { guard } from '../core'
 import { id, insist, now, stmt, text, type Mapping } from './model'
 export async function receipt(db:D1Database,sourceId:string,userId:string,groupId:string|null,m:Mapping|null,input:Record<string,unknown>,credentialGuard:D1PreparedStatement,mappingGuard:D1PreparedStatement,credentialId:string){
@@ -21,5 +22,6 @@ export async function receipt(db:D1Database,sourceId:string,userId:string,groupI
  if(m)statements.push(stmt(db,'UPDATE buoy_accounts SET revision=lower(hex(randomblob(16))) WHERE id=? AND EXISTS(SELECT 1 FROM buoy_usage_events WHERE id=?)',m.accountId,eventId),stmt(db,`INSERT OR IGNORE INTO buoy_audit_subjects(account_id,subject) SELECT ?,lower(hex(randomblob(16))) WHERE EXISTS(SELECT 1 FROM buoy_usage_events WHERE id=?)`,m.accountId,eventId),stmt(db,`INSERT INTO buoy_audit(id,actor,action,subject,detail,occurred_at) SELECT lower(hex(randomblob(16))),?,'account.usage-refreshed',subject,'',? FROM buoy_audit_subjects WHERE account_id=? AND EXISTS(SELECT 1 FROM buoy_usage_events WHERE id=?)`,'inapp-source:'+sourceId,stamp,m.accountId,eventId))
  statements.push(stmt(db,'UPDATE buoy_inapp_credentials SET last_used_at=? WHERE id=?',stamp,credentialId),stmt(db,'DELETE FROM buoy_assertions'))
  const results=await db.batch(statements),accepted=results[insertIndex].meta.changes
+ await recalculateScorecards(db)
  return {received:1,accepted,duplicates:1-accepted,stored:accepted}
 }
