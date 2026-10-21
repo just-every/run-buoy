@@ -18,7 +18,7 @@ try{
   try{
    await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}))
    const page=await context.newPage(),proof=async(label,target=page)=>{await scan(target,`INAPP-001 ${label} ${width}`);if(evidence)await target.screenshot({path:join(evidence,`inapp-${label}-${width}.png`),fullPage:true})}
-   await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});await page.getByRole('link',{name:'In-app campaigns',exact:true}).click();await proof('entry')
+   await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});await proof('usage-entry');await page.getByRole('link',{name:'In-app campaigns',exact:true}).click();await proof('entry')
    const show=async id=>{const panel=page.locator('#'+id);if(!await panel.evaluate(e=>e.open))await panel.locator('summary').click()}
    for(const [kind,title]of [['announcement','Reporting available'],['banner','Reporting workspace banner'],['checklist','Reporting launch checklist'],['walkthrough','Explore reporting']]){
     await show('inapp-create');const form=page.locator('#inapp-campaign')
