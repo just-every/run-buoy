@@ -4,7 +4,7 @@ import {spawnSync} from 'node:child_process'
 // partition these same tests so archive restore has its full execution window.
 const suites={
  http:['test:site','test:flows','test:governance','test:connections','test:adoption','test:email-link'],
- browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes','test:runway-keyboard','test:governance-browser','test:a11y','test:fields-browser','test:connections-browser','test:customer-people-browser','test:usage-browser','test:adoption-browser','test:boundary'],
+ browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes','test:runway-keyboard','test:governance-browser','test:a11y','test:fields-browser','test:connections-browser','test:customer-people-browser','test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
  archive:['test:portable'],
 }
 const selected=process.env.BUOY_VERIFY_SUITE??'all'

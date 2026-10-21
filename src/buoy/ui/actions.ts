@@ -1,3 +1,4 @@
+import {mutateInapp,type InappCredential} from './inapp';
 import {mutateCustomerPeople} from './customer-people';
 import type {CustomerFieldPreview} from './customer-people';
 import type {MappingPreview} from './usage';
@@ -28,7 +29,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -36,6 +37,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(path==='/app/inapp')return mutateInapp(api,request,fields);
   if(path==='/app/connections'){
     if(action==='connection-add')await send('/api/buoy/connections',{name:fields.name,key:fields.key});
     else if(action==='connection-key')await send('/api/buoy/connections/'+encodeURIComponent(fields.id)+'/credential',{key:fields.key},'PUT');

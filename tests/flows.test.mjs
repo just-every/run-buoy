@@ -1,3 +1,4 @@
+import {inappJourney} from './inapp-journey.mjs'
 import {customerPeopleJourney} from './customer-people-journey.mjs'
 import {usageJourney} from './usage-journey.mjs'
 import {fieldJourney} from './field-journey.mjs'
@@ -467,6 +468,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    for(const path of ['/adoption','/adoption/report.csv'])assert.equal((await call(path,'GET',undefined,{cookie:undefined,token:grant.token})).status,403)
    await json(await call('/agent-tokens/'+grant.id,'DELETE'))
   })
+  await t.test('INAPP-001 authenticated targeting, caps and receipt custody',async()=>{await inappJourney({...worker,request,dispatch:async req=>{seen.push([req.method,new URL(req.url).pathname]);return worker.dispatch(req)}})})
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))

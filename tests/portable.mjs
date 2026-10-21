@@ -59,6 +59,16 @@ try{
  const mapping={sourceId:usageSource.id,userId:'product-user',groupId:'product-company',accountId,personId:usagePerson.id};
  const review=await call('/usage/mappings/preview','POST',mapping);await call('/usage/mappings','POST',{...mapping,fingerprint:review.fingerprint});
  personState=await call('/customer-people');
+ // INAPP-001 real archive: messages and receipts survive; dedicated authority does not.
+ const inappSegment=await call('/segments','POST',{name:'Portable launch customers',mode:'static',accountIds:[accountId],rules:{match:'all',conditions:[]},tier:null,stage:null,playbook:null});
+ const inappCampaign=await call('/inapp/campaigns','POST',{sourceId:usageSource.id,segmentId:inappSegment.id,kind:'banner',title:'Portable reporting announcement',body:'Your reporting workspace is ready.',steps:[],maxViews:1,windowHours:24,enabled:true});
+ const inappCredential=await call('/inapp/credentials','POST',{sourceId:usageSource.id,label:'Portable in-app server'});
+ const inappSend=(action,body,credential=inappCredential.secret)=>fetch(running.origin+'/api/buoy/inapp/'+action+'/'+usageSource.id,{method:'POST',headers:{authorization:'Bearer '+credential,'content-type':'application/json'},body:JSON.stringify(body)});
+ const inappIdentity={userId:'product-user',groupId:'product-company'};
+ const inappDelivery=(await (await inappSend('deliver',inappIdentity)).json()).messages[0];assert.equal(inappDelivery.id,inappCampaign.id);
+ for(const kind of ['view','completion'])assert.equal((await inappSend('receipts',{...inappIdentity,campaignId:inappCampaign.id,deliveryId:inappDelivery.deliveryId,kind,messageId:'portable-'+kind})).status,202);
+ const inappBefore=await call('/inapp'),inappTimeline=await call('/customer-people/'+usagePerson.id+'/timeline');
+ assert.equal(inappTimeline.events.filter(e=>e.kind).length,2);
  const usageEvents=await call('/usage/events')
  await call('/adoption/definitions','POST',{kind:'feature',key:'license',name:'License opened',events:['License opened']});
  await call('/adoption/seats','PUT',{accountId,seats:20,reference:'Customer-approved license schedule',observedAt:'2026-10-01',staleDays:30});
@@ -101,8 +111,14 @@ try{
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
  assert.equal((await usageIntake()).status,401,'USAGE-001 archived ingestion credentials cannot authorize restored intake')
  assert.deepEqual(await call('/usage/events'),usageEvents,'USAGE-001 queued payload/provenance survives the real archive')
- const usageAfter=await call('/usage');assert.equal(usageAfter.sources[0].id,usageSource.id);assert.equal(usageAfter.sources[0].eventCount,1);assert.equal(usageAfter.credentials.length,0)
+ const usageAfter=await call('/usage');assert.equal(usageAfter.sources[0].id,usageSource.id);assert.equal(usageAfter.sources[0].eventCount,3);assert.equal(usageAfter.credentials.length,0)
  assert.equal((await running.request('/api/buoy/accounts',{method:'POST',body:erased,cookie:running.cookie})).status,409,'restored erasure tombstone prevents recreation')
+ const inappAfter=await call('/inapp');
+ assert.deepEqual(inappAfter,{...inappBefore,credentials:[]},'INAPP-001 campaigns portable, hash/credential table excluded');
+ assert.deepEqual(await call('/customer-people/'+usagePerson.id+'/timeline'),inappTimeline,'INAPP-001 user receipts and provenance survive archive restore');
+ assert.equal((await inappSend('deliver',inappIdentity)).status,401,'INAPP-001 archived server credential cannot authorize restored content');
+ const freshInapp=await call('/inapp/credentials','POST',{sourceId:usageSource.id,label:'New owner server credential'});
+ assert.deepEqual((await (await inappSend('deliver',inappIdentity,freshInapp.secret)).json()).messages,[],'INAPP-001 receipt-based cap and completion survive restore without old authority');
  const history=await (await running.request('/api/operator/import-history',{cookie:running.cookie})).json();assert.ok(history.history.some(item=>item.jobId===job.id))
  const followup=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'deferred',reason:'Review next year',evidence:'Account review note CS-18'}})
  await call(`/proposals/${followup.id}/approve`,'POST',{})

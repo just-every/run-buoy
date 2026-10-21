@@ -1,3 +1,4 @@
+import {inappIngest,inappAdmin} from './inapp'
 import {peopleApi,refreshPeople} from './people'
 import { adoptionState, saveDefinition, saveSeats, adoptionCsv } from './adoption'
 import { connectionsApi } from './connectors'
@@ -28,6 +29,7 @@ import { agentState, setAgentSettings } from './agent-policy/owner'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
 buoyApi.route('/',usageIngest)
+buoyApi.route('/',inappIngest)
 buoyApi.use('/api/buoy/*', async (c, next) => {
  c.header('cache-control', 'no-store')
  c.header('x-content-type-options', 'nosniff')
@@ -69,6 +71,7 @@ buoyApi.onError((error, c) => {
 })
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',usageAdmin)
+buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
 buoyApi.get('/api/buoy/adoption',async c=>c.json(await adoptionState(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)))
 buoyApi.get('/api/buoy/adoption/report.csv',async c=>c.body(adoptionCsv(await adoptionState(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=adoption.csv'}))
