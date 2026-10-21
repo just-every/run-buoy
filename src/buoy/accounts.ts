@@ -1,3 +1,4 @@
+import {consumerMeasurements} from './adoption/consumers'
 import { canonicalJson } from '../modules/import-kit/src/d1/index.ts'
 import { Problem, insist, stmt, guard, commit, id, now, requirePerson, type Actor } from './core'
 import { health, noticeDate, outlook, type Account } from './health'
@@ -39,10 +40,10 @@ export async function state(db: D1Database, actor: Actor) {
  const handovers = (await db.prepare('SELECT account_id AS accountId,from_id AS fromId,to_id AS toId,note,actor_id AS actorId,recorded_at AS recordedAt FROM buoy_handovers ORDER BY recorded_at DESC,id').all()).results
  const classifications=(await db.prepare('SELECT account_id,tier,stage FROM buoy_classifications').all<{account_id:string;tier:string|null;stage:string|null}>()).results
  const memberships=(await db.prepare('SELECT e.account_id AS accountId,s.id,s.document,e.entered_at AS enteredAt FROM buoy_segment_entries e JOIN buoy_segments s ON s.id=e.segment_id WHERE e.exited_at IS NULL').all<{accountId:string;id:string;document:string;enteredAt:string}>()).results
- const sentiments = await latestSentiments(db), limits = await staleness(db), on = today()
+ const sentiments = await latestSentiments(db), limits = await staleness(db), on = today(), adoption = await consumerMeasurements(db,on)
  return {operator: {id: actor.id, displayName: actor.displayName, role: actor.role}, settings: {staleness: limits, tasks: await taskTiming(db)},
   people: await people(db), notifications: await notifications(db, actor),
-  accounts: result[0].results.map(row => {const a = JSON.parse(String(row.document)) as Account; const judged = sentiments.get(a.id) ?? null; return {...a, tier:classifications.find(c=>c.account_id===a.id)?.tier??null,stage:classifications.find(c=>c.account_id===a.id)?.stage??null,segments:memberships.filter(m=>m.accountId===a.id).map(m=>({id:m.id,name:JSON.parse(m.document).name,enteredAt:m.enteredAt})), revision: row.revision, ownerId: row.ownerId ?? null, handovers: handovers.filter(h=>h.accountId===a.id), health: health(a, on, judged, limits), outlook: outlook(a, on, judged, limits), noticeDate: noticeDate(a)}}),
+  accounts: result[0].results.map(row => {const a = JSON.parse(String(row.document)) as Account; const judged = sentiments.get(a.id) ?? null; return {...a, tier:classifications.find(c=>c.account_id===a.id)?.tier??null,stage:classifications.find(c=>c.account_id===a.id)?.stage??null,segments:memberships.filter(m=>m.accountId===a.id).map(m=>({id:m.id,name:JSON.parse(m.document).name,enteredAt:m.enteredAt})), revision: row.revision, ownerId: row.ownerId ?? null, handovers: handovers.filter(h=>h.accountId===a.id), health: health(a, on, judged, limits, adoption.get(a.id)??[]), outlook: outlook(a, on, judged, limits, adoption.get(a.id)??[]), noticeDate: noticeDate(a)}}),
   proposals: result[1].results.map(row => ({...row, payload: JSON.parse(String(row.payload)), snapshot: JSON.parse(String(row.snapshot))})),
   tasks: result[2].results, decisions: result[3].results}
 }

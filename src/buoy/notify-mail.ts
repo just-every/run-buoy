@@ -1,3 +1,4 @@
+import {recordAdoptionAlerts} from './adoption/consumers-alerts'
 import type { Bindings } from '../auth.server'
 import { operatorMail } from '../mail.server.mjs'
 import { id, now, stmt } from './core'
@@ -47,6 +48,7 @@ export async function runDigests(env: Bindings, at = new Date()) {
  }
 }
 export async function runNotifications(env: Bindings, at = new Date()) {
+ await recordAdoptionAlerts(env.DB)
  await recordHealthAlerts(env.DB)
  await flushNotifications(env)
  await runDigests(env, at)

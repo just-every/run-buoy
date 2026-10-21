@@ -1,3 +1,4 @@
+import type {ConsumerPage} from './adoption-consumers';
 import {inappPage,type InappPage,type InappCredential} from './inapp';
 import {adoptionPage} from './adoption';
 import type {AdoptionReport} from '../adoption';
@@ -81,7 +82,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   } else if(path==='/app/adoption'){
     title='Product adoption';
     const query=new URLSearchParams([...url.searchParams].filter(([key,value])=>['on','accountId','personId','segmentId'].includes(key)&&value!==''));
-    try{body=adoptionPage(await apiCall<AdoptionReport>(api,request,'/api/buoy/adoption?'+query.toString()),state,fields)}
+    try{body=adoptionPage(await apiCall<AdoptionReport>(api,request,'/api/buoy/adoption?'+query.toString()),state,fields,await apiCall<ConsumerPage>(api,request,'/api/buoy/adoption/consumers'))}
     catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Adoption report unavailable',`<p>${escape(caught instanceof Error?caught.message:'Unable to load adoption measurements.')}</p><p><a href="/app/adoption">Clear report filters</a></p>`)}
   } else if(path==='/app/connections'){title='Connections';body=connectionsPage(await apiCall<ConnectionsPage>(api,request,'/api/buoy/connections'));
   } else if(path==='/app/customer-people'){title='Customer contacts and users';body=customerPeoplePage(await apiCall<CustomerPeoplePage>(api,request,'/api/buoy/customer-people'),state,fields,customerFieldPreview,url.searchParams.get('person')??fields?.personId);

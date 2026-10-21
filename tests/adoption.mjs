@@ -1,3 +1,4 @@
+import {adoptionConsumers} from './adoption-consumer-journey.mjs'
 // ADOPT-001: 90-day, 30-account public HTTP acceptance; no direct database writes.
 import {adoptionLicenses} from './adoption-license-journey.mjs'
 import assert from 'node:assert/strict'
@@ -79,6 +80,7 @@ try{
  for(const seats of [-1,1.2])assert.equal((await app.request('/api/buoy/adoption/seats',{cookie:app.cookie,method:'PUT',body:{accountId:accounts[0].id,seats}})).status,400)
  await adoptionLicenses(app,fixture,member)
  await adoptionSegments(app,fixture)
+ await adoptionConsumers(app,fixture,member)
  await api('/accounts/'+accounts[0].id,'DELETE',{confirmation:accounts[0].name})
  report=await read();assert.equal(report.accounts.length,29);assert.equal(report.summary.metrics.current.mau,290)
  assert.equal(report.personLicenses.some(l=>l.accountId===accounts[0].id),false,'ADOPT-001 account erasure removes individual evidence')

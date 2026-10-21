@@ -1,3 +1,5 @@
+import {consumerState,saveConsumer} from './adoption/consumers'
+import {recordAdoptionAlerts} from './adoption/consumers-alerts'
 import {inappIngest,inappAdmin} from './inapp'
 import {peopleApi,refreshPeople} from './people'
 import { adoptionState, saveDefinition, saveSeats, savePersonLicense, adoptionCsv } from './adoption'
@@ -57,7 +59,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  await observeOutcomes(c.env.DB,actor)
  await next()
  if(c.req.method!=='GET'&&c.res.status<400){await refreshPeople(c.env.DB,actor);await refreshFields(c.env.DB,actor);await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
- if (c.req.method !== 'GET' && c.res.status < 400) await flushNotifications(c.env)
+ if (c.req.method !== 'GET' && c.res.status < 400) {await recordAdoptionAlerts(c.env.DB);await flushNotifications(c.env)}
 })
 buoyApi.onError((error, c) => {
  if (error instanceof Problem) return c.json({error: error.message}, error.status as 400)
@@ -73,6 +75,8 @@ buoyApi.route('/',peopleApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
+buoyApi.get('/api/buoy/adoption/consumers',async c=>c.json(await consumerState(c.env.DB,c.get('actor'))))
+buoyApi.post('/api/buoy/adoption/consumers',async c=>c.json(await saveConsumer(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/adoption',async c=>c.json(await adoptionState(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)))
 buoyApi.get('/api/buoy/adoption/report.csv',async c=>c.body(adoptionCsv(await adoptionState(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=adoption.csv'}))
 buoyApi.post('/api/buoy/adoption/definitions',async c=>c.json(await saveDefinition(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))

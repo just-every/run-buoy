@@ -1,3 +1,4 @@
+import {adoptionConsumerBrowser} from './adoption-consumer-browser.mjs'
 // ADOPT-001 native report/configuration/filter/export with inherited A11Y-001.
 import {adoptionLicenseBrowser} from './adoption-license-browser.mjs'
 import {adoptionSegmentBrowser} from './adoption-segment-browser.mjs'
@@ -75,6 +76,7 @@ try{
    await page.getByRole('link',{name:'Clear report filters',exact:true}).click();assert.equal(await page.locator('#adoption-summary').count(),1)
    await adoptionLicenseBrowser({page,api,accounts,people,width,evidence,origin:app.origin})
    await adoptionSegmentBrowser({page,api,accounts,people,sdk,width,evidence,origin:app.origin})
+   await adoptionConsumerBrowser({page,api,accounts,people,sdk,width,evidence,origin:app.origin})
    await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});await scan(page,`ADOPT-001 usage entry link ${width}`)
    if(evidence){await page.locator('#work > section').first().screenshot({path:join(evidence,`adoption-usage-link-${width}.png`)})}
   }finally{await context.close()}
