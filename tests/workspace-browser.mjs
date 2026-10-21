@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict'
+import {join} from 'node:path'
+import {startWorker} from './worker.mjs'
+import {scan,submit,failures} from './a11y-checks.mjs'
+export async function workspaceBrowser(browser,evidence){
+ const app=await startWorker(),api=async(path,method='GET',body,cookie=app.cookie)=>{const r=await app.request('/api/buoy'+path,{cookie,method,body});assert.ok(r.ok,await r.clone().text());return r.json()}
+ try{
+  const people=[]
+  for(const [i,role]of ['admin','member','member'].entries()){const email='workspace-browser-'+i+'@example.test';await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email,displayName:'Workspace CSM '+i,role}});const cookie=await app.signIn(email);people.push({cookie,id:(await api('/state','GET',undefined,cookie)).operator.id})}
+  const [a,b,manager]=people;await api('/people/'+a.id+'/manager','PUT',{managerId:manager.id})
+  const today=new Date().toISOString().slice(0,10),end=new Date(Date.now()+60*86400000).toISOString().slice(0,10),accounts=[]
+  for(let i=0;i<4;i++){const id='synthetic-buoy-'+(900+i);await api('/accounts','POST',{id,name:'Workspace browser customer '+i,renewalDate:i<3?end:'2028-12-31',noticeDays:30,renewalEvidence:'Confirmed notice terms',billing:{observedAt:today,reference:'Reviewed invoice',currency:'USD',totalMinor:100,creditsMinor:0,allocatedMinor:100,dueDate:today},support:{observedAt:today,reference:'Reviewed support',openTickets:i<3?1:0,urgentTickets:i<3?1:0}});accounts.push(id);await api('/accounts/'+id+'/owner','PUT',{ownerId:i<3?a.id:b.id});if(i<3){const p=await api('/proposals','POST',{accountId:id,kind:'playbook',payload:{title:'Today’s customer review '+i,dueDate:today,ownerId:a.id}});await api('/proposals/'+p.id+'/approve','POST',{})}}
+  await api('/customer-fields','POST',{key:'workspace_active',label:'Active customer user',type:'boolean'})
+  const user=await api('/customer-people','POST',{kind:'user',name:'synthetic-buoy-910',accountIds:accounts.slice(0,2),source:'Reviewed customer directory'}),person=(await api('/customer-people')).records.find(p=>p.id===user.id)
+  await api('/customer-people/'+user.id+'/fields','PUT',{revision:person.revision,values:{workspace_active:true},source:'Customer-confirmed active user'})
+  const segment=await api('/segments','POST',{name:'Reviewed workspace cohort',mode:'static',accountIds:[],rules:{match:'all',conditions:[]},tier:null,stage:null,playbook:null})
+  const rules={match:'all',conditions:[{field:'health.status',op:'eq',value:'at-risk'},{field:'daysToRenewal',op:'gte',value:0},{field:'daysToRenewal',op:'lte',value:90}]}
+  for(const width of [1440,390]){
+   for(const id of accounts.slice(0,3))await api('/accounts/'+id+'/owner','PUT',{ownerId:a.id,note:'Explicitly reset the native browser fixture book'})
+   await app.scheduled()
+   const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
+   try{
+    await context.addCookies(a.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return {name,value:rest.join('='),url:app.origin}}))
+    const page=await context.newPage(),url=app.origin+'/app/workspace',show=async id=>{const d=page.locator('#'+id);if(!await d.evaluate(el=>el.open))await d.locator('summary').click()}
+    const save=async(form,label)=>{await submit(page,form.getByRole('button',{name:label,exact:true}));assert.equal(await page.locator('[role=alert]').count(),0,await page.locator('#work').innerText())}
+    const proof=async label=>{await scan(page,'ACCOUNT-003 '+label+' '+width);await page.screenshot({path:join(evidence,'workspace-'+label+'-'+width+'.png'),fullPage:true})}
+    await page.goto(url,{waitUntil:'networkidle'});assert.match(await page.locator('#csm-home').innerText(),/Today’s customer review/);assert.match(await page.locator('#csm-home').innerText(),/meeting information is unavailable/);await proof('csm-home')
+    await show('workspace-view-panel');let form=page.locator('#workspace-view'),name='Risk and renewal work '+width
+    await form.getByLabel('View name',{exact:true}).fill(name);await form.getByLabel('Record list',{exact:true}).selectOption('account');await form.getByLabel('Filter rules (JSON object)',{exact:true}).fill(JSON.stringify(rules));await form.getByLabel('Columns (one field per line)',{exact:true}).fill('name\nhealth.status\nrenewalDate');await form.getByLabel('Sort field',{exact:true}).fill('name');await form.getByLabel('Sort direction',{exact:true}).selectOption('desc');await form.getByLabel('Share this view definition with staff',{exact:true}).check()
+    const before=(await api('/workspace','GET',undefined,a.cookie)).views.length;await save(form,'Preview current records');assert.equal(await page.locator('#workspace-list > form > ul > li').count(),3);assert.equal((await api('/workspace','GET',undefined,a.cookie)).views.length,before);await proof('unsaved-filter-preview')
+    form=page.locator('#workspace-view');await save(form,'Save view');const view=(await api('/workspace','GET',undefined,a.cookie)).views.find(v=>v.name===name);assert.ok(view?.shared);const savedUrl=url+'?view='+view.id;await proof('shared-saved-view')
+    // The second CSM sees the shared definition, without editing the creator’s view.
+    const peer=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true});try{await peer.addCookies(b.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}));const other=await peer.newPage();await other.goto(savedUrl,{waitUntil:'networkidle'});assert.equal(await other.locator('#workspace-list > ul > li').count(),3);assert.equal(await other.locator('#workspace-view [name=viewId]').count(),0);await scan(other,'ACCOUNT-003 second CSM shared view '+width);await other.screenshot({path:join(evidence,'workspace-peer-'+width+'.png'),fullPage:true})}finally{await peer.close()}
+    // User filters and selected columns use the current typed customer carrier.
+    await show('workspace-view-panel');form=page.locator('#workspace-view');await form.getByLabel('Record list',{exact:true}).selectOption('user');await form.getByLabel('Filter rules (JSON object)',{exact:true}).fill(JSON.stringify({match:'all',conditions:[{field:'custom.workspace_active',op:'eq',value:1}]}));await form.getByLabel('Columns (one field per line)',{exact:true}).fill('name\naccountCount\ncustom.workspace_active');await form.getByLabel('Sort field',{exact:true}).fill('name');await save(form,'Preview current records');assert.equal(await page.locator('#workspace-list > form > ul > li').count(),1);assert.match(await page.locator('#workspace-list').innerText(),/synthetic-buoy-910/);await proof('typed-user-list')
+    await page.goto(savedUrl,{waitUntil:'networkidle'})
+    const choose=async action=>{const f=page.locator('#workspace-list');for(let i=0;i<3;i++)await f.getByLabel('Select Workspace browser customer '+i,{exact:true}).check();await f.getByLabel('Bulk action',{exact:true}).selectOption(action);return f}
+    form=await choose('assign');await form.getByLabel('New account owner',{exact:true}).selectOption(b.id);await form.getByLabel('Bulk handover note',{exact:true}).fill('Reviewed native bulk handover '+width);await save(form,'Preview bulk change');assert.equal(await page.locator('#workspace-bulk-review > ul > li').count(),3);await proof('review-assignment')
+    await api('/accounts/'+accounts[0]+'/sentiment','POST',{rating:'red',reason:'New evidence after the reviewed selection',days:30})
+    await submit(page,page.locator('#workspace-bulk-apply').getByRole('button',{name:'Approve reviewed bulk change',exact:true}));assert.equal(await page.locator('[role=alert]').count(),1);await proof('stale-review-refusal')
+    await page.goto(savedUrl,{waitUntil:'networkidle'});form=await choose('assign');await form.getByLabel('New account owner',{exact:true}).selectOption(b.id);await form.getByLabel('Bulk handover note',{exact:true}).fill('Reviewed native bulk handover '+width);await save(form,'Preview bulk change')
+    form=page.locator('#workspace-bulk-apply');const input=JSON.parse(await form.locator('[name=input]').inputValue()),fingerprint=await form.locator('[name=fingerprint]').inputValue();await save(form,'Approve reviewed bulk change');assert.equal((await api('/workspace/bulk/apply','POST',{...input,fingerprint},a.cookie)).replayed,true)
+    let state=await api('/state');for(const id of accounts.slice(0,3)){const account=state.accounts.find(a=>a.id===id);assert.equal(account.ownerId,b.id);assert.equal(account.handovers.filter(h=>h.note==='Reviewed native bulk handover '+width).length,1)}await proof('assignment-recorded-once')
+    await page.goto(savedUrl,{waitUntil:'networkidle'});form=await choose('enroll');await form.getByLabel('Playbook action title',{exact:true}).fill('Native bulk risk follow-up '+width);await form.getByLabel('Playbook due date',{exact:true}).fill(today);await save(form,'Preview bulk change');await save(page.locator('#workspace-bulk-apply'),'Approve reviewed bulk change');state=await api('/state');assert.equal(state.tasks.filter(t=>t.title==='Native bulk risk follow-up '+width).length,3);await proof('enrollment-recorded')
+    await page.goto(savedUrl,{waitUntil:'networkidle'});form=await choose('segment');await form.getByLabel('Static segment',{exact:true}).selectOption(segment.id);await save(form,'Preview bulk change');await save(page.locator('#workspace-bulk-apply'),'Approve reviewed bulk change');assert.equal((await api('/segments/'+segment.id+'/report')).count,3);await proof('segment-membership-recorded')
+    await page.goto(app.origin+'/app',{waitUntil:'networkidle'});await proof('account-entry-links')
+   }finally{await context.close()}
+  }
+  assert.deepEqual(failures,[],'Workspace inherited accessibility at both widths')
+  console.log('ACCOUNT-003 native CSM home, account/user filters, chosen columns/sort, shared peer view, stale-review recovery, exact-once assignment/enrollment/static membership and account entry at 1440/390 passed.')
+ }finally{await app.close()}
+}
