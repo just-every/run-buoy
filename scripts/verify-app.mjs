@@ -3,7 +3,8 @@ import {spawnSync} from 'node:child_process'
 // The default CLI door still runs the complete wall. Verify's parallel jobs
 // partition these same tests so archive restore has its full execution window.
 const suites={
- http:['test:site','test:flows','test:governance','test:connections','test:adoption','test:email-link'],
+ http:['test:site','test:flows','test:governance','test:connections','test:email-link'],
+ adoption:['test:adoption'],
  browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes','test:runway-keyboard','test:governance-browser','test:a11y','test:fields-browser','test:connections-browser','test:customer-people-browser','test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
  archive:['test:portable'],
 }
