@@ -19,8 +19,7 @@ export const measuredSnapshot=`${base} SELECT json_object(
  )`
 // Aggregate metrics are needed only by an enabled segment alert. Ordinary
 // account/person health and membership rules retain their existing report image.
-export const consumerMeasuredSnapshot=measuredSnapshot.replaceAll("WHERE scope IN ('account','person')",`WHERE scope IN ('account','person',CASE WHEN EXISTS(
- SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.scope')='segment') THEN 'segment' END)`)
+export const consumerMeasuredSnapshot=measuredSnapshot.replaceAll("WHERE scope IN ('account','person')","WHERE scope IN ('account','person','segment')")
 export interface AdoptionImage {on:string;subjects:SubjectRow[];counts:CountRow[];used:DefinitionRow[];first:FirstRow[];definitions:{kind:'feature'|'module';key:string}[]}
 const numeric=['dau','wau','mau','eventCount','depth','breadth','utilization'] as const
 export function adoptionRuleFields(image:AdoptionImage):Record<string,'number'>{

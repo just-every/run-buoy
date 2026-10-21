@@ -27,9 +27,18 @@ export function consumerImageSql(on?:string,aggregate=false){
  const day=date(on,'Adoption measurement date')
  return image.replaceAll("date('now','+1 day')",`date('${day}','+1 day')`).replaceAll("date('now')",`date('${day}')`)
 }
+const AGGREGATE_ENABLED="EXISTS(SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.scope')='segment')"
+async function requestedImageSql(db:D1Database,on?:string,aggregate=false){
+ if(!aggregate)return consumerImageSql(on)
+ const row=await db.prepare(`SELECT ${AGGREGATE_ENABLED} AS enabled`).first<{enabled:number}>()
+ insist(row,'Adoption measures unavailable.',503)
+ const enabled=row.enabled===1
+ // Refuse a concurrent enable/disable rather than measuring the wrong scope.
+ return consumerImageSql(on,enabled)+` WHERE (${AGGREGATE_ENABLED})=${enabled?1:0}`
+}
 export interface ConsumerImage {rules:ConsumerRule[];adoption:ConsumerAdoptionImage;owners:{accountId:string;personId:string}[];segments:{id:string;name:string;accountIds:string[]}[]}
 export async function consumerImage(db:D1Database,on?:string,aggregate=false){
- const sql=consumerImageSql(on,aggregate),row=await db.prepare(sql).first<{snapshot:string}>()
+ const sql=await requestedImageSql(db,on,aggregate),row=await db.prepare(sql).first<{snapshot:string}>()
  insist(row,'Adoption measures unavailable.',503)
  return {raw:row.snapshot,value:JSON.parse(row.snapshot) as ConsumerImage,sql}
 }
@@ -45,8 +54,10 @@ export async function consumerMeasurements(db:D1Database,on?:string){
 }
 export async function consumerState(db:D1Database,actor:Actor){
  insist(actor.kind==='person','Adoption measures require a staff session.',403)
- const result=await db.batch([authority(db,actor),db.prepare(AGGREGATE_IMAGE),stmt(db,'DELETE FROM buoy_assertions')])
+ const sql=await requestedImageSql(db,undefined,true)
+ const result=await db.batch([authority(db,actor),db.prepare(sql),stmt(db,'DELETE FROM buoy_assertions')])
  const row=result[1].results[0] as {snapshot:string}
+ insist(row,'Adoption measures changed. Refresh before reading.',409)
  const image=JSON.parse(row.snapshot) as ConsumerImage
  return {on:image.adoption.on,rules:image.rules,fields:adoptionRuleFields(image.adoption),segments:image.segments,evaluations:[...measuredConsumers(image)].map(([accountId,measures])=>({accountId,measures}))}
 }
