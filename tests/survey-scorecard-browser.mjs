@@ -3,7 +3,7 @@ import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
 import {chromium} from '@playwright/test'
 import {scan,submit,failures} from './a11y-checks.mjs'
-export async function surveyScorecardBrowser(app,{api},{accountId,personId,config}){
+export async function surveyScorecardBrowser(app,{api,segment},{accountId,personId,config}){
  const evidence=process.env.EVIDENCE_DIR;if(evidence)await mkdir(evidence,{recursive:true})
  const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
  try{for(const width of [1440,390]){
@@ -43,6 +43,13 @@ export async function surveyScorecardBrowser(app,{api},{accountId,personId,confi
    await proof('mapped-preview','#scorecard-preview')
    await show('scorecard-configure');await submit(page,editor.getByRole('button',{name:'Publish scorecard',exact:true}));assert.equal(await page.getByRole('alert').count(),0)
    await show('scorecard-result-'+accountId);await proof('mapped-published','#scorecard-result-'+accountId)
+   const current=await api('/state'),task=current.tasks.find(t=>t.accountId===accountId)
+   assert.ok(task,'An approved numeric health entry task is available for observational reporting')
+   const outcome=await api('/outcomes','POST',{name:'Weighted health observations '+width,segmentId:segment.id,kind:'healthy',windowDays:30,taskIds:[task.id],operationKey:'synthetic-buoy-weighted-outcome-'+width})
+   const report=await api('/outcomes/'+outcome.id+'/report'),assessment=report.enrolled[0].currentInputs.health
+   assert.ok(assessment.scorecard.breakdown.some(m=>m.field==='survey.nps'));assert.ok(assessment.reasons.some(r=>r.includes('not a churn prediction')))
+   const csv=await page.request.get(app.origin+'/api/buoy/outcomes/'+outcome.id+'/report.csv');assert.equal(csv.status(),200);assert.match(await csv.text(),/survey.nps/);
+   await page.goto(app.origin+'/app/outcomes',{waitUntil:'networkidle'});assert.match(await page.locator('main').innerText(),/Staff-recorded NPS/);await proof('outcome','main')
    await page.setViewportSize({width:320,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'Recorded survey and category scorecard forms reflow at 320');await page.setViewportSize({width,height:1000})
   }finally{await context.close()}
  }}finally{await browser.close()}
