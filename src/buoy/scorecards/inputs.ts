@@ -53,7 +53,7 @@ export async function inputImage(db:D1Database,at:Date){
    }
    values[field.key]=typeof raw==='number'&&Number.isFinite(raw)?raw:null;sources[field.kind==='adoption'?'adoption':field.key]=evidence
   }
-  const inputs:RetainedInputs={values,sources,fields,segments:segments.filter(s=>!layerOneDependency(s,segments)&&includes(s,account.account.id,account.values,account.people)).map(s=>({id:s.id,revision:s.revision})),measuredOn:on}
+  const inputs:RetainedInputs={values,sources,fields,segments:segments.filter(s=>!layerOneDependency(s,segments)&&includes(s,account.account.id,account.values,account.people)).map(s=>({id:s.id,revision:s.revision,name:s.name})),measuredOn:on}
   return {accountId:account.account.id,accountRevision:account.account.revision,inputs}
  })
  return {accounts,fields,segments,consumers:image.consumers,fences:[segmentImage,numericImage,sourceImage]}

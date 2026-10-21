@@ -12,7 +12,7 @@ export async function healthScorecardBrowser(app,{api,accounts},{config,segment,
   try{
    await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}))
    const page=await context.newPage()
-   const show=async id=>{const panel=page.locator('#'+id);if(!await panel.evaluate(e=>e.open))await panel.locator('summary').click()}
+   const show=async id=>{const panel=page.locator('#'+id);if(!await panel.evaluate(e=>e.open))await panel.locator(':scope > summary').click()}
    const proof=async(label,selector)=>{await scan(page,`Weighted health ${label} ${width}`);if(evidence)await page.locator(selector).screenshot({path:join(evidence,`health-${label}-${width}.png`)})}
    await page.goto(app.origin+'/app/accounts/'+accountId,{waitUntil:'networkidle'})
    await page.getByRole('link',{name:'Weighted health configuration and history',exact:true}).click()

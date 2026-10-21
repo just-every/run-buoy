@@ -34,7 +34,8 @@ export function weightedHealth<T extends {evaluatedOn:string;status:string;reaso
  if(!recorded)return base
  const card=projectScorecard(recorded,base.evaluatedOn),status=base.sentiment?.rating==='red'&&!base.sentiment.expired?'at-risk':card.band
  const projected=base.evaluatedOn>card.calculatedAt.slice(0,10)?` Projected on ${base.evaluatedOn} from retained observations; adoption values remain at their recorded measurement.`:''
- const line=`Published weighted health: ${card.score===null?'unknown':card.score+' / 100'} (${card.band}); version ${card.configRevision}; recalculated ${card.calculatedAt}.${projected} The configured measure weights and missing-source treatment determine this band. Native observations remain listed as inputs. This is not a churn prediction.`
+ const selection=card.selectedSegment?` Weights selected by segment ${card.selectedSegment.name??card.selectedSegment.id} (${card.selectedSegment.id}), revision ${card.selectedSegment.revision}; membership was evaluated before aggregate health.`:' Default measure weights apply.'
+ const line=`Published weighted health: ${card.score===null?'unknown':card.score+' / 100'} (${card.band}); version ${card.configRevision}; recalculated ${card.calculatedAt}.${projected}${selection} The configured measure weights and missing-source treatment determine this band. Native observations remain listed as inputs. This is not a churn prediction.`
  const inputs=card.breakdown.map(m=>`${m.name}: ${m.value===null?'missing':m.value}; contribution ${m.score===null?'unknown':m.score}, weight ${m.effectiveWeight}, ${m.missingTreatment}. ${m.sources.map(s=>`${s.label}: ${s.freshness}; ${s.reference??'reference missing'}; observed ${s.observedAt??'unknown'}`).join('; ')}`)
  return {...base,status,reasons:[line,...inputs,...base.reasons],score:card.score,recalculatedAt:card.calculatedAt,scorecard:card}
 }

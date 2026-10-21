@@ -5,12 +5,12 @@ export interface ScorecardField {key:string;name:string;kind:'billing'|'support'
 export interface SourceEvidence {kind:string;label:string;freshness:'current'|'stale'|'missing'|'untracked';observedAt:string|null;reference:string|null;details?:unknown}
 export interface RetainedInputs {
  values:Record<string,number|null>;sources:Record<string,SourceEvidence[]>;
- fields:ScorecardField[];segments:{id:string;revision:string}[];measuredOn:string
+ fields:ScorecardField[];segments:{id:string;revision:string;name?:string}[];measuredOn:string
 }
 export interface Breakdown extends Measure {value:number|null;score:number|null;effectiveWeight:number;included:boolean;missingTreatment:'present'|'unknown'|'exclude';sources:SourceEvidence[]}
 export interface ScorecardResult {
  accountId:string;accountRevision:string;configRevision:string;versionId:string;
- selectedSegment:{id:string;revision:string}|null;inputs:RetainedInputs;
+ selectedSegment:{id:string;revision:string;name?:string}|null;inputs:RetainedInputs;
  breakdown:Breakdown[];bands:ScorecardConfig['bands'];score:number|null;band:Band;calculatedAt:string
 }
 export interface ScorecardVersion {
