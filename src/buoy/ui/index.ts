@@ -22,7 +22,7 @@ import type { Bindings } from '../../auth.server';
 import { auditPage, type AuditPage } from './audit';
 import { accountPage } from './account';
 import { ApiError, apiCall, mutate } from './actions';
-import { escape, section, field, button } from './html';
+import { escape, section, button } from './html';
 import { backupsPage, importsPage, importsStyle } from './imports';
 import { shell } from './shell';
 import { canManage, type Api, type Fields, type Job, type State } from './types';
@@ -141,11 +141,13 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     title = 'Backups'; body = backupsPage(state.operator.role === 'owner');
   } else if (account) {
     title = account.name; ({ head, body, style } = accountPage(state, account, fields, open, today));
+    const organization=await apiCall<HierarchyPage>(api,request,'/api/buoy/accounts/'+encodeURIComponent(account.id)+'/hierarchy');
     const activityQuery=new URLSearchParams();for(const [pageKey,apiKey]of [['activityCursor','cursor'],['activityKind','kind'],['activityPerson','personId'],['activitySource','source']])if(url.searchParams.get(pageKey))activityQuery.set(apiKey,url.searchParams.get(pageKey)!);
     const activity=await apiCall<Awaited<ReturnType<typeof accountActivity>>>(api,request,'/api/buoy/accounts/'+encodeURIComponent(account.id)+'/activity?'+activityQuery);
     const nextActivity=new URLSearchParams(url.searchParams);if(activity.nextCursor)nextActivity.set('activityCursor',activity.nextCursor);
-    body+=section('Current record activity','<p>'+escape(activity.interpretation)+'</p><form method="get" action="/app/accounts/'+encodeURIComponent(account.id)+'#record-activity">'+field('activityKind','Activity kind',url.searchParams.get('activityKind')??'','text',false)+field('activityPerson','Customer person ID',url.searchParams.get('activityPerson')??'','text',false)+field('activitySource','Activity source',url.searchParams.get('activitySource')??'','text',false)+button('Filter record activity')+'<p>Leave filters blank for every current native entry. Sources are native, manual, received-survey, person-confirmed-contract or usage:&lt;source ID&gt;.</p></form><ol class="journal">'+activity.records.map(r=>'<li class="record"><h3><a href="'+escape(r.href)+'">'+escape(r.title)+'</a></h3><p>'+escape(r.kind)+' · '+escape(r.occurredAt)+' UTC</p><p>Source system: '+escape(r.source)+' · Reference: '+escape(r.reference)+'</p></li>').join('')+'</ol>'+(activity.nextCursor?'<p><a href="/app/accounts/'+encodeURIComponent(account.id)+'?'+escape(nextActivity.toString())+'#record-activity">Earlier record activity</a></p>':''),'record-activity');
-    body+=hierarchyPage(await apiCall<HierarchyPage>(api,request,'/api/buoy/accounts/'+encodeURIComponent(account.id)+'/hierarchy'),await apiCall<ScorecardPage>(api,request,'/api/buoy/scorecards'),state,fields);
+    const activitySelect=(key:string,label:string,choices:{id:string;name:string}[])=>'<label>'+escape(label)+'<select aria-label="'+escape(label)+'" name="'+escape(key)+'"><option value="">All</option>'+choices.map(c=>'<option value="'+escape(c.id)+'"'+(url.searchParams.get(key)===c.id?' selected':'')+'>'+escape(c.name)+'</option>').join('')+'</select></label>';
+    body+=section('Current record activity','<p>'+escape(activity.interpretation)+'</p><form method="get" action="/app/accounts/'+encodeURIComponent(account.id)+'#record-activity">'+activitySelect('activityKind','Activity kind',activity.filters.kinds)+activitySelect('activityPerson','Customer person',organization.stakeholders)+activitySelect('activitySource','Activity source',activity.filters.sources)+button('Filter record activity')+'</form><ol class="journal">'+activity.records.map(r=>'<li class="record"><h3><a href="'+escape(r.href)+'">'+escape(r.title)+'</a></h3><p>'+escape(activity.filters.kinds.find(k=>k.id===r.kind)?.name??r.kind)+' · '+escape(r.occurredAt)+' UTC</p><p>Source: '+escape(activity.filters.sources.find(s=>s.id===r.source)?.name??'Earlier product source')+' · Reference: '+escape(r.reference)+'</p></li>').join('')+'</ol>'+(activity.nextCursor?'<p><a href="/app/accounts/'+encodeURIComponent(account.id)+'?'+escape(nextActivity.toString())+'#record-activity">Earlier record activity</a></p>':''),'record-activity');
+    body+=hierarchyPage(organization,await apiCall<ScorecardPage>(api,request,'/api/buoy/scorecards'),state,fields);
     body+=surveyPage(await apiCall<SurveyPage>(api,request,'/api/buoy/surveys'),state,account.id,fields);
     body+=revenuePage(await apiCall<RevenuePage>(api,request,'/api/buoy/revenue'),state,account.id,fields);
     const usage=await apiCall<{sources:{name:string;sourceSystem:string;sourceReference:string;eventCount:number;observedAt:string;receivedAt:string;freshness:string;staleDays:number}[]}>(api,request,`/api/buoy/accounts/${encodeURIComponent(account.id)}/usage`);
