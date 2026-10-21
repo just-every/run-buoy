@@ -18,7 +18,7 @@ export async function renewalBrowser(browser,evidence){
     const page=await context.newPage(),url=app.origin+'/app/renewals?renewal='+first.id
     const show=async id=>{const d=page.locator('#'+id);if(!await d.evaluate(el=>el.open))await d.locator('summary').click()}
     const save=async(form,label)=>{await submit(page,form.getByRole('button',{name:label,exact:true}));assert.equal(await page.locator('[role=alert]').count(),0,await page.locator('#work').innerText())}
-    const proof=async label=>{await scan(page,'RENEW-001 '+label+' '+width);await page.screenshot({path:join(evidence,'renewal-'+label+'-'+width+'.png'),fullPage:true})}
+    const proof=async label=>{await scan(page,'RENEW-001 '+label+' '+width);await page.screenshot({path:join(evidence,'renewal-'+label+'-'+width+'.png'),fullPage:true});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:join(evidence,'renewal-'+label+'-viewport-'+width+'.png')});for(const [part,selector]of [["record", "#renewal-record"], ["preview", "#renewal-field-preview"], ["history", "#renewal-history"]]){const target=page.locator(selector).first();if(await target.count())await target.screenshot({path:join(evidence,'renewal-'+label+'-'+part+'-'+width+'.png')})}}
     await page.goto(url,{waitUntil:'networkidle'});assert.equal(await page.locator('#renewal-list > ul > li').count(),12);await proof('board-list')
     await show('renewal-edit-panel');let form=page.locator('#renewal-edit')
     await form.getByLabel('Renewal stage',{exact:true}).selectOption('Negotiation');await form.getByLabel('Forecast category',{exact:true}).selectOption('at-risk')

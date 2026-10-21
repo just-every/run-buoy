@@ -14,7 +14,7 @@ export async function privacyBrowser(browser,evidence){
    try{
     await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return {name,value:rest.join('='),url:app.origin}}))
     const page=await context.newPage(),path=app.origin+'/app/customer-people?person='+person.id
-    const proof=async label=>{await scan(page,'ERASE-002 '+label+' '+width);await page.screenshot({path:join(evidence,'privacy-'+label+'-'+width+'.png'),fullPage:true})}
+    const proof=async label=>{await scan(page,'ERASE-002 '+label+' '+width);await page.screenshot({path:join(evidence,'privacy-'+label+'-'+width+'.png'),fullPage:true});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:join(evidence,'privacy-'+label+'-viewport-'+width+'.png')});for(const [part,selector]of [["owner-controls", "#privacy-export-panel"], ["receipt", "#privacy-receipts"]]){const target=page.locator(selector).first();if(await target.count())await target.screenshot({path:join(evidence,'privacy-'+label+'-'+part+'-'+width+'.png')})}}
     const show=async id=>{const d=page.locator('#'+id);if(!await d.evaluate(e=>e.open))await d.locator('summary').click()}
     await page.goto(path,{waitUntil:'networkidle'});await show('privacy-holders-panel')
     let form=page.locator('#privacy-holders')
