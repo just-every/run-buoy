@@ -2,11 +2,11 @@ import { guard } from '../core'
 import { CAMPAIGN_COLUMNS, id, now, stmt, type Campaign, type Mapping } from './model'
 // A five-minute pending reservation prevents concurrent fetches overspending a
 // cap. Only actual view receipts count as views; expired reservations do not.
-export async function deliveries(db:D1Database,sourceId:string,m:Mapping|null,credentialGuard:D1PreparedStatement,mappingGuard:D1PreparedStatement,credentialId:string){
+export async function deliveries(db:D1Database,sourceId:string,m:Mapping|null,credentialGuard:D1PreparedStatement,mappingGuard:D1PreparedStatement,credentialId:string,erasureGuard:D1PreparedStatement){
  const stamp=now(),expires=new Date(Date.parse(stamp)+300000).toISOString()
  const raw=m?await stmt(db,`SELECT ${CAMPAIGN_COLUMNS} FROM buoy_inapp_campaigns WHERE source_id=? AND enabled=1 ORDER BY created_at,id`,sourceId).all():{results:[]}
  const candidates=raw.results.map(c=>({...c,steps:JSON.parse(String(c.steps)),enabled:!!c.enabled,deliveryId:id()})) as unknown as (Campaign&{deliveryId:string})[]
- const statements=[credentialGuard,mappingGuard]
+ const statements=[credentialGuard,mappingGuard,erasureGuard]
  if(m)for(const c of candidates){
   const after=new Date(Date.parse(stamp)-c.windowHours*3600000).toISOString()
   statements.push(stmt(db,`INSERT INTO buoy_inapp_deliveries(id,campaign_id,account_id,person_id,source_id,claim_key,created_at,expires_at)
@@ -18,5 +18,5 @@ export async function deliveries(db:D1Database,sourceId:string,m:Mapping|null,cr
  }
  statements.push(stmt(db,'UPDATE buoy_inapp_credentials SET last_used_at=? WHERE id=?',stamp,credentialId),stmt(db,'DELETE FROM buoy_assertions'))
  const results=await db.batch(statements)
- return {messages:candidates.filter((_,i)=>results[i+2].meta.changes===1).map(c=>({id:c.id,kind:c.kind,title:c.title,body:c.body,steps:c.steps,deliveryId:c.deliveryId}))}
+ return {messages:candidates.filter((_,i)=>results[i+3].meta.changes===1).map(c=>({id:c.id,kind:c.kind,title:c.title,body:c.body,steps:c.steps,deliveryId:c.deliveryId}))}
 }

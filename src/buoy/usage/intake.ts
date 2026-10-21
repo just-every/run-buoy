@@ -32,10 +32,12 @@ usageIngest.post('/api/buoy/usage/intake/:sourceId',async(c,next)=>{
  const stamp=now(),events=parseEvents(await jsonBody(request),authentication.kind,stamp),scope=JSON.parse(authentication.scope) as string[]
  insist(events.every(event=>scope.includes(event.type)),'Credential does not permit this event type.',403)
  const serialized=JSON.stringify(events)
+ const identityHashes=JSON.stringify(await Promise.all([...new Set(events.map(e=>e.userId).filter((v):v is string=>!!v))].map(digest)))
  // Credential authority and the insert share one write transaction. No cache
  // can keep a revoked credential alive while a batch is waiting to commit.
  const results=await env.DB.batch([
   guard(env.DB,'EXISTS(SELECT 1 FROM buoy_usage_credentials c JOIN buoy_usage_sources s ON s.id=c.source_id WHERE c.id=? AND c.token_hash=? AND c.source_id=? AND c.revoked_at IS NULL AND c.scope=? AND s.kind=? AND s.reference=?)',authentication.id,hash,sourceId,authentication.scope,authentication.kind,authentication.reference),
+  guard(env.DB,'NOT EXISTS(SELECT 1 FROM buoy_erased_usage_identities WHERE source_id=? AND identity_hash IN(SELECT value FROM json_each(?)))',sourceId,identityHashes),
   stmt(env.DB,`INSERT OR IGNORE INTO buoy_usage_events(id,source_id,message_id,type,event,user_id,group_id,observed_at,received_at,source_reference,source_system,payload)
    SELECT json_extract(value,'$.id'),?,json_extract(value,'$.messageId'),json_extract(value,'$.type'),json_extract(value,'$.event'),json_extract(value,'$.userId'),json_extract(value,'$.groupId'),json_extract(value,'$.observedAt'),?,?,?,json_extract(value,'$.payload') FROM json_each(?) ORDER BY CAST(key AS INTEGER)`,sourceId,stamp,authentication.reference,authentication.kind,serialized),
   stmt(env.DB,`UPDATE buoy_accounts SET revision=lower(hex(randomblob(16))) WHERE id IN (SELECT m.account_id FROM buoy_usage_events e ${MAPPED_JOIN} WHERE ${ATTRIBUTED} AND e.source_id=? AND e.id IN (SELECT json_extract(value,'$.id') FROM json_each(?)))`,sourceId,serialized),
@@ -45,6 +47,6 @@ usageIngest.post('/api/buoy/usage/intake/:sourceId',async(c,next)=>{
   stmt(env.DB,'DELETE FROM buoy_assertions')
  ])
  await recalculateScorecards(env.DB)
- const accepted=results[1].meta.changes
+ const accepted=results[2].meta.changes
  return c.json({received:events.length,accepted,duplicates:events.length-accepted,stored:accepted},202)
 })

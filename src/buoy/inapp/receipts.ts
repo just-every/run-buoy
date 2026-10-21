@@ -1,7 +1,7 @@
 import {recalculateScorecards} from '../scorecards'
 import { guard } from '../core'
 import { id, insist, now, stmt, text, type Mapping } from './model'
-export async function receipt(db:D1Database,sourceId:string,userId:string,groupId:string|null,m:Mapping|null,input:Record<string,unknown>,credentialGuard:D1PreparedStatement,mappingGuard:D1PreparedStatement,credentialId:string){
+export async function receipt(db:D1Database,sourceId:string,userId:string,groupId:string|null,m:Mapping|null,input:Record<string,unknown>,credentialGuard:D1PreparedStatement,mappingGuard:D1PreparedStatement,credentialId:string,erasureGuard:D1PreparedStatement){
  const campaignId=text(input.campaignId,'Campaign ID',200),messageId=input.messageId,kind=input.kind
  insist(typeof messageId==='string'&&messageId.trim().length>0&&messageId.length<=200,'An exact receipt message ID is required (up to 200 characters).')
  insist(['view','completion','dismissal'].includes(String(kind)),'Choose a view, completion or dismissal receipt.')
@@ -9,7 +9,7 @@ export async function receipt(db:D1Database,sourceId:string,userId:string,groupI
  insist(campaign,'Message not found for this source.',404)
  const existing=await stmt(db,'SELECT id FROM buoy_usage_events WHERE source_id=? AND message_id=?',sourceId,messageId).first()
  const stamp=now(),eventId=id(),deliveryId=m?text(input.deliveryId,'Delivery ID',200):null
- const statements=[credentialGuard,mappingGuard]
+ const statements=[credentialGuard,mappingGuard,erasureGuard]
  if(m&&!existing){
   statements.push(guard(db,`EXISTS(SELECT 1 FROM buoy_inapp_deliveries d JOIN buoy_inapp_campaigns c ON c.id=d.campaign_id JOIN buoy_segment_entries se ON se.segment_id=c.segment_id AND se.account_id=d.account_id AND se.exited_at IS NULL WHERE d.id=? AND d.campaign_id=? AND d.source_id=? AND d.claim_key=? AND d.person_id=? AND d.account_id=? AND c.enabled=1 AND (?<>'view' OR d.expires_at>?) AND (?='view' OR EXISTS(SELECT 1 FROM buoy_inapp_receipts r WHERE r.delivery_id=d.id AND r.kind='view')))`,deliveryId,campaignId,sourceId,m.claimKey,m.personId,m.accountId,kind,stamp,kind))
  }

@@ -32,7 +32,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -72,6 +72,16 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     else if(action==='adoption-seats')await send('/api/buoy/adoption/seats',{accountId:fields.accountId,seats:fields.seats===''?null:Number(fields.seats),...(fields.seats!==''?{reference:fields.reference,observedAt:fields.observedAt,staleDays:Number(fields.staleDays)}:{})},'PUT');
     else throw new ApiError('This adoption action is not available.');
     return {redirect:path,message:'Adoption configuration saved.',saved:action==='adoption-consumer'?(fields.consumerId?'adoption-consumer-form-'+fields.consumerId:'adoption-consumer-new'):action};
+  }
+  if(path==='/app/customer-people'&&['privacy-holders','privacy-export','privacy-erase'].includes(action)){
+    const base='/api/buoy/customer-people/'+encodeURIComponent(fields.personId)+'/privacy/';
+    if(action==='privacy-holders'){
+      let holders:unknown;try{holders=JSON.parse(fields.holders)}catch{throw new ApiError('Enter a valid JSON array of external holders.')}
+      await send(base+'holders',{revision:fields.revision,holders},'PUT');
+      return {redirect:path+'?person='+encodeURIComponent(fields.personId),message:'External holders recorded.'};
+    }
+    const result=await send(base+(action==='privacy-export'?'export':'erase'),{revision:fields.revision,confirmation:fields.confirmation});
+    return action==='privacy-export'?{privacyExport:result}:{redirect:path+'#privacy-receipts',message:'Customer erased. Review the privacy receipt.'};
   }
   if(path==='/app/customer-people')return mutateCustomerPeople(api,request,fields);
   if(path==='/app/usage')return mutateUsage(api,request,fields);

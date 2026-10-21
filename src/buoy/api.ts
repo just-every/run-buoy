@@ -1,3 +1,4 @@
+import {privacyApi} from './privacy'
 import {surveyState,recordResponse} from './surveys'
 import {revenueState,saveContract} from './revenue'
 import {scorecardState,previewScorecard,publishScorecard,recalculateScorecards} from './scorecards'
@@ -78,6 +79,7 @@ buoyApi.onError((error, c) => {
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
 buoyApi.route('/',peopleApi)
+buoyApi.route('/',privacyApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
