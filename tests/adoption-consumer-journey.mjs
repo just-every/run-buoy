@@ -21,6 +21,7 @@ export async function adoptionConsumers(app,fixture,member){
   const m=(await api('/adoption/consumers')).evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===parity.id)
   assert.equal(m.subjects[0].value,value,'ADOPT-001 every consumer uses the exact public report number');assert.equal(m.matched,true)
  }
+ assert.equal((await api('/notifications')).items.filter(i=>i.title===parity.name).length,0,'ADOPT-001 without an account owner there is no alert recipient')
  await api('/adoption/consumers','POST',{...parity,enabled:false})
  // Make the base snapshots healthy so the configurable adoption effect is decisive.
  const current=(await api('/state')).accounts.find(a=>a.id===accountId)
@@ -36,6 +37,9 @@ export async function adoptionConsumers(app,fixture,member){
  assert.ok(health.reasons.some(r=>r.includes(report.seatEvidence.find(s=>s.accountId===accountId).reference)),'ADOPT-001 health names manual denominator evidence')
  assert.deepEqual((await api('/accounts/'+accountId+'/health')).health,health,'ADOPT-001 dedicated health and account state agree')
  assert.equal((await count(rule.name)).length,1,'ADOPT-001 account owner receives one alert')
+ await api('/adoption/seats','PUT',{accountId,seats:null})
+ await api('/adoption/seats','PUT',{accountId,seats:20,reference:report.seatEvidence.find(s=>s.accountId===accountId).reference,observedAt:on})
+ assert.equal((await count(rule.name)).length,1,'ADOPT-001 unknown input alone does not rearm a matching alert')
  await app.scheduled();await app.scheduled()
  assert.equal((await count(rule.name)).length,1,'ADOPT-001 repeated public requests and hourly evaluations do not duplicate a matching episode')
  assert.equal((await count(rule.name))[0].email,'accepted','ADOPT-001 routes to the owner signal preference and records only provider acceptance')
