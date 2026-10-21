@@ -1,3 +1,4 @@
+import {seedRecordPortability,recordPortabilityImage,assertRecordPortability} from './record-portability.mjs'
 import { importClient } from './import-door-client.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
 // Source and destination run sequentially; no provider calls or data fakes.
@@ -94,7 +95,7 @@ try{
  const consumersBefore=await call('/adoption/consumers');
  assert.equal(consumersBefore.evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===portableAggregate.id).matched,true,'ADOPT-001 segment aggregate alert measures are present before archive export');
  const adoptionAlertsBefore=(await call('/notifications')).items.filter(i=>i.title===portableMeasure.name);assert.equal(adoptionAlertsBefore.length,1,'ADOPT-001 source installation has one routed alert episode');
- const adoptionBefore=await call('/adoption');
+ let adoptionBefore=await call('/adoption');
  assert.equal(adoptionBefore.people.find(p=>p.id===usagePerson.id).metrics.current.utilization,1);
  assert.equal(adoptionBefore.personLicenseHistory.length,2);
  personState=await call('/customer-people'); // Include the intended account revision from the new seat observation.
@@ -102,12 +103,15 @@ try{
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
  const surveyBeforeRecord=await call('/surveys/responses','POST',{accountId,personId:usagePerson.id,surveyName:'Portable relationship review',kind:'nps',value:9,observedAt:new Date(Date.now()-1000).toISOString(),reference:'Received customer survey export',sourceResponseId:'synthetic-buoy-portable-survey',accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision});
  const contractBefore=await call('/accounts/'+accountId+'/contract','POST',{revision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,contract:{currency:'USD',contractStart:'2026-01-01',contractEnd:'2027-12-31',lines:[{product:'Portable recurring workspace',quantity:20,amountMinor:6000000,frequency:'annual',entitlements:'20 reporting workspace seats'}],source:{reference:'Confirmed portable customer contract',confirmedOn:new Date().toISOString().slice(0,10)}}});
- const portableCard=await call('/scorecards/publish','POST',{revision:null,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
+ const recordIds=await seedRecordPortability(call,fixture.accounts[0],usagePerson.id);
+ const portableCard=await call('/scorecards/publish','POST',{revision:recordIds.card.revision,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
  const scorecardBefore=await call('/scorecards');
  const revenueBefore=await call('/revenue');
  const surveysBefore=await call('/surveys');
  const retainedScorecard=await call('/scorecards/preview','POST',{historyId:scorecardBefore.history.find(h=>h.accountId===accountId).id});
  personState=await call('/customer-people');
+ adoptionBefore=await call('/adoption');
+ const recordImage=await recordPortabilityImage(call,recordIds);
  const before=await call('/state'), beforeAudit=(await call('/audit')).entries
  assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
@@ -126,6 +130,7 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,directory:join(destination,'.wrangler/state'),keep:true})
  const after=await call('/state')
+ await assertRecordPortability(call,(path,options)=>running.request(path,{...options,cookie:running.cookie}),recordIds,recordImage)
  assert.deepEqual(await call('/adoption/consumers'),consumersBefore,'ADOPT-001 configured adoption health thresholds and measured source evidence survive archive restore');
  assert.deepEqual(await call('/adoption'),adoptionBefore,'ADOPT-001 definitions, seats, current identities, metrics and gaps survive the real installation archive');
  assert.deepEqual(await call('/customer-people'),personState,'USAGE-001 ACCOUNT-004 customer records, memberships, typed fields, calculations and source history restore exactly');

@@ -3,12 +3,14 @@ import {spawnSync} from 'node:child_process'
 // The default CLI door still runs the complete wall. Verify's parallel jobs
 // partition these same tests so archive restore has its full execution window.
 const suites={
- http:['test:site','test:flows','test:governance','test:connections','test:email-link'],
+ http:['test:site','test:flows:core','test:governance','test:connections','test:email-link'],
+ records:['test:records'],
+ 'records-browser':['test:customer-people-browser'],
  adoption:['test:adoption'],
  health:['test:health'],
  'adoption-consumers':['test:adoption-consumers'],
  'adoption-aggregates':['test:adoption-aggregates'],
- browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes','test:runway-keyboard','test:governance-browser','test:a11y','test:fields-browser','test:connections-browser','test:customer-people-browser','test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
+ browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes','test:runway-keyboard','test:governance-browser','test:a11y','test:fields-browser','test:connections-browser','test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
  archive:['test:portable'],
 }
 const selected=process.env.BUOY_VERIFY_SUITE??'all'
