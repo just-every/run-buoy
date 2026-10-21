@@ -8,7 +8,7 @@ export function adoptionConsumers(data:ConsumerPage,state:State,fields?:Fields){
  const edit=(rule?:ConsumerRule)=>{
   const selected=fields?.action==='adoption-consumer'&&(fields.consumerId??'')===(rule?.id??'')?fields:undefined
   const val=(key:string,fallback:unknown='')=>valueOf(selected,key,fallback)
-  return form(rule?'adoption-consumer-form-'+rule.id:'adoption-consumer-new','/app/adoption',hidden('action','adoption-consumer')+hidden('consumerId',rule?.id??'')+hidden('consumerRevision',rule?.revision??'')
+  return form(rule?'adoption-consumer-form-'+rule.id:'adoption-consumer-new','/app/adoption',hidden('action','adoption-consumer')+hidden('consumerId',rule?.id??'')+hidden('revision',rule?.revision??'')
    +field('consumerName','Measure name',val('consumerName',rule?.name),'text',true,'maxlength="100"')
    +options('consumerScope','Measure scope',[['account','Each account'],['user','Any related product user'],['contact','Any related contact']],val('consumerScope',rule?.scope??'account'))
    +options('consumerMetric','Adoption metric',Object.keys(data.fields).map(key=>[key,key]),val('consumerMetric',rule?.metric??'adoption.current.utilization'))

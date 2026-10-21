@@ -74,8 +74,10 @@ try{
  await call('/adoption/seats','PUT',{accountId,seats:20,reference:'Customer-approved license schedule',observedAt:'2026-10-01',staleDays:30});
  await call('/adoption/person-licenses','PUT',{accountId,personId:usagePerson.id,licensed:false,reference:'Prior individual register',observedAt:'2026-09-01'});
  await call('/adoption/person-licenses','PUT',{accountId,personId:usagePerson.id,licensed:true,reference:'Customer-approved individual register',observedAt:'2026-10-01'});
- await call('/adoption/consumers','POST',{name:'Portable license adoption measure',scope:'account',metric:'adoption.current.feature.license',op:'gte',value:1,health:true,alert:false,enabled:true});
+ await call('/accounts/'+accountId+'/owner','PUT',{ownerId:(await call('/state')).operator.id});
+ const portableMeasure=await call('/adoption/consumers','POST',{name:'Portable license adoption measure',scope:'account',metric:'adoption.current.feature.license',op:'gte',value:1,health:true,alert:true,enabled:true});
  const consumersBefore=await call('/adoption/consumers');
+ const adoptionAlertsBefore=(await call('/notifications')).items.filter(i=>i.title===portableMeasure.name);assert.equal(adoptionAlertsBefore.length,1,'ADOPT-001 source installation has one routed alert episode');
  const adoptionBefore=await call('/adoption');
  assert.equal(adoptionBefore.people.find(p=>p.id===usagePerson.id).metrics.current.utilization,1);
  assert.equal(adoptionBefore.personLicenseHistory.length,2);
@@ -115,6 +117,8 @@ try{
  assert.deepEqual(after.accounts,before.accounts)
  assert.deepEqual(after.proposals,before.proposals)
  assert.deepEqual(after.decisions,before.decisions)
+ await call('/notifications/preferences','PUT',{frequency:'off',modes:{mention:'immediate',assignment:'immediate',signal:'immediate',approval:'immediate'}});
+ assert.deepEqual((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name),adoptionAlertsBefore,'ADOPT-001 restored episode prevents another alert for unchanged matching evidence');
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
  assert.equal((await usageIntake()).status,401,'USAGE-001 archived ingestion credentials cannot authorize restored intake')
  assert.deepEqual(await call('/usage/events'),usageEvents,'USAGE-001 queued payload/provenance survives the real archive')

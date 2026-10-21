@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 export async function adoptionConsumers(app,fixture,member){
  const {api,accounts,people}=fixture,on=new Date().toISOString().slice(0,10),accountId=accounts[0].id
  const report=await api('/adoption'),base={scope:'account',op:'eq',health:false,alert:true,enabled:true}
- const saved=[],save=async body=>{const result=await api('/adoption/consumers','POST',body);saved.push(result);return result}
+ const save=body=>api('/adoption/consumers','POST',body)
  const metricValues=m=>{
   const result={}
   for(const period of ['current','previous']){
@@ -15,11 +15,13 @@ export async function adoptionConsumers(app,fixture,member){
  // Every exposed account metric reaches the configurable consumer with exact report parity.
  const values=metricValues(report.accounts.find(a=>a.id===accountId).metrics)
  assert.deepEqual(Object.keys((await api('/adoption/consumers')).fields).sort(),Object.keys(values).sort())
- for(const [metric,value] of Object.entries(values))await save({...base,name:'Metric parity '+metric,metric,value,op:value===null?'is-missing':'eq'})
- let consumers=await api('/adoption/consumers'),measures=consumers.evaluations.find(e=>e.accountId===accountId).measures
- for(const m of measures){assert.equal(m.subjects[0].value,values[m.metric],'ADOPT-001 every consumer uses the exact public report number');assert.equal(m.matched,true)}
- for(const rule of saved)await api('/adoption/consumers','POST',{...rule,enabled:false})
- saved.length=0
+ let parity,measures
+ for(const [metric,value] of Object.entries(values)){
+  parity=await save({...parity,...base,name:'Metric parity '+metric,metric,value,op:value===null?'is-missing':'eq'})
+  const m=(await api('/adoption/consumers')).evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===parity.id)
+  assert.equal(m.subjects[0].value,value,'ADOPT-001 every consumer uses the exact public report number');assert.equal(m.matched,true)
+ }
+ await api('/adoption/consumers','POST',{...parity,enabled:false})
  // Make the base snapshots healthy so the configurable adoption effect is decisive.
  const current=(await api('/state')).accounts.find(a=>a.id===accountId)
  await api('/accounts/'+accountId,'PUT',{id:current.id,name:current.name,renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,revision:current.revision,billing:{observedAt:on,reference:'Current fully paid invoice',currency:'USD',totalMinor:10000,creditsMinor:0,allocatedMinor:10000,dueDate:on},support:{observedAt:on,reference:'Current support queue',openTickets:0,urgentTickets:0}})
@@ -63,6 +65,22 @@ export async function adoptionConsumers(app,fixture,member){
  const personMeasure=measures.find(m=>m.ruleId===personal.id)
  assert.equal(personMeasure.subjects.find(s=>s.id===people[0].id).value,1)
  assert.equal(personMeasure.matched,true);assert.ok(personMeasure.personLicenses.some(l=>l.reference==='Reviewed person entitlement'))
+ // Reuse a disabled parity rule so every related-person numeric field is also
+ // asserted without multiplying configurations or adding a separate test case.
+ let related=(await api('/adoption/consumers')).rules.find(r=>!r.enabled)
+ const userReport=(await api('/adoption?personId='+people[0].id)).people[0]
+ for(const [metric,value] of Object.entries(metricValues(userReport.metrics))){
+  related=await api('/adoption/consumers','POST',{...related,name:'Related product-user parity',scope:'user',metric,op:value===null?'is-missing':'eq',value,health:true,alert:false,enabled:true})
+  const row=(await api('/adoption/consumers')).evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===related.id)
+  assert.equal(row.subjects.find(p=>p.id===people[0].id).value,value,'ADOPT-001 every related-user metric agrees with the report')
+  assert.equal(row.matched,true)
+  assert.equal((await api('/state')).accounts.find(a=>a.id===accountId).health.status,'at-risk')
+ }
+ const contact=await api('/customer-people','POST',{kind:'contact',name:'Customer adoption sponsor',accountIds:[accountId],source:'Reviewed customer stakeholder directory'})
+ related=await api('/adoption/consumers','POST',{...related,name:'Related contact activity',scope:'contact',metric:'adoption.current.mau',op:'eq',value:0,health:true,alert:false,enabled:true})
+ const contactMeasure=(await api('/adoption/consumers')).evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===related.id)
+ assert.equal(contactMeasure.subjects.length,1);assert.equal(contactMeasure.subjects[0].id,contact.id);assert.equal(contactMeasure.matched,true,'ADOPT-001 contacts and product users do not share a scope')
+ related=await api('/adoption/consumers','POST',{...related,enabled:false})
  // Existing recipient preferences and reassignment keep ownership meaningful.
  const modes={mention:'immediate',assignment:'immediate',signal:'digest',approval:'immediate'}
  await api('/notifications/preferences','PUT',{frequency:'daily',modes})
