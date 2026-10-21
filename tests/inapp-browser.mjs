@@ -36,7 +36,7 @@ try{
    assert.match(await page.getByLabel('In-app credential',{exact:true}).inputValue(),/^buoy_inapp_/)
    // Redact the one-time credential in exported visual evidence only.
    await scan(page,`INAPP-001 issued credential ${width}`);if(evidence)await page.screenshot({path:join(evidence,`inapp-issued-${width}.png`),fullPage:true,mask:[page.getByLabel('In-app credential',{exact:true})]})
-   await page.reload({waitUntil:'networkidle'});assert.equal(await page.getByLabel('In-app credential',{exact:true}).count(),0)
+   await page.goto(app.origin+'/app/inapp',{waitUntil:'networkidle'});assert.equal(await page.getByLabel('In-app credential',{exact:true}).count(),0)
    await submit(page,page.getByRole('button',{name:'Revoke Revocable server '+width,exact:true}));await proof('revoked')
    const product=await context.newPage();await product.goto(buyer.origin,{waitUntil:'networkidle'});await product.getByRole('button',{name:'Read product messages',exact:true}).click();await product.getByRole('alert').waitFor();assert.match(await product.getByRole('alert').innerText(),/Sign in/);await proof('signed-out',product)
    await context.addCookies([buyer.session(outside)]);await product.getByRole('button',{name:'Read product messages',exact:true}).click();await product.waitForFunction(()=>!document.querySelector('#messages').hasAttribute('aria-busy'));assert.equal(await product.locator('#messages section').count(),0);await proof('outside',product)
