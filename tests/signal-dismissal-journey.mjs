@@ -37,7 +37,7 @@ export async function signalDismissal(app,fixture,member){
  await api('/accounts/'+accountId+'/owner','PUT',{ownerId:owner})
  assert.equal((await notices()).length,count)
  // Exercise actual expiry with the real clock after proving the long window.
- const expires=new Date(Date.now()+1000).toISOString()
+ const expires=new Date(Date.now()+5000).toISOString()
  assert.equal((await request(notice.id,{...body,until:expires})).status,200)
  await new Promise(resolve=>setTimeout(resolve,Math.max(0,Date.parse(expires)-Date.now())+100))
  await app.scheduled()
@@ -72,7 +72,7 @@ export async function signalDismissal(app,fixture,member){
    assert.equal((await notices())[0].dismissal.until,until)
    await context.close()
    // Expire the disposition before exercising the next viewport's fresh episode.
-   const end=new Date(Date.now()+1000).toISOString();await request(current.id,{reason:body.reason,until:end})
+   const end=new Date(Date.now()+5000).toISOString();await request(current.id,{reason:body.reason,until:end})
    await new Promise(resolve=>setTimeout(resolve,Math.max(0,Date.parse(end)-Date.now())+100))
   }
  }finally{await browser.close()}
