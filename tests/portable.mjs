@@ -117,8 +117,14 @@ try{
  assert.deepEqual(after.accounts,before.accounts)
  assert.deepEqual(after.proposals,before.proposals)
  assert.deepEqual(after.decisions,before.decisions)
+ assert.notEqual(after.operator.id,before.operator.id,'RESTORE-001 establishes a fresh owner, not the original native operator');
+ assert.equal((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name).length,0,'NOTIFY-001 ADOPT-001 a fresh owner cannot read the old recipient’s private inbox');
+ await call('/accounts/'+accountId+'/owner','PUT',{ownerId:after.operator.id,note:'Fresh owner explicitly takes over restored adoption follow-up'});
+ const freshAlerts=(await call('/notifications')).items.filter(i=>i.title===portableMeasure.name);
+ assert.equal(freshAlerts.length,1,'ADOPT-001 explicit restored-account reassignment routes one alert to the new recipient');
+ assert.notEqual(freshAlerts[0].id,adoptionAlertsBefore[0].id);
  await call('/notifications/preferences','PUT',{frequency:'off',modes:{mention:'immediate',assignment:'immediate',signal:'immediate',approval:'immediate'}});
- assert.deepEqual((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name),adoptionAlertsBefore,'ADOPT-001 restored episode prevents another alert for unchanged matching evidence');
+ assert.deepEqual((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name),freshAlerts,'ADOPT-001 unchanged restored evidence does not duplicate the new recipient’s episode');
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
  assert.equal((await usageIntake()).status,401,'USAGE-001 archived ingestion credentials cannot authorize restored intake')
  assert.deepEqual(await call('/usage/events'),usageEvents,'USAGE-001 queued payload/provenance survives the real archive')
