@@ -10,7 +10,7 @@ import {scan,failures,manual,submit,focused,openForms} from './a11y-checks.mjs'
 const app=await startWorker({secure:false})
 let browser
 try{
- const {api,accounts,people}=await adoptionFixture(app,{count:2})
+ const {api,accounts,people,sdk}=await adoptionFixture(app,{count:2})
  const evidence=process.env.EVIDENCE_DIR;if(evidence)await mkdir(evidence,{recursive:true})
  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
  for(const width of [1440,390]){
@@ -72,7 +72,7 @@ try{
    await scan(page,`ADOPT-001 invalid report recovery ${width}`)
    if(evidence)await page.screenshot({path:join(evidence,`adoption-invalid-report-${width}.png`)})
    await page.getByRole('link',{name:'Clear report filters',exact:true}).click();assert.equal(await page.locator('#adoption-summary').count(),1)
-   await adoptionSegmentBrowser({page,api,accounts,width,evidence,origin:app.origin})
+   await adoptionSegmentBrowser({page,api,accounts,people,sdk,width,evidence,origin:app.origin})
    await page.goto(app.origin+'/app/usage',{waitUntil:'networkidle'});await scan(page,`ADOPT-001 usage entry link ${width}`)
    if(evidence){await page.locator('#work > section').first().screenshot({path:join(evidence,`adoption-usage-link-${width}.png`)})}
   }finally{await context.close()}

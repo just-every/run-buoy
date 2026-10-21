@@ -1,6 +1,9 @@
 // ADOPT-001 / SEGMENT-001: metrics drive real membership and entry approvals.
+import {currentAdoption} from './adoption-current-fixture.mjs'
 import assert from 'node:assert/strict'
-export async function adoptionSegments(app,{api,accounts,people}){
+export async function adoptionSegments(app,fixture){
+ const {api,accounts,people}=fixture
+ await currentAdoption(fixture,'http')
  const on=new Date().toISOString().slice(0,10)
  const report=await api('/adoption?on='+on),account=report.accounts.find(a=>a.id===accounts[0].id)
  const condition=(field,value)=>value===null?{field,op:'is-missing'}:{field,op:'eq',value}

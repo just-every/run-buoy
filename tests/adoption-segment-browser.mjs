@@ -1,8 +1,10 @@
+import {currentAdoption} from './adoption-current-fixture.mjs'
 import assert from 'node:assert/strict'
 import {join} from 'node:path'
 import {scan,submit} from './a11y-checks.mjs'
 
-export async function adoptionSegmentBrowser({page,api,accounts,width,evidence,origin}){
+export async function adoptionSegmentBrowser({page,api,accounts,people,sdk,width,evidence,origin}){
+ await currentAdoption({people,sdk},'browser-'+width)
  const account=accounts[0],on=new Date().toISOString().slice(0,10)
  await api('/adoption/seats','PUT',{accountId:account.id,seats:20,reference:'Reviewed current customer seat schedule',observedAt:on,staleDays:30})
  await page.goto(origin+'/app/segments',{waitUntil:'networkidle'})
