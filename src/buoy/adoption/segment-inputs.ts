@@ -7,7 +7,7 @@ import type { AdoptionMetrics } from './types'
 const base=BASE.replace('SELECT ? AS accountId,? AS personId,? AS segmentId,julianday(?) AS until',"SELECT NULL AS accountId,NULL AS personId,NULL AS segmentId,julianday(date('now','+1 day')) AS until")
 const rows=(query:string,columns:string[])=>{
  const body=query.slice(BASE.length).trimStart(),select=body.startsWith(',')?'WITH '+body.slice(1):body
- return `json((SELECT json_group_array(json_object(${columns.map(c=>`'${c}',${c}`).join(',')})) FROM (${select}) WHERE scope IN ('account','person','segment')))`
+ return `json((SELECT json_group_array(json_object(${columns.map(c=>`'${c}',${c}`).join(',')})) FROM (${select}) WHERE scope IN ('account','person')))`
 }
 export const measuredSnapshot=`${base} SELECT json_object(
  'on',date('now'),
@@ -17,6 +17,9 @@ export const measuredSnapshot=`${base} SELECT json_object(
  'first',${rows(FIRST_VALUE,['scope','id','people','meanSeconds'])},
  'definitions',json((SELECT json_group_array(json_object('kind',kind,'key',key)) FROM (SELECT kind,key FROM buoy_adoption_definitions ORDER BY kind,key)))
  )`
+// Aggregate metrics are needed only by an enabled segment alert. Ordinary
+// account/person health and membership rules retain their existing report image.
+export const aggregateMeasuredSnapshot=measuredSnapshot.replaceAll("WHERE scope IN ('account','person')","WHERE scope IN ('account','person','segment')")
 export interface AdoptionImage {on:string;subjects:SubjectRow[];counts:CountRow[];used:DefinitionRow[];first:FirstRow[];definitions:{kind:'feature'|'module';key:string}[]}
 const numeric=['dau','wau','mau','eventCount','depth','breadth','utilization'] as const
 export function adoptionRuleFields(image:AdoptionImage):Record<string,'number'>{

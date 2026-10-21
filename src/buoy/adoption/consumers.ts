@@ -1,13 +1,13 @@
 import { auditRecord } from '../audit-records'
 import { authority, date, guard, id, insist, now, requirePerson, stmt, text, type Actor } from '../core'
 import { ATTRIBUTED, MAPPED_JOIN } from '../usage/mappings'
-import { adoptionRuleFields, adoptionRuleValues, measuredSnapshot } from './segment-inputs'
+import { adoptionRuleFields, adoptionRuleValues, measuredSnapshot, aggregateMeasuredSnapshot } from './segment-inputs'
 import { CONSUMER_OPERATORS, evaluateConsumers, type ConsumerAdoptionImage, type ConsumerRule } from './consumers-model'
 
 export const CONSUMER_SNAPSHOT=`SELECT json_group_array(json_patch(json(document),json_object('id',id,'revision',revision))) FROM (SELECT * FROM buoy_adoption_consumers ORDER BY created_at,id)`
 // This embeds the report's metric image. Added metadata describes its sources
 // and manual denominators; it does not calculate a second version of a metric.
-export const CONSUMER_ADOPTION_SNAPSHOT=`SELECT json_patch(json((${measuredSnapshot})),json_object(
+export const CONSUMER_ADOPTION_SNAPSHOT=`SELECT json_patch(json((SELECT CASE WHEN EXISTS(SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.scope')='segment') THEN (${aggregateMeasuredSnapshot}) ELSE (${measuredSnapshot}) END)),json_object(
  'sources',json((SELECT json_group_array(json_object('id',id,'name',name,'kind',kind,'reference',reference,'eventCount',eventCount,'attributedEventCount',attributedEventCount,'lastObservedAt',lastObservedAt,'staleDays',staleDays,'freshness',CASE WHEN lastObservedAt IS NULL THEN 'missing' WHEN julianday(date('now'))-julianday(substr(lastObservedAt,1,10))>staleDays THEN 'stale' ELSE 'current' END)) FROM (
   SELECT s.id,s.name,s.kind,s.reference,s.stale_days AS staleDays,count(e.id) AS eventCount,max(e.observed_at) AS lastObservedAt,
    count(CASE WHEN ${ATTRIBUTED} AND e.user_id IS NOT NULL AND m.person_id IS NOT NULL THEN 1 END) AS attributedEventCount
@@ -17,13 +17,14 @@ export const CONSUMER_ADOPTION_SNAPSHOT=`SELECT json_patch(json((${measuredSnaps
  'personLicenses',json((SELECT json_group_array(json_object('accountId',account_id,'personId',person_id,'licensed',json(CASE WHEN licensed=1 THEN 'true' ELSE 'false' END),'sourceSystem',source_system,'reference',reference,'observedAt',observed_at,'staleDays',stale_days,'freshness',CASE WHEN julianday(date('now'))-julianday(observed_at)>stale_days THEN 'stale' ELSE 'current' END)) FROM (SELECT * FROM buoy_adoption_person_licenses ORDER BY account_id,person_id)))
  ))`
 const IMAGE=`SELECT json_object('rules',json((${CONSUMER_SNAPSHOT})),'adoption',json((${CONSUMER_ADOPTION_SNAPSHOT})),
+ 'segments',json((SELECT json_group_array(json_object('id',s.id,'name',json_extract(s.document,'$.name'),'accountIds',json((SELECT json_group_array(account_id) FROM (SELECT account_id FROM buoy_segment_entries WHERE segment_id=s.id AND exited_at IS NULL ORDER BY account_id))))) FROM (SELECT * FROM buoy_segments ORDER BY created_at,id) s)),
  'owners',json((SELECT json_group_array(json_object('accountId',a.account_id,'personId',a.owner_id)) FROM buoy_account_owners a JOIN oa_operators o ON o.id=a.owner_id AND o.status='active' ORDER BY a.account_id))) AS snapshot`
 export function consumerImageSql(on?:string){
  if(on===undefined)return IMAGE
  const day=date(on,'Adoption measurement date')
  return IMAGE.replaceAll("date('now','+1 day')",`date('${day}','+1 day')`).replaceAll("date('now')",`date('${day}')`)
 }
-export interface ConsumerImage {rules:ConsumerRule[];adoption:ConsumerAdoptionImage;owners:{accountId:string;personId:string}[]}
+export interface ConsumerImage {rules:ConsumerRule[];adoption:ConsumerAdoptionImage;owners:{accountId:string;personId:string}[];segments:{id:string;name:string;accountIds:string[]}[]}
 export async function consumerImage(db:D1Database,on?:string){
  const sql=consumerImageSql(on),row=await db.prepare(sql).first<{snapshot:string}>()
  insist(row,'Adoption measures unavailable.',503)
@@ -44,7 +45,7 @@ export async function consumerState(db:D1Database,actor:Actor){
  const result=await db.batch([authority(db,actor),db.prepare(IMAGE),stmt(db,'DELETE FROM buoy_assertions')])
  const row=result[1].results[0] as {snapshot:string}
  const image=JSON.parse(row.snapshot) as ConsumerImage
- return {on:image.adoption.on,rules:image.rules,fields:adoptionRuleFields(image.adoption),segments:image.adoption.subjects.filter(subject=>subject.scope==='segment').map(({id,name,accountIds})=>({id,name,accountIds:JSON.parse(accountIds) as string[]})),evaluations:[...measuredConsumers(image)].map(([accountId,measures])=>({accountId,measures}))}
+ return {on:image.adoption.on,rules:image.rules,fields:adoptionRuleFields(image.adoption),segments:image.segments,evaluations:[...measuredConsumers(image)].map(([accountId,measures])=>({accountId,measures}))}
 }
 export async function saveConsumer(db:D1Database,actor:Actor,input:Record<string,unknown>):Promise<ConsumerRule>{
  requirePerson(actor)
@@ -62,7 +63,7 @@ export async function saveConsumer(db:D1Database,actor:Actor,input:Record<string
  for(const key of ['health','alert','enabled'])insist(typeof input[key]==='boolean',`${key} must be a boolean.`)
  insist(input.health||input.alert,'Choose health, alert or both effects.')
  if(input.scope==='segment'){
-  insist(typeof input.segmentId==='string'&&snapshot.value.adoption.subjects.some(subject=>subject.scope==='segment'&&subject.id===input.segmentId),'Choose an existing segment for the aggregate.')
+  insist(typeof input.segmentId==='string'&&snapshot.value.segments.some(segment=>segment.id===input.segmentId),'Choose an existing segment for the aggregate.')
   insist(input.health===false,'Segment aggregate health is not available yet. Choose an alert without a health effect.')
  }else insist(input.segmentId===undefined,'Segment selection applies only to a segment aggregate.')
  insist(prior||snapshot.value.rules.length<32,'At most 32 adoption consumers are supported.')
