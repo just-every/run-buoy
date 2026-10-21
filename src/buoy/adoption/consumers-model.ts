@@ -4,7 +4,7 @@ import type { AdoptionPersonLicense, AdoptionSeatEvidence } from './types'
 
 export const CONSUMER_OPERATORS = ['lt','lte','eq','gte','gt','is-missing'] as const
 export interface ConsumerRule {
- id:string;name:string;scope:'account'|'user'|'contact';metric:string;
+ id:string;name:string;scope:'account'|'user'|'contact'|'segment';segmentId?:string;metric:string;
  op:typeof CONSUMER_OPERATORS[number];value:number|null;health:boolean;alert:boolean;enabled:boolean;revision:string
 }
 export interface ConsumerAdoptionImage extends AdoptionImage {
@@ -21,15 +21,17 @@ export function consumerEvidence(measure:ConsumerEvaluation){
  const sources=measure.sources.map(s=>`${s.name}: ${s.reference}; ${s.freshness}`).join('; ')||'missing'
  const seats=measure.seatEvidence.map(s=>`${s.reference}, observed ${s.observedAt}, ${s.freshness}`).join('; ')||'missing'
  const licenses=measure.personLicenses.map(s=>`${s.personId}: ${s.reference}, observed ${s.observedAt}, ${s.freshness}`).join('; ')||'missing'
- return `${measure.reason} Measured ${measure.on} UTC. Installation source coverage: ${sources}. Account manual seat evidence: ${seats}. Related-person manual license evidence: ${licenses}. Current reviewed mappings, memberships and definitions apply; source completeness, billing verification and a verified signup baseline are not inferred.`
+ return `${measure.reason} Measured ${measure.on} UTC. Installation source coverage: ${sources}. Selected account manual seat evidence: ${seats}. Related-person manual license evidence: ${licenses}. Current reviewed mappings, memberships and definitions apply; source completeness, billing verification and a verified signup baseline are not inferred.`
 }
 const comparisons={lt:(a:number,b:number)=>a<b,lte:(a:number,b:number)=>a<=b,eq:(a:number,b:number)=>a===b,gte:(a:number,b:number)=>a>=b,gt:(a:number,b:number)=>a>b}
 const membership=(value:string)=>JSON.parse(value) as string[]
 export function evaluateConsumers(rules:ConsumerRule[],accountId:string,image:ConsumerAdoptionImage,values?:ReturnType<typeof adoptionRuleValues>):ConsumerEvaluation[]{
  if(!rules.some(rule=>rule.enabled))return []
  values??=adoptionRuleValues(image)
- return rules.filter(rule=>rule.enabled).map(rule=>{
-  const subjects=image.subjects.filter(subject=>rule.scope==='account'
+ return rules.filter(rule=>rule.enabled&&(rule.scope!=='segment'||image.subjects.some(subject=>subject.scope==='segment'&&subject.id===rule.segmentId&&membership(subject.accountIds).includes(accountId)))).map(rule=>{
+  const subjects=image.subjects.filter(subject=>rule.scope==='segment'
+   ?subject.scope==='segment'&&subject.id===rule.segmentId
+   :rule.scope==='account'
    ?subject.scope==='account'&&subject.id===accountId
    :subject.scope==='person'&&subject.kind===rule.scope&&membership(subject.accountIds).includes(accountId))
    .map(subject=>{
@@ -41,9 +43,10 @@ export function evaluateConsumers(rules:ConsumerRule[],accountId:string,image:Co
   const matched=subjects.some(subject=>subject.matched),missing=subjects.length===0||(!matched&&rule.op!=='is-missing'&&subjects.some(subject=>subject.missing))
   const details=subjects.map(subject=>`${subject.name} (${subject.id}): ${subject.value===null?'missing':subject.value}${subject.matched?' (matches)':''}`).join('; ')
   const predicate=rule.op==='is-missing'?'is missing':`${rule.op} ${rule.value}`
+  const evidenceAccounts=rule.scope==='segment'?image.subjects.find(subject=>subject.scope==='segment'&&subject.id===rule.segmentId)!.accountIds:null
   return {...rule,ruleId:rule.id,accountId,on:image.on,matched,missing,subjects,
    reason:`${rule.name}: ${rule.metric} ${predicate}; ${details||`no current related ${rule.scope} subject`}. ${matched?'Threshold matched.':missing?'Required adoption measure is unknown.':'Threshold did not match.'}`,
-   sources:image.sources??[],seatEvidence:(image.seatEvidence??[]).filter(e=>e.accountId===accountId),
+   sources:image.sources??[],seatEvidence:(image.seatEvidence??[]).filter(e=>evidenceAccounts?membership(evidenceAccounts).includes(e.accountId):e.accountId===accountId),
    personLicenses:(image.personLicenses??[]).filter(e=>subjects.some(subject=>subject.id===e.personId))}
  })
 }

@@ -1,3 +1,4 @@
+import {adoptionAggregateBrowser} from './adoption-aggregate-browser.mjs'
 // ADOPT-001 native configuration, health, routed-inbox and refusal/recovery.
 import assert from 'node:assert/strict'
 import {join} from 'node:path'
@@ -56,4 +57,5 @@ export async function adoptionConsumerBrowser({page,api,accounts,people,sdk,widt
  await show('adoption-consumer-'+consumer.id);await page.setViewportSize({width:320,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'ADOPT-001 consumer configuration and evidence reflow to 320')
  await page.setViewportSize({width,height:1000});await proof('disabled',page.locator('#adoption-consumer-'+consumer.id))
  await api('/adoption/seats','PUT',{accountId,seats:20,reference:'Restored native adoption schedule',observedAt:on})
+ await adoptionAggregateBrowser({page,api,accounts,width,evidence,origin})
 }

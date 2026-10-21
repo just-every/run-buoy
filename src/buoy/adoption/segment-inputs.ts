@@ -7,7 +7,7 @@ import type { AdoptionMetrics } from './types'
 const base=BASE.replace('SELECT ? AS accountId,? AS personId,? AS segmentId,julianday(?) AS until',"SELECT NULL AS accountId,NULL AS personId,NULL AS segmentId,julianday(date('now','+1 day')) AS until")
 const rows=(query:string,columns:string[])=>{
  const body=query.slice(BASE.length).trimStart(),select=body.startsWith(',')?'WITH '+body.slice(1):body
- return `json((SELECT json_group_array(json_object(${columns.map(c=>`'${c}',${c}`).join(',')})) FROM (${select}) WHERE scope IN ('account','person')))`
+ return `json((SELECT json_group_array(json_object(${columns.map(c=>`'${c}',${c}`).join(',')})) FROM (${select}) WHERE scope IN ('account','person','segment')))`
 }
 export const measuredSnapshot=`${base} SELECT json_object(
  'on',date('now'),

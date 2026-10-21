@@ -76,7 +76,9 @@ try{
  await call('/adoption/person-licenses','PUT',{accountId,personId:usagePerson.id,licensed:true,reference:'Customer-approved individual register',observedAt:'2026-10-01'});
  await call('/accounts/'+accountId+'/owner','PUT',{ownerId:(await call('/state')).operator.id});
  const portableMeasure=await call('/adoption/consumers','POST',{name:'Portable license adoption measure',scope:'account',metric:'adoption.current.feature.license',op:'gte',value:1,health:true,alert:true,enabled:true});
+ const portableAggregate=await call('/adoption/consumers','POST',{name:'Portable segment adoption alert',scope:'segment',segmentId:inappSegment.id,metric:'adoption.current.feature.license',op:'gte',value:1,health:false,alert:true,enabled:true});
  const consumersBefore=await call('/adoption/consumers');
+ assert.equal(consumersBefore.evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===portableAggregate.id).matched,true,'ADOPT-001 segment aggregate alert measures are present before archive export');
  const adoptionAlertsBefore=(await call('/notifications')).items.filter(i=>i.title===portableMeasure.name);assert.equal(adoptionAlertsBefore.length,1,'ADOPT-001 source installation has one routed alert episode');
  const adoptionBefore=await call('/adoption');
  assert.equal(adoptionBefore.people.find(p=>p.id===usagePerson.id).metrics.current.utilization,1);
@@ -121,6 +123,7 @@ try{
  assert.equal((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name).length,0,'NOTIFY-001 ADOPT-001 a fresh owner cannot read the old recipient’s private inbox');
  await call('/accounts/'+accountId+'/owner','PUT',{ownerId:after.operator.id,note:'Fresh owner explicitly takes over restored adoption follow-up'});
  const freshAlerts=(await call('/notifications')).items.filter(i=>i.title===portableMeasure.name);
+ assert.equal((await call('/notifications')).items.filter(i=>i.title===portableAggregate.name).length,1,'ADOPT-001 restored segment aggregate routes one fresh-owner alert');
  assert.equal(freshAlerts.length,1,'ADOPT-001 explicit restored-account reassignment routes one alert to the new recipient');
  assert.notEqual(freshAlerts[0].id,adoptionAlertsBefore[0].id);
  await call('/notifications/preferences','PUT',{frequency:'off',modes:{mention:'immediate',assignment:'immediate',signal:'immediate',approval:'immediate'}});

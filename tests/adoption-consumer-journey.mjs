@@ -1,3 +1,4 @@
+import {adoptionAggregateAlerts} from './adoption-aggregate-journey.mjs'
 // ADOPT-001: configured health and routed alerts use the public report's metrics.
 import assert from 'node:assert/strict'
 export async function adoptionConsumers(app,fixture,member){
@@ -100,7 +101,7 @@ export async function adoptionConsumers(app,fixture,member){
  const memberNotices=await api('/notifications','GET',undefined,member)
  assert.equal(memberNotices.items.filter(i=>i.title===rule.name&&i.accountId===accountId).length,1,'ADOPT-001 reassignment routes current risk to the new owner')
  for(const options of [{cookie:member},{cookie:app.cookie,headers:{origin:'https://foreign.invalid'}},{}])assert.equal((await app.request('/api/buoy/adoption/consumers',{...options,method:'POST',body:{...base,name:'Forbidden',metric:'adoption.current.mau',value:1}})).status,options.cookie?403:401)
- for(const changed of [{metric:'adoption.not-real'},{value:'1'},{op:'eq',value:null},{scope:'segment'},{health:false,alert:false},{unknown:true}])assert.equal((await app.request('/api/buoy/adoption/consumers',{cookie:app.cookie,method:'POST',body:{...base,name:'Invalid measure',metric:'adoption.current.mau',value:1,...changed}})).status,400)
+ for(const changed of [{metric:'adoption.not-real'},{value:'1'},{op:'eq',value:null},{scope:'unavailable'},{health:false,alert:false},{unknown:true}])assert.equal((await app.request('/api/buoy/adoption/consumers',{cookie:app.cookie,method:'POST',body:{...base,name:'Invalid measure',metric:'adoption.current.mau',value:1,...changed}})).status,400)
  const token=await api('/agent-tokens','POST',{label:'Adoption consumer authority check'})
  for(const method of ['GET','POST'])assert.equal((await app.request('/api/buoy/adoption/consumers',{token:token.token,method,...(method==='POST'?{body:{...base,name:'Forbidden',metric:'adoption.current.mau',value:1}}:{})})).status,403)
  await api('/agent-tokens/'+token.id,'DELETE')
@@ -108,5 +109,6 @@ export async function adoptionConsumers(app,fixture,member){
  for(const r of (await api('/adoption/consumers')).rules)if(r.enabled)await api('/adoption/consumers','POST',{...r,enabled:false})
  await api('/notifications/preferences','PUT',{frequency:'off',modes:{...modes,signal:'immediate'}})
  await api('/adoption/seats','PUT',{accountId,seats:20,reference:'Restored reviewed license schedule',observedAt:on})
+ await adoptionAggregateAlerts(app,fixture,member)
  console.log('ADOPT-001 every account metric parity, configurable health, missing evidence, owner alerts, dedup/recovery, recipient preferences/reassignment, guarded playbook approval, configuration invalidation and authority passed.')
 }

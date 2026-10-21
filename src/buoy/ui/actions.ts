@@ -54,7 +54,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     }
     else if(action==='adoption-consumer'){
       if(![fields.consumerHealth,fields.consumerAlert,fields.consumerEnabled].every(v=>['true','false'].includes(v)))throw new ApiError('Choose measure effects and enabled status.');
-      await send('/api/buoy/adoption/consumers',{...(fields.consumerId?{id:fields.consumerId,revision:fields.revision}:{}),name:fields.consumerName,scope:fields.consumerScope,metric:fields.consumerMetric,op:fields.consumerOp,value:fields.consumerValue===''?null:Number(fields.consumerValue),health:fields.consumerHealth==='true',alert:fields.consumerAlert==='true',enabled:fields.consumerEnabled==='true'});
+      await send('/api/buoy/adoption/consumers',{...(fields.consumerId?{id:fields.consumerId,revision:fields.revision}:{}),name:fields.consumerName,scope:fields.consumerScope,...(fields.consumerScope==='segment'?{segmentId:fields.consumerSegment}:{}),metric:fields.consumerMetric,op:fields.consumerOp,value:fields.consumerValue===''?null:Number(fields.consumerValue),health:fields.consumerHealth==='true',alert:fields.consumerAlert==='true',enabled:fields.consumerEnabled==='true'});
     }
     else if(action==='adoption-seats')await send('/api/buoy/adoption/seats',{accountId:fields.accountId,seats:fields.seats===''?null:Number(fields.seats),...(fields.seats!==''?{reference:fields.reference,observedAt:fields.observedAt,staleDays:Number(fields.staleDays)}:{})},'PUT');
     else throw new ApiError('This adoption action is not available.');

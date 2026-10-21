@@ -44,25 +44,29 @@ export async function consumerState(db:D1Database,actor:Actor){
  const result=await db.batch([authority(db,actor),db.prepare(IMAGE),stmt(db,'DELETE FROM buoy_assertions')])
  const row=result[1].results[0] as {snapshot:string}
  const image=JSON.parse(row.snapshot) as ConsumerImage
- return {on:image.adoption.on,rules:image.rules,fields:adoptionRuleFields(image.adoption),evaluations:[...measuredConsumers(image)].map(([accountId,measures])=>({accountId,measures}))}
+ return {on:image.adoption.on,rules:image.rules,fields:adoptionRuleFields(image.adoption),segments:image.adoption.subjects.filter(subject=>subject.scope==='segment').map(({id,name,accountIds})=>({id,name,accountIds:JSON.parse(accountIds) as string[]})),evaluations:[...measuredConsumers(image)].map(([accountId,measures])=>({accountId,measures}))}
 }
 export async function saveConsumer(db:D1Database,actor:Actor,input:Record<string,unknown>):Promise<ConsumerRule>{
  requirePerson(actor)
- insist(Object.keys(input).every(key=>['id','revision','name','scope','metric','op','value','health','alert','enabled'].includes(key)),'Unsupported adoption consumer property.')
+ insist(Object.keys(input).every(key=>['id','revision','name','scope','segmentId','metric','op','value','health','alert','enabled'].includes(key)),'Unsupported adoption consumer property.')
  const snapshot=await consumerImage(db),prior=input.id===undefined?undefined:snapshot.value.rules.find(rule=>rule.id===input.id)
  if(input.id!==undefined){
   text(input.id,'Consumer ID',200);insist(prior,'Adoption consumer not found.',404)
   insist(input.revision===prior.revision,'Adoption consumer changed. Refresh before saving.',409)
  }else insist(input.revision===undefined,'New adoption consumers do not have a revision.')
  const name=text(input.name,'Consumer name',100),metric=text(input.metric,'Adoption metric',250)
- insist(input.scope==='account'||input.scope==='user'||input.scope==='contact','Choose account, user or contact scope.')
+ insist(input.scope==='account'||input.scope==='user'||input.scope==='contact'||input.scope==='segment','Choose account, user, contact or segment scope.')
  insist(Object.hasOwn(adoptionRuleFields(snapshot.value.adoption),metric),'Choose an available numeric adoption report metric.')
  insist(CONSUMER_OPERATORS.includes(input.op as ConsumerRule['op']),'Choose a supported threshold operator.')
  insist(input.op==='is-missing'?input.value===null:typeof input.value==='number'&&Number.isFinite(input.value),'Threshold must be a finite number, or null for is-missing.')
  for(const key of ['health','alert','enabled'])insist(typeof input[key]==='boolean',`${key} must be a boolean.`)
  insist(input.health||input.alert,'Choose health, alert or both effects.')
+ if(input.scope==='segment'){
+  insist(typeof input.segmentId==='string'&&snapshot.value.adoption.subjects.some(subject=>subject.scope==='segment'&&subject.id===input.segmentId),'Choose an existing segment for the aggregate.')
+  insist(input.health===false,'Segment aggregate health is not available yet. Choose an alert without a health effect.')
+ }else insist(input.segmentId===undefined,'Segment selection applies only to a segment aggregate.')
  insist(prior||snapshot.value.rules.length<32,'At most 32 adoption consumers are supported.')
- const rule:ConsumerRule={id:prior?.id??id(),name,scope:input.scope,metric,op:input.op as ConsumerRule['op'],value:input.value as number|null,health:input.health as boolean,alert:input.alert as boolean,enabled:input.enabled as boolean,revision:id()},at=now()
+ const rule:ConsumerRule={id:prior?.id??id(),name,scope:input.scope,...(input.scope==='segment'?{segmentId:input.segmentId as string}:{}),metric,op:input.op as ConsumerRule['op'],value:input.value as number|null,health:input.health as boolean,alert:input.alert as boolean,enabled:input.enabled as boolean,revision:id()},at=now()
  await db.batch([authority(db,actor,true),guard(db,`(${CONSUMER_SNAPSHOT})=?`,JSON.stringify(snapshot.value.rules)),
   guard(db,"(SELECT json_group_array(json_object('kind',kind,'key',key)) FROM (SELECT kind,key FROM buoy_adoption_definitions ORDER BY kind,key))=?",JSON.stringify(snapshot.value.adoption.definitions)),
   prior?stmt(db,'UPDATE buoy_adoption_consumers SET document=?,revision=?,updated_at=? WHERE id=? AND revision=?',JSON.stringify(rule),rule.revision,at,rule.id,prior.revision)
