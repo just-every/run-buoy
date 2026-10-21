@@ -94,6 +94,13 @@ Except for the Stripe test-mode customer-ID inventory below, Buoy makes no outbo
 - **Receives:** the sender receives received, accepted, duplicate and stored counts or an error; a storage receipt does not claim provider identity or delivery. Browser clients send only to the buyer's authenticated product relay; its server holds the intake secret.
 - **Terms:** [Twilio Segment terms](https://segment.com/legal/terms/) and [Twilio data protection addendum](https://www.twilio.com/en-us/legal/data-protection-addendum). Source and relay copies remain external holders.
 
+### In-app relay
+
+- **When:** you deploy the INAPP-001 snippet and relay on your own product. The browser sends same-origin JSON POST actions to your product server; that server authenticates the real product session and current account membership and uses a separate server-only in-app credential to request Buoy delivery or submit receipts. The browser holds no Buoy credential. Targeting requires the exact administrator-reviewed source/user/group mapping to an existing customer person and current account membership/segment; unknown or conflicting identities receive no targeted content.
+- **Sends:** your product relay sends validated user/group identity claims to Buoy, replacing browser-supplied identities. Receipt requests also carry campaign ID, delivery ID when mapped, exact message ID and view, completion or dismissal kind. Buoy stores receipt observations with source provenance and instants in your Worker/D1, attributes only through the reviewed mapping and advances the mapped account revision. Buoy makes no outbound call to the relay or a new third-party provider.
+- **Receives:** the relay receives eligible announcement, banner, checklist or walkthrough content (plain-text title, body and steps), campaign and delivery IDs, and returns that content to the product browser. Receipt submissions receive stored/accepted/duplicate counts or an error. A reservation is not a view, and a stored receipt is not proof of hosted delivery, provider verification or verified attention.
+- **Terms:** this is your buyer-operated server, not a third-party provider with separate provider terms. Your own hosting and product/source agreements apply, including the [Cloudflare terms](https://www.cloudflare.com/terms/) and [Cloudflare customer DPA](https://www.cloudflare.com/cloudflare-customer-dpa/) for the Buoy deployment. You operate, authenticate and secure the relay and browser deployment, keep the credential server-side, and manage copies retained by your product, relay or source as external holders; erasure in Buoy does not delete those copies. This guide records data flows and responsibilities, not legal acceptance or certification.
+
 ## Stripe test-mode inventory
 
 ### Stripe
