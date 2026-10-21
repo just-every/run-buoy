@@ -60,7 +60,11 @@ export async function approve(db: D1Database, actor: Actor, proposalId: string) 
  if (proposal.kind === 'playbook') statements.push(
   ...(payload.ownerId ? [guard(db, "EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')", payload.ownerId)] : []),
   stmt(db, 'INSERT INTO buoy_tasks(id,account_id,proposal_id,title,due_date,owner_id,priority,type,renewal_id) VALUES(?,?,?,?,?,COALESCE(?,(SELECT owner_id FROM buoy_account_owners WHERE account_id=?),?),?,?,?)', id(), current.id, proposalId, payload.title, payload.dueDate, payload.ownerId ?? null, current.id, actor.id, payload.priority ?? 'medium', payload.type ?? 'risk',payload.renewalId??null))
- else statements.push(stmt(db, 'INSERT INTO buoy_decisions(id,account_id,proposal_id,outcome,reason,evidence,renewal_date,recorded_by,recorded_at) VALUES(?,?,?,?,?,?,?,?,?)', id(), current.id, proposalId, payload.outcome, payload.reason, payload.evidence, current.renewalDate, actorLabel, at))
+ else {
+  const decisionId=id(),variant=['renewed-with-expansion','renewed-with-contraction'].includes(payload.outcome)
+  statements.push(stmt(db, 'INSERT INTO buoy_decisions(id,account_id,proposal_id,outcome,reason,evidence,renewal_date,recorded_by,recorded_at) VALUES(?,?,?,?,?,?,?,?,?)', decisionId, current.id, proposalId, variant?'renewed':payload.outcome, payload.reason, payload.evidence, current.renewalDate, actorLabel, at))
+  if(variant)statements.push(stmt(db,'INSERT INTO buoy_decision_outcomes(decision_id,outcome) VALUES(?,?)',decisionId,payload.outcome))
+ }
  statements.push(stmt(db, 'UPDATE buoy_accounts SET revision=? WHERE id=?', id(), current.id))
  await commit(db, actor, current.id, `${proposal.kind}.approved`, statements, true)
  return {id: proposalId, status: 'approved'}
