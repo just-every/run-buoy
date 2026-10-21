@@ -1,3 +1,4 @@
+import {eraseJourney} from './erase-journey.mjs'
 import {searchHttpJourney} from './search-journey.mjs'
 import {inappJourney} from './inapp-journey.mjs'
 import {customerPeopleJourney} from './customer-people-journey.mjs'
@@ -447,6 +448,9 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok(!(await read()).items.some(i=>i.accountId===a.id),'account erasure clears inbox content')
    assert.doesNotMatch(worker.mails.findLast(m=>m.subject==='Buoy weekly digest').text,/NOTIFY-001 inbox only/)
   })
+  // Privacy doors share the same outbound/authority boundary inventory. The full
+  // journey below uses its own installation to isolate its published scorecard.
+  for(const [tail,method,body] of [['holders','PUT',{revision:'stale',holders:[]}],['export','POST',{}],['erase','POST',{}]])assert.equal((await call('/customer-people/synthetic-buoy-260/privacy/'+tail,method,body)).status,404)
   await t.test('USAGE-001 ACCOUNT-004 SEGMENT-001 complete contact and user carrier',async()=>customerPeopleJourney({call,json,request,cookie,member,account}))
   await t.test('USAGE-001 receiver credentials, relay-only intake and reviewed user/account attribution',async()=>usageJourney({call,json,request,cookie,member,signIn,dispatch:worker.dispatch,origin:worker.origin}))
   await t.test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>teamJourney({call,json,request,cookie,member,signIn,account}))
@@ -529,3 +533,15 @@ test('HTTP-001 IMPORT-001 operator and Business door authority, provisioning, re
 // Search owns a fresh public Worker so unrelated field/usage fixtures do not
 // multiply every lookup's reconciliation cost in Verify's 15-minute budget.
 test('ACCOUNT-005 native search, live custody and ordinary staff authority',async()=>searchHttpJourney())
+
+// Privacy fixtures publish a scorecard, so use an independent real installation.
+test('ERASE-002 owner customer export and erasure, source replay, aggregates and opaque audit',async()=>{
+ const app=await startWorker(),cookie=app.cookie;
+ const call=(path,method='GET',body,options={})=>app.request('/api/buoy'+path,{cookie,method,body,...options});
+ const json=async(response,status=200)=>{assert.equal(response.status,status,await response.clone().text());return response.json()};
+ try{
+  await json(await app.request('/auth/invite',{method:'POST',cookie,body:{email:'member@example.test',displayName:'CS colleague',role:'member'}}),202);
+  const member=await app.signIn('member@example.test');
+  await eraseJourney({call,json,request:app.request,cookie,member,signIn:app.signIn,account,dispatch:app.dispatch,origin:app.origin});
+ }finally{await app.close()}
+})

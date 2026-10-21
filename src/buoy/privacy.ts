@@ -22,7 +22,7 @@ const stores=[
 ] as const
 async function image(db:D1Database,personId:string){
  const columns=await db.batch(stores.map(([,table])=>db.prepare(`PRAGMA table_info(${table})`)))
- const parts=stores.map(([key,table,filter],i)=>{const names=columns[i].results.map(c=>String(c.name));return `'${key}',json((SELECT json_group_array(json(row)) FROM(SELECT json_object(${names.map(n=>`'${n}',t."${n}"`).join(',')}) AS row FROM ${table} t WHERE ${filter} ORDER BY ${names.map(n=>`t."${n}"`).join(',')})))`})
+ const parts=stores.map(([key,table,filter],i)=>{const names=columns[i].results.map(c=>String((c as {name:string}).name));return `'${key}',json((SELECT json_group_array(json(row)) FROM(SELECT json_object(${names.map(n=>`'${n}',t."${n}"`).join(',')}) AS row FROM ${table} t WHERE ${filter} ORDER BY ${names.map(n=>`t."${n}"`).join(',')})))`})
  const sql=`SELECT json_object(${parts.join(',')})`,params=stores.map(()=>personId)
  const row=await stmt(db,sql+' AS snapshot',...params).first<{snapshot:string}>()
  insist(row,'Customer privacy data unavailable.',503)
@@ -70,7 +70,7 @@ export async function privacyRequest(db:D1Database,actor:Actor,personId:string,i
  return action==='exported'?{receipt,format:'buoy-customer-export/v1',records:current.data}: {receipt}
 }
 export const privacyApi=new Hono<{Bindings:Bindings;Variables:{actor:Actor}}>()
-privacyApi.get('/api/buoy/privacy/receipts',async c=>{const actor=c.get('actor');requirePerson(actor,true);const result=await c.env.DB.batch([owner(c.env.DB,actor),stmt(c.env.DB,'SELECT document FROM buoy_privacy_receipts ORDER BY recorded_at DESC,id'),stmt(c.env.DB,'DELETE FROM buoy_assertions')]);return c.json({receipts:result[1].results.map(r=>JSON.parse(String(r.document)))})})
+privacyApi.get('/api/buoy/privacy/receipts',async c=>{const actor=c.get('actor');requirePerson(actor,true);const result=await c.env.DB.batch([owner(c.env.DB,actor),stmt(c.env.DB,'SELECT document FROM buoy_privacy_receipts ORDER BY recorded_at DESC,id'),stmt(c.env.DB,'DELETE FROM buoy_assertions')]);return c.json({receipts:result[1].results.map(r=>JSON.parse(String((r as {document:string}).document)))})})
 privacyApi.get('/api/buoy/customer-people/:id/privacy',async c=>c.json(await privacyState(c.env.DB,c.get('actor'),c.req.param('id'))))
 privacyApi.put('/api/buoy/customer-people/:id/privacy/holders',async c=>c.json(await saveHolders(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
-for(const [verb,action] of [['export','exported'],['erase','erased']] as const)privacyApi.post('/api/buoy/customer-people/:id/privacy/'+verb,async c=>c.json(await privacyRequest(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw),action)))
+for(const [verb,action] of [['export','exported'],['erase','erased']] as const)privacyApi.post('/api/buoy/customer-people/:id/privacy/'+verb,async c=>c.json(await privacyRequest(c.env.DB,c.get('actor'),c.req.param('id')!,await jsonBody(c.req.raw),action)))
