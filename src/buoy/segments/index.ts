@@ -14,7 +14,7 @@ import {validateHealthInputs} from './dependencies'
 import {aggregateProof} from '../adoption/proof'
 
 
-function fields(image:Image){
+export function segmentFields(image:Image){
  const adoption=adoptionRuleFields(image.adoption)
  return {...FIELDS,...renewalRuleFields(image.renewals),...ruleFields(image.custom.definitions),...relatedPersonFields(image.people.definitions),...adoption,
   ...Object.fromEntries((['contact','user'] as const).flatMap(kind=>Object.entries(adoption).map(([field,type])=>[`people.${kind}.${field}`,type])))}
@@ -49,7 +49,7 @@ export async function reconcile(db:D1Database,actor:Actor,at=new Date()) {
 }
 export async function segmentState(db:D1Database) {
  const image=(await snapshot(db)).value,accounts=evaluated(image,new Date().toISOString().slice(0,10))
- return {fields:fields(image),tiers:tierNames(image),segments:definitions(image).map(s=>({...s,
+ return {fields:segmentFields(image),tiers:tierNames(image),segments:definitions(image).map(s=>({...s,
   members:image.entries.filter(e=>e.segmentId===s.id&&!e.exitedAt).map(e=>{const a=accounts.find(a=>a.account.id===e.accountId)!;return {accountId:e.accountId,name:a.account.name,health:a.values['health.status'] as string,assessment:a.assessment,tier:a.tier,stage:a.stage,enteredAt:e.enteredAt}}),
   history:image.entries.filter(e=>e.segmentId===s.id).map(e=>({accountId:e.accountId,enteredAt:e.enteredAt,exitedAt:e.exitedAt,proposalId:e.proposalId}))})),
   classifications:accounts.map(a=>({accountId:a.account.id,tier:a.tier,stage:a.stage,tierManual:!!a.classification?.tierManual,stageManual:!!a.classification?.stageManual}))}
@@ -59,7 +59,7 @@ export async function saveSegment(db:D1Database,actor:Actor,input:Record<string,
  const image=await snapshot(db),existing=input.id?image.value.segments.find(s=>s.id===input.id):undefined
  if(input.id)insist(existing&&input.revision===existing.revision,'Segment changed. Reload before saving.',409)
  else insist(image.value.segments.length<50,'At most 50 segments are supported.')
- const value=segmentInput(input,new Set(image.value.accounts.map(a=>a.id)),tierNames(image.value),fields(image.value)),segmentId=existing?.id??id()
+ const value=segmentInput(input,new Set(image.value.accounts.map(a=>a.id)),tierNames(image.value),segmentFields(image.value)),segmentId=existing?.id??id()
  const candidates=[...definitions(image.value).filter(s=>s.id!==segmentId),{...value,id:segmentId,revision:existing?.revision??'',createdAt:existing?.createdAt??now()}]
  validateHealthInputs(candidates,image.value.consumers)
  const card=await db.prepare('SELECT c.revision,v.document FROM buoy_scorecard_current c JOIN buoy_scorecard_versions v ON v.id=c.version_id WHERE c.singleton=1').first<{revision:string;document:string}>()

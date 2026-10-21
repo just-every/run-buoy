@@ -1,3 +1,4 @@
+import {workspaceApi} from './workspace'
 import {renewalsApi,generateRenewals} from './renewals'
 import {refreshRenewalFields} from './renewals/fields'
 import {privacyApi} from './privacy'
@@ -84,6 +85,7 @@ buoyApi.onError((error, c) => {
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',privacyApi)
 buoyApi.route('/',renewalsApi)
+buoyApi.route('/',workspaceApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
