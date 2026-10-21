@@ -55,7 +55,8 @@ export function noticeDate(account: Account) {
 }
 // The runway's health along a lane: today's band, then each day before renewal on
 // which today's evidence turns stale or a judgment expires. It projects forward
-// exactly as healthOn does and never looks back or invents history.
+// for billing/support and sentiment. Adoption measures retain today’s observed
+// values here; no future activity is forecast or historical state invented.
 const DAY = 86400000
 const shift = (value: string, days: number) => new Date(Date.parse(value.slice(0, 10)) + days * DAY).toISOString().slice(0, 10)
 export function outlook(account: Account, today: string, sentiment: Sentiment | null = null, limits: Staleness = DEFAULT_STALENESS, adoption: ConsumerEvaluation[] = []) {
