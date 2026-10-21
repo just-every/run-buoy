@@ -70,3 +70,40 @@ A refresh changes the account revision. Pending proposals prepared against an ea
 The owner can use **Delete account** at the bottom of its page and type the account name to confirm. Export a [backup](/docs/backups) first if the records need to be retained.
 
 Deletion removes the account’s work, decisions and retained normalized import evidence together. Nonpersonal erasure receipts and replay tombstones remain so erased records cannot simply be imported again. Deletion does not remove previously exported backups or evidence in other systems.
+
+## Organizations and product relationships
+
+Create each organization, child account and product relationship through the same
+**Create account** door. Each is a full native record and counts against the
+installation’s 500-record limit. On a child, open **Edit organization, staff owners
+and stakeholders**, select its parent and record kind, and name the source. A
+relationship represents a product line, subscription or business unit. Cycles are
+refused without changing the hierarchy.
+
+Assign the CSM through **Account owner**. The organization form separately records
+the account executive, executive sponsor and support owner. Create customer
+contacts/users and their explicit account memberships before choosing stakeholder
+roles. One contact can be a champion on one account and an executive sponsor on
+another. Tier and lifecycle stage remain editable through **Segments**.
+
+Each product relationship has its own sources, recurring contract, renewal,
+activity, custom fields and CSM. **Choose this record’s scorecard** pins an immutable
+published version, or inherits the installation default. Publishing a new default
+does not replace a pinned version. New sources still recalculate the pinned card.
+
+The hierarchy ARR rollup includes each terminal descendant once, separating native
+currencies and leaving a total unknown when a source is missing. Intermediate
+organization contracts remain visible on their own record and are not added again.
+Product users count once across all memberships in the subtree. Health lists the
+terminal records, uses the worst band (at risk, unknown, watch, healthy), and shows
+a mean only when every terminal record has a numeric score. A parent’s score is
+therefore weighted by its number of terminal sources when combining child means.
+
+Erasing a parent removes that requested native record. Its other native child
+accounts remain detached with their IDs and record kinds preserved; reattach them
+explicitly. A product relationship is never silently converted or erased with its
+parent. Erased-parent source history is withdrawn.
+
+**Current record activity** links native sources in observation/action order,
+newest first, with stable pages. Connected mailbox, meeting, CRM and support
+history remains unfinished; the current feed does not claim a connected timeline.

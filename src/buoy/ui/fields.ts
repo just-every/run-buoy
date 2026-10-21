@@ -95,7 +95,7 @@ function history(data: FieldsPage): string {
       + `<dl><dt>Field key</dt><dd><code>${escape(entry.key)}</code></dd><dt>Previous value</dt><dd>${rawValue(entry.oldValue)}</dd><dt>New value</dt><dd>${rawValue(entry.newValue)}</dd>`
       + `<dt>Actor</dt><dd>${escape(entry.actor)}</dd><dt>Recorded (UTC)</dt><dd>${timestamp(entry.recordedAt)}</dd><dt>Source reference</dt><dd>${escape(entry.source)}</dd></dl></li>`;
   }).join('');
-  return section('Field value history', entries ? `<ol class="journal">${entries}</ol>` : '<p>No field value changes recorded.</p>');
+  return section('Field value history', entries ? `<ol class="journal">${entries}</ol>` : '<p>No field value changes recorded.</p>', 'field-history');
 }
 
 export function fieldsPage(data: FieldsPage, state: State, fields?: Fields, preview?: unknown, selectedAccountId?:string): string {

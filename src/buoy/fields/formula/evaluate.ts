@@ -58,8 +58,8 @@ function describe(value: unknown): string {
   return '[non-scalar value]'
 }
 
-/** Aggregates roll up the supplied portfolio, never an inferred account hierarchy.
- * Hierarchical rollup obligations belong to future ACCOUNT-001 work.
+/** Plain aggregates use the supplied portfolio; children/descendants functions
+ * use its explicit native parent links.
  * Currency amounts remain their explicit numeric units; no exchange conversion occurs.
  */
 export function evaluateExpression(expression: Expression, values: Record<string, unknown>, portfolio: Record<string, unknown>[]): FormulaResult {

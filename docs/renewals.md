@@ -27,3 +27,35 @@ A decision stays attached to the renewal date and source snapshot it approved. R
 Pending proposals are bound to the account revision. A source refresh, another approval or task completion changes it. If Buoy marks a proposal stale, review the current account and prepare a new proposal before approval.
 
 For follow-up actions before a decision is ready, use a [playbook](/docs/playbooks).
+
+## Confirmed-term renewal pipeline
+
+Open **Renewal pipeline** from Accounts. An owner/admin first records a confirmed
+recurring contract on the account. **Configure renewal generation** sets 0–730
+whole UTC lead days and the stage names. The hourly job and successful native
+source writes use the same once-per-contract-period generation rule. Changing a
+source within a period refreshes that opportunity; changing the period creates
+another and keeps the earlier history.
+
+The board and list show quarter, stage, owner, forecast, risk reasons, expected ARR
+in the contract’s native minor units and the notice deadline from matching
+confirmed account terms. Missing notice terms remain unknown. Stages in use cannot
+be removed until their opportunities are moved.
+
+**Define or preview a renewal field** accepts the same typed definition JSON as
+account fields. **Edit renewal custom fields** records values and a source. Formula
+previews evaluate all current opportunities and display ten real renewals and ten
+associated accounts without saving. Formula explanations and actor/time/source
+old–new history stay beside the selected opportunity. Typed segment paths begin
+`records.renewal.`; all conditions for that related kind bind to one opportunity.
+
+From a selected opportunity prepare renewed, renewed-with-expansion,
+renewed-with-contraction, churned or deferred. Supply expected outcome ARR in native
+minor units, a reason code and evidence. A separate owner/admin approval checks
+the current account and opportunity revisions. Churn requires zero ARR; expansion
+must exceed the prior expected ARR and contraction must be lower. Replays do not
+create another outcome. Approved outcomes retain their source snapshot.
+
+These are person-confirmed contracts and human decisions. They do not update
+billing. Provider subscription intake and matching ARR to the next provider sync
+remain unfinished and are labelled as pending reconciliation.

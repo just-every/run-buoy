@@ -75,3 +75,25 @@ Customer records and account memberships provide the carrier for USAGE-001 mappi
 `tests/customer-people-browser.mjs` drives native forms against the real public Worker at 1440 and 390 pixels. It creates a contact and a user with explicit memberships, saves every manual field type, previews the utilization formula over ten real accounts, saves it, verifies missing/zero explanations, changes an input and reads actor/time/source old–new history. It also edits memberships and proves an unsafe formula is refused while preserving the entered definition.
 
 The journey reuses the inherited axe, keyboard, reflow and painted-background contrast checks. Named ACCOUNT-004 / USAGE-001 screenshots are written beneath `EVIDENCE_DIR` (default `../evidence/customer-people`, outside the repository). After building the Worker, run `pnpm run test:customer-people-browser`. The journey establishes native behavior, not provider delivery or certification.
+
+## Customer privacy requests
+
+The installation owner can open a customer’s privacy controls, record an external
+holder inventory, and export or erase the current customer record by entering its
+exact name. A changed revision requires reloading and reviewing again. Admins,
+members and agent credentials cannot perform these requests.
+
+The JSON export includes current memberships, typed values/history, received
+surveys, reviewed source-user usage across groups, in-app/license custody and
+linked stakeholder/view history. Buoy records an opaque export receipt without
+retaining the downloaded contents. Erasure removes this current custody and
+recalculates surviving aggregates, preserving unrelated records. Source-scoped
+user digests refuse erased usage replay; no raw identity is kept in that fence.
+
+Receipts list explicitly recorded external system names, including reviewed usage
+sources. The manual holder inventory is unverified: Buoy does not claim to discover
+Salesforce/Zendesk records or delete anything there. Previously downloaded exports
+and installation archives must be handled separately. Connected email/timeline
+custody and the full connected-holder privacy acceptance remain unfinished. The
+current owner-only confirmation, digest and receipt/holder retention defaults
+remain subject to contract-policy review.

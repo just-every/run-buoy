@@ -27,7 +27,7 @@ parentheses. Comparisons use `==`, `!=`, `<`, `<=`, `>` and `>=`, with matching
 value types. `if` evaluates only the selected branch. `days(a,b)` subtracts UTC
 calendar days, including timezone offsets for timestamp literals. A missing input,
 invalid calculation or zero denominator yields no value and an explanation.
-Rollups use all current accounts, not an inferred hierarchy: sum and average
+Plain `sum`, `avg` and `count` use all current accounts: sum and average
 require numeric values on every account; count counts present values, including
 zero and false. Empty sum/average is missing and empty count is zero. Explanations
 list inputs and portfolio account IDs. Custom currency paths expose `.amountMinor`
@@ -46,12 +46,24 @@ comparisons. Booleans use 1/0; multi-selects compare their JSON array text. A
 currency field exposes separate currency and minor-unit paths, so a monetary
 rule must name its currency as well as the amount. No custom field grants access.
 
-Current account fields are complete. ACCOUNT-001 adds users and contacts plus
-hierarchy/relationship rollups; RENEW-001/RENEW-002 add opportunities; ACCOUNT-006
-adds custom objects. Each must carry these types, formulas, preview, explanation,
-history and segment-input obligations through its new record kinds before shipping.
+Full native relationship records now use these same account fields. Renewal
+opportunities and customer people have their own definitions and history with
+the same safe language. RENEW-002 and ACCOUNT-006 retain the same obligations
+before their expansion opportunities and custom objects ship.
 
 Customer contacts and product users use the same field types, formula semantics,
 explanations and change history through [Customer people](https://github.com/just-every/run-buoy/blob/main/docs/people.md). Their typed
 segment paths are `people.contact.*` and `people.user.*`; conjunctions for one kind
 must be satisfied by the same related record, including currency and amount.
+
+## Explicit hierarchy formulas
+
+`childrenSum(path)`, `childrenAvg(path)` and `childrenCount(path)` select direct
+children. `descendantsSum(path)`, `descendantsAvg(path)` and
+`descendantsCount(path)` select every descendant native account/relationship
+once. They require the explicit hierarchy, refuse circular field dependencies,
+and explain their selected records. Empty hierarchy sums/counts are zero; an
+empty average is missing. Missing numeric inputs leave sums/averages unavailable.
+Hierarchical monetary rollups refuse missing or mixed currency context. They do
+not convert currencies. These explicit field formulas are separate from the
+terminal-source ARR/health totals shown on an organization page.
