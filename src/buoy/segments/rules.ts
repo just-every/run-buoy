@@ -5,7 +5,7 @@ export const FIELDS: Record<string, 'text' | 'number'> = {
  id:'text',name:'text',renewalDate:'text',noticeDays:'number',renewalEvidence:'text',revision:'text',createdAt:'text',ownerId:'text',territory:'text',tier:'text',stage:'text',
  'billing.observedAt':'text','billing.reference':'text','billing.currency':'text','billing.totalMinor':'number','billing.creditsMinor':'number','billing.allocatedMinor':'number','billing.dueDate':'text','billing.balanceMinor':'number',
  'support.observedAt':'text','support.reference':'text','support.openTickets':'number','support.urgentTickets':'number',
- 'health.status':'text','health.reasons':'text','health.billingMissing':'number','health.billingStale':'number','health.supportMissing':'number','health.supportStale':'number',
+ 'health.nativeStatus':'text','health.nativeReasons':'text','health.status':'text','health.reasons':'text','health.billingMissing':'number','health.billingStale':'number','health.supportMissing':'number','health.supportStale':'number',
  'sentiment.rating':'text','sentiment.reason':'text','sentiment.recordedBy':'text','sentiment.recordedAt':'text','sentiment.expiresOn':'text',
  openTasks:'number',completedTasks:'number',daysToRenewal:'number',noticeDate:'text'
 }

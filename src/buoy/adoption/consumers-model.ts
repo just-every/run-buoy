@@ -42,10 +42,12 @@ export function evaluateConsumers(rules:ConsumerRule[],accountId:string,image:Co
   // value satisfies an is-missing predicate. Related-person matching is ANY.
   const matched=subjects.some(subject=>subject.matched),missing=subjects.length===0||(!matched&&rule.op!=='is-missing'&&subjects.some(subject=>subject.missing))
   const details=subjects.map(subject=>`${subject.name} (${subject.id}): ${subject.value===null?'missing':subject.value}${subject.matched?' (matches)':''}`).join('; ')
+  const input=image.healthInputs?.find(s=>s.id===rule.segmentId)
+  const layer=input?` Selected segment ${input.name} (${input.id}), revision ${input.revision}; membership evaluated before aggregate health.`:''
   const predicate=rule.op==='is-missing'?'is missing':`${rule.op} ${rule.value}`
   const evidenceAccounts=rule.scope==='segment'?image.subjects.find(subject=>subject.scope==='segment'&&subject.id===rule.segmentId)!.accountIds:null
   return {...rule,ruleId:rule.id,accountId,on:image.on,matched,missing,subjects,
-   reason:`${rule.name}: ${rule.metric} ${predicate}; ${details||`no current related ${rule.scope} subject`}. ${matched?'Threshold matched.':missing?'Required adoption measure is unknown.':'Threshold did not match.'}`,
+   reason:`${layer}${rule.name}: ${rule.metric} ${predicate}; ${details||`no current related ${rule.scope} subject`}. ${matched?'Threshold matched.':missing?'Required adoption measure is unknown.':'Threshold did not match.'}`,
    sources:image.sources??[],seatEvidence:(image.seatEvidence??[]).filter(e=>evidenceAccounts?membership(evidenceAccounts).includes(e.accountId):e.accountId===accountId),
    personLicenses:(image.personLicenses??[]).filter(e=>subjects.some(subject=>subject.id===e.personId))}
  })

@@ -30,7 +30,7 @@ export async function startOutcome(db:D1Database,actor:Actor,input:Record<string
  const enrolled=new Map(selected.map(t=>[t.account_id,t.id]))
  // Freeze both source revisions and the cohort membership in the same fenced batch.
  const subjects=accounts.filter(a=>members.has(a.account.id)&&(enrolled.has(a.account.id)||!satisfied(a.account.id)))
- await db.batch([authority(db,actor,true),fence(db,image.raw),
+ await db.batch([authority(db,actor,true),fence(db,image),
   stmt(db,'INSERT INTO buoy_outcomes(id,document,started_at,deadline,created_by,operation_key) VALUES(?,?,?,?,?,?)',reportId,JSON.stringify(definition),startedAt,deadline,actor.id,operationKey),
   ...subjects.map(a=>stmt(db,'INSERT INTO buoy_outcome_accounts(report_id,account_id,task_id,cohort,baseline_revision) VALUES(?,?,?,?,?)',reportId,a.account.id,enrolled.get(a.account.id)??null,enrolled.has(a.account.id)?'enrolled':'comparison',a.account.revision)),
   auditRecord(db,actor,'playbook.outcome-started',`outcome:${reportId}`),stmt(db,'DELETE FROM buoy_assertions')])

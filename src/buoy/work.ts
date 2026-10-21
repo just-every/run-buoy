@@ -1,3 +1,5 @@
+import {snapshot,fence} from './segments/snapshot'
+import {aggregateProof} from './adoption/proof'
 import { account } from './accounts'
 import { accountHealth } from './sentiment'
 import { insist, text, date, object, stmt, guard, commit, id, now, requirePerson, type Actor } from './core'
@@ -23,8 +25,12 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
   insist(['renewed','churned','deferred'].includes(String(payload.outcome)), 'Choose a renewal outcome.')
   normalized = {outcome: String(payload.outcome), reason: text(payload.reason, 'Decision reason'), evidence: text(payload.evidence, 'Decision evidence')}
  }
+ const image=kind==='playbook'?await snapshot(db):undefined
+ const adoptionProof=image?await aggregateProof(image.value,current.id):undefined
+ if(adoptionProof)normalized.adoptionProof=adoptionProof
  const proposalId = id(), at = now()
  await commit(db, actor, accountId, `${kind}.prepared`, [
+  ...(image?[fence(db,image)]:[]),
   guard(db, 'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)', accountId, current.revision),
   stmt(db, "INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,?,?,?,?,'prepared',?,?)", proposalId, accountId, kind, current.revision, JSON.stringify(current), JSON.stringify(normalized), `${actor.kind}:${actor.id}:${actor.displayName}`, at)])
  return {id: proposalId, accountId, kind, payload: normalized, status: 'prepared'}
@@ -39,7 +45,10 @@ export async function approve(db: D1Database, actor: Actor, proposalId: string) 
  insist(current.revision === proposal.account_revision, 'Evidence changed since preparation. Prepare a new proposal.', 409)
  if (proposal.kind === 'playbook' && !payload.segmentEntry) insist((await accountHealth(db, current)).status === 'at-risk', 'This account no longer has an at-risk signal. Prepare from current evidence.', 409)
  if(payload.segmentEntry)insist(await stmt(db,'SELECT 1 FROM buoy_segment_entries e JOIN buoy_segments s ON s.id=e.segment_id WHERE e.id=? AND e.proposal_id=? AND e.exited_at IS NULL AND s.revision=?',payload.segmentEntry,proposalId,payload.segmentRevision).first(),'Segment entry or configuration changed. Review a new entry.',409)
+ const image=payload.adoptionProof?await snapshot(db):undefined
+ if(image)insist(payload.adoptionProof===await aggregateProof(image.value,current.id),'Aggregate adoption evidence changed since preparation. Prepare a new proposal.',409)
  const at = now(), actorLabel = `person:${actor.id}:${actor.displayName}`, statements = [
+  ...(image?[fence(db,image)]:[]),
   guard(db, "EXISTS(SELECT 1 FROM buoy_proposals p JOIN buoy_accounts a ON a.id=p.account_id WHERE p.id=? AND p.status='prepared' AND a.revision=p.account_revision)", proposalId),
   stmt(db, "UPDATE buoy_proposals SET status='approved',approved_by=?,approved_at=? WHERE id=?", actorLabel, at, proposalId)]
  if (payload.segmentEntry) statements.push(guard(db,'EXISTS(SELECT 1 FROM buoy_segment_entries e JOIN buoy_segments s ON s.id=e.segment_id WHERE e.id=? AND e.proposal_id=? AND e.exited_at IS NULL AND s.revision=?)',payload.segmentEntry,proposalId,payload.segmentRevision))

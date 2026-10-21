@@ -1,4 +1,4 @@
-import {CONSUMER_SNAPSHOT,CONSUMER_ADOPTION_SNAPSHOT} from '../adoption/consumers'
+import {CONSUMER_SNAPSHOT,CONSUMER_ADOPTION_SNAPSHOT} from '../adoption/consumers-image'
 import {evaluateConsumers,type ConsumerRule} from '../adoption/consumers-model'
 import {ADOPTION_SNAPSHOT,adoptionRuleValues,type AdoptionImage} from '../adoption/segment-inputs'
 import {FIELD_SNAPSHOT} from '../fields'
@@ -6,10 +6,10 @@ import {evaluate,ruleValues,type Image as FieldImage} from '../fields/model'
 import { PEOPLE_SNAPSHOT } from '../people/snapshot'
 import type { PeopleImage } from '../people/snapshot'
 import { evaluatePeople, personRuleValues } from '../people/model'
-import { guard, insist } from '../core'
+import { guard } from '../core'
 import { health, noticeDate, type Account, type Sentiment } from '../health'
 import { DEFAULT_STALENESS } from '../settings'
-import { TIERS, type Segment, type Values } from './rules'
+import { TIERS, includes, type Segment, type Values } from './rules'
 // One SQL image fences every rule input and the previous membership intervals.
 export const SNAPSHOT = `SELECT json_object(
  'accounts',json((SELECT json_group_array(json_object('id',id,'document',document,'revision',revision,'createdAt',created_at)) FROM (SELECT * FROM buoy_accounts ORDER BY id))),
@@ -30,18 +30,19 @@ export const SNAPSHOT = `SELECT json_object(
 interface Row {id:string;document:string;revision:string;createdAt:string}
 interface Classification {accountId:string;tier:string|null;stage:string|null;tierManual:number;stageManual:number}
 export interface Image {consumers:ConsumerRule[];adoption:AdoptionImage;accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage;people:PeopleImage}
-export async function snapshot(db:D1Database){const row=await db.prepare(SNAPSHOT).first<{snapshot:string}>();insist(row,'Segment data unavailable.',503);return {raw:row.snapshot,value:JSON.parse(row.snapshot) as Image}}
-export const fence=(db:D1Database,raw:string)=>guard(db,`(${SNAPSHOT})=?`,raw)
+
+export const fence=(db:D1Database,image:{raw:string;sql:string})=>guard(db,`(${image.sql})=?`,image.raw)
 export const tierNames=(image:Image):string[]=>image.tiers?JSON.parse(image.tiers):TIERS
 export const definitions=(image:Image):Segment[]=>image.segments.map(row=>({...JSON.parse(row.document),id:row.id,revision:row.revision,createdAt:row.createdAt}))
-export function accountValues(image:Image,on:string) {
- const adoption=adoptionRuleValues(image.adoption),healthRules=image.consumers.filter(rule=>rule.health)
+export function accountValues(image:Image,on:string,aggregate=true) {
+ const adoption=adoptionRuleValues(image.adoption),healthRules=image.consumers.filter(rule=>rule.health&&(aggregate||rule.scope!=='segment'))
  const custom=evaluate(image.custom)
  const people=evaluatePeople(image.people)
  const limits=image.staleness?JSON.parse(image.staleness):DEFAULT_STALENESS
  return image.accounts.map(row=>{
   const a=JSON.parse(row.document) as Account,sentiment=image.sentiments.findLast(s=>s.accountId===a.id)??null,h=health(a,on,sentiment,limits,evaluateConsumers(healthRules,a.id,image.adoption,adoption)),classification=image.classifications.find(c=>c.accountId===a.id)
-  const values:Values={...adoption.get(`account:${a.id}`),...ruleValues(image.custom.definitions,custom.find(c=>c.id===a.id)?.values??{}),id:a.id,name:a.name,renewalDate:a.renewalDate,noticeDays:a.noticeDays,renewalEvidence:a.renewalEvidence,revision:row.revision,createdAt:row.createdAt,ownerId:image.owners.find(o=>o.accountId===a.id)?.ownerId??null,territory:image.territories.find(o=>o.accountId===a.id)?.territory??null,tier:classification?.tierManual?classification.tier:null,stage:classification?.stageManual?classification.stage:null,'health.status':h.status,'health.reasons':h.reasons.join('\n'),openTasks:image.tasks.filter(t=>t.accountId===a.id&&!t.completedAt).length,completedTasks:image.tasks.filter(t=>t.accountId===a.id&&t.completedAt).length,daysToRenewal:(Date.parse(a.renewalDate)-Date.parse(on))/86400000,noticeDate:noticeDate(a)}
+  const native=aggregate?health(a,on,sentiment,limits,evaluateConsumers(healthRules.filter(r=>r.scope!=='segment'),a.id,image.adoption,adoption)):h
+  const values:Values={'health.nativeStatus':native.status,'health.nativeReasons':native.reasons.join('\n'),...adoption.get(`account:${a.id}`),...ruleValues(image.custom.definitions,custom.find(c=>c.id===a.id)?.values??{}),id:a.id,name:a.name,renewalDate:a.renewalDate,noticeDays:a.noticeDays,renewalEvidence:a.renewalEvidence,revision:row.revision,createdAt:row.createdAt,ownerId:image.owners.find(o=>o.accountId===a.id)?.ownerId??null,territory:image.territories.find(o=>o.accountId===a.id)?.territory??null,tier:classification?.tierManual?classification.tier:null,stage:classification?.stageManual?classification.stage:null,'health.status':h.status,'health.reasons':h.reasons.join('\n'),openTasks:image.tasks.filter(t=>t.accountId===a.id&&!t.completedAt).length,completedTasks:image.tasks.filter(t=>t.accountId===a.id&&t.completedAt).length,daysToRenewal:(Date.parse(a.renewalDate)-Date.parse(on))/86400000,noticeDate:noticeDate(a)}
   for(const kind of ['billing','support'] as const)if(a[kind])for(const [key,v] of Object.entries(a[kind]!))values[`${kind}.${key}`]=v
   if(a.billing)values['billing.balanceMinor']=a.billing.totalMinor-a.billing.creditsMinor-a.billing.allocatedMinor
   for(const e of h.evidence){values[`health.${e.kind}Missing`]=Number(e.missing);values[`health.${e.kind}Stale`]=Number(e.stale)}
@@ -50,3 +51,13 @@ export function accountValues(image:Image,on:string) {
   return {account:{...a,revision:row.revision},values,people:related,classification,assessment:h}
  })
 }
+
+export function evaluated(image:Image,on:string,aggregate=true) {
+ const segments=definitions(image)
+ return accountValues(image,on,aggregate).map(item=>{
+  const tiers=segments.find(s=>s.tier&&includes(s,item.account.id,item.values,item.people)),stages=segments.find(s=>s.stage&&includes(s,item.account.id,item.values,item.people))
+  const tier=item.classification?.tierManual?item.classification.tier:tiers?.tier??null,stage=item.classification?.stageManual?item.classification.stage:stages?.stage??null
+  return {...item,tier,stage,values:{...item.values,tier,stage} as Values}
+ })
+}
+export {snapshot} from './measurement'

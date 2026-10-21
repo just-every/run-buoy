@@ -1,15 +1,16 @@
-import { insist, now } from '../core'
+import { insist, now,stmt } from '../core'
 import { evaluated } from '../segments'
-import { SNAPSHOT, definitions, type Image } from '../segments/snapshot'
+import { snapshot, fence, definitions } from '../segments/snapshot'
 import type { Definition, ReportRow, Subject } from './types'
 export const OUTCOME_INTERPRETATION = 'This is an observational comparison, never proof of causation. Differences may reflect which accounts received tasks or other account differences.'
 export async function outcomeState(db:D1Database) {
  // One transactional read keeps current input revisions and report subjects consistent.
+ const measured=await snapshot(db)
  const result=await db.batch<Record<string,unknown>>([
-  db.prepare(SNAPSHOT),
+  fence(db,measured),
   db.prepare('SELECT * FROM buoy_outcomes ORDER BY started_at,id'),
-  db.prepare('SELECT o.*,json_extract(a.document,\'$.name\') AS name FROM buoy_outcome_accounts o JOIN buoy_accounts a ON a.id=o.account_id ORDER BY a.id')])
- const image=JSON.parse(String(result[0].results[0].snapshot)) as Image,on=new Date().toISOString().slice(0,10),accounts=evaluated(image,on)
+  db.prepare('SELECT o.*,json_extract(a.document,\'$.name\') AS name FROM buoy_outcome_accounts o JOIN buoy_accounts a ON a.id=o.account_id ORDER BY a.id'),stmt(db,'DELETE FROM buoy_assertions')])
+ const image=measured.value,on=new Date().toISOString().slice(0,10),accounts=evaluated(image,on)
  const inputs=(id:string)=>{const a=accounts.find(a=>a.account.id===id)!;return {asOf:on,revision:a.account.revision,billing:a.account.billing,support:a.account.support,health:a.assessment}}
  const reports=result[1].results as unknown as ReportRow[],subjects=result[2].results as unknown as (Subject&{name:string})[]
  const summarize=(cohort:Subject['cohort'],report:ReportRow)=>subjects.filter(s=>s.report_id===report.id&&s.cohort===cohort).map(s=>({accountId:s.account_id,name:s.name,taskId:s.task_id,currentInputs:inputs(s.account_id),reachedAt:s.reached_at,evidence:s.evidence,elapsedHours:s.reached_at?(Date.parse(s.reached_at)-Date.parse(report.started_at))/3600000:null,status:s.reached_at?'reached':(report.closed_at||now()>report.deadline)?'missed':'observing'}))

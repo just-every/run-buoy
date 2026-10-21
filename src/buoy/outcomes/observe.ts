@@ -20,5 +20,5 @@ export async function observeOutcomes(db:D1Database,actor:Actor,at=new Date()) {
    if(evidence)statements.push(stmt(db,'UPDATE buoy_outcome_accounts SET reached_at=?,evidence=? WHERE report_id=? AND account_id=? AND reached_at IS NULL AND EXISTS(SELECT 1 FROM buoy_outcomes WHERE id=report_id AND closed_at IS NULL)',at.toISOString(),evidence,row.id,a.account.id))
   }
  }
- if(statements.length)await db.batch([authority(db,actor),fence(db,image.raw),...statements,stmt(db,'DELETE FROM buoy_assertions')])
+ if(statements.length)await db.batch([authority(db,actor),fence(db,image),...statements,stmt(db,'DELETE FROM buoy_assertions')])
 }

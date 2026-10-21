@@ -1,33 +1,61 @@
-// ADOPT-001 segment aggregate alerts: real forms and owner inbox at both widths.
+// ADOPT-001 segment aggregate health, entry proposals and owner inbox at both widths.
 import assert from 'node:assert/strict'
 import {join} from 'node:path'
 import {scan,submit,focused} from './a11y-checks.mjs'
 export async function adoptionAggregateBrowser({page,api,accounts,width,evidence,origin}){
  const ids=accounts.slice(0,2).map(a=>a.id),on=new Date().toISOString().slice(0,10)
+ const base=(await api('/state')).accounts.filter(a=>ids.includes(a.id))
+ // The preceding account-consumer journey restores this account's sources.
+ // The peer may retain its own billing/support risk, which must survive here.
+ assert.notEqual(base.find(a=>a.id===ids[0]).health.status,'at-risk')
  const segment=await api('/segments','POST',{name:'Aggregate adoption review '+width,mode:'static',accountIds:ids,rules:{match:'all',conditions:[]},tier:null,stage:null,playbook:null})
  const show=async id=>{const p=page.locator('#'+id);if(!await p.evaluate(e=>e.open))await p.locator('summary').click()}
  const proof=async(label,locator)=>{await scan(page,`ADOPT-001 segment aggregate ${label} ${width}`);if(evidence){await locator.scrollIntoViewIfNeeded();await locator.screenshot({path:join(evidence,`aggregate-${label}-${width}.png`)})}}
  const expected=(await api('/adoption')).segments.find(s=>s.id===segment.id).metrics.current.utilization
  assert.equal(typeof expected,'number')
+ // Aggregate health remains a supported downstream segment/playbook input.
+ // That same segment must be refused when selected as the health input itself.
+ await page.goto(origin+'/app/segments',{waitUntil:'networkidle'});await show('create-segment')
+ let form=page.locator('#segment-create')
+ const downstreamName='Aggregate health follow-up '+width,taskTitle='Review aggregate adoption risk '+width
+ await form.getByLabel('Segment name',{exact:true}).fill(downstreamName)
+ await form.getByLabel('Rule conditions').fill(JSON.stringify([{field:'id',op:'eq',value:ids[0]},{field:'health.status',op:'eq',value:'at-risk'}]))
+ await form.getByLabel('Entry playbook title').fill(taskTitle)
+ await submit(page,form.getByRole('button',{name:'Create segment',exact:true}))
+ assert.equal(await page.locator('[role=alert]').count(),0)
+ let downstream=(await api('/segments')).segments.find(s=>s.name===downstreamName)
+ assert.ok(downstream);assert.equal(downstream.members.length,0);assert.equal(downstream.history.length,0)
  await page.goto(origin+'/app/adoption',{waitUntil:'networkidle'});await show('adoption-consumer-create')
- let form=page.locator('#adoption-consumer-new')
+ form=page.locator('#adoption-consumer-new')
  const title='Review segment adoption '+width
  await form.getByLabel('Measure name',{exact:true}).fill(title)
  await form.getByLabel('Measure scope',{exact:true}).selectOption('segment')
- await form.getByLabel('Aggregate segment',{exact:true}).selectOption(segment.id)
+ await form.getByLabel('Aggregate segment',{exact:true}).selectOption(downstream.id)
  await form.getByLabel('Adoption metric',{exact:true}).selectOption('adoption.current.utilization')
  await form.getByLabel('Threshold comparison',{exact:true}).selectOption('lte')
  await form.getByLabel('Threshold value (blank for is missing)',{exact:true}).fill(String(expected))
- // The unfinished health consumer is honestly refused, preserving all entries.
+ await form.getByLabel('Affect health',{exact:true}).selectOption('true')
+ // Refuse the recursive input at save and retain the complete native form.
  await submit(page,form.getByRole('button',{name:'Create adoption measure',exact:true}))
  assert.equal(await page.locator('[role=alert]').count(),1)
- assert.equal(await form.getByLabel('Aggregate segment',{exact:true}).inputValue(),segment.id)
+ const refusal=await page.locator('[role=alert]').innerText()
+ assert.ok(refusal.includes(downstreamName));assert.match(refusal,/health\.status/)
+ assert.equal(await form.getByLabel('Measure name',{exact:true}).inputValue(),title)
+ assert.equal(await form.getByLabel('Measure scope',{exact:true}).inputValue(),'segment')
+ assert.equal(await form.getByLabel('Aggregate segment',{exact:true}).inputValue(),downstream.id)
+ assert.equal(await form.getByLabel('Adoption metric',{exact:true}).inputValue(),'adoption.current.utilization')
+ assert.equal(await form.getByLabel('Threshold comparison',{exact:true}).inputValue(),'lte')
  assert.equal(await form.getByLabel('Threshold value (blank for is missing)',{exact:true}).inputValue(),String(expected))
+ assert.equal(await form.getByLabel('Affect health',{exact:true}).inputValue(),'true')
+ assert.equal(await form.getByLabel('Route an alert',{exact:true}).inputValue(),'true')
+ assert.equal(await form.getByLabel('Measure enabled',{exact:true}).inputValue(),'true')
+ assert.equal((await api('/adoption/consumers')).rules.some(r=>r.name===title),false)
  await proof('refused-health',page.locator('#adoption-consumer-create'))
- await form.getByLabel('Affect health',{exact:true}).selectOption('false')
+ await form.getByLabel('Aggregate segment',{exact:true}).selectOption(segment.id)
  const create=form.getByRole('button',{name:'Create adoption measure',exact:true});await create.focus();await focused(page,create,`ADOPT-001 aggregate keyboard save ${width}`)
  await submit(page,create);assert.equal(await page.locator('[role=alert]').count(),0)
  let rule=(await api('/adoption/consumers')).rules.find(r=>r.name===title);assert.ok(rule)
+ assert.equal(rule.health,true);assert.equal(rule.segmentId,segment.id)
  let measures=(await api('/adoption/consumers')).evaluations.find(e=>e.accountId===ids[0]).measures.find(m=>m.ruleId===rule.id)
  assert.equal(measures.subjects[0].value,expected);assert.equal(measures.subjects[0].id,segment.id);assert.equal(measures.matched,true)
  assert.deepEqual(measures.seatEvidence.map(s=>s.accountId).sort(),ids.toSorted())
@@ -35,6 +63,46 @@ export async function adoptionAggregateBrowser({page,api,accounts,width,evidence
  assert.ok((await page.locator('#adoption-consumer-evidence-'+ids[0]).innerText()).includes('Aggregate adoption review '+width))
  await proof('configured',page.locator('#adoption-consumer-'+rule.id))
  await proof('evidence',page.locator('#adoption-consumer-evidence-'+ids[0]))
+ let state=await api('/state')
+ for(const id of ids){
+  const health=state.accounts.find(a=>a.id===id).health
+  assert.equal(health.status,'at-risk')
+  assert.ok(health.reasons.some(reason=>reason.includes(title)&&reason.includes(segment.id)))
+  assert.ok(health.adoptionMeasures.some(m=>m.ruleId===rule.id&&m.matched))
+  await page.goto(origin+'/app/accounts/'+id,{waitUntil:'networkidle'})
+  const healthText=await page.locator('#health').innerText()
+  assert.ok(healthText.includes(title));assert.ok(healthText.includes('Aggregate adoption review '+width))
+  assert.match(healthText,/membership evaluated before aggregate health/)
+  await proof(id===ids[0]?'account-risk':'peer-risk',page.locator('#health'))
+ }
+ await page.goto(origin+'/app?intro=hidden',{waitUntil:'networkidle'})
+ for(const id of ids){
+  const lane=page.locator('#lane-'+id)
+  assert.match(await lane.getAttribute('class'),/\bat-risk\b/)
+  assert.ok((await lane.innerText()).includes(title))
+ }
+ await proof('runway-risk',page.locator('main'))
+ await page.goto(origin+'/app/segments',{waitUntil:'networkidle'})
+ downstream=(await api('/segments')).segments.find(s=>s.id===downstream.id)
+ assert.deepEqual(downstream.members.map(m=>m.accountId),[ids[0]])
+ assert.equal(downstream.history.length,1)
+ const entry=downstream.history[0],proposalId=entry.proposalId
+ assert.ok(entry.enteredAt);assert.equal(entry.exitedAt,null);assert.ok(proposalId)
+ state=await api('/state')
+ assert.equal(state.proposals.find(p=>p.id===proposalId).status,'prepared')
+ assert.equal(state.tasks.filter(t=>t.proposalId===proposalId).length,0)
+ assert.ok((await page.locator('#segment-'+downstream.id).innerText()).includes(title))
+ await proof('health-segment-entry',page.locator('#segment-'+downstream.id))
+ await page.goto(origin+'/app/accounts/'+ids[0],{waitUntil:'networkidle'})
+ await proof('approval-required',page.locator('#proposals'))
+ await submit(page,page.locator('#approve-'+proposalId).getByRole('button',{name:'Approve and create task',exact:true}))
+ assert.equal(await page.locator('[role=alert]').count(),0)
+ state=await api('/state')
+ assert.equal(state.proposals.find(p=>p.id===proposalId).status,'approved')
+ assert.equal(state.tasks.filter(t=>t.proposalId===proposalId&&t.title===taskTitle).length,1)
+ await page.reload({waitUntil:'networkidle'})
+ assert.equal((await api('/state')).tasks.filter(t=>t.proposalId===proposalId).length,1)
+ await proof('approved-task',page.locator('#tasks'))
  await page.goto(origin+'/app/notifications',{waitUntil:'networkidle'})
  assert.ok((await page.locator('main').innerText()).includes(title));await proof('owner-inbox',page.locator('main'))
  await api('/adoption/seats','PUT',{accountId:ids[1],seats:null})
@@ -43,12 +111,38 @@ export async function adoptionAggregateBrowser({page,api,accounts,width,evidence
  assert.equal(measures.subjects[0].value,null);assert.equal(measures.missing,true)
  assert.match(await page.locator('#adoption-consumer-evidence-'+ids[0]).innerText(),/Required adoption measure is unknown/)
  await proof('peer-denominator-missing',page.locator('#adoption-consumer-evidence-'+ids[0]))
+ state=await api('/state')
+ for(const account of base){
+  const health=state.accounts.find(a=>a.id===account.id).health
+  assert.equal(health.status,account.health.status==='at-risk'?'at-risk':'unknown')
+  assert.ok(health.adoptionMeasures.some(m=>m.ruleId===rule.id&&m.missing&&!m.matched))
+ }
+ await page.goto(origin+'/app/accounts/'+ids[0],{waitUntil:'networkidle'})
+ assert.match(await page.locator('#health').innerText(),/Required adoption measure is unknown/)
+ await proof('account-unknown',page.locator('#health'))
+ downstream=(await api('/segments')).segments.find(s=>s.id===downstream.id)
+ assert.equal(downstream.members.length,0);assert.equal(downstream.history.length,1)
+ assert.ok(downstream.history[0].exitedAt)
+ assert.equal((await api('/state')).tasks.filter(t=>t.proposalId===proposalId).length,1)
+ await page.goto(origin+'/app/segments',{waitUntil:'networkidle'});await show('segment-history-'+downstream.id)
+ await proof('health-segment-exit',page.locator('#segment-'+downstream.id))
+ await page.goto(origin+'/app/adoption',{waitUntil:'networkidle'})
  await show('adoption-consumer-'+rule.id);form=page.locator('#adoption-consumer-'+rule.id+' form')
  await form.getByLabel('Measure enabled',{exact:true}).selectOption('false')
  await submit(page,form.getByRole('button',{name:'Save measure changes',exact:true}))
  rule=(await api('/adoption/consumers')).rules.find(r=>r.id===rule.id);assert.equal(rule.enabled,false)
+ state=await api('/state')
+ for(const account of base){
+  const health=state.accounts.find(a=>a.id===account.id).health
+  assert.equal(health.status,account.health.status)
+  assert.equal(health.reasons.some(reason=>reason.includes(title)),false)
+ }
+ assert.equal((await api('/adoption/consumers')).evaluations.some(e=>e.measures.some(m=>m.ruleId===rule.id)),false)
  await show('adoption-consumer-'+rule.id)
  await page.setViewportSize({width:320,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'ADOPT-001 aggregate controls reflow to 320')
  await page.setViewportSize({width,height:1000});await proof('disabled',page.locator('#adoption-consumer-'+rule.id))
+ await page.goto(origin+'/app/accounts/'+ids[0],{waitUntil:'networkidle'})
+ assert.equal((await page.locator('#health').innerText()).includes(title),false)
+ await proof('account-disabled',page.locator('#health'))
  await api('/adoption/seats','PUT',{accountId:ids[1],seats:20,reference:'Restored segment member license schedule',observedAt:on})
 }

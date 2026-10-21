@@ -1,4 +1,4 @@
-// ADOPT-001 PARTIAL: selected segment aggregates route owner alerts only.
+// ADOPT-001: segment aggregates drive health, alerts, reports and approved playbooks.
 import assert from 'node:assert/strict'
 
 function metricValues(metrics){
@@ -113,7 +113,7 @@ export async function adoptionAggregateAlerts(app,fixture,member){
  assert.equal((await notices(app.cookie,outside.id)).length,1)
 
  const request={...base,name:'Invalid aggregate consumer',metric:'adoption.current.utilization',op:'lte',value:fraction}
- for(const changed of [{segmentId:undefined},{segmentId:''},{segmentId:'missing-segment'},{health:true},{playbook:{title:'Unavailable aggregate playbook'}}]){
+ for(const changed of [{segmentId:undefined},{segmentId:''},{segmentId:'missing-segment'},{playbook:{title:'Unsupported direct playbook'}}]){
   assert.equal((await app.request('/api/buoy/adoption/consumers',{cookie:app.cookie,method:'POST',body:{...request,...changed}})).status,400,'ADOPT-001 aggregate requires an existing selection and refuses health/playbook effects')
  }
  for(const options of [{cookie:member},{cookie:app.cookie,headers:{origin:'https://foreign.invalid'}},{}])assert.equal((await app.request('/api/buoy/adoption/consumers',{...options,method:'POST',body:request})).status,options.cookie?403:401,'ADOPT-001 aggregate configuration uses existing staff and origin authority')
@@ -122,7 +122,88 @@ export async function adoptionAggregateAlerts(app,fixture,member){
  await api('/agent-tokens/'+agent.id,'DELETE')
  assert.ok((await api('/audit?subject='+encodeURIComponent('adoption-consumer:'+rule.id))).entries.some(entry=>entry.action==='adoption.consumer-saved'&&entry.subject==='adoption-consumer:'+rule.id),'ADOPT-001 selected aggregate configuration is audited')
  rule=await save({...rule,enabled:false})
+ await aggregateHealth(app,fixture,selection,rule,first,peer,outside)
  await preferences(app.cookie,ownerPrefs,ownerPrefs.modes.signal);await preferences(member,memberPrefs,memberPrefs.modes.signal)
  for(const account of [first,peer,outside])await seat(account.id,20)
- console.log('ADOPT-001 PARTIAL selected segment aggregate alerts: all numeric report parity, complete peer evidence, fractional thresholds, owner preferences/reassignment, missing inputs, hourly dedup/recovery, membership edits and authority passed; aggregate health/playbooks remain unavailable.')
+ console.log('ADOPT-001 selected segment aggregates: all numeric report parity, complete peer evidence, fractional thresholds, owner preferences/reassignment, missing inputs, hourly dedup/recovery, membership edits and authority, layered health, dependency refusal and approved playbooks passed.')
+}
+
+async function aggregateHealth(app,fixture,selection,rule,first,peer,outside){
+ const {api}=fixture,on=new Date().toISOString().slice(0,10),save=body=>api('/adoption/consumers','POST',body)
+ const selectedIds=[first.id,peer.id]
+ const segment=async id=>(await api('/segments')).segments.find(s=>s.id===id)
+ const update=s=>api('/segments','POST',{id:s.id,revision:s.revision,name:s.name,mode:s.mode,accountIds:s.accountIds,rules:s.rules,tier:s.tier,stage:s.stage,playbook:s.playbook})
+ const create=(name,conditions,extra={})=>api('/segments','POST',{name,mode:'dynamic',accountIds:[],rules:{match:'all',conditions},tier:null,stage:null,playbook:null,...extra})
+ // Fresh paid/support snapshots make aggregate health decisive on both peers.
+ for(const {id} of [first,peer,outside]){
+  const a=(await api('/state')).accounts.find(a=>a.id===id)
+  await api('/accounts/'+id,'PUT',{id,name:a.name,revision:a.revision,renewalDate:a.renewalDate,noticeDays:a.noticeDays,renewalEvidence:a.renewalEvidence,billing:{observedAt:on,reference:'Paid adoption review invoice',currency:'USD',totalMinor:100,creditsMinor:0,allocatedMinor:100,dueDate:on},support:{observedAt:on,reference:'Resolved adoption support queue',openTickets:0,urgentTickets:0}})
+  await api('/adoption/seats','PUT',{accountId:id,seats:20,reference:'Confirmed aggregate entitlement '+id,observedAt:on})
+ }
+ let input=await segment(selection.id)
+ await update({...input,accountIds:selectedIds})
+ const downstream=await create('Aggregate risk follow-up',[{field:'id',op:'eq',value:first.id},{field:'health.status',op:'eq',value:'at-risk'}],{playbook:{title:'Discuss segment adoption',dueDays:2}})
+ const body={...rule,health:true,alert:false,enabled:true,op:'gte',value:0}
+ let response=await app.request('/api/buoy/adoption/consumers',{cookie:app.cookie,method:'POST',body:{...body,segmentId:downstream.id}})
+ assert.equal(response.status,400)
+ assert.match((await response.json()).error,/Aggregate risk follow-up.*health.status.*aggregate health/,'Aggregate-health input refuses its direct dependency chain')
+ // A classification chain cannot hide the dependency, nor can a subsequent
+ // segment edit introduce one into an already configured health input.
+ const classifier=await create('Risk tier producer',[{field:'health.status',op:'eq',value:'at-risk'}],{tier:'scaled'})
+ const indirect=await create('Tier health input',[{field:'tier',op:'eq',value:'scaled'}])
+ response=await app.request('/api/buoy/adoption/consumers',{cookie:app.cookie,method:'POST',body:{...body,segmentId:indirect.id}})
+ assert.equal(response.status,400);assert.match((await response.json()).error,/Tier health input.*tier.*Risk tier producer.*health.status/)
+ rule=await save(body)
+ for(const id of selectedIds){
+  const a=(await api('/state')).accounts.find(a=>a.id===id)
+  assert.equal(a.health.status,'at-risk')
+  const m=a.health.adoptionMeasures.find(m=>m.ruleId===rule.id)
+  assert.equal(m.subjects[0].value,(await api('/adoption')).segments.find(s=>s.id===selection.id).metrics.current.utilization)
+  assert.ok(m.reason.includes('membership evaluated before aggregate health'))
+  assert.deepEqual((await api('/accounts/'+id+'/health')).health,a.health)
+ }
+ assert.equal((await api('/state')).accounts.find(a=>a.id===outside.id).health.status,'healthy')
+ const entered=await segment(downstream.id),proposal=entered.history.find(e=>!e.exitedAt).proposalId
+ assert.ok(entered.history[0].enteredAt);assert.ok(proposal)
+ assert.equal((await api('/state')).tasks.filter(t=>t.proposalId===proposal).length,0,'Aggregate entry prepares, never automatically acts')
+ const report=await api('/segments/'+selection.id+'/report')
+ assert.equal(report.health['at-risk'],2)
+ assert.ok(report.accounts.every(a=>a.assessment.reasons.some(r=>r.includes(rule.name))))
+ const csv=await app.request('/api/buoy/segments/'+selection.id+'/report.csv',{cookie:app.cookie})
+ assert.match(await csv.text(),/membership evaluated before aggregate health/)
+ await api('/proposals/'+proposal+'/approve','POST',{});await api('/proposals/'+proposal+'/approve','POST',{})
+ assert.equal((await api('/state')).tasks.filter(t=>t.proposalId===proposal).length,1)
+ // A changed peer denominator can keep the band at risk; it still makes the
+ // earlier account's aggregate-based manual preparation unsafe to approve.
+ const manual=await api('/proposals','POST',{accountId:first.id,kind:'playbook',payload:{title:'Review peer-based evidence',dueDate:on}})
+ await api('/adoption/seats','PUT',{accountId:peer.id,seats:40,reference:'Changed peer license evidence',observedAt:on})
+ assert.equal((await api('/state')).accounts.find(a=>a.id===first.id).health.status,'at-risk')
+ assert.equal((await app.request('/api/buoy/proposals/'+manual.id+'/approve',{cookie:app.cookie,method:'POST',body:{}})).status,409,'Peer evidence invalidates stale aggregate preparations even while still matching')
+ input=await segment(selection.id)
+ response=await app.request('/api/buoy/segments',{cookie:app.cookie,method:'POST',body:{id:input.id,revision:input.revision,name:input.name,mode:'dynamic',accountIds:[],rules:{match:'all',conditions:[{field:'health.status',op:'eq',value:'at-risk'}]},tier:null,stage:null,playbook:null}})
+ assert.equal(response.status,400);assert.match((await response.json()).error,/health.status.*aggregate health/,'Editing an existing health input cannot introduce a cycle')
+ // Change the input to a layer-1 native-health segment, and let peer updates
+ // drive membership and aggregate health together within the same request.
+ await update({...input,mode:'dynamic',accountIds:[],rules:{match:'all',conditions:[{field:'health.nativeStatus',op:'eq',value:'healthy'}]}})
+ assert.equal((await segment(selection.id)).members.length,3,'Layer-1 native health selects exactly the three fresh accounts')
+ let current=(await api('/adoption/consumers')).rules.find(r=>r.id===rule.id)
+ current=await save({...current,op:'gt',value:100})
+ assert.equal((await api('/state')).accounts.find(a=>a.id===first.id).health.status,'healthy')
+ assert.equal((await segment(downstream.id)).members.length,0)
+ assert.ok((await segment(downstream.id)).history[0].exitedAt)
+ current=await save({...current,op:'gte',value:0})
+ const reentry=(await segment(downstream.id)).history.find(e=>!e.exitedAt).proposalId
+ assert.notEqual(reentry,proposal)
+ await api('/adoption/seats','PUT',{accountId:peer.id,seats:80,reference:'New peer denominator before entry approval',observedAt:on})
+ assert.equal((await app.request('/api/buoy/proposals/'+reentry+'/approve',{cookie:app.cookie,method:'POST',body:{}})).status,409,'Peer changes also invalidate a still-active segment-entry proposal')
+ await api('/adoption/seats','PUT',{accountId:peer.id,seats:null})
+ assert.equal((await api('/state')).accounts.find(a=>a.id===first.id).health.status,'unknown')
+ assert.equal((await segment(downstream.id)).members.length,0)
+ await app.scheduled()
+ assert.equal((await api('/state')).accounts.find(a=>a.id===first.id).health.status,'unknown')
+ await api('/adoption/seats','PUT',{accountId:peer.id,seats:20,reference:'Restored peer denominator',observedAt:on})
+ assert.equal((await api('/state')).accounts.find(a=>a.id===first.id).health.status,'at-risk')
+ assert.equal((await segment(downstream.id)).members.length,1)
+ current=await save({...current,enabled:false})
+ assert.equal((await api('/state')).accounts.find(a=>a.id===first.id).health.status,'healthy')
 }
