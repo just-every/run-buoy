@@ -52,7 +52,7 @@ export function ordered(defs:Definition[],baseFields=BASE_FIELDS) {
 }
 export function flatten(a:FieldAccount,values:Record<string,unknown>,baseFields=BASE_FIELDS) {
  const doc=JSON.parse(a.document),flat:Record<string,unknown>={id:a.id,name:a.name}
- for(const key of baseFields){const [parent,child]=key.split('.');flat[key]=child?doc[parent]?.[child]??null:doc[parent]??null}
+ for(const key of baseFields){const [parent,child]=key.split('.');flat[key]=key==='id'?a.id:key==='name'?a.name:child?doc[parent]?.[child]??null:doc[parent]??null}
  for(const [key,value] of Object.entries(values)){
   flat[`custom.${key}`]=value
   if(value&&typeof value==='object'&&!Array.isArray(value))for(const [part,v] of Object.entries(value))flat[`custom.${key}.${part}`]=v
