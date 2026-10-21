@@ -3,7 +3,7 @@ import type {ConsumerRule} from '../adoption/consumers-model'
 import {escape,section,field,hidden,form,button,disclosure,valueOf} from './html'
 import {canManage,type State,type Fields} from './types'
 export type ConsumerPage=Awaited<ReturnType<typeof consumerState>>
-const options=(name:string,label:string,items:[string,string][],chosen:unknown)=>`<label>${escape(label)}<select name="${escape(name)}" required>${items.map(([v,l])=>`<option value="${escape(v)}"${v===String(chosen)?' selected':''}>${escape(l)}</option>`).join('')}</select></label>`
+const options=(name:string,label:string,items:[string,string][],chosen:unknown)=>`<label>${escape(label)}<select name="${escape(name)}" aria-label="${escape(label)}" required>${items.map(([v,l])=>`<option value="${escape(v)}"${v===String(chosen)?' selected':''}>${escape(l)}</option>`).join('')}</select></label>`
 export function adoptionConsumers(data:ConsumerPage,state:State,fields?:Fields){
  const edit=(rule?:ConsumerRule)=>{
   const selected=fields?.action==='adoption-consumer'&&(fields.consumerId??'')===(rule?.id??'')?fields:undefined
