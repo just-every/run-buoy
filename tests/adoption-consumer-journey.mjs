@@ -17,7 +17,7 @@ export async function adoptionConsumers(app,fixture,member){
  assert.deepEqual(Object.keys((await api('/adoption/consumers')).fields).sort(),Object.keys(values).sort())
  let parity,measures
  for(const [metric,value] of Object.entries(values)){
-  parity=await save({...parity,...base,name:'Metric parity '+metric,metric,value,op:value===null?'is-missing':'eq'})
+  parity=await save({...parity,...base,name:'Account metric parity',metric,value,op:value===null?'is-missing':'eq'})
   const m=(await api('/adoption/consumers')).evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===parity.id)
   assert.equal(m.subjects[0].value,value,'ADOPT-001 every consumer uses the exact public report number');assert.equal(m.matched,true)
  }
