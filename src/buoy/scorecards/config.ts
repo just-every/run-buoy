@@ -20,19 +20,22 @@ export function scorecardConfig(input:unknown,fields:ScorecardField[],segments:S
  const value=object(input);keys(value,['name','measures','bands','segments'])
  insist(Array.isArray(value.measures)&&value.measures.length>0&&value.measures.length<=16,'Choose 1–16 measures.')
  const measures=value.measures.map(raw=>{
-  const m=object(raw);keys(m,['key','name','field','min','max','weight','direction','missing','categoryValues'])
+  const m=object(raw);keys(m,['key','name','field','min','max','weight','direction','missing','categoryValues','aggregate'])
   const key=text(m.key,'Measure key',60),field=text(m.field,'Measure field',200)
   insist(/^[a-z][a-z0-9_]*$/.test(key),'Use lowercase measure keys with letters, digits and underscores.')
   insist(!field.startsWith('health.'),'Final health fields cannot be scorecard inputs.')
   const definition=fields.find(f=>f.key===field)
   insist(definition,'Choose a currently available measure.')
+  if(definition.related)insist(m.aggregate==='mean'||m.aggregate==='min'||m.aggregate==='max'||m.aggregate==='sum','Related-person measures require an explicit mean, min, max or sum aggregate.')
+  else insist(!Object.hasOwn(m,'aggregate'),'Only related-person measures can have an aggregate.')
+  const aggregation=definition.related?{aggregate:m.aggregate}:{}
   const mapping=Object.hasOwn(m,'categoryValues')?{categoryValues:categoryValues(m.categoryValues)}:{}
   insist(!definition.valueType||definition.valueType==='number'||Object.hasOwn(mapping,'categoryValues'),'Non-numeric measures require explicit category values.')
   insist(finite(m.min)&&finite(m.max)&&m.min<m.max,'Measure bounds must be finite with min less than max.')
   insist(positive(m.weight),'Measure weights must be finite and positive.')
   insist(m.direction==='higher'||m.direction==='lower','Choose higher or lower scoring direction.')
   insist(m.missing==='unknown'||m.missing==='exclude','Choose unknown or exclude for missing values.')
-  return {key,name:text(m.name,'Measure name',100),field,min:m.min,max:m.max,weight:m.weight,direction:m.direction,missing:m.missing,...mapping}
+  return {key,name:text(m.name,'Measure name',100),field,min:m.min,max:m.max,weight:m.weight,direction:m.direction,missing:m.missing,...mapping,...aggregation}
  }) as ScorecardConfig['measures']
  insist(new Set(measures.map(m=>m.key)).size===measures.length&&new Set(measures.map(m=>m.field)).size===measures.length,'Measure keys and fields must be unique.')
  const bands=object(value.bands);keys(bands,['riskBelow','healthyAt'])

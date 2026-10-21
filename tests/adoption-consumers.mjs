@@ -1,3 +1,5 @@
+import {relatedHealth} from './related-health-journey.mjs'
+import {scorecardCustody} from './scorecard-custody-journey.mjs'
 import {surveyScorecards} from './survey-scorecard-journey.mjs'
 import {surveyScorecardBrowser} from './survey-scorecard-browser.mjs'
 import {revenueHealth} from './revenue-health-journey.mjs'
@@ -21,6 +23,6 @@ try{
  await currentAdoption(fixture,'consumer-shard-'+mode)
  assert.equal((await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'consumer-member@example.test',displayName:'CS colleague',role:'member'}})).status,202)
  const member=await app.signIn('consumer-member@example.test')
- if(mode==='health'){const result=await healthScorecards(app,fixture,member);await healthScorecardBrowser(app,fixture,result);const revenue=await revenueHealth(app,fixture,member,result);await revenueHealthBrowser(app,fixture,revenue);const survey=await surveyScorecards(app,fixture,member,result,revenue);await surveyScorecardBrowser(app,fixture,survey)}
+ if(mode==='health'){const result=await healthScorecards(app,fixture,member);await healthScorecardBrowser(app,fixture,result);const revenue=await revenueHealth(app,fixture,member,result);await revenueHealthBrowser(app,fixture,revenue);const survey=await surveyScorecards(app,fixture,member,result,revenue);const related=await relatedHealth(app,fixture,member,survey);await surveyScorecardBrowser(app,fixture,related);await scorecardCustody(app,fixture)}
  else await (mode==='account'?adoptionConsumers:adoptionAggregateAlerts)(app,fixture,member)
 }finally{await app.close()}

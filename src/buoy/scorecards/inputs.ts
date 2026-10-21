@@ -1,3 +1,4 @@
+import {customFields,relatedInputs,scalar} from './related'
 import {parseSurveyImage} from '../surveys/snapshot'
 import {parseRevenueImage} from '../revenue/snapshot'
 import {consumerImage} from '../adoption/consumers-image'
@@ -11,38 +12,37 @@ import type {RetainedInputs,ScorecardField,SourceEvidence} from './types'
 
 // Keep independently fenced images separate: embedding the metric CTE in the
 // segment CTE again exceeds SQLite/D1's expression-depth budget.
-const SOURCES=`SELECT json_group_array(json_object('accountId',account_id,'key',field_key,'source',source,'recordedAt',recorded_at)) AS snapshot FROM (
+const SOURCES=`SELECT json_group_array(json_object('accountId',account_id,'key',field_key,'source',source,'sourceAccountId',source_account_id,'recordedAt',recorded_at)) AS snapshot FROM (
  SELECT h.*,row_number() OVER(PARTITION BY account_id,field_key ORDER BY recorded_at DESC,id DESC) AS latest FROM buoy_field_history h
  ) WHERE latest=1`
-interface CustomSource {accountId:string;key:string;source:string;recordedAt:string}
+interface CustomSource {accountId:string;key:string;source:string;sourceAccountId:string|null;recordedAt:string}
 export async function inputImage(db:D1Database,at:Date){
  const on=at.toISOString().slice(0,10)
  const [segmentImage,numericImage,sourceRow]=await Promise.all([snapshot(db,on),consumerImage(db,on,true),db.prepare(SOURCES).first<{snapshot:string}>()])
  insist(sourceRow,'Scorecard source evidence unavailable.',503)
  const sourceImage={sql:SOURCES,raw:sourceRow.snapshot},customSources=JSON.parse(sourceRow.snapshot) as CustomSource[]
  const image={...segmentImage.value,adoption:numericImage.value.adoption},segments=definitions(image),adoption=adoptionRuleValues(image.adoption),computed=evaluate(image.custom)
+ const related=await relatedInputs(db,image.people)
  const surveys=parseSurveyImage(JSON.stringify(image.surveys),on)
  const revenues=parseRevenueImage(JSON.stringify(image.revenue),on)
  const fields:ScorecardField[]=[
   ...['arrMinor','mrrMinor','seats'].map(key=>({key:`revenue.${key}`,name:`Confirmed recurring ${key}`,kind:'billing' as const,unit:key==='seats'?'purchased units':'native currency minor units'})),
   ...['totalMinor','creditsMinor','allocatedMinor','balanceMinor'].map(key=>({key:`billing.${key}`,name:`Recorded billing ${key} (minor currency units)`,kind:'billing' as const,unit:'minor currency units'})),
   ...['openTickets','urgentTickets'].map(key=>({key:`support.${key}`,name:`Recorded support ${key}`,kind:'support' as const,unit:'tickets'})),
-  ...image.custom.definitions.flatMap(d=>d.type==='currency'?[
-   {key:`custom.${d.key}.amountMinor`,name:d.label+' amount',kind:'custom' as const,valueType:'number' as const,unit:'minor currency units'},
-   {key:`custom.${d.key}.currency`,name:d.label+' currency',kind:'custom' as const,valueType:'text' as const}]:[
-   {key:`custom.${d.key}`,name:d.label,kind:d.type==='formula'?'calculated' as const:'custom' as const,valueType:(['number','formula'].includes(d.type)?'number':['boolean','multi-select','date'].includes(d.type)?d.type:'text') as ScorecardField['valueType']}
-  ]),
+  ...customFields(image.custom.definitions),...related.fields,
   ...['nps','csat','npsResponses','csatResponses'].map(key=>({key:`survey.${key}`,name:`Recorded survey ${key}`,kind:'survey' as const,unit:key==='nps'?'−100 to 100':key==='csat'?'1 to 5':'respondents'})),
   ...Object.keys(adoptionRuleFields(image.adoption)).map(key=>({key,name:`Recorded ${key}`,kind:'adoption' as const})),
   {key:'sentiment.score',name:'Current CSM sentiment (red 0, amber 50, green 100)',kind:'sentiment',unit:'0–100 judgment'}
  ]
  const accounts=evaluated(image,on,false).map(account=>{
-  const values:RetainedInputs['values']={},sources:RetainedInputs['sources']={}
+  const relatedValues:NonNullable<RetainedInputs['relatedValues']>={},values:RetainedInputs['values']={},sources:RetainedInputs['sources']={}
   const usage=image.adoption.sources??[],hasUsageEvidence=usage.some(s=>s.lastObservedAt!==null)
   for(const field of fields){
    let raw:unknown=field.kind==='adoption'?adoption.get(`account:${account.account.id}`)?.[field.key]:account.values[field.key]
    let evidence:SourceEvidence[]=[]
-   if(field.kind==='survey'){
+   if(field.related){
+    const value=related.account(account.account.id,field);relatedValues[field.key]=value.values;evidence=value.evidence;raw=null
+   }else if(field.kind==='survey'){
     const survey=surveys.find(a=>a.accountId===account.account.id)!,assessment=survey.assessments[field.key.startsWith('survey.nps')?'nps':'csat']
     evidence=[{kind:'survey',label:'Staff-recorded '+assessment.kind.toUpperCase()+' responses',freshness:assessment.freshness,observedAt:assessment.latestDatum?.observedAt??null,reference:assessment.latestDatum?.reference??null,details:{respondentCount:assessment.respondentCount,responses:assessment.responses,windowDays:90}}]
    }else if(field.key.startsWith('revenue.')){
@@ -66,10 +66,15 @@ export async function inputImage(db:D1Database,at:Date){
     raw=definition.type==='currency'&&current&&typeof current==='object'?(current as Record<string,unknown>)[field.key.endsWith('.currency')?'currency':'amountMinor']:current
     evidence=[{kind:field.kind,label:definition.label,freshness:raw===null||raw===undefined?'missing':'untracked',observedAt:source?.recordedAt??null,reference:source?.source??null,details:{definition,explanation:computed.find(a=>a.id===account.account.id)?.explanations[key]??null,...(definition.type==='currency'?{currency:account.values[`custom.${key}.currency`]??null}:{})}}]
    }
-   values[field.key]=typeof raw==='number'&&Number.isFinite(raw)||typeof raw==='string'||typeof raw==='boolean'||Array.isArray(raw)&&raw.every(v=>typeof v==='string')?raw as RetainedInputs['values'][string]:null;sources[field.kind==='adoption'?'adoption':field.key]=evidence
+   values[field.key]=scalar(raw);sources[field.kind==='adoption'?'adoption':field.key]=evidence
   }
-  const inputs:RetainedInputs={values,sources,fields,segments:segments.filter(s=>!layerOneDependency(s,segments)&&includes(s,account.account.id,account.values,account.people)).map(s=>({id:s.id,revision:s.revision,name:s.name})),measuredOn:on}
+  const sourceAccountIds=new Set<string>([account.account.id,...customSources.filter(s=>s.accountId===account.account.id).flatMap(s=>s.sourceAccountId?[s.sourceAccountId]:[])])
+  if([...image.custom.definitions,...image.people.definitions].some(d=>d.formula?.includes('portfolio.')))image.accounts.forEach(a=>sourceAccountIds.add(a.id))
+  const relevantPeople=image.people.records.filter(p=>p.accountIds.includes(account.account.id))
+  for(const p of relevantPeople)for(const ids of [...Object.values(p.valueAccounts??{}),...Object.values(p.previousAccounts??{})])ids.forEach(id=>sourceAccountIds.add(id))
+  const sourcePersonIds=[...new Set([...relevantPeople.map(p=>p.id),...image.surveys.responses.filter(r=>r.accountId===account.account.id).map(r=>r.personId)])].sort()
+  const inputs:RetainedInputs={values,relatedValues,sources,fields,sourceAccountIds:[...sourceAccountIds].sort(),sourcePersonIds,segments:segments.filter(s=>!layerOneDependency(s,segments)&&includes(s,account.account.id,account.values,account.people)).map(s=>({id:s.id,revision:s.revision,name:s.name})),measuredOn:on}
   return {accountId:account.account.id,accountRevision:account.account.revision,inputs}
  })
- return {accounts,fields,segments,consumers:image.consumers,fences:[segmentImage,numericImage,sourceImage]}
+ return {accounts,fields,segments,consumers:image.consumers,fences:[segmentImage,numericImage,sourceImage,related.fence]}
 }
