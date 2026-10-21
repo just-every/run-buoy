@@ -31,7 +31,7 @@ export async function adoptionConsumers(app,fixture,member){
  assert.equal(health.status,'at-risk','ADOPT-001 inclusive adoption threshold drives actual account health')
  assert.equal(health.adoptionMeasures.find(m=>m.ruleId===rule.id).subjects[0].value,.5)
  assert.ok(health.reasons.some(r=>r.includes(rule.name)))
- assert.ok(health.reasons.some(r=>r.includes('Restored reviewed license schedule')||r.includes('Customer-approved license schedule')),'ADOPT-001 health names manual denominator evidence')
+ assert.ok(health.reasons.some(r=>r.includes(report.seatEvidence.find(s=>s.accountId===accountId).reference)),'ADOPT-001 health names manual denominator evidence')
  assert.deepEqual((await api('/accounts/'+accountId+'/health')).health,health,'ADOPT-001 dedicated health and account state agree')
  assert.equal((await count(rule.name)).length,1,'ADOPT-001 account owner receives one alert')
  await app.scheduled();await app.scheduled()
