@@ -1,3 +1,4 @@
+import {search} from './search'
 import {consumerState,saveConsumer} from './adoption/consumers'
 import {recordAdoptionAlerts} from './adoption/consumers-alerts'
 import {inappIngest,inappAdmin} from './inapp'
@@ -104,6 +105,7 @@ buoyApi.get('/api/buoy/notifications', async c => c.json(await inbox(c.env.DB, c
 buoyApi.put('/api/buoy/notifications/preferences', async c => c.json(await setPreferences(c.env.DB, c.get('actor'), await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/notifications/:id/read', async c => {await jsonBody(c.req.raw); return c.json(await markRead(c.env.DB,c.get('actor'),c.req.param('id')))})
 buoyApi.post('/api/buoy/accounts/:id/mentions', async c => c.json(await mention(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
+buoyApi.get('/api/buoy/search',async c=>c.json(await search(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)))
 buoyApi.get('/api/buoy/state', async c => c.json(await state(c.env.DB, c.get('actor'))))
 buoyApi.post('/api/buoy/accounts', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.put('/api/buoy/accounts/:id', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw), c.req.param('id'))))
