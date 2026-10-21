@@ -291,7 +291,8 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   })
   await t.test('PLAY-002 owners, priority and type; reminders in-app and by email; escalation; reassignment; away cover; outcome',async()=>{
    // Task days are dates in the installation's time zone: pick one where it is now about noon.
-   const zoneAt=hour=>{const offset=((hour-new Date().getUTCHours()+36)%24)-12;return [offset===0?'Etc/GMT':`Etc/GMT${offset>0?'-':'+'}${Math.abs(offset)}`,new Date(Date.now()+offset*3600000).toISOString().slice(0,10)]}
+   // The setting stores the canonical IANA name, so offset 0 is named UTC (Etc/GMT would be stored, and returned, as UTC).
+   const zoneAt=hour=>{const offset=((hour-new Date().getUTCHours()+36)%24)-12;return [offset===0?'UTC':`Etc/GMT${offset>0?'-':'+'}${Math.abs(offset)}`,new Date(Date.now()+offset*3600000).toISOString().slice(0,10)]}
    const [zone,local]=zoneAt(12), [night]=zoneAt(3)
    const day=n=>new Date(Date.parse(local)+n*86400000).toISOString().slice(0,10)
    for(const [email,displayName] of [['casey@example.test','Casey CSM'],['blair@example.test','Blair CSM'],['morgan@example.test','Morgan Manager']])await json(await request('/auth/invite',{method:'POST',cookie,body:{email,displayName,role:'member'}}),202)
