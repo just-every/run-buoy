@@ -67,7 +67,18 @@ export function evaluateExpression(expression: Expression, values: Record<string
   const evidence: string[] = []
   const aggregate = (name: string, path: string): number => {
     if (portfolio.length > 10_000) throw new Error('Portfolio exceeds the 10000-account formula limit.')
-    const cohort = portfolio.map((account, index) => {
+    let records=portfolio
+    const hierarchical=/^(children|descendants)(Sum|Avg|Count)$/.exec(name)
+    const operation=hierarchical?hierarchical[2].toLowerCase():name
+    if(hierarchical){
+      if(!Object.hasOwn(values,'__parentId'))throw new Error('Hierarchical functions require account records.')
+      const current=readField(values,'id'),parents=new Set([current]),selected=new Set<unknown>()
+      do{let added=false;for(const record of portfolio)if(parents.has(readField(record,'__parentId'))&&!selected.has(readField(record,'id'))){selected.add(readField(record,'id'));if(hierarchical[1]==='descendants'){parents.add(readField(record,'id'));added=true}}if(!added)break}while(true)
+      records=portfolio.filter(record=>selected.has(readField(record,'id')))
+      const currencyPath=path.endsWith('.amountMinor')?path.replace(/\.amountMinor$/,'.currency'):path.startsWith('billing.')&&path.endsWith('Minor')?'billing.currency':null
+      if(currencyPath){const currencies=records.map(record=>readField(record,currencyPath));if(currencies.some(value=>typeof value!=='string'))throw new Error('Missing currency for hierarchical money rollup.');if(new Set(currencies).size>1)throw new Error('Hierarchical money rollups refuse mixed currencies; no conversion occurs.')}
+    }
+    const cohort = records.map((account, index) => {
       const value = readField(account, path)
       const id = readField(account, 'id')
       const accountName = readField(account, 'name')
@@ -80,16 +91,16 @@ export function evaluateExpression(expression: Expression, values: Record<string
       }
     })
     const key = `${name}(${path})`
-    inputs[`portfolio.${key}`] = cohort
-    evidence.push(`Portfolio ${key}: [${cohort.map(item => `${item.accountId ?? item.accountName ?? `row ${item.index + 1}`}=${item.missing ? 'missing' : describe(item.value)}`).join(', ')}].`)
-    if (name === 'count') return cohort.filter(item => !item.missing).length
-    if (!cohort.length) throw new Error(`Portfolio ${key} has no accounts.`)
+    inputs[`${hierarchical?hierarchical[1]:'portfolio'}.${key}`] = cohort
+    evidence.push(`${hierarchical?hierarchical[1]:'Portfolio'} ${key}: [${cohort.map(item => `${item.accountId ?? item.accountName ?? `row ${item.index + 1}`}=${item.missing ? 'missing' : describe(item.value)}`).join(', ')}].`)
+    if (operation === 'count') return cohort.filter(item => !item.missing).length
+    if (!cohort.length){if(hierarchical&&operation==='sum')return 0;throw new Error(`Portfolio ${key} has no accounts.`)}
     let total = 0
     for (const item of cohort) {
       if (item.missing) throw new Error(`Missing input "${path}" for portfolio account ${item.accountId ?? item.accountName ?? item.index + 1}.`)
       total = finite(total + numeric(scalar(item.value, path), `${key} for portfolio account ${item.accountId ?? item.accountName ?? item.index + 1}`))
     }
-    return name === 'avg' ? finite(total / cohort.length) : total
+    return operation === 'avg' ? finite(total / cohort.length) : total
   }
   const evaluate = (node: Expression): Scalar => {
     if (node.kind === 'literal') return node.value

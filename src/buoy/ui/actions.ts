@@ -42,6 +42,11 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(accountId&&action==='account-hierarchy'){
+    const selected=new Map<string,string[]>();for(const [key,value]of Object.entries(fields))if(key.startsWith('stakeholder:')&&value==='on'){const [,personId,role]=key.split(':');selected.set(personId,[...(selected.get(personId)??[]),role]);}
+    await send(accountPath+'/hierarchy',{revision:fields.revision,parentId:fields.parentId||null,kind:fields.kind,accountExecutiveId:fields.accountExecutiveId||null,executiveSponsorId:fields.executiveSponsorId||null,supportOwnerId:fields.supportOwnerId||null,stakeholders:[...selected].map(([personId,roles])=>({personId,roles})),source:fields.source},'PUT');return {redirect:path+'#account-hierarchy',message:'Organization and stakeholder roles saved.',saved:'account-hierarchy-form'};
+  }
+  if(accountId&&action==='account-scorecard'){await send(accountPath+'/scorecard',{revision:fields.revision,versionId:fields.versionId||null},'PUT');return {redirect:path+'#health-scorecard',message:'Record scorecard saved.',saved:'account-scorecard'}}
   if(accountId&&action==='survey-response'){await send('/api/buoy/surveys/responses',surveyForm(fields,accountId));return {redirect:path+'#surveys',message:'Received survey response recorded.'}}
   if(accountId&&action==='contract'){await send(accountPath+'/contract',contractForm(fields));return {redirect:path+'#revenue',message:'Recurring contract confirmed.'}}
   if(path==='/app'&&action==='scorecard'){

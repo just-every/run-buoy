@@ -3,8 +3,8 @@ import { minorUnitDigits } from '../currencies'
 import { evaluateFormula, validateFormula, formulaReferences } from './formula'
 export type Definition = {key:string;label:string;type:string;options?:string[];formula?:string}
 export type FieldAccount = {id:string;name:string;revision:string;document:string;manual:Record<string,unknown>;previous:Record<string,unknown>}
-export interface Image {definitions:Definition[];accounts:FieldAccount[]}
-export const BASE_FIELDS = ['id','name','renewalDate','noticeDays','renewalEvidence','billing.observedAt','billing.reference','billing.currency','billing.totalMinor','billing.creditsMinor','billing.allocatedMinor','billing.dueDate','support.observedAt','support.reference','support.openTickets','support.urgentTickets']
+export interface Image {definitions:Definition[];accounts:FieldAccount[];links?:{accountId:string;parentId:string|null;kind:string}[];users?:{personId:string;accountId:string}[]}
+export const BASE_FIELDS = ['hierarchy.parentId','hierarchy.kind','hierarchy.childCount','hierarchy.descendantCount','hierarchy.userCount','id','name','renewalDate','noticeDays','renewalEvidence','billing.observedAt','billing.reference','billing.currency','billing.totalMinor','billing.creditsMinor','billing.allocatedMinor','billing.dueDate','support.observedAt','support.reference','support.openTickets','support.urgentTickets']
 const TYPES=['text','number','currency','date','picklist','multi-select','boolean','formula']
 export function definition(input:Record<string,unknown>):Definition {
  insist(Object.keys(input).every(k=>['key','label','type','options','formula'].includes(k)),'Unsupported field definition property.')
@@ -44,7 +44,7 @@ export function ordered(defs:Definition[],baseFields=BASE_FIELDS) {
  const visit=(d:Definition)=>{
   if(visited.has(d.key))return
   insist(!active.has(d.key),'Calculated fields cannot have circular dependencies.');active.add(d.key)
-  try{validateFormula(d.formula!,references(defs,baseFields))}catch(error){insist(false,error instanceof Error?error.message:'Invalid formula.')} 
+  try{validateFormula(d.formula!,references(defs,baseFields),baseFields===BASE_FIELDS)}catch(error){insist(false,error instanceof Error?error.message:'Invalid formula.')} 
   for(const ref of formulaReferences(d.formula!)){const dep=pending.find(x=>`custom.${x.key}`===ref);if(dep)visit(dep)}
   active.delete(d.key);visited.add(d.key);done.push(d)
  }
@@ -59,11 +59,16 @@ export function flatten(a:FieldAccount,values:Record<string,unknown>,baseFields=
  }
  return flat
 }
+export function descendantIds(image:Pick<Image,'links'>,accountId:string){const ids=new Set<string>(),pending=[accountId];while(pending.length){const parent=pending.pop()!;for(const link of image.links??[])if(link.parentId===parent&&!ids.has(link.accountId)){ids.add(link.accountId);pending.push(link.accountId)}}return [...ids]}
 export function evaluate(image:Image,baseFields=BASE_FIELDS) {
  const formulas=ordered(image.definitions,baseFields)
  const results=image.accounts.map(a=>({id:a.id,name:a.name,revision:a.revision,values:Object.fromEntries(image.definitions.filter(d=>d.type!=='formula').map(d=>[d.key,a.manual[d.key]??null])),explanations:{} as Record<string,string>}))
  for(const d of formulas){
-  const portfolio=image.accounts.map((a,i)=>flatten(a,results[i].values,baseFields))
+  const portfolio=image.accounts.map((a,i)=>{
+   const flat=flatten(a,results[i].values,baseFields)
+   if(baseFields===BASE_FIELDS){const link=image.links?.find(l=>l.accountId===a.id),descendants=descendantIds(image,a.id),cohort=new Set([a.id,...descendants]);Object.assign(flat,{__parentId:link?.parentId??null,'hierarchy.parentId':link?.parentId??null,'hierarchy.kind':link?.kind??'account','hierarchy.childCount':image.links?.filter(l=>l.parentId===a.id).length??0,'hierarchy.descendantCount':descendants.length,'hierarchy.userCount':new Set(image.users?.filter(u=>cohort.has(u.accountId)).map(u=>u.personId)).size})}
+   return flat
+  })
   for(let i=0;i<results.length;i++){
    const result=evaluateFormula(d.formula!,portfolio[i],portfolio)
    results[i].values[d.key]=result.value;results[i].explanations[d.key]=result.explanation

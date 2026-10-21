@@ -1,3 +1,4 @@
+import {scorecardAssignments,assignmentFence} from './assignments'
 import {auditRecord} from '../audit-records'
 import {authority,guard,id,insist,object,requirePerson,stmt,type Actor} from '../core'
 import {fence} from '../segments/snapshot'
@@ -19,7 +20,7 @@ export async function currentScores(db:D1Database):Promise<Map<string,ScorecardR
 export async function scorecardState(db:D1Database,actor:Actor){
  await reader(db,actor)
  const [stored,image,allVersions,history]=await Promise.all([storage(db),inputImage(db,new Date()),versions(db),db.prepare("SELECT id,account_id AS accountId,version_id AS versionId,calculated_at AS calculatedAt,json_extract(document,'$.score') AS score,json_extract(document,'$.band') AS band FROM buoy_scorecard_history ORDER BY calculated_at DESC,id DESC LIMIT 500").all<{id:string;accountId:string;versionId:string;calculatedAt:string;score:number|null;band:string}>()])
- return {revision:stored.revision,published:stored.published,versions:allVersions,fields:image.fields,segments:image.segments.map(({id,name,revision})=>({id,name,revision})),accounts:stored.results.map(row=>JSON.parse(row.document) as ScorecardResult),history:history.results}
+ return {assignments:(await scorecardAssignments(db)).rows.map(({document,versionRevision,publishedBy,publishedAt,...row})=>row),revision:stored.revision,published:stored.published,versions:allVersions,fields:image.fields,segments:image.segments.map(({id,name,revision})=>({id,name,revision})),accounts:stored.results.map(row=>JSON.parse(row.document) as ScorecardResult),history:history.results}
 }
 export async function previewScorecard(db:D1Database,actor:Actor,input:{config?:unknown;versionId?:unknown;historyId?:unknown}={}){
  await reader(db,actor)
@@ -49,8 +50,9 @@ export async function publishScorecard(db:D1Database,actor:Actor,input:{revision
  insist(input.revision===stored.revision,'Scorecard changed. Reload before publishing.',409)
  const config=scorecardConfig(input.config,image.fields,image.segments),revision=id(),versionId=id(),stamp=new Date().toISOString()
  const version:ScorecardVersion={id:versionId,revision,config,publishedBy:`${actor.kind}:${actor.id}`,publishedAt:stamp,dependencies:{segments:image.segments.filter(s=>config.segments.some(c=>c.segmentId===s.id)).map(({id,revision})=>({id,revision})),consumers:image.consumers.map(({id,revision})=>({id,revision})),fields:image.fields.filter(f=>config.measures.some(m=>m.field===f.key))}}
- const results=image.accounts.map(account=>calculate(config,account.inputs,{accountId:account.accountId,accountRevision:account.accountRevision,configRevision:revision,versionId,calculatedAt:stamp})),writes=await calculationWrites(db,results,stored.results,true)
- await db.batch([authority(db,actor,true),revisionFence(db,stored.revision),guard(db,`(${RESULTS_SQL})=?`,stored.rawResults),...image.fences.map(source=>fence(db,source)),
+ const assignments=await scorecardAssignments(db)
+ const results=image.accounts.map(account=>{const selected=assignments.versions.get(account.accountId);return calculate(selected?.config??config,account.inputs,{accountId:account.accountId,accountRevision:account.accountRevision,configRevision:selected?.revision??revision,versionId:selected?.id??versionId,calculatedAt:stamp})}),writes=await calculationWrites(db,results,stored.results,true)
+ await db.batch([authority(db,actor,true),assignmentFence(db,assignments.raw),revisionFence(db,stored.revision),guard(db,`(${RESULTS_SQL})=?`,stored.rawResults),...image.fences.map(source=>fence(db,source)),
   stmt(db,'INSERT INTO buoy_scorecard_versions(id,revision,document,published_by,published_at) VALUES(?,?,?,?,?)',versionId,revision,JSON.stringify({config,dependencies:version.dependencies}),version.publishedBy,stamp),
   stmt(db,'INSERT INTO buoy_scorecard_current(singleton,revision,version_id) VALUES(1,?,?) ON CONFLICT(singleton) DO UPDATE SET revision=excluded.revision,version_id=excluded.version_id',revision,versionId),
   ...writes.statements,auditRecord(db,actor,'health.scorecard-published',`scorecard:${versionId}`),stmt(db,'DELETE FROM buoy_assertions')])
@@ -59,8 +61,8 @@ export async function publishScorecard(db:D1Database,actor:Actor,input:{revision
 export async function recalculateScorecards(db:D1Database,at=new Date()){
  const stored=await storage(db)
  if(!stored.published)return
- const version=stored.published,image=await inputImage(db,at),stamp=at.toISOString()
- const results=image.accounts.map(account=>calculate(version.config,account.inputs,{accountId:account.accountId,accountRevision:account.accountRevision,configRevision:version.revision,versionId:version.id,calculatedAt:stamp})),writes=await calculationWrites(db,results,stored.results)
+ const version=stored.published,image=await inputImage(db,at),stamp=at.toISOString(),assignments=await scorecardAssignments(db)
+ const results=image.accounts.map(account=>{const selected=assignments.versions.get(account.accountId)??version;return calculate(selected.config,account.inputs,{accountId:account.accountId,accountRevision:account.accountRevision,configRevision:selected.revision,versionId:selected.id,calculatedAt:stamp})}),writes=await calculationWrites(db,results,stored.results)
  if(!writes.statements.length)return
- await db.batch([revisionFence(db,stored.revision),guard(db,`(${RESULTS_SQL})=?`,stored.rawResults),...image.fences.map(source=>fence(db,source)),...writes.statements,stmt(db,'DELETE FROM buoy_assertions')])
+ await db.batch([assignmentFence(db,assignments.raw),revisionFence(db,stored.revision),guard(db,`(${RESULTS_SQL})=?`,stored.rawResults),...image.fences.map(source=>fence(db,source)),...writes.statements,stmt(db,'DELETE FROM buoy_assertions')])
 }

@@ -1,3 +1,6 @@
+import {accountActivity} from './activity'
+import {setScorecardAssignment} from './scorecards/assignments'
+import {hierarchyApi} from './hierarchy'
 import {workspaceApi} from './workspace'
 import {renewalsApi,generateRenewals} from './renewals'
 import {refreshRenewalFields} from './renewals/fields'
@@ -86,6 +89,7 @@ buoyApi.route('/',peopleApi)
 buoyApi.route('/',privacyApi)
 buoyApi.route('/',renewalsApi)
 buoyApi.route('/',workspaceApi)
+buoyApi.route('/',hierarchyApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
@@ -93,6 +97,7 @@ buoyApi.get('/api/buoy/surveys',async c=>c.json(await surveyState(c.env.DB,c.get
 buoyApi.post('/api/buoy/surveys/responses',async c=>c.json(await recordResponse(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/revenue',async c=>c.json(await revenueState(c.env.DB,c.get('actor'))))
 buoyApi.post('/api/buoy/accounts/:id/contract',async c=>c.json(await saveContract(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
+buoyApi.put('/api/buoy/accounts/:id/scorecard',async c=>c.json(await setScorecardAssignment(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
 buoyApi.get('/api/buoy/scorecards',async c=>c.json(await scorecardState(c.env.DB,c.get('actor'))))
 buoyApi.post('/api/buoy/scorecards/preview',async c=>c.json(await previewScorecard(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
 buoyApi.post('/api/buoy/scorecards/publish',async c=>c.json(await publishScorecard(c.env.DB,c.get('actor'),await jsonBody(c.req.raw) as Record<string,unknown>&{revision:unknown;config:unknown}),201))
@@ -131,6 +136,7 @@ buoyApi.get('/api/buoy/state', async c => c.json(await state(c.env.DB, c.get('ac
 buoyApi.post('/api/buoy/accounts', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw)), 201))
 buoyApi.put('/api/buoy/accounts/:id', async c => c.json(await saveAccount(c.env.DB, c.get('actor'), await jsonBody(c.req.raw), c.req.param('id'))))
 buoyApi.post('/api/buoy/accounts/:id/sentiment', async c => c.json(await recordSentiment(c.env.DB, c.get('actor'), c.req.param('id'), await jsonBody(c.req.raw)), 201))
+buoyApi.get('/api/buoy/accounts/:id/activity',async c=>c.json(await accountActivity(c.env.DB,c.get('actor'),c.req.param('id'),new URL(c.req.url).searchParams)))
 buoyApi.get('/api/buoy/accounts/:id/health', async c => c.json(await healthOn(c.env.DB, c.req.param('id'), date(c.req.query('on') ?? today(), 'Health date'))))
 buoyApi.put('/api/buoy/settings/staleness', async c => c.json(await setStaleness(c.env.DB, c.get('actor'), await jsonBody(c.req.raw))))
 // PLAY-002: account CSM, manager, away cover, reminder timing and tasks as of a date.

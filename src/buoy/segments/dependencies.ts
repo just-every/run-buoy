@@ -9,6 +9,7 @@ export function healthDependency(segment:Segment,segments:Segment[],path:string[
  if(segment.mode==='static')return null
  const chain=[...path,segment.id]
  for(const {field} of segment.rules.conditions){
+  if(field.startsWith('hierarchy.health'))return [segment.name,field,'hierarchical final health']
   if(['health.status','health.reasons','health.score','health.recalculatedAt'].includes(field))return [segment.name,field,'aggregate health']
   if(field==='tier'||field==='stage')for(const producer of segments.filter(s=>s[field]!==null)){
    const dependency=healthDependency(producer,segments,chain)

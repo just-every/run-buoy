@@ -8,7 +8,7 @@ export type Expression =
   | { kind: 'call'; name: string; args: Expression[] }
 
 const precedence: Record<string, number> = { '==': 1, '!=': 1, '<': 1, '<=': 1, '>': 1, '>=': 1, '+': 2, '-': 2, '*': 3, '/': 3 }
-const arity: Record<string, number> = { if: 3, days: 2, sum: 1, avg: 1, count: 1 }
+const arity: Record<string, number> = { if: 3, days: 2, sum: 1, avg: 1, count: 1, childrenSum:1, childrenAvg:1, childrenCount:1, descendantsSum:1, descendantsAvg:1, descendantsCount:1 }
 const forbidden = new Set(['__proto__', 'prototype', 'constructor'])
 
 export function parseFormula(source: string): Expression {
@@ -51,7 +51,7 @@ export function parseFormula(source: string): Expression {
           expect(')')
         }
         if (args.length !== arity[token.text]) fail(`${token.text} requires ${arity[token.text]} arguments.`)
-        if (['sum', 'avg', 'count'].includes(token.text) && args[0].kind !== 'field') fail(`${token.text} requires a direct field reference.`)
+        if (['sum', 'avg', 'count','childrenSum','childrenAvg','childrenCount','descendantsSum','descendantsAvg','descendantsCount'].includes(token.text) && args[0].kind !== 'field') fail(`${token.text} requires a direct field reference.`)
         left = node({ kind: 'call', name: token.text, args })
       } else if (token.text === 'true' || token.text === 'false') {
         left = node({ kind: 'literal', value: token.text === 'true' })
@@ -81,3 +81,5 @@ export function fieldReferences(expression: Expression): string[] {
   if (expression.kind === 'call') return expression.args.flatMap(fieldReferences)
   return []
 }
+
+export function functionNames(expression:Expression):string[]{if(expression.kind==='call')return [expression.name,...expression.args.flatMap(functionNames)];if(expression.kind==='unary')return functionNames(expression.operand);if(expression.kind==='binary')return [...functionNames(expression.left),...functionNames(expression.right)];return []}

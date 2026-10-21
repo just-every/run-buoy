@@ -26,6 +26,7 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
    ...(payload.ownerId === undefined || payload.ownerId === '' ? {} : {ownerId: text(payload.ownerId, 'Task owner', 100)}),...(payload.renewalId===undefined?{}:{renewalId:text(payload.renewalId,'Renewal opportunity',100)})}
  } else {
   insist(RENEWAL_OUTCOMES.includes(String(payload.outcome)), 'Choose a renewal outcome.')
+  insist(!['renewed-with-expansion','renewed-with-contraction'].includes(String(payload.outcome))||payload.renewalId!==undefined,'Expansion and contraction outcomes need a source-linked renewal opportunity.')
   normalized = {outcome: String(payload.outcome), reason: text(payload.reason, 'Decision reason'), evidence: text(payload.evidence, 'Decision evidence'),...await renewalPreparation(db,current.id,payload)}
  }
  const image=kind==='playbook'&&await hasAggregateHealth(db)?await snapshot(db):undefined

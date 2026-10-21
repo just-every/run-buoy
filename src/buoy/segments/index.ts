@@ -1,3 +1,4 @@
+import {scorecardAssignments,assignmentFence} from '../scorecards/assignments'
 import {layerOneDependency} from '../scorecards/config'
 import {adoptionRuleFields} from '../adoption/segment-inputs'
 import {ruleFields} from '../fields/model'
@@ -16,7 +17,7 @@ import {aggregateProof} from '../adoption/proof'
 
 export function segmentFields(image:Image){
  const adoption=adoptionRuleFields(image.adoption)
- return {...FIELDS,...renewalRuleFields(image.renewals),...ruleFields(image.custom.definitions),...relatedPersonFields(image.people.definitions),...adoption,
+ return {...FIELDS,...Object.fromEntries((['contact','user'] as const).flatMap(kind=>[['people.'+kind+'.stakeholder.roles','text'],...['champion','executive-sponsor','economic-buyer','admin','billing-contact','end-user'].map(role=>['people.'+kind+'.stakeholder.'+role,'number'])])),...renewalRuleFields(image.renewals),...ruleFields(image.custom.definitions),...relatedPersonFields(image.people.definitions),...adoption,
   ...Object.fromEntries((['contact','user'] as const).flatMap(kind=>Object.entries(adoption).map(([field,type])=>[`people.${kind}.${field}`,type])))}
 }
 
@@ -63,11 +64,13 @@ export async function saveSegment(db:D1Database,actor:Actor,input:Record<string,
  const candidates=[...definitions(image.value).filter(s=>s.id!==segmentId),{...value,id:segmentId,revision:existing?.revision??'',createdAt:existing?.createdAt??now()}]
  validateHealthInputs(candidates,image.value.consumers)
  const card=await db.prepare('SELECT c.revision,v.document FROM buoy_scorecard_current c JOIN buoy_scorecard_versions v ON v.id=c.version_id WHERE c.singleton=1').first<{revision:string;document:string}>()
+ const assignments=await scorecardAssignments(db)
+ for(const assigned of assignments.versions.values())for(const override of assigned.config.segments){const selected=candidates.find(s=>s.id===override.segmentId);insist(selected,'Assigned scorecard weight segment is unavailable.');const chain=layerOneDependency(selected,candidates);insist(!chain,`Assigned scorecard dependency refused: ${chain?.join(' -> ')}.`)}
  if(card)for(const override of JSON.parse(card.document).config.segments){
   const selected=candidates.find(s=>s.id===override.segmentId);insist(selected,'Scorecard weight segment is unavailable.')
   const chain=layerOneDependency(selected,candidates);insist(!chain,`Scorecard dependency refused: ${chain?.join(' -> ')}.`)
  }
- await db.batch([authority(db,actor,true),fence(db,image),...(card?[guard(db,'EXISTS(SELECT 1 FROM buoy_scorecard_current WHERE revision=?)',card.revision)]:[guard(db,'NOT EXISTS(SELECT 1 FROM buoy_scorecard_current)')]),stmt(db,'INSERT INTO buoy_segments(id,document,revision,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',segmentId,JSON.stringify(value),id(),existing?.createdAt??now()),auditRecord(db,actor,'segment.saved',`segment:${segmentId}`),stmt(db,'DELETE FROM buoy_assertions')])
+ await db.batch([authority(db,actor,true),assignmentFence(db,assignments.raw),fence(db,image),...(card?[guard(db,'EXISTS(SELECT 1 FROM buoy_scorecard_current WHERE revision=?)',card.revision)]:[guard(db,'NOT EXISTS(SELECT 1 FROM buoy_scorecard_current)')]),stmt(db,'INSERT INTO buoy_segments(id,document,revision,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',segmentId,JSON.stringify(value),id(),existing?.createdAt??now()),auditRecord(db,actor,'segment.saved',`segment:${segmentId}`),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:segmentId}
 }
 export async function setClassification(db:D1Database,actor:Actor,accountId:string,input:Record<string,unknown>) {

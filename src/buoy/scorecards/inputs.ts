@@ -1,4 +1,5 @@
-import {usesPortfolio} from './custody'
+import {descendantIds} from '../fields/model'
+import {usesPortfolio,usesHierarchy} from './custody'
 import {customFields,relatedInputs,scalar} from './related'
 import {parseSurveyImage} from '../surveys/snapshot'
 import {parseRevenueImage} from '../revenue/snapshot'
@@ -70,6 +71,7 @@ export async function inputImage(db:D1Database,at:Date){
    values[field.key]=scalar(raw);sources[field.kind==='adoption'?'adoption':field.key]=evidence
   }
   const sourceAccountIds=new Set<string>([account.account.id,...customSources.filter(s=>s.accountId===account.account.id).flatMap(s=>s.sourceAccountId?[s.sourceAccountId]:[])])
+  if(usesHierarchy(image.custom.definitions))descendantIds(image.custom,account.account.id).forEach(id=>sourceAccountIds.add(id))
   if(usesPortfolio([...image.custom.definitions,...image.people.definitions]))image.accounts.forEach(a=>sourceAccountIds.add(a.id))
   const relevantPeople=image.people.records.filter(p=>p.accountIds.includes(account.account.id))
   for(const p of relevantPeople)for(const ids of [...Object.values(p.valueAccounts??{}),...Object.values(p.previousAccounts??{})])ids.forEach(id=>sourceAccountIds.add(id))

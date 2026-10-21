@@ -1,3 +1,4 @@
+import {descendantIds} from '../fields/model'
 import {RENEWAL_FIELDS_SQL,renewalRuleRecords} from '../renewals/fields'
 import {surveyImageSql,parseSurveyImage} from '../surveys/snapshot'
 import {surveyValues} from '../surveys/model'
@@ -20,6 +21,8 @@ import { DEFAULT_STALENESS } from '../settings'
 import { TIERS, includes, type Segment, type Values } from './rules'
 // One SQL image fences every rule input and the previous membership intervals.
 export const SNAPSHOT = `SELECT json_object(
+ 'hierarchyStaff',json((SELECT json_group_array(json_object('accountId',account_id,'accountExecutiveId',account_executive_id,'executiveSponsorId',executive_sponsor_id,'supportOwnerId',support_owner_id)) FROM(SELECT * FROM buoy_account_staff ORDER BY account_id))),
+ 'stakeholders',json((SELECT json_group_array(json_object('accountId',account_id,'personId',person_id,'role',role)) FROM(SELECT * FROM buoy_stakeholder_roles ORDER BY account_id,person_id,role))),
  'renewals',json(( ${RENEWAL_FIELDS_SQL} )),
  'surveys',json((${surveyImageSql()})),
  'revenue',json((${revenueImageSql()})),
@@ -41,7 +44,7 @@ export const SNAPSHOT = `SELECT json_object(
  ) AS snapshot`
 interface Row {id:string;document:string;revision:string;createdAt:string}
 interface Classification {accountId:string;tier:string|null;stage:string|null;tierManual:number;stageManual:number}
-export interface Image {renewals:FieldImage;surveys:SurveyImage;revenue:RevenueImageRow[];scorecards:ScorecardHealth[];consumers:ConsumerRule[];adoption:AdoptionImage;accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage;people:PeopleImage}
+export interface Image {hierarchyStaff:{accountId:string;accountExecutiveId:string|null;executiveSponsorId:string|null;supportOwnerId:string|null}[];stakeholders:{accountId:string;personId:string;role:string}[];renewals:FieldImage;surveys:SurveyImage;revenue:RevenueImageRow[];scorecards:ScorecardHealth[];consumers:ConsumerRule[];adoption:AdoptionImage;accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage;people:PeopleImage}
 
 export const fence=(db:D1Database,image:{raw:string;sql:string})=>guard(db,`(${image.sql})=?`,image.raw)
 export const tierNames=(image:Image):string[]=>image.tiers?JSON.parse(image.tiers):TIERS
@@ -53,7 +56,7 @@ export function accountValues(image:Image,on:string,aggregate=true) {
  const custom=evaluate(image.custom)
  const people=evaluatePeople(image.people)
  const limits=image.staleness?JSON.parse(image.staleness):DEFAULT_STALENESS
- return image.accounts.map(row=>{
+ const rows=image.accounts.map(row=>{
   const a=JSON.parse(row.document) as Account,sentiment=image.sentiments.findLast(s=>s.accountId===a.id)??null,h=health(a,on,sentiment,limits,evaluateConsumers(healthRules,a.id,image.adoption,adoption),aggregate?image.scorecards.find(c=>c.accountId===a.id):undefined),classification=image.classifications.find(c=>c.accountId===a.id)
   const native=aggregate?health(a,on,sentiment,limits,evaluateConsumers(healthRules.filter(r=>r.scope!=='segment'),a.id,image.adoption,adoption)):h
   const values:Values={...surveys.get(a.id),...revenue.get(a.id),'health.score':aggregate&&'score' in h?h.score as number|null:null,'health.recalculatedAt':aggregate?image.scorecards.find(c=>c.accountId===a.id)?.calculatedAt??null:null,'health.nativeStatus':native.status,'health.nativeReasons':native.reasons.join('\n'),...adoption.get(`account:${a.id}`),...ruleValues(image.custom.definitions,custom.find(c=>c.id===a.id)?.values??{}),id:a.id,name:a.name,renewalDate:a.renewalDate,noticeDays:a.noticeDays,renewalEvidence:a.renewalEvidence,revision:row.revision,createdAt:row.createdAt,ownerId:image.owners.find(o=>o.accountId===a.id)?.ownerId??null,territory:image.territories.find(o=>o.accountId===a.id)?.territory??null,tier:classification?.tierManual?classification.tier:null,stage:classification?.stageManual?classification.stage:null,'health.status':h.status,'health.reasons':h.reasons.join('\n'),openTasks:image.tasks.filter(t=>t.accountId===a.id&&!t.completedAt).length,completedTasks:image.tasks.filter(t=>t.accountId===a.id&&t.completedAt).length,daysToRenewal:(Date.parse(a.renewalDate)-Date.parse(on))/86400000,noticeDate:noticeDate(a)}
@@ -61,8 +64,16 @@ export function accountValues(image:Image,on:string,aggregate=true) {
   if(a.billing)values['billing.balanceMinor']=a.billing.totalMinor-a.billing.creditsMinor-a.billing.allocatedMinor
   for(const e of h.evidence){values[`health.${e.kind}Missing`]=Number(e.missing);values[`health.${e.kind}Stale`]=Number(e.stale)}
   if(sentiment)for(const key of ['rating','reason','recordedBy','recordedAt','expiresOn'] as const)values[`sentiment.${key}`]=sentiment[key]
-  const related={renewal:renewalRuleRecords(image.renewals,a.id),contact:people.filter(person=>person.kind==='contact'&&person.accountIds.includes(a.id)).map(person=>({...personRuleValues(image.people.definitions,person),...adoption.get(`person:${person.id}`)})),user:people.filter(person=>person.kind==='user'&&person.accountIds.includes(a.id)).map(person=>({...personRuleValues(image.people.definitions,person),...adoption.get(`person:${person.id}`)}))}
+  const roles=(personId:string)=>{const selected=image.stakeholders.filter(s=>s.accountId===a.id&&s.personId===personId).map(s=>s.role);return {'stakeholder.roles':JSON.stringify(selected),...Object.fromEntries(['champion','executive-sponsor','economic-buyer','admin','billing-contact','end-user'].map(role=>['stakeholder.'+role,Number(selected.includes(role))]))}}
+  const related={renewal:renewalRuleRecords(image.renewals,a.id),contact:people.filter(person=>person.kind==='contact'&&person.accountIds.includes(a.id)).map(person=>({...personRuleValues(image.people.definitions,person),...roles(person.id),...adoption.get(`person:${person.id}`)})),user:people.filter(person=>person.kind==='user'&&person.accountIds.includes(a.id)).map(person=>({...personRuleValues(image.people.definitions,person),...roles(person.id),...adoption.get(`person:${person.id}`)}))}
   return {account:{...a,revision:row.revision},values,people:related,classification,assessment:h}
+ })
+ return rows.map(item=>{
+  const accountId=item.account.id,descendants=descendantIds(image.custom,accountId),cohort=descendants.length?descendants.filter(id=>!image.custom.links?.some(l=>l.parentId===id)):[accountId],members=new Set([accountId,...descendants]),link=image.custom.links?.find(l=>l.accountId===accountId),staff=image.hierarchyStaff.find(s=>s.accountId===accountId),totals=new Map<string,bigint>();let complete=true
+  for(const key of cohort){const values=revenue.get(key),amount=values?.['revenue.arrMinor'],currency=values?.['revenue.currency'];if(typeof amount!=='number'||typeof currency!=='string'){complete=false;continue}totals.set(currency,(totals.get(currency)??0n)+BigInt(amount))}
+  const arrByCurrency=Object.fromEntries([...totals].sort(([a],[b])=>a.localeCompare(b)).map(([currency,amount])=>[currency,amount>BigInt(Number.MAX_SAFE_INTEGER)?null:Number(amount)]));if(Object.values(arrByCurrency).some(v=>v===null))complete=false
+  const currencies=Object.keys(arrByCurrency),health=cohort.map(key=>rows.find(r=>r.account.id===key)!),band=['at-risk','unknown','watch','healthy'].find(b=>health.some(r=>r.assessment.status===b))??'unknown',scores=health.map(r=>r.values['health.score']),score=scores.length&&scores.every(s=>typeof s==='number')?scores.reduce<number>((sum,s)=>sum+Number(s),0)/scores.length:null
+  return {...item,values:{...item.values,'hierarchy.parentId':link?.parentId??null,'hierarchy.kind':link?.kind??'account','hierarchy.childCount':image.custom.links?.filter(l=>l.parentId===accountId).length??0,'hierarchy.descendantCount':descendants.length,'hierarchy.userCount':image.people.records.filter(p=>p.kind==='user'&&p.accountIds.some(id=>members.has(id))).length,'hierarchy.arrByCurrency':JSON.stringify(arrByCurrency),'hierarchy.arrMinor':complete&&currencies.length===1?arrByCurrency[currencies[0]]:null,'hierarchy.currency':complete&&currencies.length===1?currencies[0]:null,'hierarchy.healthBand':band,'hierarchy.healthScore':score,'staff.accountExecutiveId':staff?.accountExecutiveId??null,'staff.executiveSponsorId':staff?.executiveSponsorId??null,'staff.supportOwnerId':staff?.supportOwnerId??null} as Values}
  })
 }
 

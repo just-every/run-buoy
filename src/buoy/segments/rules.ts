@@ -4,6 +4,7 @@ import { insist, object, text } from '../core'
 export const TIERS = ['high-touch', 'scaled', 'digital']
 export const STAGES = ['onboarding', 'adoption', 'expansion', 'renewal', 'churned']
 export const FIELDS: Record<string, 'text' | 'number'> = {...SURVEY_FIELDS,...REVENUE_FIELDS,
+ 'hierarchy.parentId':'text','hierarchy.kind':'text','hierarchy.childCount':'number','hierarchy.descendantCount':'number','hierarchy.userCount':'number','hierarchy.arrMinor':'number','hierarchy.currency':'text','hierarchy.arrByCurrency':'text','hierarchy.healthBand':'text','hierarchy.healthScore':'number','staff.accountExecutiveId':'text','staff.executiveSponsorId':'text','staff.supportOwnerId':'text',
  id:'text',name:'text',renewalDate:'text',noticeDays:'number',renewalEvidence:'text',revision:'text',createdAt:'text',ownerId:'text',territory:'text',tier:'text',stage:'text',
  'billing.observedAt':'text','billing.reference':'text','billing.currency':'text','billing.totalMinor':'number','billing.creditsMinor':'number','billing.allocatedMinor':'number','billing.dueDate':'text','billing.balanceMinor':'number',
  'support.observedAt':'text','support.reference':'text','support.openTickets':'number','support.urgentTickets':'number',
@@ -33,11 +34,12 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
   insist(kind,'Choose a supported rule field.')
   insist(['eq','ne','is-missing',...(kind==='number'?['gt','gte','lt','lte']:['contains','gt','gte','lt','lte'])].includes(op),'Choose a supported rule operator.')
   if(op==='is-missing'){insist(c.value===undefined,'Missing checks take no value.');return {field,op}}
-  const customNumber=(field==='survey.nps'||field==='survey.csat')||field==='health.score'||field.startsWith('custom.')||field.startsWith('adoption.')||field.startsWith('records.renewal.custom.')||/^people\.(contact|user)\.(custom|adoption)\./.test(field)
+  const customNumber=(field==='survey.nps'||field==='survey.csat')||field==='health.score'||field==='hierarchy.healthScore'||field.startsWith('custom.')||field.startsWith('adoption.')||field.startsWith('records.renewal.custom.')||/^people\.(contact|user)\.(custom|adoption)\./.test(field)
   insist(typeof c.value===(kind==='text'?'string':'number')&&(kind!=='number'||(customNumber?Number.isFinite(c.value):Number.isSafeInteger(c.value))),`Rule value must be ${kind==='number'?(customNumber?'a finite number':'a safe whole number'):'text'}.`)
   if(kind==='text')insist(String(c.value).length<=1000,'Rule text is too long.')
   return {field,op,value:c.value as string|number}
  })
+ for(const c of conditions)if(c.field==='hierarchy.arrMinor'&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='hierarchy.currency'&&other.op==='eq'),'A hierarchy ARR comparison needs its exact currency.')
  for(const c of conditions)if(c.field==='records.renewal.expectedArrMinor'&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='records.renewal.currency'&&other.op==='eq'),'A renewal ARR comparison needs its exact currency.')
  for(const c of conditions)if(['revenue.arrMinor','revenue.mrrMinor'].includes(c.field)&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='revenue.currency'&&other.op==='eq'),'A recurring revenue comparison needs an all-rule with its exact currency.')
  for(const c of conditions)if((c.field.startsWith('custom.')||c.field.startsWith('records.renewal.custom.')||/^people\.(contact|user)\.custom\./.test(c.field))&&c.field.endsWith('.amountMinor')&&c.op!=='is-missing'){

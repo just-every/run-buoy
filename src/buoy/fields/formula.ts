@@ -1,5 +1,5 @@
 import { evaluateExpression, type FormulaResult } from './formula/evaluate'
-import { fieldReferences, parseFormula } from './formula/parser'
+import { fieldReferences, parseFormula, functionNames } from './formula/parser'
 
 export type { FormulaResult } from './formula/evaluate'
 
@@ -9,7 +9,8 @@ export function formulaReferences(source: string): string[] {
 }
 
 /** Parse without executing and reject references outside the caller's field schema. */
-export function validateFormula(source: string, allowed: string[]): void {
+export function validateFormula(source: string, allowed: string[],hierarchy=false): void {
+  if(!hierarchy&&functionNames(parseFormula(source)).some(name=>/^(children|descendants)/.test(name)))throw new Error('Hierarchical functions require account fields.')
   const known = new Set(allowed)
   const unknown = formulaReferences(source).filter(name => !known.has(name))
   if (unknown.length) throw new Error(`Unknown field reference${unknown.length === 1 ? '' : 's'}: ${unknown.join(', ')}.`)

@@ -1,3 +1,4 @@
+import {hierarchyJourney} from './hierarchy-journey.mjs'
 import {workspaceJourney} from './workspace-journey.mjs'
 import {renewalJourney} from './renewal-journey.mjs'
 import {eraseJourney} from './erase-journey.mjs'
@@ -452,6 +453,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   })
   for(const [route,method] of [['/renewals/settings','PUT'],['/renewals/synthetic-buoy-400','PUT'],['/renewal-fields/preview','POST'],['/renewal-fields','POST'],['/renewals/synthetic-buoy-400/fields','PUT']])assert.ok((await call(route,method,{})).status>=400)
   for(const [route,method] of [['/workspace/lists/preview','POST'],['/workspace/views','POST'],['/workspace/views/synthetic-buoy-600','DELETE'],['/workspace/bulk/preview','POST'],['/workspace/bulk/apply','POST']])assert.ok((await call(route,method,{})).status>=400)
+  for(const tail of ['hierarchy','scorecard'])assert.ok((await call('/accounts/synthetic-buoy-700/'+tail,'PUT',{})).status>=400)
   // Privacy doors share the same outbound/authority boundary inventory. The full
   // journey below uses its own installation to isolate its published scorecard.
   for(const [tail,method,body] of [['holders','PUT',{revision:'stale',holders:[]}],['export','POST',{}],['erase','POST',{}]])assert.equal((await call('/customer-people/synthetic-buoy-260/privacy/'+tail,method,body)).status,404)
@@ -553,3 +555,5 @@ test('ERASE-002 owner customer export and erasure, source replay, aggregates and
 test('RENEW-001 native renewal pipeline and inherited field carrier',renewalJourney)
 
 test('ACCOUNT-003 current workspace, live views and reviewed bulk operations',workspaceJourney)
+
+test('ACCOUNT-001 complete native hierarchy and product relationships',hierarchyJourney)
