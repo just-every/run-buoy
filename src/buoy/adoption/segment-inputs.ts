@@ -5,7 +5,10 @@ import type { AdoptionMetrics } from './types'
 // Reuse the report SQL with today's complete UTC window and no caller filter.
 // Aggregate inputs share the segment's single image and transaction fence.
 const base=BASE.replace('SELECT ? AS accountId,? AS personId,? AS segmentId,julianday(?) AS until',"SELECT NULL AS accountId,NULL AS personId,NULL AS segmentId,julianday(date('now','+1 day')) AS until")
-const rows=(query:string,columns:string[])=>`json((SELECT json_group_array(json_object(${columns.map(c=>`'${c}',${c}`).join(',')})) FROM (${query.slice(BASE.length)}) WHERE scope IN ('account','person')))`
+const rows=(query:string,columns:string[])=>{
+ const body=query.slice(BASE.length).trimStart(),select=body.startsWith(',')?'WITH '+body.slice(1):body
+ return `json((SELECT json_group_array(json_object(${columns.map(c=>`'${c}',${c}`).join(',')})) FROM (${select}) WHERE scope IN ('account','person')))`
+}
 const measuredSnapshot=`${base} SELECT json_object(
  'on',date('now'),
  'subjects',${rows(SUBJECTS,['scope','id','name','kind','accountIds','seats'])},
