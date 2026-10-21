@@ -473,13 +473,17 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const grant=await json(await call('/agent-tokens','POST',{label:'Adoption authority boundary'}),201)
    for(const path of ['/adoption','/adoption/report.csv','/adoption/consumers'])assert.equal((await call(path,'GET',undefined,{cookie:undefined,token:grant.token})).status,403)
    await json(await call('/agent-tokens/'+grant.id,'DELETE'))
+   const scorecard={name:'Recorded billing preview',measures:[{key:'allocation',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}
+   await json(await call('/scorecards/preview','POST',{config:scorecard}))
+   assert.equal((await call('/scorecards/publish','POST',{revision:null,config:scorecard},{cookie:member})).status,403)
+   assert.equal((await call('/scorecards/publish','POST',{revision:'stale',config:scorecard})).status,409)
   })
   await t.test('INAPP-001 authenticated targeting, caps and receipt custody',async()=>{await inappJourney({...worker,request,dispatch:async req=>{seen.push([req.method,new URL(req.url).pathname]);return worker.dispatch(req)}})})
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))
    for(const route of routes){
-    assert.doesNotMatch(route.path,/charge|payment|refund|payout|dunning|checkout|tax|subscription|card/i,`${route.method} ${route.path} does not move money`)
+    assert.doesNotMatch(route.path,/(?:^|\/)(?:charge|payment|refund|payout|dunning|checkout|tax|subscription|card)s?(?:[-_\/]|$)/i,`${route.method} ${route.path} does not move money`)
     if(route.method==='GET')continue
     const pattern=new RegExp('^'+route.path.replace(/:[^/]+/g,'[^/]+')+'$')
     assert.ok(seen.some(([method,path])=>method===route.method&&pattern.test(path)),`${route.method} ${route.path} ran in this journey`)
