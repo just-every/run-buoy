@@ -25,7 +25,7 @@ export {evaluated} from './snapshot'
 export async function reconcile(db:D1Database,actor:Actor,at=new Date()) {
  const image=await snapshot(db,at.toISOString().slice(0,10)),segments=definitions(image.value)
  if(!segments.length)return
- const on=at.toISOString().slice(0,10),accounts=evaluated(image.value,on),layer1=new Map(evaluated(image.value,on,false).map(a=>[a.account.id,a])),inputs=new Set(image.value.consumers.filter(r=>r.health&&r.scope==='segment').map(r=>r.segmentId)),statements:D1PreparedStatement[]=[],stamp=at.toISOString()
+ const on=at.toISOString().slice(0,10),accounts=evaluated(image.value,on),layer1=new Map((image.value.consumers.some(r=>r.enabled&&r.health&&r.scope==='segment')?evaluated(image.value,on,false):accounts).map(a=>[a.account.id,a])),inputs=new Set(image.value.consumers.filter(r=>r.health&&r.scope==='segment').map(r=>r.segmentId)),statements:D1PreparedStatement[]=[],stamp=at.toISOString()
  for(const a of accounts) {
   if((a.classification?.tier??null)!==a.tier||(a.classification?.stage??null)!==a.stage)
    statements.push(stmt(db,'INSERT INTO buoy_classifications(account_id,tier,stage) VALUES(?,?,?) ON CONFLICT(account_id) DO UPDATE SET tier=excluded.tier,stage=excluded.stage',a.account.id,a.tier,a.stage))

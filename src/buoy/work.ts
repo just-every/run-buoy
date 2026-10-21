@@ -1,3 +1,4 @@
+import {hasAggregateHealth} from './adoption/consumers'
 import {snapshot,fence} from './segments/snapshot'
 import {aggregateProof} from './adoption/proof'
 import { account } from './accounts'
@@ -25,7 +26,7 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
   insist(['renewed','churned','deferred'].includes(String(payload.outcome)), 'Choose a renewal outcome.')
   normalized = {outcome: String(payload.outcome), reason: text(payload.reason, 'Decision reason'), evidence: text(payload.evidence, 'Decision evidence')}
  }
- const image=kind==='playbook'?await snapshot(db):undefined
+ const image=kind==='playbook'&&await hasAggregateHealth(db)?await snapshot(db):undefined
  const adoptionProof=image?await aggregateProof(image.value,current.id):undefined
  if(adoptionProof)normalized.adoptionProof=adoptionProof
  const proposalId = id(), at = now()
