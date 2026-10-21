@@ -1,7 +1,8 @@
 import { guard } from '../core'
 import { id, insist, now, stmt, text, type Mapping } from './model'
 export async function receipt(db:D1Database,sourceId:string,userId:string,groupId:string|null,m:Mapping|null,input:Record<string,unknown>,credentialGuard:D1PreparedStatement,mappingGuard:D1PreparedStatement,credentialId:string){
- const campaignId=text(input.campaignId,'Campaign ID',200),messageId=text(input.messageId,'Receipt message ID',200),kind=input.kind
+ const campaignId=text(input.campaignId,'Campaign ID',200),messageId=input.messageId,kind=input.kind
+ insist(typeof messageId==='string'&&messageId.trim().length>0&&messageId.length<=200,'An exact receipt message ID is required (up to 200 characters).')
  insist(['view','completion','dismissal'].includes(String(kind)),'Choose a view, completion or dismissal receipt.')
  const campaign=await stmt(db,'SELECT id FROM buoy_inapp_campaigns WHERE id=? AND source_id=?',campaignId,sourceId).first()
  insist(campaign,'Message not found for this source.',404)

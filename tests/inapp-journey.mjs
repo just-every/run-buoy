@@ -14,6 +14,7 @@ export async function inappJourney(app){
  assert.equal((await client.receipt(unknown)).duplicates,1)
  assert.ok((await api('/usage')).review.some(r=>r.userId==='unknown'&&r.eventCount===1),'INAPP-001 unknown receipt waits in usage review')
  assert.equal((await api('/customer-people/'+people[0].id+'/timeline')).events.length,0)
+ for(const messageId of [' Receipt ID ','Receipt ID'])assert.equal((await client.receipt({...unknown,messageId})).accepted,1,'INAPP-001 USAGE-001 source/message IDs remain exact, without trimming')
  // All concurrent requests compete in the same cap transaction, including pending reservations.
  const delivered=await Promise.all(Array.from({length:4},()=>client.deliver(identity)))
  const messages=delivered.flatMap(r=>r.messages)
