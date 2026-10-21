@@ -1,3 +1,4 @@
+import type {RenewalPreview} from './renewals';
 import {surveyForm} from './surveys';
 import {contractForm} from './revenue';
 import {scorecardFormConfig,type ScorecardPreview} from './scorecards';
@@ -32,7 +33,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { renewalFieldPreview?:RenewalPreview; privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -50,6 +51,22 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     return {redirect:'/app#health-scorecard',message:'Scorecard published.'};
   }
   if(path==='/app'&&action==='scorecard-history-preview')return {scorecardPreview:await send<ScorecardPreview>('/api/buoy/scorecards/preview',{versionId:fields.versionId,...(fields.historyId?{historyId:fields.historyId}:{})})};
+  if(path==='/app/renewals'){
+    const record='/api/buoy/renewals/'+encodeURIComponent(fields.renewalId??'');
+    const target=path+(fields.renewalId?'?renewal='+encodeURIComponent(fields.renewalId):'');
+    if(action==='renewal-settings'){await send('/api/buoy/renewals/settings',{revision:fields.revision,leadDays:Number(fields.leadDays),stages:fields.stages.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)},'PUT');return {redirect:path,message:'Renewal configuration saved.',saved:'renewal-settings'}}
+    if(action==='renewal-edit'){await send(record,{revision:fields.revision,stage:fields.stage,forecast:fields.forecast,ownerId:fields.ownerId||null,riskReasons:fields.riskReasons.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)},'PUT');return {redirect:target,message:'Renewal pipeline saved.',saved:'renewal-edit'}}
+    if(action==='renewal-outcome'){await send('/api/buoy/proposals',{accountId:fields.accountId,kind:'renewal',payload:{renewalId:fields.renewalId,outcome:fields.outcome,resultArrMinor:Number(fields.resultArrMinor),reason:fields.reason,evidence:fields.evidence}});return {redirect:target,message:'Renewal outcome prepared.',saved:'renewal-outcome'}}
+    if(action==='renewal-approve'){await send('/api/buoy/proposals/'+encodeURIComponent(fields.proposalId)+'/approve',{});return {redirect:target,message:'Renewal outcome approved.'}}
+    if(action==='renewal-field'){
+      let definition:unknown;try{definition=JSON.parse(fields.definition)}catch{throw new ApiError('Enter a valid JSON field definition.')}
+      if(fields.intent==='preview')return {renewalFieldPreview:await send<RenewalPreview>('/api/buoy/renewal-fields/preview',definition)};
+      if(fields.intent!=='save')throw new ApiError('Choose preview or save.');
+      await send('/api/buoy/renewal-fields',definition);return {redirect:target,message:'Renewal field saved.',saved:'renewal-field'};
+    }
+    if(action==='renewal-values'){let values:unknown;try{values=JSON.parse(fields.values)}catch{throw new ApiError('Enter valid JSON renewal values.')}await send(record+'/fields',{revision:fields.revision,values,source:fields.source},'PUT');return {redirect:target,message:'Renewal field values saved.',saved:'renewal-values'}}
+    throw new ApiError('This renewal action is unavailable.');
+  }
   if(path==='/app/inapp')return mutateInapp(api,request,fields);
   if(path==='/app/connections'){
     if(action==='connection-add')await send('/api/buoy/connections',{name:fields.name,key:fields.key});

@@ -12,7 +12,7 @@ export const FIELDS: Record<string, 'text' | 'number'> = {...SURVEY_FIELDS,...RE
  openTasks:'number',completedTasks:'number',daysToRenewal:'number',noticeDate:'text'
 }
 export type Values = Record<string, string | number | null>
-export type RelatedPeople = {contact:Values[];user:Values[]}
+export type RelatedPeople = {contact:Values[];user:Values[];renewal?:Values[]}
 export interface Condition {field:string;op:string;value?:string|number}
 export interface Rules {match:'all'|'any';conditions:Condition[]}
 export interface Segment {id:string;name:string;mode:'static'|'dynamic';rules:Rules;accountIds:string[];tier:string|null;stage:string|null;playbook:{title:string;dueDays:number}|null;revision:string;createdAt:string}
@@ -33,13 +33,14 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
   insist(kind,'Choose a supported rule field.')
   insist(['eq','ne','is-missing',...(kind==='number'?['gt','gte','lt','lte']:['contains','gt','gte','lt','lte'])].includes(op),'Choose a supported rule operator.')
   if(op==='is-missing'){insist(c.value===undefined,'Missing checks take no value.');return {field,op}}
-  const customNumber=(field==='survey.nps'||field==='survey.csat')||field==='health.score'||field.startsWith('custom.')||field.startsWith('adoption.')||/^people\.(contact|user)\.(custom|adoption)\./.test(field)
+  const customNumber=(field==='survey.nps'||field==='survey.csat')||field==='health.score'||field.startsWith('custom.')||field.startsWith('adoption.')||field.startsWith('records.renewal.custom.')||/^people\.(contact|user)\.(custom|adoption)\./.test(field)
   insist(typeof c.value===(kind==='text'?'string':'number')&&(kind!=='number'||(customNumber?Number.isFinite(c.value):Number.isSafeInteger(c.value))),`Rule value must be ${kind==='number'?(customNumber?'a finite number':'a safe whole number'):'text'}.`)
   if(kind==='text')insist(String(c.value).length<=1000,'Rule text is too long.')
   return {field,op,value:c.value as string|number}
  })
+ for(const c of conditions)if(c.field==='records.renewal.expectedArrMinor'&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='records.renewal.currency'&&other.op==='eq'),'A renewal ARR comparison needs its exact currency.')
  for(const c of conditions)if(['revenue.arrMinor','revenue.mrrMinor'].includes(c.field)&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='revenue.currency'&&other.op==='eq'),'A recurring revenue comparison needs an all-rule with its exact currency.')
- for(const c of conditions)if((c.field.startsWith('custom.')||/^people\.(contact|user)\.custom\./.test(c.field))&&c.field.endsWith('.amountMinor')&&c.op!=='is-missing'){
+ for(const c of conditions)if((c.field.startsWith('custom.')||c.field.startsWith('records.renewal.custom.')||/^people\.(contact|user)\.custom\./.test(c.field))&&c.field.endsWith('.amountMinor')&&c.op!=='is-missing'){
   const currency=c.field.replace(/\.amountMinor$/,'.currency')
   insist(rules.match==='all'&&conditions.some(other=>other.field===currency&&other.op==='eq'),'A custom money comparison needs an all-rule with its exact currency.')
  }
@@ -58,13 +59,13 @@ function conditionMatches(c:Condition,values:Values){
   switch(c.op){case'eq':return v===c.value;case'ne':return v!==c.value;case'contains':return String(v).includes(String(c.value));case'gt':return v>c.value!;case'gte':return v>=c.value!;case'lt':return v<c.value!;case'lte':return v<=c.value!;default:return false}
 }
 export function matches(rules:Rules,values:Values,people:RelatedPeople={contact:[],user:[]}) {
- const native=rules.conditions.filter(c=>!/^people\.(contact|user)\./.test(c.field))
+ const native=rules.conditions.filter(c=>!/^people\.(contact|user)\./.test(c.field)&&!c.field.startsWith('records.renewal.'))
  const tests=native.map(c=>conditionMatches(c,values))
- for(const kind of ['contact','user'] as const){
-  const prefix=`people.${kind}.`,conditions=rules.conditions.filter(c=>c.field.startsWith(prefix)).map(c=>({...c,field:c.field.slice(prefix.length)}))
+ for(const kind of ['contact','user','renewal'] as const){
+  const prefix=kind==='renewal'?'records.renewal.':`people.${kind}.`,conditions=rules.conditions.filter(c=>c.field.startsWith(prefix)).map(c=>({...c,field:c.field.slice(prefix.length)}))
   // Conjunctions bind to the same related record, including money's exact
   // currency. Two different people cannot jointly satisfy one person predicate.
-  if(conditions.length)tests.push(people[kind].some(person=>rules.match==='all'?conditions.every(c=>conditionMatches(c,person)):conditions.some(c=>conditionMatches(c,person))))
+  if(conditions.length)tests.push((people[kind]??[]).some(person=>rules.match==='all'?conditions.every(c=>conditionMatches(c,person)):conditions.some(c=>conditionMatches(c,person))))
  }
  return rules.match==='all'?tests.every(Boolean):tests.some(Boolean)
 }

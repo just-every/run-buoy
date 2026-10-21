@@ -1,3 +1,4 @@
+import {renewalJourney} from './renewal-journey.mjs'
 import {eraseJourney} from './erase-journey.mjs'
 import {searchHttpJourney} from './search-journey.mjs'
 import {inappJourney} from './inapp-journey.mjs'
@@ -448,6 +449,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok(!(await read()).items.some(i=>i.accountId===a.id),'account erasure clears inbox content')
    assert.doesNotMatch(worker.mails.findLast(m=>m.subject==='Buoy weekly digest').text,/NOTIFY-001 inbox only/)
   })
+  for(const [route,method] of [['/renewals/settings','PUT'],['/renewals/synthetic-buoy-400','PUT'],['/renewal-fields/preview','POST'],['/renewal-fields','POST'],['/renewals/synthetic-buoy-400/fields','PUT']])assert.ok((await call(route,method,{})).status>=400)
   // Privacy doors share the same outbound/authority boundary inventory. The full
   // journey below uses its own installation to isolate its published scorecard.
   for(const [tail,method,body] of [['holders','PUT',{revision:'stale',holders:[]}],['export','POST',{}],['erase','POST',{}]])assert.equal((await call('/customer-people/synthetic-buoy-260/privacy/'+tail,method,body)).status,404)
@@ -545,3 +547,5 @@ test('ERASE-002 owner customer export and erasure, source replay, aggregates and
   await eraseJourney({call,json,request:app.request,cookie,member,signIn:app.signIn,account,dispatch:app.dispatch,origin:app.origin});
  }finally{await app.close()}
 })
+
+test('RENEW-001 native renewal pipeline and inherited field carrier',renewalJourney)

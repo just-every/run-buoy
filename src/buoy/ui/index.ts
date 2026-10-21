@@ -1,3 +1,4 @@
+import {renewalsPage,type RenewalPage,type RenewalPreview} from './renewals';
 import {privacyControls,privacyReceipts,type PrivacyReceipt} from './privacy';
 import {surveyPage,surveyPersonTimeline,type SurveyPage} from './surveys';
 import {revenuePage,type RevenuePage} from './revenue';
@@ -46,9 +47,10 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   let accountId: string | undefined;
   try { accountId = match ? decodeURIComponent(match[1]) : undefined; } catch { /* The shell below renders a 404. */ }
   const account = accountId ? state.accounts.find(item => item.id === accountId) : undefined;
-  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && path !== '/app/team' && path !== '/app/segments' && path !== '/app/outcomes' && path !== '/app/customer-people' && path !== '/app/fields' && path !== '/app/usage' && path !== '/app/connections' && path !== '/app/adoption' && path !== '/app/inapp' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
+  if ((path !== '/app' && path !== '/app/imports' && path !== '/app/backups' && path !== '/app/audit' && path !== '/app/notifications' && path !== '/app/team' && path !== '/app/segments' && path !== '/app/outcomes' && path !== '/app/customer-people' && path !== '/app/fields' && path !== '/app/usage' && path !== '/app/connections' && path !== '/app/adoption' && path !== '/app/inapp' && path !== '/app/renewals' && !account) || (match && !account)) return shell({ title: 'Page not found', body: section('Nothing here', '<p>This account or page could not be found.</p><p><a href="/app">Return to accounts</a></p>'), state, current: '/app', status: 404 });
   if (path === '/app/imports' && state.operator.role !== 'owner') return shell({ title: 'Owner access required', body: section('Owner access required', '<p>Only the owner can import accounts or manage Business imports.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
   if ((path === '/app/audit' || path === '/app/team' || path === '/app/usage' || path === '/app/connections' || path === '/app/inapp') && !canManage(state)) return shell({ title: 'Administrator access required', body: section('Administrator access required', '<p>Only the owner or an administrator can open this page.</p><p><a href="/app">Return to accounts</a></p>'), state, current: path, status: 403 });
+  let renewalFieldPreview:RenewalPreview|undefined;
   let usageCredential:UsageCredential|undefined;
   let inappCredential:InappCredential|undefined;
   let fieldPreview:unknown,scorecardPreview:ScorecardPreview|undefined;
@@ -63,6 +65,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
       for (const [key, value] of data) { if (typeof value !== 'string') throw new ApiError('Use the import upload control for account files. This form accepts text fields only.'); fields[key] = value; }
       const result = await mutate(api, request, path, fields, account?.id);
       if(result.privacyExport)return new Response(JSON.stringify(result.privacyExport,null,2),{headers:{'content-type':'application/json; charset=utf-8','content-disposition':'attachment; filename="buoy-customer-export.json"','cache-control':'no-store','x-content-type-options':'nosniff'}});
+      renewalFieldPreview=result.renewalFieldPreview;
       teamPreview = result.teamPreview;
       fieldPreview=result.fieldPreview;scorecardPreview=result.scorecardPreview;
       customerFieldPreview=result.customerFieldPreview;usageMappingPreview=result.usageMappingPreview;
@@ -83,7 +86,8 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   const open = url.searchParams.has('open') ? (url.searchParams.get('open') === 'none' ? null : url.searchParams.get('open')) : undefined;
   const today = new Date().toISOString().slice(0, 10);
   let title = 'Renewals', body: string, head: string | undefined, style: string | undefined;
-  if(path==='/app/inapp'){title='In-app campaigns';body=inappPage(await apiCall<InappPage>(api,request,'/api/buoy/inapp'),state,fields,inappCredential);
+  if(path==='/app/renewals'){title='Renewal pipeline';body=renewalsPage(await apiCall<RenewalPage>(api,request,'/api/buoy/renewals'+(url.searchParams.has('quarter')?'?quarter='+encodeURIComponent(url.searchParams.get('quarter')!):'')),state,fields,renewalFieldPreview,url.searchParams.get('renewal')??fields?.renewalId);
+  } else if(path==='/app/inapp'){title='In-app campaigns';body=inappPage(await apiCall<InappPage>(api,request,'/api/buoy/inapp'),state,fields,inappCredential);
   } else if(path==='/app/adoption'){
     title='Product adoption';
     const query=new URLSearchParams([...url.searchParams].filter(([key,value])=>['on','accountId','personId','segmentId'].includes(key)&&value!==''));
@@ -138,12 +142,13 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   } else {
     ({ head, body, style } = workPage(state, fields, open, today));
     if (url.searchParams.get('intro') === 'hidden') body = body.replace('<div data-introduction>', '<div data-introduction hidden>');
+    body+=section('Renewal pipeline','<p><a href="/app/renewals">Open the contract-driven renewal board, list and approved outcomes</a>.</p>');
     body+=scorecardsPage(await apiCall<ScorecardPage>(api,request,'/api/buoy/scorecards'),state,fields,scorecardPreview);
     if (url.searchParams.get('intro') === 'hidden') body = body.replace('<div class="below">', '<div class="below"><p class="show-intro"><a data-show-introduction href="/app?intro=show#first-use">Show first-use checklist</a></p>');
   }
   // Success messages are selected from known server outcomes, not arbitrary
   // text supplied in a link to this private page.
-  const messages = new Set(['External holders recorded.','Customer erased. Review the privacy receipt.','Signal dismissed until your chosen UTC instant.','Received survey response recorded.','Recurring contract confirmed.','Scorecard published.','In-app campaign created.','In-app campaign enabled.','In-app campaign disabled.','In-app credential revoked.','Adoption configuration saved.','Customer record saved.','Customer field saved.','Customer field values saved.','Exact identity mapping approved.','Usage source saved.', 'Ingestion credential revoked.', 'Field saved.', 'Field values saved.', 'Agent switch saved.', 'Agent credential revoked.', 'Tier names saved.', 'Outcome tracking started.', 'Segment saved.', 'Account classification saved.', 'Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
+  const messages = new Set(['Renewal pipeline saved.','Renewal configuration saved.','Renewal field saved.','Renewal field values saved.','Renewal outcome prepared.','Renewal outcome approved.','External holders recorded.','Customer erased. Review the privacy receipt.','Signal dismissed until your chosen UTC instant.','Received survey response recorded.','Recurring contract confirmed.','Scorecard published.','In-app campaign created.','In-app campaign enabled.','In-app campaign disabled.','In-app credential revoked.','Adoption configuration saved.','Customer record saved.','Customer field saved.','Customer field values saved.','Exact identity mapping approved.','Usage source saved.', 'Ingestion credential revoked.', 'Field saved.', 'Field values saved.', 'Agent switch saved.', 'Agent credential revoked.', 'Tier names saved.', 'Outcome tracking started.', 'Segment saved.', 'Account classification saved.', 'Team settings saved.', 'Reviewed assignment applied. Handover notes are on each account.', 'Your notification preferences saved.', 'Notification marked read.', 'Mention sent to their inbox.', 'Account created.', 'Account source refresh saved.', 'Proposal prepared and awaiting approval.', 'CSM sentiment recorded.', 'Freshness thresholds saved.', 'Proposal approved. Review the recorded work or decision below.', 'Task completion recorded with evidence.', 'Account deleted.', 'Import undone.', 'Undo request recorded. Check its current state in the journal below.', 'Account owner saved. Open tasks moved to them.', 'Reminder timing saved.', 'Manager saved.', 'Away period and cover saved.']);
   const success = url.searchParams.get('success') ?? '';
   const response = await shell({ title, head, body, style, state, current: account ? '/app' : path, status, error, success: messages.has(success) ? success : undefined, backToAccounts: !!account, importDoor: path === '/app/imports' && state.operator.role === 'owner' });
   return request.method === 'HEAD' ? new Response(null, { status: response.status, headers: response.headers }) : response;

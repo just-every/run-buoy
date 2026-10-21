@@ -1,3 +1,4 @@
+import {generateRenewals} from './buoy/renewals'
 import {recalculateScorecards} from './buoy/scorecards'
 import { scheduledConnections } from './buoy/connectors/sync'
 import { importDoorResponse } from './buoy/imports/door'
@@ -57,6 +58,7 @@ export default withDemo({
   async scheduled(controller, env) {
     const at = new Date(controller.scheduledTime)
     await scheduledConnections(runtimeBindings(env))
+    await generateRenewals(env.DB,at)
     await recalculateScorecards(env.DB,at)
     await scheduledSegments(env.DB, at)
     await runReminders(runtimeBindings(env), at)

@@ -61,7 +61,7 @@ export async function setAway(db: D1Database, actor: Actor, personId: string, in
   auditRecord(db, actor, 'person.away-set', `person:${personId}`, `cover person:${coverId} from ${startsOn} through ${endsOn}`)])
  return {id: awayId, personId, coverId, startsOn, endsOn}
 }
-export const TASK_COLUMNS = `t.id,t.account_id AS accountId,t.proposal_id AS proposalId,t.title,t.due_date AS dueDate,t.owner_id AS ownerId,${HANDLER} AS handlerId,t.priority,t.type,t.completed_at AS completedAt,t.outcome,t.evidence`
+export const TASK_COLUMNS = `t.id,t.renewal_id AS renewalId,t.account_id AS accountId,t.proposal_id AS proposalId,t.title,t.due_date AS dueDate,t.owner_id AS ownerId,${HANDLER} AS handlerId,t.priority,t.type,t.completed_at AS completedAt,t.outcome,t.evidence`
 /** Today in the installation's time zone: the day cover and reminders are judged on. */
 export const taskToday = async (db: D1Database) => localTime((await taskTiming(db)).timeZone).date
 export async function tasksOn(db: D1Database, requested?: string) {

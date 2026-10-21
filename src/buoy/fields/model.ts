@@ -36,34 +36,34 @@ export function fieldValue(d:Definition,value:unknown):unknown {
   default:insist(false,'Calculated values cannot be entered by hand.')
  }
 }
-export function references(defs:Definition[]) {
- return [...BASE_FIELDS,...defs.flatMap(d=>d.type==='currency'?[`custom.${d.key}.amountMinor`,`custom.${d.key}.currency`]:[`custom.${d.key}`])]
+export function references(defs:Definition[],baseFields=BASE_FIELDS) {
+ return [...baseFields,...defs.flatMap(d=>d.type==='currency'?[`custom.${d.key}.amountMinor`,`custom.${d.key}.currency`]:[`custom.${d.key}`])]
 }
-export function ordered(defs:Definition[]) {
+export function ordered(defs:Definition[],baseFields=BASE_FIELDS) {
  const pending=defs.filter(d=>d.type==='formula'),done:Definition[]=[],active=new Set<string>(),visited=new Set<string>()
  const visit=(d:Definition)=>{
   if(visited.has(d.key))return
   insist(!active.has(d.key),'Calculated fields cannot have circular dependencies.');active.add(d.key)
-  try{validateFormula(d.formula!,references(defs))}catch(error){insist(false,error instanceof Error?error.message:'Invalid formula.')} 
+  try{validateFormula(d.formula!,references(defs,baseFields))}catch(error){insist(false,error instanceof Error?error.message:'Invalid formula.')} 
   for(const ref of formulaReferences(d.formula!)){const dep=pending.find(x=>`custom.${x.key}`===ref);if(dep)visit(dep)}
   active.delete(d.key);visited.add(d.key);done.push(d)
  }
  pending.forEach(visit);return done
 }
-export function flatten(a:FieldAccount,values:Record<string,unknown>) {
+export function flatten(a:FieldAccount,values:Record<string,unknown>,baseFields=BASE_FIELDS) {
  const doc=JSON.parse(a.document),flat:Record<string,unknown>={id:a.id,name:a.name}
- for(const key of BASE_FIELDS){const [parent,child]=key.split('.');flat[key]=child?doc[parent]?.[child]??null:doc[parent]??null}
+ for(const key of baseFields){const [parent,child]=key.split('.');flat[key]=child?doc[parent]?.[child]??null:doc[parent]??null}
  for(const [key,value] of Object.entries(values)){
   flat[`custom.${key}`]=value
   if(value&&typeof value==='object'&&!Array.isArray(value))for(const [part,v] of Object.entries(value))flat[`custom.${key}.${part}`]=v
  }
  return flat
 }
-export function evaluate(image:Image) {
- const formulas=ordered(image.definitions)
+export function evaluate(image:Image,baseFields=BASE_FIELDS) {
+ const formulas=ordered(image.definitions,baseFields)
  const results=image.accounts.map(a=>({id:a.id,name:a.name,revision:a.revision,values:Object.fromEntries(image.definitions.filter(d=>d.type!=='formula').map(d=>[d.key,a.manual[d.key]??null])),explanations:{} as Record<string,string>}))
  for(const d of formulas){
-  const portfolio=image.accounts.map((a,i)=>flatten(a,results[i].values))
+  const portfolio=image.accounts.map((a,i)=>flatten(a,results[i].values,baseFields))
   for(let i=0;i<results.length;i++){
    const result=evaluateFormula(d.formula!,portfolio[i],portfolio)
    results[i].values[d.key]=result.value;results[i].explanations[d.key]=result.explanation

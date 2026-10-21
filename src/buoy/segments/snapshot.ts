@@ -1,3 +1,4 @@
+import {RENEWAL_FIELDS_SQL,renewalRuleRecords} from '../renewals/fields'
 import {surveyImageSql,parseSurveyImage} from '../surveys/snapshot'
 import {surveyValues} from '../surveys/model'
 import type {SurveyImage} from '../surveys/types'
@@ -19,6 +20,7 @@ import { DEFAULT_STALENESS } from '../settings'
 import { TIERS, includes, type Segment, type Values } from './rules'
 // One SQL image fences every rule input and the previous membership intervals.
 export const SNAPSHOT = `SELECT json_object(
+ 'renewals',json(( ${RENEWAL_FIELDS_SQL} )),
  'surveys',json((${surveyImageSql()})),
  'revenue',json((${revenueImageSql()})),
  'scorecards',json((SELECT json_group_array(json_object('accountId',account_id,'score',json_extract(document,'$.score'),'band',json_extract(document,'$.band'),'bands',json(json_extract(document,'$.bands')),'configRevision',json_extract(document,'$.configRevision'),'calculatedAt',calculated_at,'versionId',version_id,'selectedSegment',json(json_extract(document,'$.selectedSegment')),'breakdown',json(json_extract(document,'$.breakdown')))) FROM (SELECT * FROM buoy_scorecard_results ORDER BY account_id))),
@@ -39,7 +41,7 @@ export const SNAPSHOT = `SELECT json_object(
  ) AS snapshot`
 interface Row {id:string;document:string;revision:string;createdAt:string}
 interface Classification {accountId:string;tier:string|null;stage:string|null;tierManual:number;stageManual:number}
-export interface Image {surveys:SurveyImage;revenue:RevenueImageRow[];scorecards:ScorecardHealth[];consumers:ConsumerRule[];adoption:AdoptionImage;accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage;people:PeopleImage}
+export interface Image {renewals:FieldImage;surveys:SurveyImage;revenue:RevenueImageRow[];scorecards:ScorecardHealth[];consumers:ConsumerRule[];adoption:AdoptionImage;accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage;people:PeopleImage}
 
 export const fence=(db:D1Database,image:{raw:string;sql:string})=>guard(db,`(${image.sql})=?`,image.raw)
 export const tierNames=(image:Image):string[]=>image.tiers?JSON.parse(image.tiers):TIERS
@@ -59,7 +61,7 @@ export function accountValues(image:Image,on:string,aggregate=true) {
   if(a.billing)values['billing.balanceMinor']=a.billing.totalMinor-a.billing.creditsMinor-a.billing.allocatedMinor
   for(const e of h.evidence){values[`health.${e.kind}Missing`]=Number(e.missing);values[`health.${e.kind}Stale`]=Number(e.stale)}
   if(sentiment)for(const key of ['rating','reason','recordedBy','recordedAt','expiresOn'] as const)values[`sentiment.${key}`]=sentiment[key]
-  const related={contact:people.filter(person=>person.kind==='contact'&&person.accountIds.includes(a.id)).map(person=>({...personRuleValues(image.people.definitions,person),...adoption.get(`person:${person.id}`)})),user:people.filter(person=>person.kind==='user'&&person.accountIds.includes(a.id)).map(person=>({...personRuleValues(image.people.definitions,person),...adoption.get(`person:${person.id}`)}))}
+  const related={renewal:renewalRuleRecords(image.renewals,a.id),contact:people.filter(person=>person.kind==='contact'&&person.accountIds.includes(a.id)).map(person=>({...personRuleValues(image.people.definitions,person),...adoption.get(`person:${person.id}`)})),user:people.filter(person=>person.kind==='user'&&person.accountIds.includes(a.id)).map(person=>({...personRuleValues(image.people.definitions,person),...adoption.get(`person:${person.id}`)}))}
   return {account:{...a,revision:row.revision},values,people:related,classification,assessment:h}
  })
 }

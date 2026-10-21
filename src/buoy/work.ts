@@ -1,3 +1,4 @@
+import {RENEWAL_OUTCOMES,linkedRenewal,renewalPreparation,renewalApproval} from './renewals/outcomes'
 import {hasAggregateHealth} from './adoption/consumers'
 import {snapshot,fence} from './segments/snapshot'
 import {aggregateProof} from './adoption/proof'
@@ -20,11 +21,12 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
   // the account's CSM at approval, else the approving person owns the task.
   insist(payload.priority === undefined || PRIORITIES.includes(String(payload.priority)), `Priority is one of ${PRIORITIES.join(', ')}.`)
   insist(payload.type === undefined || TYPES.includes(String(payload.type)), `Task type is one of ${TYPES.join(', ')}.`)
+  if(payload.renewalId!==undefined)await linkedRenewal(db,current.id,payload.renewalId)
   normalized = {title: text(payload.title, 'Playbook action', 500), dueDate: date(payload.dueDate, 'Due date'), priority: String(payload.priority ?? 'medium'), type: String(payload.type ?? 'risk'),
-   ...(payload.ownerId === undefined || payload.ownerId === '' ? {} : {ownerId: text(payload.ownerId, 'Task owner', 100)})}
+   ...(payload.ownerId === undefined || payload.ownerId === '' ? {} : {ownerId: text(payload.ownerId, 'Task owner', 100)}),...(payload.renewalId===undefined?{}:{renewalId:text(payload.renewalId,'Renewal opportunity',100)})}
  } else {
-  insist(['renewed','churned','deferred'].includes(String(payload.outcome)), 'Choose a renewal outcome.')
-  normalized = {outcome: String(payload.outcome), reason: text(payload.reason, 'Decision reason'), evidence: text(payload.evidence, 'Decision evidence')}
+  insist(RENEWAL_OUTCOMES.includes(String(payload.outcome)), 'Choose a renewal outcome.')
+  normalized = {outcome: String(payload.outcome), reason: text(payload.reason, 'Decision reason'), evidence: text(payload.evidence, 'Decision evidence'),...await renewalPreparation(db,current.id,payload)}
  }
  const image=kind==='playbook'&&await hasAggregateHealth(db)?await snapshot(db):undefined
  const adoptionProof=image?await aggregateProof(image.value,current.id):undefined
@@ -48,14 +50,16 @@ export async function approve(db: D1Database, actor: Actor, proposalId: string) 
  if(payload.segmentEntry)insist(await stmt(db,'SELECT 1 FROM buoy_segment_entries e JOIN buoy_segments s ON s.id=e.segment_id WHERE e.id=? AND e.proposal_id=? AND e.exited_at IS NULL AND s.revision=?',payload.segmentEntry,proposalId,payload.segmentRevision).first(),'Segment entry or configuration changed. Review a new entry.',409)
  const image=payload.adoptionProof?await snapshot(db):undefined
  if(image)insist(payload.adoptionProof===await aggregateProof(image.value,current.id),'Aggregate adoption evidence changed since preparation. Prepare a new proposal.',409)
- const at = now(), actorLabel = `person:${actor.id}:${actor.displayName}`, statements = [
+ const linkedWrites=proposal.kind==='renewal'?await renewalApproval(db,actor,current.id,payload):[]
+ if(proposal.kind==='playbook'&&payload.renewalId)await linkedRenewal(db,current.id,payload.renewalId)
+ const at = now(), actorLabel = `person:${actor.id}:${actor.displayName}`, statements = [...linkedWrites,
   ...(image?[fence(db,image)]:[]),
   guard(db, "EXISTS(SELECT 1 FROM buoy_proposals p JOIN buoy_accounts a ON a.id=p.account_id WHERE p.id=? AND p.status='prepared' AND a.revision=p.account_revision)", proposalId),
   stmt(db, "UPDATE buoy_proposals SET status='approved',approved_by=?,approved_at=? WHERE id=?", actorLabel, at, proposalId)]
  if (payload.segmentEntry) statements.push(guard(db,'EXISTS(SELECT 1 FROM buoy_segment_entries e JOIN buoy_segments s ON s.id=e.segment_id WHERE e.id=? AND e.proposal_id=? AND e.exited_at IS NULL AND s.revision=?)',payload.segmentEntry,proposalId,payload.segmentRevision))
  if (proposal.kind === 'playbook') statements.push(
   ...(payload.ownerId ? [guard(db, "EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')", payload.ownerId)] : []),
-  stmt(db, 'INSERT INTO buoy_tasks(id,account_id,proposal_id,title,due_date,owner_id,priority,type) VALUES(?,?,?,?,?,COALESCE(?,(SELECT owner_id FROM buoy_account_owners WHERE account_id=?),?),?,?)', id(), current.id, proposalId, payload.title, payload.dueDate, payload.ownerId ?? null, current.id, actor.id, payload.priority ?? 'medium', payload.type ?? 'risk'))
+  stmt(db, 'INSERT INTO buoy_tasks(id,account_id,proposal_id,title,due_date,owner_id,priority,type,renewal_id) VALUES(?,?,?,?,?,COALESCE(?,(SELECT owner_id FROM buoy_account_owners WHERE account_id=?),?),?,?,?)', id(), current.id, proposalId, payload.title, payload.dueDate, payload.ownerId ?? null, current.id, actor.id, payload.priority ?? 'medium', payload.type ?? 'risk',payload.renewalId??null))
  else statements.push(stmt(db, 'INSERT INTO buoy_decisions(id,account_id,proposal_id,outcome,reason,evidence,renewal_date,recorded_by,recorded_at) VALUES(?,?,?,?,?,?,?,?,?)', id(), current.id, proposalId, payload.outcome, payload.reason, payload.evidence, current.renewalDate, actorLabel, at))
  statements.push(stmt(db, 'UPDATE buoy_accounts SET revision=? WHERE id=?', id(), current.id))
  await commit(db, actor, current.id, `${proposal.kind}.approved`, statements, true)

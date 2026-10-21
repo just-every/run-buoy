@@ -1,6 +1,7 @@
 import {layerOneDependency} from '../scorecards/config'
 import {adoptionRuleFields} from '../adoption/segment-inputs'
 import {ruleFields} from '../fields/model'
+import {renewalRuleFields} from '../renewals/fields'
 import {relatedPersonFields} from '../people/model'
 import { HEALTH_INTERPRETATION } from '../health'
 import { observeOutcomes } from '../outcomes/observe'
@@ -15,7 +16,7 @@ import {aggregateProof} from '../adoption/proof'
 
 function fields(image:Image){
  const adoption=adoptionRuleFields(image.adoption)
- return {...FIELDS,...ruleFields(image.custom.definitions),...relatedPersonFields(image.people.definitions),...adoption,
+ return {...FIELDS,...renewalRuleFields(image.renewals),...ruleFields(image.custom.definitions),...relatedPersonFields(image.people.definitions),...adoption,
   ...Object.fromEntries((['contact','user'] as const).flatMap(kind=>Object.entries(adoption).map(([field,type])=>[`people.${kind}.${field}`,type])))}
 }
 

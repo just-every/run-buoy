@@ -1,3 +1,5 @@
+import {renewalsApi,generateRenewals} from './renewals'
+import {refreshRenewalFields} from './renewals/fields'
 import {privacyApi} from './privacy'
 import {surveyState,recordResponse} from './surveys'
 import {revenueState,saveContract} from './revenue'
@@ -59,13 +61,14 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
   finally { await finishRequest(c.env.DB, actor, status) }
   return
  }
+ await generateRenewals(c.env.DB)
  await refreshPeople(c.env.DB,actor)
  await refreshFields(c.env.DB,actor)
  if(!c.req.path.endsWith('/scorecards/preview'))await recalculateScorecards(c.env.DB)
  await reconcile(c.env.DB, actor)
  await observeOutcomes(c.env.DB,actor)
  await next()
- if(c.req.method!=='GET'&&c.res.status<400){await refreshPeople(c.env.DB,actor);await refreshFields(c.env.DB,actor);if(!c.req.path.endsWith('/scorecards/preview'))await recalculateScorecards(c.env.DB);await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
+ if(c.req.method!=='GET'&&c.res.status<400){await generateRenewals(c.env.DB);await refreshRenewalFields(c.env.DB,actor);await refreshPeople(c.env.DB,actor);await refreshFields(c.env.DB,actor);if(!c.req.path.endsWith('/scorecards/preview'))await recalculateScorecards(c.env.DB);await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
  if (c.req.method !== 'GET' && c.res.status < 400) {await recordAdoptionAlerts(c.env.DB);await flushNotifications(c.env)}
 })
 buoyApi.onError((error, c) => {
@@ -80,6 +83,7 @@ buoyApi.onError((error, c) => {
 })
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',privacyApi)
+buoyApi.route('/',renewalsApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
