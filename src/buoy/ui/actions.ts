@@ -1,3 +1,4 @@
+import type {WorkspaceListPreview,WorkspaceBulkPreview} from './workspace';
 import type {RenewalPreview} from './renewals';
 import {surveyForm} from './surveys';
 import {contractForm} from './revenue';
@@ -33,7 +34,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { renewalFieldPreview?:RenewalPreview; privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { workspaceListPreview?:WorkspaceListPreview; workspaceBulkPreview?:WorkspaceBulkPreview; renewalFieldPreview?:RenewalPreview; privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -51,6 +52,21 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     return {redirect:'/app#health-scorecard',message:'Scorecard published.'};
   }
   if(path==='/app'&&action==='scorecard-history-preview')return {scorecardPreview:await send<ScorecardPreview>('/api/buoy/scorecards/preview',{versionId:fields.versionId,...(fields.historyId?{historyId:fields.historyId}:{})})};
+  if(path==='/app/workspace'){
+    const parse=(text:string)=>{try{return JSON.parse(text)}catch{throw new ApiError('Enter valid JSON for the workspace configuration.')}};
+    if(action==='workspace-view'){
+      const view={name:fields.name,kind:fields.kind,shared:fields.shared==='on',rules:parse(fields.rules),columns:fields.columns.split(/\r?\n/).map(s=>s.trim()).filter(Boolean),sort:{field:fields.sortField,direction:fields.direction}};
+      if(fields.intent==='preview')return {workspaceListPreview:await send<WorkspaceListPreview>('/api/buoy/workspace/lists/preview',view)};
+      if(fields.intent!=='save')throw new ApiError('Choose preview or save.');
+      const saved=await send<{id:string}>('/api/buoy/workspace/views',{view,...(fields.viewId?{id:fields.viewId,revision:fields.revision}:{})});return {redirect:path+'?view='+encodeURIComponent(saved.id),message:'View saved.',saved:'workspace-view'};
+    }
+    if(action==='workspace-view-delete'){await send('/api/buoy/workspace/views/'+encodeURIComponent(fields.viewId),{revision:fields.revision},'DELETE');return {redirect:path,message:'Saved view deleted.'}}
+    if(action==='workspace-bulk-preview'){
+      const input={operationKey:fields.operationKey,kind:fields.kind,recordIds:Object.keys(fields).filter(k=>k.startsWith('record:')&&fields[k]==='on').map(k=>k.slice(7)),action:fields.bulkAction,...(fields.bulkAction==='assign'?{ownerId:fields.ownerId,note:fields.note}:fields.bulkAction==='enroll'?{title:fields.title,dueDate:fields.dueDate}:fields.bulkAction==='segment'?{segmentId:fields.segmentId}:{})};return {workspaceBulkPreview:await send<WorkspaceBulkPreview>('/api/buoy/workspace/bulk/preview',input)};
+    }
+    if(action==='workspace-bulk-apply'){await send('/api/buoy/workspace/bulk/apply',{...parse(fields.input),fingerprint:fields.fingerprint});return {redirect:path,message:'Reviewed bulk change applied.',saved:'workspace-list'}}
+    throw new ApiError('This workspace action is unavailable.');
+  }
   if(path==='/app/renewals'){
     const record='/api/buoy/renewals/'+encodeURIComponent(fields.renewalId??'');
     const target=path+(fields.renewalId?'?renewal='+encodeURIComponent(fields.renewalId):'');
