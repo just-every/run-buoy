@@ -458,8 +458,6 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   // journey below uses its own installation to isolate its published scorecard.
   for(const [tail,method,body] of [['holders','PUT',{revision:'stale',holders:[]}],['export','POST',{}],['erase','POST',{}]])assert.equal((await call('/customer-people/synthetic-buoy-260/privacy/'+tail,method,body)).status,404)
   await t.test('USAGE-001 ACCOUNT-004 SEGMENT-001 complete contact and user carrier',async()=>customerPeopleJourney({call,json,request,cookie,member,account}))
-  await t.test('USAGE-001 receiver credentials, relay-only intake and reviewed user/account attribution',async()=>usageJourney({call,json,request,cookie,member,signIn,dispatch:worker.dispatch,origin:worker.origin}))
-  await t.test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>teamJourney({call,json,request,cookie,member,signIn,account}))
   await t.test('SEGMENT-001 rules, classification, intervals, proposals, reports and erasure',async()=>segmentJourney({call,json,request,cookie,member,account,scheduled}))
   await t.test('PLAY-004 frozen cohorts, 40 playbooks, outcomes, observed times and comparison',async()=>outcomeJourney({call,json,request,cookie,member,account,scheduled}))
   await t.test('ACCOUNT-004 typed fields, formulas, preview, history and segments',async()=>fieldJourney({call,json,request,cookie,member,account,signIn}))
@@ -518,6 +516,9 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   })
   await t.test('INAPP-001 authenticated targeting, caps and receipt custody',async()=>{await inappJourney({...worker,request,dispatch:async req=>{seen.push([req.method,new URL(req.url).pathname]);return worker.dispatch(req)}})})
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
+   // Full usage-volume and team journeys run unchanged in isolated installations.
+   // Keep the central write-door inventory and denied ordinary-member boundary here.
+   for(const [method,path]of [['POST','/usage/sources'],['PUT','/usage/sources/synthetic-buoy-1500'],['POST','/usage/sources/synthetic-buoy-1500/credentials'],['DELETE','/usage/credentials/synthetic-buoy-1501'],['POST','/usage/mappings/preview'],['POST','/usage/mappings'],['PUT','/team/settings'],['POST','/team/preview'],['POST','/team/apply']])assert.equal((await call(path,method,{}, {cookie:member})).status,403)
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))
    for(const route of routes){
@@ -557,3 +558,19 @@ test('RENEW-001 native renewal pipeline and inherited field carrier',renewalJour
 test('ACCOUNT-003 current workspace, live views and reviewed bulk operations',workspaceJourney)
 
 test('ACCOUNT-001 complete native hierarchy and product relationships',hierarchyJourney)
+
+// The same volume/business assertions use their own public installation so their
+// retained 100k observations and 300 accounts do not multiply unrelated tests.
+async function isolatedJourney(run){
+ const app=await startWorker(),cookie=app.cookie;
+ const call=(path,method='GET',body,extra={})=>app.request('/api/buoy'+path,{method,body,cookie,...extra});
+ const json=async(response,status=200)=>{assert.equal(response.status,status,await response.clone().text());return response.json()};
+ try{
+  await json(await app.request('/auth/invite',{method:'POST',cookie,body:{email:'member@example.test',displayName:'CS colleague',role:'member'}}),202);
+  const member=await app.signIn('member@example.test');await json(await call('/accounts','POST',account()),201);
+  await run({call,json,request:app.request,cookie,member,signIn:app.signIn,dispatch:app.dispatch,origin:app.origin,account});
+  assert.deepEqual([...new Set(app.outbound)],['https://api.resend.com/emails'],'Isolated positive journeys retain the same only-internal-mail outbound boundary');
+ }finally{await app.close()}
+}
+test('USAGE-001 receiver credentials, relay-only intake and reviewed user/account attribution',async()=>isolatedJourney(usageJourney))
+test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>isolatedJourney(teamJourney))

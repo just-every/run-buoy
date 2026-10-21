@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process'
 const suites={
  http:['test:site','test:flows:core','test:governance','test:connections','test:email-link'],
  records:['test:records'],
+ volume:['test:volume'],
  'records-browser':['test:customer-people-browser'],
  adoption:['test:adoption'],
  health:['test:health'],
