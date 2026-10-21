@@ -25,8 +25,8 @@ export async function generateRenewals(db:D1Database,at=new Date()){
  const statements:D1PreparedStatement[]=[]
  for(const row of rows){
   const account=JSON.parse(row.document) as Account,contract=JSON.parse(row.contract) as ConfirmedContract,opensOn=new Date(Date.parse(contract.contractEnd)-settings.leadDays*86400000).toISOString().slice(0,10)
-  if(on<opensOn)continue
   const periodKey=JSON.stringify([contract.contractStart,contract.contractEnd]),prior=existing.find(r=>r.accountId===row.id&&r.periodKey===periodKey),previous=prior?JSON.parse(prior.document) as Omit<Renewal,'id'|'revision'|'createdAt'>:null
+  if(!prior&&on<opensOn)continue
   const sourceData={name:account.name+' renewal',accountId:row.id,renewalDate:contract.contractEnd,noticeDeadline:account.renewalDate===contract.contractEnd?noticeDate(account):null,expectedArrMinor:annualTotals(contract).arrMinor,currency:contract.currency,contractStart:contract.contractStart,sourceVersionId:row.versionId,sourceReference:contract.source.reference}
   if(previous?.outcome)continue
   const riskReasons=sourceData.noticeDeadline===null?['Confirmed account notice terms do not match this contract end date.']:[]
