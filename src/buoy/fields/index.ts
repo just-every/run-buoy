@@ -2,9 +2,9 @@ import { authority, guard, id, insist, now, object, requirePerson, stmt, text, t
 import { definition, evaluate, fieldValue, ordered, type Definition, type Image } from './model'
 export const FIELD_SNAPSHOT=`SELECT json_object(
  'links',json((SELECT json_group_array(json_object('accountId',account_id,'parentId',parent_id,'kind',kind)) FROM(SELECT * FROM buoy_account_hierarchy ORDER BY account_id))),
- 'users',json((SELECT json_group_array(json_object('personId',m.person_id,'accountId',m.account_id)) FROM buoy_customer_memberships m JOIN buoy_customer_people p ON p.id=m.person_id WHERE p.kind='user' ORDER BY m.person_id,m.account_id)),
+ 'users',json((SELECT json_group_array(json_object('personId',m.person_id,'accountId',m.account_id)) FROM(SELECT m.person_id,m.account_id FROM buoy_customer_memberships m JOIN buoy_customer_people p ON p.id=m.person_id WHERE p.kind='user' ORDER BY m.person_id,m.account_id) m)),
  'definitions',json((SELECT json_group_array(json(document)) FROM (SELECT document FROM buoy_fields ORDER BY key))),
- 'accounts',json((SELECT json_group_array(json_object('id',a.id,'name',json_extract(a.document,'$.name'),'revision',a.revision,'document',a.document,'manual',json(COALESCE(v.document,'{}')),'previous',json(COALESCE(r.document,'{}')))) FROM buoy_accounts a LEFT JOIN buoy_field_values v ON v.account_id=a.id LEFT JOIN buoy_field_results r ON r.account_id=a.id ORDER BY a.id))
+ 'accounts',json((SELECT json_group_array(json_object('id',a.id,'name',json_extract(a.document,'$.name'),'revision',a.revision,'document',a.document,'manual',json(COALESCE(v.document,'{}')),'previous',json(COALESCE(r.document,'{}')))) FROM(SELECT * FROM buoy_accounts ORDER BY id) a LEFT JOIN buoy_field_values v ON v.account_id=a.id LEFT JOIN buoy_field_results r ON r.account_id=a.id ))
  ) AS snapshot`
 export async function image(db:D1Database){const row=await db.prepare(FIELD_SNAPSHOT).first<{snapshot:string}>();insist(row,'Custom fields unavailable.',503);return {raw:row.snapshot,value:JSON.parse(row.snapshot) as Image}}
 export function changes(db:D1Database,actor:Actor,data:Image,source:string,sourceAccountId:string|null=null){

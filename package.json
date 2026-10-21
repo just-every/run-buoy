@@ -53,8 +53,8 @@
     "test:adoption-consumers": "node tests/adoption-consumers.mjs account",
     "test:adoption-aggregates": "node tests/adoption-consumers.mjs segment",
     "test:health": "node tests/adoption-consumers.mjs health",
-    "test:flows:core": "node --test --test-concurrency=1 --test-name-pattern='^(Buoy public|HTTP-001 IMPORT-001)' tests/flows.test.mjs",
-    "test:records": "node --test --test-concurrency=1 --test-name-pattern='^(ACCOUNT-005|ERASE-002|RENEW-001|ACCOUNT-003|ACCOUNT-001)' tests/flows.test.mjs"
+    "test:flows:core": "node --test --test-concurrency=1 --test-name-pattern=\"^(Buoy public|HTTP-001 IMPORT-001)\" tests/flows.test.mjs",
+    "test:records": "node --test --test-concurrency=1 --test-name-pattern=\"^(ACCOUNT-005|ERASE-002|RENEW-001|ACCOUNT-003|ACCOUNT-001)\" tests/flows.test.mjs"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.41",
