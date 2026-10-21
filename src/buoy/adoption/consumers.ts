@@ -1,7 +1,7 @@
 import { auditRecord } from '../audit-records'
 import { authority, date, guard, id, insist, now, requirePerson, stmt, text, type Actor } from '../core'
 import { ATTRIBUTED, MAPPED_JOIN } from '../usage/mappings'
-import { adoptionRuleFields, measuredSnapshot } from './segment-inputs'
+import { adoptionRuleFields, adoptionRuleValues, measuredSnapshot } from './segment-inputs'
 import { CONSUMER_OPERATORS, evaluateConsumers, type ConsumerAdoptionImage, type ConsumerRule } from './consumers-model'
 
 export const CONSUMER_SNAPSHOT=`SELECT json_group_array(json_patch(json(document),json_object('id',id,'revision',revision))) FROM (SELECT * FROM buoy_adoption_consumers ORDER BY created_at,id)`
@@ -29,13 +29,15 @@ export async function consumerImage(db:D1Database,on?:string){
  insist(row,'Adoption measures unavailable.',503)
  return {raw:row.snapshot,value:JSON.parse(row.snapshot) as ConsumerImage,sql}
 }
-export function measuredConsumers(image:ConsumerImage){
- return new Map(image.adoption.subjects.filter(subject=>subject.scope==='account').map(subject=>[subject.id,evaluateConsumers(image.rules,subject.id,image.adoption)]))
+export function measuredConsumers(image:ConsumerImage,accountIds?:Set<string>){
+ const values=adoptionRuleValues(image.adoption)
+ return new Map(image.adoption.subjects.filter(subject=>subject.scope==='account'&&(!accountIds||accountIds.has(subject.id))).map(subject=>[subject.id,evaluateConsumers(image.rules,subject.id,image.adoption,values)]))
 }
 export async function consumerMeasurements(db:D1Database,on?:string){
- const enabled=await db.prepare("SELECT 1 AS enabled FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 LIMIT 1").first()
+ const enabled=await db.prepare("SELECT 1 AS enabled FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.health')=1 LIMIT 1").first()
  if(!enabled)return new Map<string,ReturnType<typeof evaluateConsumers>>()
- return measuredConsumers((await consumerImage(db,on)).value)
+ const image=(await consumerImage(db,on)).value
+ return measuredConsumers({...image,rules:image.rules.filter(rule=>rule.health)})
 }
 export async function consumerState(db:D1Database,actor:Actor){
  insist(actor.kind==='person','Adoption measures require a staff session.',403)

@@ -11,13 +11,15 @@ function explanation(measure:ConsumerEvaluation){
 /** No outbound delivery: inbox email remains pending for the existing preferences
  * and mail dispatcher. A matching episode belongs to each rule/account/owner. */
 export async function recordAdoptionAlerts(db:D1Database){
- const enabled=await db.prepare("SELECT 1 AS enabled FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.alert')=1 LIMIT 1").first()
+ const activeOwner="EXISTS(SELECT 1 FROM buoy_account_owners a JOIN oa_operators o ON o.id=a.owner_id AND o.status='active')"
+ const alertRule="EXISTS(SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.alert')=1)"
+ const enabled=await db.prepare(`SELECT 1 AS enabled WHERE ${activeOwner} AND ${alertRule}`).first()
  if(!enabled){
-  await db.prepare("UPDATE buoy_adoption_alert_state SET active=0 WHERE active=1 AND NOT EXISTS(SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.alert')=1)").run()
+  await db.prepare(`UPDATE buoy_adoption_alert_state SET active=0 WHERE active=1 AND (NOT ${activeOwner} OR NOT ${alertRule})`).run()
   return
  }
  const snapshot=await consumerImage(db),owners=new Map(snapshot.value.owners.map(owner=>[owner.accountId,owner.personId])),episode=id(),at=now()
- const measures=[...measuredConsumers(snapshot.value)].flatMap(([accountId,evaluations])=>{
+ const measures=[...measuredConsumers({...snapshot.value,rules:snapshot.value.rules.filter(rule=>rule.alert)},new Set(owners.keys()))].flatMap(([accountId,evaluations])=>{
   const personId=owners.get(accountId)
   return personId?evaluations.filter(measure=>measure.alert).map(measure=>({ruleId:measure.ruleId,accountId,personId,matched:measure.matched,missing:measure.missing,title:measure.name,body:explanation(measure)})):[]
  }),payload=JSON.stringify(measures)

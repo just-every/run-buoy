@@ -42,7 +42,7 @@ export function adoptionRuleValues(image:AdoptionImage){
 
 // Keep unrelated product doors cheap before an adoption rule is configured.
 export const ADOPTION_SNAPSHOT=`SELECT CASE WHEN EXISTS (
- SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1
+ SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.health')=1
  UNION ALL SELECT 1 FROM buoy_segments s,json_each(s.document,'$.rules.conditions') c
  WHERE json_extract(c.value,'$.field') LIKE 'adoption.%' OR json_extract(c.value,'$.field') LIKE 'people.%.adoption.%'
  ) THEN (${measuredSnapshot}) ELSE json_object('on',date('now'),'subjects',json('[]'),'counts',json('[]'),'used',json('[]'),'first',json('[]'),

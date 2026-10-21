@@ -25,8 +25,9 @@ export function consumerEvidence(measure:ConsumerEvaluation){
 }
 const comparisons={lt:(a:number,b:number)=>a<b,lte:(a:number,b:number)=>a<=b,eq:(a:number,b:number)=>a===b,gte:(a:number,b:number)=>a>=b,gt:(a:number,b:number)=>a>b}
 const membership=(value:string)=>JSON.parse(value) as string[]
-export function evaluateConsumers(rules:ConsumerRule[],accountId:string,image:ConsumerAdoptionImage):ConsumerEvaluation[]{
- const values=adoptionRuleValues(image)
+export function evaluateConsumers(rules:ConsumerRule[],accountId:string,image:ConsumerAdoptionImage,values?:ReturnType<typeof adoptionRuleValues>):ConsumerEvaluation[]{
+ if(!rules.some(rule=>rule.enabled))return []
+ values??=adoptionRuleValues(image)
  return rules.filter(rule=>rule.enabled).map(rule=>{
   const subjects=image.subjects.filter(subject=>rule.scope==='account'
    ?subject.scope==='account'&&subject.id===accountId
