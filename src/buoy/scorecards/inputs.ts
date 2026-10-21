@@ -1,7 +1,8 @@
+import {parseSurveyImage} from '../surveys/snapshot'
 import {parseRevenueImage} from '../revenue/snapshot'
 import {consumerImage} from '../adoption/consumers-image'
 import {adoptionRuleFields,adoptionRuleValues} from '../adoption/segment-inputs'
-import {evaluate,ruleFields} from '../fields/model'
+import {evaluate} from '../fields/model'
 import {insist} from '../core'
 import {definitions,evaluated,snapshot} from '../segments/snapshot'
 import {includes} from '../segments/rules'
@@ -20,15 +21,18 @@ export async function inputImage(db:D1Database,at:Date){
  insist(sourceRow,'Scorecard source evidence unavailable.',503)
  const sourceImage={sql:SOURCES,raw:sourceRow.snapshot},customSources=JSON.parse(sourceRow.snapshot) as CustomSource[]
  const image={...segmentImage.value,adoption:numericImage.value.adoption},segments=definitions(image),adoption=adoptionRuleValues(image.adoption),computed=evaluate(image.custom)
+ const surveys=parseSurveyImage(JSON.stringify(image.surveys),on)
  const revenues=parseRevenueImage(JSON.stringify(image.revenue),on)
  const fields:ScorecardField[]=[
   ...['arrMinor','mrrMinor','seats'].map(key=>({key:`revenue.${key}`,name:`Confirmed recurring ${key}`,kind:'billing' as const,unit:key==='seats'?'purchased units':'native currency minor units'})),
   ...['totalMinor','creditsMinor','allocatedMinor','balanceMinor'].map(key=>({key:`billing.${key}`,name:`Recorded billing ${key} (minor currency units)`,kind:'billing' as const,unit:'minor currency units'})),
   ...['openTickets','urgentTickets'].map(key=>({key:`support.${key}`,name:`Recorded support ${key}`,kind:'support' as const,unit:'tickets'})),
-  ...Object.entries(ruleFields(image.custom.definitions)).filter(([,type])=>type==='number').map(([key])=>{
-   const d=image.custom.definitions.find(d=>key===`custom.${d.key}`||key===`custom.${d.key}.amountMinor`)!
-   return {key,name:d.label,kind:d.type==='formula'?'calculated' as const:'custom' as const,...(d.type==='currency'?{unit:'minor currency units'}:{})}
-  }),
+  ...image.custom.definitions.flatMap(d=>d.type==='currency'?[
+   {key:`custom.${d.key}.amountMinor`,name:d.label+' amount',kind:'custom' as const,valueType:'number' as const,unit:'minor currency units'},
+   {key:`custom.${d.key}.currency`,name:d.label+' currency',kind:'custom' as const,valueType:'text' as const}]:[
+   {key:`custom.${d.key}`,name:d.label,kind:d.type==='formula'?'calculated' as const:'custom' as const,valueType:(['number','formula'].includes(d.type)?'number':['boolean','multi-select','date'].includes(d.type)?d.type:'text') as ScorecardField['valueType']}
+  ]),
+  ...['nps','csat','npsResponses','csatResponses'].map(key=>({key:`survey.${key}`,name:`Recorded survey ${key}`,kind:'survey' as const,unit:key==='nps'?'−100 to 100':key==='csat'?'1 to 5':'respondents'})),
   ...Object.keys(adoptionRuleFields(image.adoption)).map(key=>({key,name:`Recorded ${key}`,kind:'adoption' as const})),
   {key:'sentiment.score',name:'Current CSM sentiment (red 0, amber 50, green 100)',kind:'sentiment',unit:'0–100 judgment'}
  ]
@@ -38,7 +42,10 @@ export async function inputImage(db:D1Database,at:Date){
   for(const field of fields){
    let raw:unknown=field.kind==='adoption'?adoption.get(`account:${account.account.id}`)?.[field.key]:account.values[field.key]
    let evidence:SourceEvidence[]=[]
-   if(field.key.startsWith('revenue.')){
+   if(field.kind==='survey'){
+    const survey=surveys.find(a=>a.accountId===account.account.id)!,assessment=survey.assessments[field.key.startsWith('survey.nps')?'nps':'csat']
+    evidence=[{kind:'survey',label:'Staff-recorded '+assessment.kind.toUpperCase()+' responses',freshness:assessment.freshness,observedAt:assessment.latestDatum?.observedAt??null,reference:assessment.latestDatum?.reference??null,details:{respondentCount:assessment.respondentCount,responses:assessment.responses,windowDays:90}}]
+   }else if(field.key.startsWith('revenue.')){
     const row=revenues.find(r=>r.accountId===account.account.id)!,revenue=row.revenue
     evidence=[{kind:'recurring-contract',label:'Person-confirmed recurring contract',freshness:revenue.freshness,observedAt:revenue.confirmedOn,reference:revenue.reference,details:{sourceKind:revenue.sourceKind,currency:revenue.currency,status:revenue.status,versionId:row.versionId,contractRevision:row.contractRevision,recordedBy:row.recordedBy,recordedAt:row.recordedAt,contract:row.contract}}]
    }else if(field.kind==='billing'||field.kind==='support'){
@@ -55,9 +62,11 @@ export async function inputImage(db:D1Database,at:Date){
     evidence=[{kind:'sentiment',label:'Recorded CSM judgment',freshness:!sentiment?'missing':expired?'stale':'current',observedAt:sentiment?.recordedAt??null,reference:null,details:sentiment?{rating:sentiment.rating,expiresOn:sentiment.expiresOn,recordedBy:sentiment.recordedBy,reason:sentiment.reason,scale:{red:0,amber:50,green:100}}:null}]
    }else{
     const key=field.key.split('.')[1],definition=image.custom.definitions.find(d=>d.key===key)!,source=customSources.find(s=>s.accountId===account.account.id&&s.key===key)
+    const current=computed.find(a=>a.id===account.account.id)?.values[key]
+    raw=definition.type==='currency'&&current&&typeof current==='object'?(current as Record<string,unknown>)[field.key.endsWith('.currency')?'currency':'amountMinor']:current
     evidence=[{kind:field.kind,label:definition.label,freshness:raw===null||raw===undefined?'missing':'untracked',observedAt:source?.recordedAt??null,reference:source?.source??null,details:{definition,explanation:computed.find(a=>a.id===account.account.id)?.explanations[key]??null,...(definition.type==='currency'?{currency:account.values[`custom.${key}.currency`]??null}:{})}}]
    }
-   values[field.key]=typeof raw==='number'&&Number.isFinite(raw)?raw:null;sources[field.kind==='adoption'?'adoption':field.key]=evidence
+   values[field.key]=typeof raw==='number'&&Number.isFinite(raw)||typeof raw==='string'||typeof raw==='boolean'||Array.isArray(raw)&&raw.every(v=>typeof v==='string')?raw as RetainedInputs['values'][string]:null;sources[field.kind==='adoption'?'adoption':field.key]=evidence
   }
   const inputs:RetainedInputs={values,sources,fields,segments:segments.filter(s=>!layerOneDependency(s,segments)&&includes(s,account.account.id,account.values,account.people)).map(s=>({id:s.id,revision:s.revision,name:s.name})),measuredOn:on}
   return {accountId:account.account.id,accountRevision:account.account.revision,inputs}

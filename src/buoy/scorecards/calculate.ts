@@ -1,4 +1,5 @@
 import type {Breakdown,RetainedInputs,ScorecardConfig,ScorecardResult} from './types'
+import {categoryKey} from './categories'
 // Scaling before summing keeps all valid finite weights and bounds usable,
 // including inputs whose direct difference or sum would overflow.
 function linear(value:number,min:number,max:number){
@@ -10,9 +11,11 @@ function linear(value:number,min:number,max:number){
 export function calculate(config:ScorecardConfig,inputs:RetainedInputs,identity:Pick<ScorecardResult,'accountId'|'accountRevision'|'configRevision'|'versionId'|'calculatedAt'>):ScorecardResult {
  const override=config.segments.find(s=>inputs.segments.some(member=>member.id===s.segmentId)),selectedSegment=override?inputs.segments.find(s=>s.id===override.segmentId)!:null
  const breakdown=config.measures.map(measure=>{
-  const raw=inputs.values[measure.field],value=typeof raw==='number'&&Number.isFinite(raw)?raw:null,weight=override?.weights[measure.key]??measure.weight
+  const raw=inputs.values[measure.field]??null,key=categoryKey(raw)
+  const mapped=measure.categoryValues===undefined?raw:key!==null&&Object.hasOwn(measure.categoryValues,key)?measure.categoryValues[key]:null
+  const value=typeof mapped==='number'&&Number.isFinite(mapped)?mapped:null,weight=override?.weights[measure.key]??measure.weight
   const normalized=value===null?null:linear(value,measure.min,measure.max),score=normalized===null?null:measure.direction==='lower'?100-normalized:normalized
-  return {...measure,value,score,effectiveWeight:weight,included:value!==null,missingTreatment:value===null?measure.missing:'present' as const,sources:inputs.sources[measure.field]??inputs.sources[measure.field.split('.')[0]]??[]}
+  return {...measure,rawValue:raw,value,score,effectiveWeight:weight,included:value!==null,missingTreatment:value===null?measure.missing:'present' as const,sources:inputs.sources[measure.field]??inputs.sources[measure.field.split('.')[0]]??[]}
  })
  return {...identity,inputs,selectedSegment,breakdown,bands:{...config.bands},...summarizeBreakdown(breakdown,config.bands)}
 }

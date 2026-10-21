@@ -1,3 +1,4 @@
+import {surveyForm} from './surveys';
 import {contractForm} from './revenue';
 import {scorecardFormConfig,type ScorecardPreview} from './scorecards';
 import {mutateInapp,type InappCredential} from './inapp';
@@ -39,6 +40,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(accountId&&action==='survey-response'){await send('/api/buoy/surveys/responses',surveyForm(fields,accountId));return {redirect:path+'#surveys',message:'Received survey response recorded.'}}
   if(accountId&&action==='contract'){await send(accountPath+'/contract',contractForm(fields));return {redirect:path+'#revenue',message:'Recurring contract confirmed.'}}
   if(path==='/app'&&action==='scorecard'){
     const config=scorecardFormConfig(fields);

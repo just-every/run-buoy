@@ -473,6 +473,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const grant=await json(await call('/agent-tokens','POST',{label:'Adoption authority boundary'}),201)
    for(const path of ['/adoption','/adoption/report.csv','/adoption/consumers'])assert.equal((await call(path,'GET',undefined,{cookie:undefined,token:grant.token})).status,403)
    await json(await call('/agent-tokens/'+grant.id,'DELETE'))
+   assert.equal((await call('/surveys/responses','POST',{})).status,400)
    assert.equal((await call('/accounts/harbour/contract','POST',{})).status,400)
    const scorecard={name:'Recorded billing preview',measures:[{key:'allocation',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}
    await json(await call('/scorecards/preview','POST',{config:scorecard}))

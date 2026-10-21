@@ -1,13 +1,14 @@
 export type Band='at-risk'|'watch'|'healthy'|'unknown'
-export interface Measure {key:string;name:string;field:string;min:number;max:number;weight:number;direction:'higher'|'lower';missing:'unknown'|'exclude'}
+export type ScorecardValue=number|string|boolean|string[]|null
+export interface Measure {key:string;name:string;field:string;min:number;max:number;weight:number;direction:'higher'|'lower';missing:'unknown'|'exclude';categoryValues?:Record<string,number>}
 export interface ScorecardConfig {name:string;measures:Measure[];bands:{riskBelow:number;healthyAt:number};segments:{segmentId:string;weights:Record<string,number>}[]}
-export interface ScorecardField {key:string;name:string;kind:'billing'|'support'|'custom'|'calculated'|'adoption'|'sentiment';unit?:string}
+export interface ScorecardField {key:string;name:string;kind:'billing'|'support'|'custom'|'calculated'|'adoption'|'sentiment'|'survey';unit?:string;valueType?:'number'|'text'|'boolean'|'multi-select'|'date'}
 export interface SourceEvidence {kind:string;label:string;freshness:'current'|'stale'|'missing'|'untracked';observedAt:string|null;reference:string|null;details?:unknown}
 export interface RetainedInputs {
- values:Record<string,number|null>;sources:Record<string,SourceEvidence[]>;
+ values:Record<string,ScorecardValue>;sources:Record<string,SourceEvidence[]>;
  fields:ScorecardField[];segments:{id:string;revision:string;name?:string}[];measuredOn:string
 }
-export interface Breakdown extends Measure {value:number|null;score:number|null;effectiveWeight:number;included:boolean;missingTreatment:'present'|'unknown'|'exclude';sources:SourceEvidence[]}
+export interface Breakdown extends Measure {rawValue:ScorecardValue;value:number|null;score:number|null;effectiveWeight:number;included:boolean;missingTreatment:'present'|'unknown'|'exclude';sources:SourceEvidence[]}
 export interface ScorecardResult {
  accountId:string;accountRevision:string;configRevision:string;versionId:string;
  selectedSegment:{id:string;revision:string;name?:string}|null;inputs:RetainedInputs;

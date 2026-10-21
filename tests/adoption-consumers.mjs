@@ -1,3 +1,5 @@
+import {surveyScorecards} from './survey-scorecard-journey.mjs'
+import {surveyScorecardBrowser} from './survey-scorecard-browser.mjs'
 import {revenueHealth} from './revenue-health-journey.mjs'
 import {revenueHealthBrowser} from './revenue-health-browser.mjs'
 // ADOPT-001 consumer shards retain the full 90-day, 30-account fixture.
@@ -19,6 +21,6 @@ try{
  await currentAdoption(fixture,'consumer-shard-'+mode)
  assert.equal((await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'consumer-member@example.test',displayName:'CS colleague',role:'member'}})).status,202)
  const member=await app.signIn('consumer-member@example.test')
- if(mode==='health'){const result=await healthScorecards(app,fixture,member);await healthScorecardBrowser(app,fixture,result);const revenue=await revenueHealth(app,fixture,member,result);await revenueHealthBrowser(app,fixture,revenue)}
+ if(mode==='health'){const result=await healthScorecards(app,fixture,member);await healthScorecardBrowser(app,fixture,result);const revenue=await revenueHealth(app,fixture,member,result);await revenueHealthBrowser(app,fixture,revenue);const survey=await surveyScorecards(app,fixture,member,result,revenue);await surveyScorecardBrowser(app,fixture,survey)}
  else await (mode==='account'?adoptionConsumers:adoptionAggregateAlerts)(app,fixture,member)
 }finally{await app.close()}

@@ -1,3 +1,4 @@
+import {surveyState,recordResponse} from './surveys'
 import {revenueState,saveContract} from './revenue'
 import {scorecardState,previewScorecard,publishScorecard,recalculateScorecards} from './scorecards'
 import {search} from './search'
@@ -79,6 +80,8 @@ buoyApi.route('/',peopleApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
+buoyApi.get('/api/buoy/surveys',async c=>c.json(await surveyState(c.env.DB,c.get('actor'))))
+buoyApi.post('/api/buoy/surveys/responses',async c=>c.json(await recordResponse(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/revenue',async c=>c.json(await revenueState(c.env.DB,c.get('actor'))))
 buoyApi.post('/api/buoy/accounts/:id/contract',async c=>c.json(await saveContract(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/scorecards',async c=>c.json(await scorecardState(c.env.DB,c.get('actor'))))

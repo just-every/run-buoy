@@ -1,8 +1,9 @@
+import {SURVEY_FIELDS} from '../surveys/model'
 import {REVENUE_FIELDS} from '../revenue/model'
 import { insist, object, text } from '../core'
 export const TIERS = ['high-touch', 'scaled', 'digital']
 export const STAGES = ['onboarding', 'adoption', 'expansion', 'renewal', 'churned']
-export const FIELDS: Record<string, 'text' | 'number'> = {...REVENUE_FIELDS,
+export const FIELDS: Record<string, 'text' | 'number'> = {...SURVEY_FIELDS,...REVENUE_FIELDS,
  id:'text',name:'text',renewalDate:'text',noticeDays:'number',renewalEvidence:'text',revision:'text',createdAt:'text',ownerId:'text',territory:'text',tier:'text',stage:'text',
  'billing.observedAt':'text','billing.reference':'text','billing.currency':'text','billing.totalMinor':'number','billing.creditsMinor':'number','billing.allocatedMinor':'number','billing.dueDate':'text','billing.balanceMinor':'number',
  'support.observedAt':'text','support.reference':'text','support.openTickets':'number','support.urgentTickets':'number',
@@ -32,7 +33,7 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
   insist(kind,'Choose a supported rule field.')
   insist(['eq','ne','is-missing',...(kind==='number'?['gt','gte','lt','lte']:['contains','gt','gte','lt','lte'])].includes(op),'Choose a supported rule operator.')
   if(op==='is-missing'){insist(c.value===undefined,'Missing checks take no value.');return {field,op}}
-  const customNumber=field==='health.score'||field.startsWith('custom.')||field.startsWith('adoption.')||/^people\.(contact|user)\.(custom|adoption)\./.test(field)
+  const customNumber=(field==='survey.nps'||field==='survey.csat')||field==='health.score'||field.startsWith('custom.')||field.startsWith('adoption.')||/^people\.(contact|user)\.(custom|adoption)\./.test(field)
   insist(typeof c.value===(kind==='text'?'string':'number')&&(kind!=='number'||(customNumber?Number.isFinite(c.value):Number.isSafeInteger(c.value))),`Rule value must be ${kind==='number'?(customNumber?'a finite number':'a safe whole number'):'text'}.`)
   if(kind==='text')insist(String(c.value).length<=1000,'Rule text is too long.')
   return {field,op,value:c.value as string|number}
