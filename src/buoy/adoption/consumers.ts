@@ -1,13 +1,13 @@
 import { auditRecord } from '../audit-records'
 import { authority, date, guard, id, insist, now, requirePerson, stmt, text, type Actor } from '../core'
 import { ATTRIBUTED, MAPPED_JOIN } from '../usage/mappings'
-import { adoptionRuleFields, adoptionRuleValues, measuredSnapshot, aggregateMeasuredSnapshot } from './segment-inputs'
+import { adoptionRuleFields, adoptionRuleValues, consumerMeasuredSnapshot } from './segment-inputs'
 import { CONSUMER_OPERATORS, evaluateConsumers, type ConsumerAdoptionImage, type ConsumerRule } from './consumers-model'
 
 export const CONSUMER_SNAPSHOT=`SELECT json_group_array(json_patch(json(document),json_object('id',id,'revision',revision))) FROM (SELECT * FROM buoy_adoption_consumers ORDER BY created_at,id)`
 // This embeds the report's metric image. Added metadata describes its sources
 // and manual denominators; it does not calculate a second version of a metric.
-export const CONSUMER_ADOPTION_SNAPSHOT=`SELECT json_patch(json((SELECT CASE WHEN EXISTS(SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.scope')='segment') THEN (${aggregateMeasuredSnapshot}) ELSE (${measuredSnapshot}) END)),json_object(
+export const CONSUMER_ADOPTION_SNAPSHOT=`SELECT json_patch(json((${consumerMeasuredSnapshot})),json_object(
  'sources',json((SELECT json_group_array(json_object('id',id,'name',name,'kind',kind,'reference',reference,'eventCount',eventCount,'attributedEventCount',attributedEventCount,'lastObservedAt',lastObservedAt,'staleDays',staleDays,'freshness',CASE WHEN lastObservedAt IS NULL THEN 'missing' WHEN julianday(date('now'))-julianday(substr(lastObservedAt,1,10))>staleDays THEN 'stale' ELSE 'current' END)) FROM (
   SELECT s.id,s.name,s.kind,s.reference,s.stale_days AS staleDays,count(e.id) AS eventCount,max(e.observed_at) AS lastObservedAt,
    count(CASE WHEN ${ATTRIBUTED} AND e.user_id IS NOT NULL AND m.person_id IS NOT NULL THEN 1 END) AS attributedEventCount
