@@ -18,9 +18,8 @@ export async function snapshot(db:D1Database,on?:string){
   const segments=definitions(image),inputs=new Set(rules.map(r=>r.segmentId)),accounts=evaluated(image,on??image.adoption.on,false)
   validateHealthInputs(segments,image.consumers)
   const memberships=segments.filter(s=>inputs.has(s.id)).flatMap(s=>accounts.filter(a=>includes(s,a.account.id,a.values,a.people)).map(a=>({segmentId:s.id,accountId:a.account.id})))
-  const healthInputs=segments.filter(s=>inputs.has(s.id)).map(({id,name,revision})=>({id,name,revision}))
-  const relation=`(SELECT segment_id,account_id,exited_at FROM buoy_segment_entries WHERE segment_id NOT IN (SELECT value FROM json_each(${literal([...inputs])})) UNION ALL SELECT json_extract(value,'$.segmentId'),json_extract(value,'$.accountId'),NULL FROM json_each(${literal(memberships)}))`
-  const aggregate=`SELECT json_patch(json((${AGGREGATE_ADOPTION_SNAPSHOT.replaceAll('buoy_segment_entries',relation)})),json_object('healthInputs',json(${literal(healthInputs)})))`
+  const relation=`(SELECT json_extract(value,'$.segmentId') AS segment_id,json_extract(value,'$.accountId') AS account_id,NULL AS exited_at FROM json_each(${literal(memberships)}))`
+  const aggregate=AGGREGATE_ADOPTION_SNAPSHOT.replaceAll('buoy_segment_entries',relation)
   sql=dated(SNAPSHOT.replace(CONSUMER_ADOPTION_SNAPSHOT,aggregate))
   row=await db.prepare(`${sql} WHERE (${dated(SNAPSHOT)})=?`).bind(base).first<{snapshot:string}>()
   insist(row,'Adoption inputs changed. Refresh before reading.',409)
