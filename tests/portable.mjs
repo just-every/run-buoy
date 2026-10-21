@@ -31,6 +31,7 @@ try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
  running=await startWorker({root:source,directory:join(source,'.wrangler/state'),keep:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
+ const allAudit=async()=>{const entries=[];let offset=0;do{const page=await call('/audit?offset='+offset);entries.push(...page.entries);offset=page.nextOffset}while(offset!==null);return entries}
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
  const door=importClient(running.request,running.cookie), plan=await door.plan(fixture)
  const job=await door.apply(plan)
@@ -112,13 +113,15 @@ try{
  personState=await call('/customer-people');
  adoptionBefore=await call('/adoption');
  const recordImage=await recordPortabilityImage(call,recordIds);
- const before=await call('/state'), beforeAudit=(await call('/audit')).entries
+ const before=await call('/state'), beforeAudit=await allAudit()
  assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
  assert.doesNotMatch(JSON.stringify(beforeAudit),/Retired account|erase-before-backup|example\.test|Ana Lyst|Harbour CS owner/,'AUDIT-001 erased account and people stay unnamed')
- const screen=await (await running.request('/app/audit',{cookie:running.cookie})).text()
- assert.equal((screen.match(/<article class="record">/g)??[]).length,beforeAudit.length,'AUDIT-001 screen lists the exported entries')
- for(const entry of beforeAudit){assert.ok(screen.includes(entry.action));assert.ok(screen.includes(entry.subject));assert.ok(screen.includes(entry.occurredAt))}
+ for(let offset=0;offset<beforeAudit.length;offset+=50){
+  const screen=await (await running.request('/app/audit?offset='+offset,{cookie:running.cookie})).text(),page=beforeAudit.slice(offset,offset+50)
+  assert.equal((screen.match(/<article class="record">/g)??[]).length,page.length,'AUDIT-001 screen pages list every exported entry exactly once')
+  for(const entry of page){assert.ok(screen.includes(entry.action));assert.ok(screen.includes(entry.subject));assert.ok(screen.includes(entry.occurredAt))}
+ }
  await running.close();running=null
  // The first export's own record is taken with its snapshot; the next export carries it.
  await command(source,['export','--output',join(parent,'first.rer')])
@@ -139,7 +142,7 @@ try{
  assert.equal(restoredConnection.name,'Portable Stripe source')
  assert.equal(restoredConnection.freshness,'Reconnect required','CONNECT-001 restores retain metadata without credential authority')
  assert.equal((await running.request('/api/buoy/connections/'+connection.id+'/sync',{cookie:running.cookie,method:'POST',body:{}})).status,409)
- const restored=(await call('/audit')).entries, added=restored.filter(entry=>!beforeAudit.some(prior=>prior.id===entry.id))
+ const restored=await allAudit(), added=restored.filter(entry=>!beforeAudit.some(prior=>prior.id===entry.id))
  assert.deepEqual(restored.filter(entry=>!added.includes(entry)),beforeAudit,'AUDIT-001 archive preserves exactly the audit entries shown before export')
  assert.deepEqual(added.map(entry=>[entry.action,entry.actor.replace(/[0-9a-f-]{36}$/,'id'),entry.detail]),[['auth.signed-in','person:id','native session issued'],['data.exported','portability:direct','Installation archive snapshot taken; delivery of the file is not recorded.']],'AUDIT-001 the export is recorded, and the destination records its own bootstrap sign-in')
  assert.match(added[1].subject,/^archive:[0-9a-f-]+$/)
