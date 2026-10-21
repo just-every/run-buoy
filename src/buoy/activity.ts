@@ -16,7 +16,7 @@ export async function accountActivity(db:D1Database,actor:Actor,accountId:string
   `SELECT 'contract:'||id,'recurring-contract',recorded_at,NULL,'Recurring contract confirmed',json_extract(document,'$.source.reference'),'#revenue' FROM buoy_recurring_contract_versions WHERE account_id=?`,
   `SELECT 'fields:'||id,'field-change',recorded_at,NULL,field_key,source,'#account-hierarchy' FROM buoy_field_history WHERE account_id=?`,
   `SELECT 'hierarchy:'||id,'organization-change',recorded_at,NULL,'Organization and stakeholder roles changed',source,'#hierarchy-history' FROM buoy_hierarchy_history WHERE account_id=?`,
-  `SELECT 'license:'||id,'person-license',recorded_at,person_id,'Person license evidence',reference,'#product-usage' FROM buoy_adoption_person_license_history WHERE account_id=?`,
+  `SELECT 'license:'||id,'person-license',recorded_at,person_id,'Person license evidence',COALESCE(json_extract(document,'$.newValue.reference'),json_extract(document,'$.oldValue.reference'),'License evidence cleared'),'#product-usage' FROM buoy_adoption_person_license_history WHERE account_id=?`,
   `SELECT 'usage:'||e.id,'usage-event',e.observed_at,m.person_id,COALESCE(e.event,e.type),e.source_reference,'#product-usage' FROM buoy_usage_events e ${MAPPED_JOIN} WHERE ${ATTRIBUTED} AND m.account_id=?`,
   `SELECT 'account:'||a.id,a.action,a.occurred_at,NULL,a.action,'Native account audit','#account-hierarchy' FROM buoy_audit a JOIN buoy_audit_subjects s ON s.subject=a.subject WHERE s.account_id=? AND a.action IN ('account.created','account.updated','account.reassigned','health.scorecard-assigned')`
  ]
