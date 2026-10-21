@@ -30,14 +30,14 @@ const timestamp = (value: string | null) => value
   ? `<time datetime="${escape(value)}">${escape(value)}</time>` : 'Not recorded';
 const text = (value: string) => escape(value).replace(/\r?\n/g, '<br>');
 const select = (name: string, label: string, choices: { id: string; name: string }[], chosen: unknown) =>
-  `<label>${escape(label)}<select name="${escape(name)}" required><option value="">Choose one</option>${choices.map(choice => `<option value="${escape(choice.id)}"${chosen === choice.id ? ' selected' : ''}>${escape(choice.name)}</option>`).join('')}</select></label>`;
+  `<label>${escape(label)}<select name="${escape(name)}" aria-label="${escape(label)}" required><option value="">Choose one</option>${choices.map(choice => `<option value="${escape(choice.id)}"${chosen === choice.id ? ' selected' : ''}>${escape(choice.name)}</option>`).join('')}</select></label>`;
 
 function campaignForm(data: InappPage, fields?: Fields): string {
   const values = fields?.action === 'inapp-campaign' ? fields : undefined;
   const v = (name: string, initial: unknown = '') => valueOf(values, name, initial);
   return form('inapp-campaign', '/app/inapp', hidden('action', 'inapp-campaign')
     + `<div class="form-grid">${select('sourceId', 'Product source', data.sources, v('sourceId'))}${select('segmentId', 'Account segment', data.segments, v('segmentId'))}</div>`
-    + `<label>Campaign format<select name="kind" required>${kinds.map(([kind, label]) => `<option value="${kind}"${v('kind', 'announcement') === kind ? ' selected' : ''}>${label}</option>`).join('')}</select></label>`
+    + `<label>Campaign format<select name="kind" aria-label="Campaign format" required>${kinds.map(([kind, label]) => `<option value="${kind}"${v('kind', 'announcement') === kind ? ' selected' : ''}>${label}</option>`).join('')}</select></label>`
     + field('title', 'Title (plain text)', v('title'))
     + textarea('body', 'Body (plain text)', v('body'))
     + textarea('steps', 'Steps (one plain-text step per line)', v('steps'), false, 'aria-describedby="inapp-steps-help"')
