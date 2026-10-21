@@ -48,7 +48,10 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   }
   if(path==='/app/adoption') {
     if(action==='adoption-definition')await send('/api/buoy/adoption/definitions',{kind:fields.kind,key:fields.key,name:fields.name,events:fields.events.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)});
-    else if(action==='adoption-person-license')await send('/api/buoy/adoption/person-licenses',{accountId:fields.licenseAccountId,personId:fields.licensePersonId,licensed:fields.licensed===''?null:fields.licensed==='true',...(fields.licensed!==''?{reference:fields.licenseReference,observedAt:fields.licenseObservedAt,staleDays:Number(fields.licenseStaleDays)}:{})},'PUT');
+    else if(action==='adoption-person-license'){
+      if(!['','true','false'].includes(fields.licensed))throw new ApiError('Choose a recorded individual license status.');
+      await send('/api/buoy/adoption/person-licenses',{accountId:fields.licenseAccountId,personId:fields.licensePersonId,licensed:fields.licensed===''?null:fields.licensed==='true',...(fields.licensed!==''?{reference:fields.licenseReference,observedAt:fields.licenseObservedAt,staleDays:Number(fields.licenseStaleDays)}:{})},'PUT');
+    }
     else if(action==='adoption-seats')await send('/api/buoy/adoption/seats',{accountId:fields.accountId,seats:fields.seats===''?null:Number(fields.seats),...(fields.seats!==''?{reference:fields.reference,observedAt:fields.observedAt,staleDays:Number(fields.staleDays)}:{})},'PUT');
     else throw new ApiError('This adoption action is not available.');
     return {redirect:path,message:'Adoption configuration saved.',saved:action};
