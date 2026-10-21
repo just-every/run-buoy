@@ -20,11 +20,17 @@ export async function accountActivity(db:D1Database,actor:Actor,accountId:string
   `SELECT 'usage:'||e.id,'usage-event',e.observed_at,m.person_id,COALESCE(e.event,e.type),e.source_reference,'#product-usage' FROM buoy_usage_events e ${MAPPED_JOIN} WHERE ${ATTRIBUTED} AND m.account_id=?`,
   `SELECT 'account:'||a.id,a.action,a.occurred_at,NULL,a.action,'Native account audit','#account-hierarchy' FROM buoy_audit a JOIN buoy_audit_subjects s ON s.subject=a.subject WHERE s.account_id=? AND a.action IN ('account.created','account.updated','account.reassigned','health.scorecard-assigned')`
  ]
- const clauses:string[]=[],params:unknown[]=parts.map(()=>accountId)
+ const clauses:string[]=[],params:unknown[]=[]
  if(query.has('kind')){clauses.push('kind=?');params.push(query.get('kind'))}
  if(query.has('personId')){clauses.push('personId=?');params.push(query.get('personId'))}
  if(query.has('cursor')){let cursor:unknown;try{cursor=JSON.parse(atob(query.get('cursor')!))}catch{insist(false,'Invalid activity cursor.')};insist(Array.isArray(cursor)&&cursor.length===2&&cursor.every(v=>typeof v==='string'&&v.length<=200),'Invalid activity cursor.');clauses.push('(occurredAt<? OR (occurredAt=? AND id<?))');params.push(cursor[0],cursor[0],cursor[1])}
- const results=await db.batch([authority(db,actor),stmt(db,`WITH activity AS(${parts.join(' UNION ALL ')}) SELECT * FROM activity ${clauses.length?'WHERE '+clauses.join(' AND '):''} ORDER BY occurredAt DESC,id DESC LIMIT ?`,...params,limit+1),stmt(db,'DELETE FROM buoy_assertions')])
- const rows=results[1].results as {id:string;kind:string;occurredAt:string;personId:string|null;title:string;reference:string;fragment:string}[],records=rows.slice(0,limit).map(({fragment,...r})=>({...r,href:'/app/accounts/'+encodeURIComponent(accountId)+fragment})),last=records.at(-1)
+ // D1 bounds compound SELECTs more tightly than desktop SQLite. Each shard
+ // reads in the same batch transaction; limit+1 from every shard is sufficient
+ // to merge an exact global page, including its next-page indicator.
+ const groups:string[][]=[];for(let i=0;i<parts.length;i+=3)groups.push(parts.slice(i,i+3))
+ const results=await db.batch([authority(db,actor),...groups.map(group=>stmt(db,`WITH activity(id,kind,occurredAt,personId,title,reference,fragment) AS(${group.join(' UNION ALL ')}) SELECT * FROM activity ${clauses.length?'WHERE '+clauses.join(' AND '):''} ORDER BY occurredAt DESC,id DESC LIMIT ?`,...group.map(()=>accountId),...params,limit+1)),stmt(db,'DELETE FROM buoy_assertions')])
+ const rows=results.slice(1,-1).flatMap(result=>result.results) as {id:string;kind:string;occurredAt:string;personId:string|null;title:string;reference:string;fragment:string}[]
+ const compare=(a:string,b:string)=>a===b?0:a>b?1:-1;rows.sort((a,b)=>compare(b.occurredAt,a.occurredAt)||compare(b.id,a.id))
+ const records=rows.slice(0,limit).map(({fragment,...r})=>({...r,href:'/app/accounts/'+encodeURIComponent(accountId)+fragment})),last=records.at(-1)
  return {accountId,records,nextCursor:rows.length>limit&&last?btoa(JSON.stringify([last.occurredAt,last.id])):null,interpretation:'Current native record activity, newest observation/action first, with links to the native source section. Connected email, calendar, CRM and support timelines remain ACCOUNT-002 work.'}
 }
