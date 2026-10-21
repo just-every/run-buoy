@@ -49,7 +49,9 @@
     "test:connections-browser": "node tests/connections-browser.mjs",
     "test:adoption": "node tests/adoption.mjs",
     "test:adoption-browser": "node tests/adoption-browser.mjs",
-    "test:inapp-browser": "node tests/inapp-browser.mjs"
+    "test:inapp-browser": "node tests/inapp-browser.mjs",
+    "test:adoption-consumers": "node tests/adoption-consumers.mjs account",
+    "test:adoption-aggregates": "node tests/adoption-consumers.mjs segment"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.41",

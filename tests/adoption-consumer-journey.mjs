@@ -1,4 +1,3 @@
-import {adoptionAggregateAlerts} from './adoption-aggregate-journey.mjs'
 // ADOPT-001: configured health and routed alerts use the public report's metrics.
 import assert from 'node:assert/strict'
 export async function adoptionConsumers(app,fixture,member){
@@ -109,6 +108,5 @@ export async function adoptionConsumers(app,fixture,member){
  for(const r of (await api('/adoption/consumers')).rules)if(r.enabled)await api('/adoption/consumers','POST',{...r,enabled:false})
  await api('/notifications/preferences','PUT',{frequency:'off',modes:{...modes,signal:'immediate'}})
  await api('/adoption/seats','PUT',{accountId,seats:20,reference:'Restored reviewed license schedule',observedAt:on})
- await adoptionAggregateAlerts(app,fixture,member)
  console.log('ADOPT-001 every account metric parity, configurable health, missing evidence, owner alerts, dedup/recovery, recipient preferences/reassignment, guarded playbook approval, configuration invalidation and authority passed.')
 }
