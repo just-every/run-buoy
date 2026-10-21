@@ -40,5 +40,9 @@ export async function adoptionSegments(app,{api,accounts,people}){
  const invalid={name:'Invalid metric',mode:'dynamic',accountIds:[],rules:{match:'all',conditions:[{field:'adoption.current.utilization',op:'gte',value:'0.5'}]},tier:null,stage:null,playbook:null}
  assert.equal((await app.request('/api/buoy/segments',{cookie:app.cookie,method:'POST',body:invalid})).status,400,'ADOPT-001 numeric metric predicates refuse strings')
  await api('/adoption/definitions','POST',{kind:'feature',key:'reports',name:'Reports',events:['Report generated']})
+ const key='customer_success_workspace_adoption_dashboard_weekly_reporting_automation'
+ await api('/adoption/definitions','POST',{kind:'feature',key,name:'Workspace reporting adoption',events:['Report generated']})
+ const long=await create('ADOPT-001 descriptive feature key',[{field:'id',op:'eq',value:account.id},{field:`people.user.adoption.current.feature.${key}`,op:'gte',value:.5}])
+ assert.equal((await segment(long.id)).members.length,1,'ADOPT-001 valid descriptive event-set keys work in related-person rules')
  console.log('ADOPT-001 typed metric/report parity, fractional rules, same-person conjunction, entry/exit/reentry, approval once and definition revision passed.')
 }

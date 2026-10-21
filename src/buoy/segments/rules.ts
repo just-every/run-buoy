@@ -27,7 +27,7 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
  insist(Array.isArray(rules.conditions)&&rules.conditions.length<=32,'Use at most 32 conditions.')
  const conditions=rules.conditions.map(value=>{
   const c=object(value);keys(c,['field','op','value'])
-  const field=text(c.field,'Rule field',100),op=String(c.op),kind=fields[field]
+  const field=text(c.field,'Rule field',200),op=String(c.op),kind=fields[field]
   insist(kind,'Choose a supported rule field.')
   insist(['eq','ne','is-missing',...(kind==='number'?['gt','gte','lt','lte']:['contains','gt','gte','lt','lte'])].includes(op),'Choose a supported rule operator.')
   if(op==='is-missing'){insist(c.value===undefined,'Missing checks take no value.');return {field,op}}

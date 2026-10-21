@@ -2,7 +2,7 @@ import { BASE, SUBJECTS, COUNTS, DEFINITIONS, FIRST_VALUE } from './queries'
 import { metricReader, type SubjectRow, type CountRow, type DefinitionRow, type FirstRow } from './metrics'
 import type { AdoptionMetrics } from './types'
 
-// Reuse the report SQL with today's complete UTC window and no caller filter.
+// Reuse the report SQL with today's inclusive UTC windows and no caller filter.
 // Aggregate inputs share the segment's single image and transaction fence.
 const base=BASE.replace('SELECT ? AS accountId,? AS personId,? AS segmentId,julianday(?) AS until',"SELECT NULL AS accountId,NULL AS personId,NULL AS segmentId,julianday(date('now','+1 day')) AS until")
 const rows=(query:string,columns:string[])=>{
