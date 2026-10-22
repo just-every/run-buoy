@@ -1,3 +1,4 @@
+import {playIngest} from './play/intake'
 import {playApi} from './play'
 import {runPlaybooks,alertFailures} from './play/engine'
 import {accountActivity} from './activity'
@@ -44,6 +45,7 @@ import { beginRequest, checkRequest, finishRequest, refuseRequest } from './agen
 import { agentState, setAgentSettings } from './agent-policy/owner'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
+buoyApi.route('/',playIngest)
 buoyApi.route('/',usageIngest)
 buoyApi.route('/',inappIngest)
 buoyApi.use('/api/buoy/*', async (c, next) => {

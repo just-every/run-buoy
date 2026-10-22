@@ -108,6 +108,10 @@ try{
  const surveyBeforeRecord=await call('/surveys/responses','POST',{accountId,personId:usagePerson.id,surveyName:'Portable relationship review',kind:'nps',value:9,observedAt:new Date(Date.now()-1000).toISOString(),reference:'Received customer survey export',sourceResponseId:'synthetic-buoy-portable-survey',accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision});
  const contractBefore=await call('/accounts/'+accountId+'/contract','POST',{revision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,contract:{currency:'USD',contractStart:'2026-01-01',contractEnd:'2027-12-31',lines:[{product:'Portable recurring workspace',quantity:20,amountMinor:6000000,frequency:'annual',entitlements:'20 reporting workspace seats'}],source:{reference:'Confirmed portable customer contract',confirmedOn:new Date().toISOString().slice(0,10)}}});
  const recordIds=await seedRecordPortability(call,fixture.accounts[0],usagePerson.id);
+ const webhookBook=await call('/playbooks','POST',{config:{name:'Portable webhook authority boundary',ownerId:(await call('/state')).operator.id,enabled:true,reentryDays:30,failureThreshold:3,trigger:{kind:'webhook'},entry:null,exit:null,steps:[{id:'review',kind:'approval',title:'Review portable webhook enrollment'}]}});
+ const webhookKey=await call('/playbooks/'+webhookBook.id+'/credentials','POST',{accountIds:[accountId]});
+ const webhookIntake=()=>fetch(running.origin+'/api/buoy/playbooks/intake/'+webhookBook.id,{method:'POST',headers:{authorization:'Bearer '+webhookKey.secret,'content-type':'application/json'},body:JSON.stringify({accountId,operationKey:'synthetic-buoy-1760'})});
+ assert.equal((await webhookIntake()).status,202);
  const portableCard=await call('/scorecards/publish','POST',{revision:recordIds.card.revision,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
  const scorecardBefore=await call('/scorecards');
  const revenueBefore=await call('/revenue');
@@ -134,6 +138,7 @@ try{
  // calculation proves a keyed fence, not merely a replay refusal that plain SHA
  // would also satisfy. No generated installation key is logged on failure.
  const archiveRows=(await readFile(archive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assert.ok(!archiveRows.some(item=>['buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
  const replayKey=archiveRows.find(item=>item.table==='buoy_privacy_key')?.row.secret
  assert.ok(typeof replayKey==='string'&&/^[a-f0-9]{64}$/.test(replayKey),'Archive carries a 256-bit installation replay key')
  const fences=archiveRows.filter(item=>item.table==='buoy_erased_usage_identities').map(item=>item.row)
@@ -187,6 +192,7 @@ try{
  await call('/notifications/preferences','PUT',{frequency:'off',modes:{mention:'immediate',assignment:'immediate',signal:'immediate',approval:'immediate'}});
  assert.deepEqual((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name),freshAlerts,'ADOPT-001 unchanged restored evidence does not duplicate the new recipient’s episode');
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
+ assert.equal((await webhookIntake()).status,401,'PLAY-001 restored run history cannot authorize old webhook intake');
  assert.equal((await usageIntake()).status,401,'USAGE-001 archived ingestion credentials cannot authorize restored intake')
  assert.equal((await call('/usage')).credentials.length,0,'No archived ingestion credentials restore');
  assert.deepEqual(await call('/privacy/requests'),privacyRequestsBefore,'Verified request records survive real archive restoration');

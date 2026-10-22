@@ -1,4 +1,4 @@
-import {playJourney,playTriggerJourney} from './play-journey.mjs'
+import {playJourney,playTriggerJourney,playIntakeJourney,playFieldJourney} from './play-journey.mjs'
 import {hierarchyJourney} from './hierarchy-journey.mjs'
 import {workspaceJourney} from './workspace-journey.mjs'
 import {renewalJourney} from './renewal-journey.mjs'
@@ -579,3 +579,7 @@ test('TEAM-001 300-account rules, capacity, book handover, open work, notes and 
 test('PLAY-001 PLAY-003 durable multi-step work and manual external failure recovery',playJourney)
 
 test('PLAY-001 typed enrollment triggers and observed usage recovery',playTriggerJourney)
+
+test('PLAY-001 scoped server webhook enrollment authority and replay',playIntakeJourney)
+
+test('PLAY-001 reviewed field changes commit once before downstream branching',playFieldJourney)

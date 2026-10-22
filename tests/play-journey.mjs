@@ -114,3 +114,51 @@ export async function playTriggerJourney(){
   console.log('PLAY-001 typed field/segment/lifecycle/renewal/confirmed-contract triggers deduplicate; authenticated usage recovery satisfies a persisted wait/branch after timeout retry.')
  }finally{await app.close()}
 }
+
+export async function playIntakeJourney(){
+ const f=await playFixture(),{app,api,ownerId,create,run}=f
+ try{
+  const allowed=await create('synthetic-buoy-1750'),other=await create('synthetic-buoy-1751'),config=playConfig(ownerId,{name:'Scoped webhook enrollment',trigger:{kind:'webhook'},steps:[{id:'approve',kind:'approval',title:'Review server-originated follow-up'}]}),book=await api('/playbooks','POST',{config})
+  const email='play-intake-admin@example.test';await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email,displayName:'Intake admin',role:'admin'}});const admin=await app.signIn(email)
+  assert.equal((await app.request('/api/buoy/playbooks/'+book.id+'/credentials',{method:'POST',cookie:admin,body:{accountIds:[allowed]}})).status,403,'Only the owner delegates new intake authority')
+  const credential=await api('/playbooks/'+book.id+'/credentials','POST',{accountIds:[allowed]})
+  const send=(key,body={accountId:allowed,operationKey:'synthetic-buoy-1752'},extra={})=>app.dispatch(new Request(app.origin+'/api/buoy/playbooks/intake/'+book.id,{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json',...extra},body:JSON.stringify(body)}))
+  assert.equal((await send('synthetic-buoy-1753')).status,401)
+  assert.equal((await app.request('/api/buoy/state',{token:credential.secret})).status,401,'Intake authority grants no account reads or session fallback')
+  assert.equal((await send(credential.secret,undefined,{origin:app.origin})).status,403,'A browser cannot bypass the authenticated server relay')
+  assert.equal((await send(credential.secret,{accountId:other,operationKey:'synthetic-buoy-1754'})).status,403)
+  let response=await send(credential.secret);assert.equal(response.status,202);const enrolled=await response.json();assert.equal((await run(enrolled.id)).status,'approval')
+  response=await send(credential.secret);assert.equal(response.status,202);assert.equal((await response.json()).id,enrolled.id);assert.equal((await api('/playbooks')).runs.length,1)
+  const current=await api('/playbooks/'+book.id+'/credentials');assert.ok(current.credentials[0].lastUsedAt);assert.ok(!JSON.stringify(current).includes(credential.secret),'Credential status has no plaintext secret')
+  const audit=(await api('/audit?action=playbook.intake-issued')).entries;assert.ok(audit.some(e=>e.subject===credential.id));assert.ok(!JSON.stringify(audit).includes(credential.secret))
+  // The limit is independent for each credential, and failed/over-scope intake also consumes its reservation.
+  const limited=await api('/playbooks/'+book.id+'/credentials','POST',{accountIds:[allowed]}),buckets=new Map();let refused
+  for(let i=0;i<121;i++){const r=await send(limited.secret,{accountId:allowed,operationKey:'synthetic-buoy-1752'}),bucket=r.headers.get('ratelimit-reset'),count=(buckets.get(bucket)??0)+1;buckets.set(bucket,count);assert.equal(r.headers.get('ratelimit-limit'),'60');assert.equal(Number(r.headers.get('ratelimit-remaining')),Math.max(0,60-count));if(r.status===429){refused=r;assert.equal(count,61);break}assert.equal(r.status,202)}
+  assert.ok(refused,'One credential is refused on its 61st request in a server-reported UTC minute');assert.ok(Number(refused.headers.get('retry-after'))>0)
+  assert.equal((await send(credential.secret)).status,202)
+  await api('/playbooks/'+book.id+'/credentials/'+credential.id,'DELETE',{});assert.equal((await send(credential.secret)).status,401)
+  const fresh=await api('/playbooks/'+book.id+'/credentials','POST',{accountIds:[allowed]});await api('/playbooks','POST',{id:book.id,revision:book.revision,config:{...config,name:'Reviewed later version'}});assert.equal((await send(fresh.secret)).status,401,'Publishing cannot silently expand an earlier delegation')
+  assert.equal((await api('/playbooks')).runs.length,1);assert.equal((await api('/state')).tasks.length,0,'Webhook intake cannot approve sensitive steps')
+  console.log('PLAY-001 webhook intake: owner-only delegation, server-only request, one version/account scope, no reads/approvals, atomic source replay, per-credential limits, last use, secret-free status/audit and immediate revocation passed.')
+ }finally{await app.close()}
+}
+
+export async function playFieldJourney(){
+ const f=await playFixture(),{app,api,ownerId,create,run,action}=f
+ try{
+  const accountId=await create('synthetic-buoy-1780'),entry=condition('id','eq',accountId)
+  await api('/fields','POST',{key:'play_ready',label:'Other reviewed readiness',type:'boolean'})
+  // Approved field steps preserve unrelated values and atomically refresh downstream health/branches.
+  await api('/fields','POST',{key:'play_value',label:'Reviewed play value',type:'number'});await api('/fields','POST',{key:'play_untouched',label:'Unrelated retained value',type:'text'});await api('/fields','POST',{key:'play_twice',label:'Derived play value',type:'formula',formula:'custom.play_value * 2'})
+  const putValues=async value=>api('/accounts/'+accountId+'/fields','PUT',{revision:(await api('/state')).accounts.find(a=>a.id===accountId).revision,values:{play_ready:true,play_value:value,play_untouched:'synthetic-buoy-1770'},source:'synthetic-buoy-1771'})
+  await putValues(2)
+  await api('/scorecards/publish','POST',{revision:null,config:{name:'Reviewed field health',measures:[{key:'value',name:'Play value',field:'custom.play_value',min:0,max:10,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}})
+  const fieldBook=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Reviewed field transition',entry,steps:[{id:'fields',kind:'fields',title:'Set reviewed value',values:{play_value:9}},{id:'branch',kind:'branch',title:'Use recalculated health',rules:condition('health.score','gte',75),next:2,otherwise:3},{id:'review',kind:'approval',title:'Review recalculated result'}]})}),fieldRun=await api('/playbooks/'+fieldBook.id+'/enroll','POST',{accountId,operationKey:'synthetic-buoy-1772'})
+  assert.equal((await run(fieldRun.id)).status,'approval');assert.equal((await api('/fields')).accounts.find(a=>a.id===accountId).values.play_value,2)
+  await putValues(3);const pending=await run(fieldRun.id),stale=await app.request('/api/buoy/playbook-runs/'+pending.id+'/action',{cookie:app.cookie,method:'POST',body:{revision:pending.revision,action:'approve',reference:'synthetic-buoy-1773'}});assert.equal(stale.status,409)
+  await action(pending.id,{action:'review'});const reviewed=await run(pending.id);assert.deepEqual(reviewed.events.at(-1).result.changes.play_value,{before:3,after:9})
+  const results=await Promise.all([0,1].map(()=>app.request('/api/buoy/playbook-runs/'+pending.id+'/action',{cookie:app.cookie,method:'POST',body:{revision:reviewed.revision,action:'approve',reference:'synthetic-buoy-1774'}})));assert.deepEqual(results.map(r=>r.status).sort(),[200,409])
+  const fields=await api('/fields'),values=fields.accounts.find(a=>a.id===accountId).values;assert.equal(values.play_value,9);assert.equal(values.play_twice,18);assert.equal(values.play_untouched,'synthetic-buoy-1770');assert.equal(fields.history.filter(h=>h.accountId===accountId&&h.key==='play_value'&&h.source==='Approved playbook step: synthetic-buoy-1774').length,1);assert.equal((await run(pending.id)).cursor,2,'The next branch reads freshly recalculated health')
+  console.log('PLAY-001 reviewed field step: no mutation before approval, stale review, one concurrent winner, preserved unrelated data/formula history and freshly recalculated health branch passed.')
+ }finally{await app.close()}
+}

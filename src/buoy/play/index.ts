@@ -1,3 +1,4 @@
+import {issueIntake,revokeIntake,intakeState} from './intake'
 import {Hono} from 'hono'
 import type {Bindings} from '../../auth.server'
 import {jsonBody} from '../access'
@@ -8,3 +9,6 @@ playApi.get('/api/buoy/playbooks',async c=>c.json(await playState(c.env.DB,c.get
 playApi.post('/api/buoy/playbooks',async c=>c.json(await publish(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 playApi.post('/api/buoy/playbooks/:id/enroll',async c=>{const r=await enroll(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw));await advance(c.env.DB,r.id);return c.json(r,201)})
 playApi.post('/api/buoy/playbook-runs/:id/action',async c=>{const r=await act(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw));await alertFailures(c.env.DB);return c.json(r)})
+playApi.get('/api/buoy/playbooks/:id/credentials',async c=>c.json(await intakeState(c.env.DB,c.get('actor'),c.req.param('id'))))
+playApi.post('/api/buoy/playbooks/:id/credentials',async c=>c.json(await issueIntake(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
+playApi.delete('/api/buoy/playbooks/:id/credentials/:credentialId',async c=>c.json(await revokeIntake(c.env.DB,c.get('actor'),c.req.param('id'),c.req.param('credentialId'))))
