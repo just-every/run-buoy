@@ -40,7 +40,7 @@ try {
  await json(await call('/scorecards/publish','POST',{revision:current.revision,config:{name:synthetic(90_000_008),measures:[{key:'billing',name:synthetic(90_000_009),field:'billing.allocatedMinor',min:0,max:10000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}}),201)
  await measure('load account/user directory',null,()=>seedDirectory(source,on,usage.id,owner,baselineAccountId))
  const baseBytes=await databaseBytes(source),pilot=100_000
- await measure('load 100000 real usage rows for storage projection',null,()=>seedEvents(source,usage.id,on,0,pilot))
+ await measure('load 100000 real usage rows for storage projection',null,()=>seedEvents(source,usage.id,on,0,pilot,baselineAccountId))
  const pilotBytes=await databaseBytes(source),bytesPerEvent=(pilotBytes-baseBytes)/pilot,projectedBytes=baseBytes+Math.ceil(bytesPerEvent*volume.events)
  console.log(JSON.stringify({scale:'storage-projection',baseBytes,pilotBytes,bytesPerEvent,projectedBytes,d1LimitBytes:10_000_000_000}))
  assert.ok(Number.isFinite(bytesPerEvent)&&bytesPerEvent>0,'The pilot must produce measurable positive persisted event growth before projecting capacity')
@@ -48,7 +48,7 @@ try {
  // installed D1 service cannot: reject it explicitly rather than claiming scale.
  assert.ok(projectedBytes<=10_000_000_000,`SCALE-001 projected single-D1 footprint ${Math.ceil(projectedBytes/1e9)} GB exceeds its 10 GB limit. Full 50-million-row load was not attempted; this is a failed scale journey.`)
  await requireSpace(parent,projectedBytes*5)
- await measure('load remaining monthly usage rows',null,()=>seedEvents(source,usage.id,on,pilot,volume.events))
+ await measure('load remaining monthly usage rows',null,()=>seedEvents(source,usage.id,on,pilot,volume.events,baselineAccountId))
  const loaded=await inventory(source)
  assert.deepEqual({accounts:loaded.accounts,people:loaded.people,events:loaded.events},volume)
  assert.equal(loaded.memberships,volume.people);assert.equal(loaded.mappings,volume.people)

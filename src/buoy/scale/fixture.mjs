@@ -21,7 +21,7 @@ export async function seedDirectory(root,on,sourceId,ownerId,baselineAccountId){
   chunked(volume.people,cte=>`${cte} INSERT INTO buoy_usage_mappings(source_id,claim_key,user_id,group_id,account_id,person_id,revision,reviewed_by,reviewed_at) SELECT ${literal(sourceId)},json_array('synthetic-buoy-'||(1000000+i),CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END),'synthetic-buoy-'||(1000000+i),CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END,CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END,'synthetic-buoy-'||(1000000+i),'synthetic-buoy-'||(1000000+i),${literal(ownerId)},${literal(stamp)} FROM n;`)
  ].join('\n'))
 }
-export async function seedEvents(root,sourceId,on,start,end){
+export async function seedEvents(root,sourceId,on,start,end,baselineAccountId){
  const statements=[]
  // Bounded statements keep each query short; no huge JS array of event objects.
  for(let offset=start;offset<end;offset+=10000){

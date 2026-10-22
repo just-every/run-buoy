@@ -13,8 +13,10 @@ export async function command(root, script, args, {timeout=3_600_000,json=false,
  const timer=setTimeout(()=>child.kill('SIGTERM'),timeout)
  try {
   const code=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('close',resolve)})
-  // Error bodies and CLI output may contain credentials; report operation/status only.
-  assert.equal(code,expected,`${args[0]} failed (exit ${code}; signal ${child.signalCode??'none'}). CLI output withheld. ${(output+errorOutput).match(/(?:no such (?:table|column): [A-Za-z0-9_.]+|(?:NOT NULL|UNIQUE) constraint failed: [A-Za-z0-9_., ]+|FOREIGN KEY constraint failed)/)?.[0]??''}`)
+  // Scale D1 files contain synthetic rows only. Keep a bounded diagnostic,
+  // removing URLs, long opaque identifiers and terminal escape sequences.
+  const diagnostic=args[0]==='d1'?(output+errorOutput).replace(/\x1b\[[0-9;]*m/g,'').replace(/https?:\/\/[^\s]+/g,'[URL]').replace(/[A-Za-z0-9_+./=-]{24,}/g,'[identifier]').slice(-1800):''
+  assert.equal(code,expected,`${args[0]} failed (exit ${code}; signal ${child.signalCode??'none'}). CLI output withheld. ${diagnostic}`)
   if(json)return JSON.parse(output)
  } finally {clearTimeout(timer)}
 }
