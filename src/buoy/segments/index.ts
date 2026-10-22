@@ -1,3 +1,4 @@
+import {hierarchyProof} from '../hierarchy-approval'
 import {scorecardAssignments,assignmentFence} from '../scorecards/assignments'
 import {layerOneDependency} from '../scorecards/config'
 import {adoptionRuleFields} from '../adoption/segment-inputs'
@@ -40,7 +41,7 @@ export async function reconcile(db:D1Database,actor:Actor,at=new Date()) {
     statements.push(stmt(db,'INSERT INTO buoy_segment_entries(id,segment_id,account_id,entered_at,proposal_id) VALUES(?,?,?,?,?)',entryId,segment.id,a.account.id,stamp,proposalId))
     if(segment.playbook) {
      const dueDate=new Date(Date.parse(stamp.slice(0,10))+segment.playbook.dueDays*86400000).toISOString().slice(0,10)
-     const payload={title:segment.playbook.title,dueDate,priority:'medium',type:'general',segmentEntry:entryId,segmentRevision:segment.revision,adoptionProof:await aggregateProof(image.value,a.account.id)}
+     const payload={title:segment.playbook.title,dueDate,priority:'medium',type:'general',segmentEntry:entryId,segmentRevision:segment.revision,adoptionProof:await aggregateProof(image.value,a.account.id),hierarchyProof:await hierarchyProof({accounts:image.value.accounts,links:image.value.custom.links??[]},a.account.id,on)}
      statements.push(stmt(db,"INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,'playbook',?,?,?,'prepared',?,?)",proposalId,a.account.id,a.account.revision,JSON.stringify(a.account),JSON.stringify(payload),`${actor.kind}:${actor.id}:${actor.displayName}`,stamp))
     }
    }

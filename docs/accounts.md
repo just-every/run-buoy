@@ -107,3 +107,8 @@ parent. Erased-parent source history is withdrawn.
 **Current record activity** links native sources in observation/action order,
 newest first, with stable pages. Connected mailbox, meeting, CRM and support
 history remains unfinished; the current feed does not claim a connected timeline.
+
+Proposals on a parent also bind its current subtree source revisions and UTC
+evidence day. A changed child source refuses stale approval even when the
+native rollup has no matching custom field. Review the current tree and prepare
+a new proposal; segment-entry playbooks use the same source binding.
