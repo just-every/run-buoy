@@ -7,13 +7,15 @@ native. An unassigned member keeps the existing member behavior; the installatio
 does not silently reclassify existing people. Removing a profile explicitly
 returns that person to the existing native member policy.
 
-The default declarations mirror the role matrix in `CONTRACT.md`. Only current
-account reads and account search have been ported to these profiles. A declared
-permission is not an implemented action: assigned profiles receive a server-side
-refusal on other product endpoints, including exports, linked records, workspace
-homes, publishing, edits, approvals, connectors, credentials and audit. Custom
-objects, CRM identities, AI answers and embedded provider surfaces do not ship.
-ROLE-001 remains partial.
+The default declarations mirror the role matrix in `CONTRACT.md`. Current
+account reads/search, scoped workspace homes, a narrow account-details PATCH and
+scoped confirmed-term retention reports with audited CSV export are implemented.
+A declared permission does not enable every action in its row. Assigned profiles
+still receive server-side refusals on unported linked records, complete-data
+exports, bulk actions, publishing, broader edits, approvals, connectors,
+credentials and audit. Custom objects, CRM identities, AI answers and embedded
+provider surfaces do not ship. ROLE-001 remains partial; complete acceptance and
+verification are not claimed here.
 
 ## Configure a profile
 
@@ -106,17 +108,20 @@ does not invent CRM participation. This acceptance remains pending CRM work.
 
 `GET /api/buoy/state` returns an explicit account projection: native identity,
 name, revision, renewal date, owner, health band and permitted recurring-revenue
-values. It also returns the current `roleAccess` summary. It omits nested health
+values. It also returns the current `roleAccess` summary and each account's
+current edit affordance. It omits nested health
 explanations, arbitrary custom values, source text, contract terms, histories,
-timeline entries, task/proposal payloads and immutable evidence snapshots. Those
-read doors require their own field and record permissions before they can ship.
+timeline entries, task/proposal payloads and immutable evidence snapshots.
+General linked-record, field and timeline doors still require their own field
+and record permissions; permitted retention-source drilldown is described below.
 
 Full commercial readers receive current confirmed ARR, MRR and native currency.
 Band readers receive only a native-currency ARR band: under 10,000; 10,000 to
 under 100,000; or 100,000 and above. Missing recurring contracts say ARR is
 unavailable. These bands use the currency's native major units; they perform no
 currency conversion, and an invoice total never substitutes for ARR. Contract
-dates, line items, discounts and forecasts are absent. CSM commercial reads are
+dates, line items, discounts and forecasts are absent from this account/search
+projection. CSM commercial reads are
 limited to their own book, even when the record is shared with them.
 
 `GET /api/buoy/search` matches only this permitted projection, before matching,
@@ -139,13 +144,92 @@ live scope inputs and recurring-revenue snapshot before returning. Other future
 role-authorized writes must include the exported role and scope fences in the
 same transaction as their effect.
 
+## Scoped home and book
+
+`GET /api/buoy/workspace/home` and `/app/workspace` show the caller's current
+assigned book. A CS manager or finance/executive profile with the matrix's home
+permission can request another person's home with `?person=PERSON_ID`; a CSM
+cannot open another person's home. The caller's own record and commercial-field
+scope still applies. Inspecting a person never adopts that person's privileges.
+Another person's wholly outside-scope book is refused; a partly permitted book
+contains only its permitted accounts.
+
+The read-only home shows open tasks handled by the selected person and due today
+on the installation calendar, including current away cover; current unread alerts
+with dismissed alerts excluded; and renewal dates through both endpoints of the
+next 90 days. Its book uses the safe account/commercial projection. Task and alert
+free text is replaced by generic labels, while references, dates and permitted
+account names identify the work. Calendar meetings remain explicitly unavailable.
+The person selector contains only eligible current homes, rather than a global
+staff directory. Saved-view editing, bulk changes and general task/plan operations
+are not enabled by this read door.
+
+## Edit current account details
+
+`PATCH /api/buoy/accounts/:id` accepts the current `revision` and a nonempty subset
+of `name`, `renewalDate`, `noticeDays` and `renewalEvidence`. The native account
+validator applies. Edit authority must be `all`, `team` or `own`, intersected with
+the current readable record scope and the role definition's scope. A CSM's shared
+accounts remain read-only; a CS manager edits only accounts owned by current
+direct reports. Custom permission rows obey the same scope checks.
+
+The operation reads the real stored account and preserves its billing/support
+snapshots and all other unsubmitted fields. Commercial fields, custom fields,
+ownership changes and unknown properties refuse the whole request. Role/native
+version, live scope, source document and current revision guards run in the same
+transaction as the edit, revision advance and opaque `account.updated` audit
+entry. A stale or withdrawn authority cannot partially apply an edit.
+
+The native account form is offered only when the projected record is currently
+editable. It prefills the permitted name/date and revision; it requires an
+explicit notice period when that value is not projected, and new confirmation
+evidence. It never fills hidden source evidence or monetary values into markup.
+This narrow operation does not enable the remaining account/contact/task/plan or
+commercial-edit matrix acceptance.
+
+## Scoped retention reports and CSV
+
+`GET /api/buoy/revenue/retention`, `/app/revenue` and
+`GET /api/buoy/revenue/retention.csv` use the existing confirmed-term retention
+calculation. A report permission must allow it, and every selected account needs
+full commercial-field access. CSM reports cover their current own book; CS manager
+reports cover their current direct-managed team; finance/executive reports cover
+their readable scope. Custom roles intersect their configured scope with the
+report row. Band-only or no-commercial profiles are refused even when a custom
+role declares report permission. Native owner/admin can use the new CSV door;
+unassigned native members retain their existing GET report behavior, without
+gaining the new CSV permission.
+
+The allowlist applies before report filters, exceptions, account movements and
+totals. Existing period/end, segment, CSM, tier, plan and cohort filters remain
+available. Labeled CSM and segment choices come only from current owners and
+members of the allowed export-set; tier choices are likewise scoped, while
+plan/cohort choices use permitted report rows. There is no global staff, account
+or segment catalog. Blank optional controls mean no filter. A selected value
+remains selectable when its current result is empty, without looking up an
+outside person's or segment's name. Hidden and unknown owner filters both return
+empty results; a segment without a current permitted export-set member receives
+the same generic refusal as an unknown segment.
+
+The report retains permitted account financial movements and their confirmation
+sources. Native formulas retain their complete internal graph; hidden accounts
+do not become report rows, totals, exceptions or filter labels. Role, scope,
+native/segment label revisions and exact financial/filter source images are
+fenced before returning. A successful CSV rechecks the original authority/scope
+and records one opaque `data.exported` receipt; a refused export records no
+success. CSV contains only the permitted report, not an installation archive or
+complete-data export. The screen has no rate-publishing controls. Provider invoice
+reconciliation and the remaining REPORT-001 acceptance remain unavailable or
+unproved; this role boundary does not change that report's meaning.
+
 ## Remaining ROLE-001 acceptance
 
 The complete role matrix still needs per-row UI and API proofs inside and outside
 scope. Unported work includes linked contacts/custom objects/plans/tasks,
-commercial custom-field classification, manager and finance workspace homes,
-draft/publish authority, report/data exports, named concession and renewal approval
-execution, connector and agent management, AI settings/answers and the listed
+commercial custom-field classification and editing, saved-view/bulk workspace
+authority, draft/publish authority, complete-data exports and other report kinds,
+named concession and renewal approval execution, connector and agent management,
+AI settings/answers and the listed
 embedded provider surfaces. Existing GOVERN-001 agent command/data-class policies
 remain separate; this foundation does not add agent record scopes or widen their
 authority. No scoped privacy exception is introduced.
