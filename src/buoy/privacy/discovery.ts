@@ -30,7 +30,6 @@ export async function discover(db:D1Database,key:CryptoKey,person:{id:string;nam
    if(typeof value==='string'){
     const after=redact(value,terms)
     if(after!==value){
-     insist(matches.length<500,'More than 500 free-text matches. Review a smaller source before erasure; no matches were silently omitted.',409)
      const id=await privacyFingerprint(key,[row.id,path,value])
      matches.push({id,recordId:row.id,path:JSON.stringify(path),before:value,after,held:!!row.held});changes.push({path,id,after})
     }

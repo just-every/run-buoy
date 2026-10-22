@@ -3,7 +3,7 @@ import { importClient } from './import-door-client.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
 // Source and destination run sequentially; no provider calls or data fakes.
 import assert from 'node:assert/strict'
-import {randomUUID} from 'node:crypto'
+import {randomUUID,createHmac,createHash} from 'node:crypto'
 import { cp, mkdtemp, rm, symlink, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { join, resolve } from 'node:path'
@@ -130,6 +130,17 @@ try{
  // The first export's own record is taken with its snapshot; the next export carries it.
  await command(source,['export','--output',join(parent,'first.rer')])
  await command(source,['export','--output',archive])
+ // Inspect the public archive format, never the live database. This independent
+ // calculation proves a keyed fence, not merely a replay refusal that plain SHA
+ // would also satisfy. No generated installation key is logged on failure.
+ const archiveRows=(await readFile(archive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ const replayKey=archiveRows.find(item=>item.table==='buoy_privacy_key')?.row.secret
+ assert.ok(typeof replayKey==='string'&&/^[a-f0-9]{64}$/.test(replayKey),'Archive carries a 256-bit installation replay key')
+ const fences=archiveRows.filter(item=>item.table==='buoy_erased_usage_identities').map(item=>item.row)
+ const expectedFence='hmac:'+createHmac('sha256',Buffer.from(replayKey,'hex')).update(JSON.stringify([usageSource.id,privacyIdentity.userId])).digest('hex')
+ assert.ok(fences.some(row=>row.source_id===usageSource.id&&row.identity_hash===expectedFence),'Archived fence equals an independently calculated source-bound HMAC-SHA-256')
+ const unkeyed=createHash('sha256').update(privacyIdentity.userId).digest('hex')
+ assert.ok(!fences.some(row=>row.identity_hash===unkeyed),'No guessable unkeyed erased-user digest remains')
  await command(destination,['import','--input',archive,'--yes'])
  await command(destination,['import','--input',archive,'--yes'],1)
  const bytes=await readFile(archive);bytes[Math.floor(bytes.length/2)]^=1
