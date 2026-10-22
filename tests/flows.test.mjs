@@ -1,4 +1,4 @@
-import {playJourney,playTriggerJourney,playIntakeJourney,playFieldJourney} from './play-journey.mjs'
+import {playJourney,playTriggerJourney,playIntakeJourney,playFieldJourney,playChildJourney,playCalendarJourney} from './play-journey.mjs'
 import {hierarchyJourney} from './hierarchy-journey.mjs'
 import {workspaceJourney} from './workspace-journey.mjs'
 import {renewalJourney} from './renewal-journey.mjs'
@@ -517,9 +517,9 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   })
   await t.test('INAPP-001 authenticated targeting, caps and receipt custody',async()=>{await inappJourney({...worker,request,dispatch:async req=>{seen.push([req.method,new URL(req.url).pathname]);return worker.dispatch(req)}})})
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
-   // Full usage-volume and team journeys run unchanged in isolated installations.
+   // Full usage-volume, team and multi-step playbook journeys use isolated installations.
    // Keep the central write-door inventory and denied ordinary-member boundary here.
-   for(const [method,path]of [['POST','/usage/intake/synthetic-buoy-1502'],['POST','/usage/sources'],['PUT','/usage/sources/synthetic-buoy-1500'],['POST','/usage/sources/synthetic-buoy-1500/credentials'],['DELETE','/usage/credentials/synthetic-buoy-1501'],['POST','/usage/mappings/preview'],['POST','/usage/mappings'],['PUT','/team/settings'],['POST','/team/preview'],['POST','/team/apply']])assert.equal((await call(path,method,{}, {cookie:member})).status,403)
+   for(const [method,path]of [['POST','/playbooks'],['POST','/playbooks/synthetic-buoy-1790/enroll'],['POST','/playbook-runs/synthetic-buoy-1791/action'],['POST','/playbooks/synthetic-buoy-1790/credentials'],['DELETE','/playbooks/synthetic-buoy-1790/credentials/synthetic-buoy-1792'],['POST','/playbooks/intake/synthetic-buoy-1790'],['POST','/usage/intake/synthetic-buoy-1502'],['POST','/usage/sources'],['PUT','/usage/sources/synthetic-buoy-1500'],['POST','/usage/sources/synthetic-buoy-1500/credentials'],['DELETE','/usage/credentials/synthetic-buoy-1501'],['POST','/usage/mappings/preview'],['POST','/usage/mappings'],['PUT','/team/settings'],['POST','/team/preview'],['POST','/team/apply']])assert.equal((await call(path,method,{}, {cookie:member})).status,403)
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))
    for(const route of routes){
@@ -583,3 +583,7 @@ test('PLAY-001 typed enrollment triggers and observed usage recovery',playTrigge
 test('PLAY-001 scoped server webhook enrollment authority and replay',playIntakeJourney)
 
 test('PLAY-001 reviewed field changes commit once before downstream branching',playFieldJourney)
+
+test('PLAY-001 child playbook starts are pinned and recorded once',playChildJourney)
+
+test('PLAY-001 task offsets follow the installation calendar',playCalendarJourney)

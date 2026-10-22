@@ -162,3 +162,30 @@ export async function playFieldJourney(){
   console.log('PLAY-001 reviewed field step: no mutation before approval, stale review, one concurrent winner, preserved unrelated data/formula history and freshly recalculated health branch passed.')
  }finally{await app.close()}
 }
+
+export async function playChildJourney(){
+ const f=await playFixture(),{app,api,ownerId,create,run,action,approveTask}=f
+ try{
+  const accountId=await create('synthetic-buoy-1800'),child=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Pinned child review',steps:[{id:'task',kind:'task',title:'Original reviewed child action',dueDays:1},{id:'finish',kind:'approval',title:'Child completion review'}]})}),parent=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Reviewed parent launch',steps:[{id:'start',kind:'playbook',title:'Start reviewed child',playbookId:child.id},{id:'finish',kind:'approval',title:'Parent completion review'}]})}),enrolled=await api('/playbooks/'+parent.id+'/enroll','POST',{accountId,operationKey:'synthetic-buoy-1801'})
+  assert.equal((await api('/playbooks')).runs.length,1,'A child is not started before explicit approval')
+  await api('/playbooks','POST',{id:child.id,revision:child.revision,config:playConfig(ownerId,{name:'A later child version',steps:[{id:'task',kind:'task',title:'Later unreviewed action',dueDays:2}]})})
+  const before=await run(enrolled.id),results=await Promise.all([0,1].map(()=>app.request('/api/buoy/playbook-runs/'+enrolled.id+'/action',{cookie:app.cookie,method:'POST',body:{revision:before.revision,action:'approve',reference:'synthetic-buoy-1802'}})));assert.deepEqual(results.map(r=>r.status).sort(),[200,409])
+  const children=(await api('/playbooks')).runs.filter(r=>r.parent_run_id===enrolled.id);assert.equal(children.length,1);const launched=children[0];assert.equal(launched.parent_step,0);assert.equal(launched.version_id,child.revision);assert.equal(launched.config.name,'Pinned child review');assert.equal(launched.config.steps[0].title,'Original reviewed child action');assert.equal((await run(enrolled.id)).cursor,1)
+  assert.equal((await api('/state')).tasks.length,0,'Approving a launch does not approve the child task')
+  await approveTask(launched.id);await action(launched.id,{action:'approve',reference:'synthetic-buoy-1803'});assert.equal((await run(launched.id)).status,'completed')
+  await action(enrolled.id,{action:'review'});await action(enrolled.id,{action:'approve',reference:'synthetic-buoy-1804'});assert.equal((await run(enrolled.id)).status,'completed');assert.equal((await api('/state')).tasks.filter(t=>t.title==='Original reviewed child action').length,1);assert.equal((await api('/state')).tasks.filter(t=>t.title==='Later unreviewed action').length,0)
+  assert.equal((await run(enrolled.id)).events.filter(e=>e.result.childRunId===launched.id).length,1)
+  console.log('PLAY-001 child launch: explicit approval, immutable child version, one concurrent winner, atomic parent provenance/receipt and separate child task approval passed.')
+ }finally{await app.close()}
+}
+
+export async function playCalendarJourney(){
+ const f=await playFixture(),{app,api,ownerId,create,run}=f
+ try{
+  const accountId=await create('synthetic-buoy-1850');await api('/settings/tasks','PUT',{remindDaysBefore:1,escalateAfterDays:1,timeZone:'America/Los_Angeles'})
+  const book=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Installation calendar due dates',steps:[{id:'wait',kind:'wait',title:'Wait for date boundary',seconds:1},{id:'task',kind:'task',title:'Calendar-bound task',dueDays:1}]})}),enrolled=await api('/playbooks/'+book.id+'/enroll','POST',{accountId,operationKey:'synthetic-buoy-1851'})
+  const utcDay=new Date(Date.now()+86400000).toISOString().slice(0,10),instant=Date.parse(utcDay+'T01:00:00Z');await app.scheduled('0 * * * *',instant)
+  const r=await run(enrolled.id);assert.equal(r.status,'approval');const proposal=(await api('/state')).proposals.find(p=>p.id===r.proposalId);assert.equal(proposal.payload.dueDate,utcDay,'At 01:00 UTC Los Angeles is still on the preceding calendar day; one due day reaches the UTC date, not the following day');assert.equal(proposal.payload.playTimeZone,'America/Los_Angeles')
+  console.log('PLAY-001 task due offsets follow the existing installation calendar across a UTC date boundary.')
+ }finally{await app.close()}
+}

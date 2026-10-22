@@ -42,5 +42,5 @@ playIngest.post('/api/buoy/playbooks/intake/:id',async c=>{
  const run=await enroll(db,undefined,bookId,{accountId,operationKey:'webhook:'+text(body.operationKey,'Source operation key',80)},new Date(),[fence])
  await advance(db,run.id)
  await stmt(db,'DELETE FROM buoy_playbook_intake_limits WHERE minute<?',minute-1440).run()
- return c.json({id:run.id,replayed:run.replayed,status:'enrolled; owner/admin approval remains required for sensitive steps'},202)
+ return c.json({id:run.id,replayed:run.replayed,accepted:true,authority:'Enrollment only; no read or approval grant'},202)
 })

@@ -1,3 +1,4 @@
+import {localTime,taskTiming,DEFAULT_TASK_TIMING} from '../settings'
 import {checkedValues,fieldWrites,fieldDiff} from './fields'
 import {segmentFields} from '../segments'
 import {hierarchyApprovalImage,hierarchyApprovalFence} from '../hierarchy-approval'
@@ -23,7 +24,15 @@ export async function publish(db:D1Database,actor:Actor,input:Record<string,unkn
  requirePerson(actor)
  insist(Object.keys(input).every(k=>['id','revision','config'].includes(k)),'Unsupported publish field.')
  const validationImage=await snapshot(db),d=definition(input.config,segmentFields(validationImage.value)),bookId=input.id===undefined?id():text(input.id,'Playbook id',100),version=id(),at=now()
- for(const step of d.steps)if(step.kind==='fields')step.values=checkedValues(validationImage.value.custom.definitions,step.values!)
+ for(const step of d.steps){
+  if(step.kind==='fields')step.values=checkedValues(validationImage.value.custom.definitions,step.values!)
+  if(step.kind==='playbook'){
+   insist(step.playbookId!==bookId,'A playbook cannot directly start itself.')
+   const child=await stmt(db,'SELECT revision FROM buoy_playbooks WHERE id=?',step.playbookId).first<{revision:string}>();insist(child,'Choose an existing child playbook.')
+   step.playbookVersion??=child.revision
+   insist(await stmt(db,'SELECT id FROM buoy_playbook_versions WHERE id=? AND playbook_id=?',step.playbookVersion,step.playbookId).first(),'Choose a version belonging to the child playbook.')
+  }
+ }
  const old=await stmt(db,'SELECT * FROM buoy_playbooks WHERE id=?',bookId).first<Book>()
  insist(old?input.revision===old.revision:input.revision==null,'Playbook changed. Reload before publishing.',409)
  insist((await stmt(db,'SELECT count(*) AS n FROM buoy_playbooks').first<{n:number}>())!.n<50||old,'At most 50 playbooks fit this installation.',409)
@@ -31,18 +40,19 @@ export async function publish(db:D1Database,actor:Actor,input:Record<string,unkn
  await db.batch([authority(db,actor,true),fence(db,validationImage),guard(db,"EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')",d.ownerId),guard(db,old?'EXISTS(SELECT 1 FROM buoy_playbooks WHERE id=? AND revision=?)':'NOT EXISTS(SELECT 1 FROM buoy_playbooks WHERE id=?)',bookId,...(old?[old.revision]:[])),stmt(db,'INSERT INTO buoy_playbooks(id,revision,document,enabled,published_at) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,document=excluded.document,enabled=excluded.enabled,published_at=excluded.published_at',bookId,version,JSON.stringify(d),Number(d.enabled),at),stmt(db,'INSERT INTO buoy_playbook_versions(id,playbook_id,document,published_by,published_at) VALUES(?,?,?,?,?)',version,bookId,JSON.stringify(d),'person:'+actor.id,at),auditRecord(db,actor,'playbook.published',bookId),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:bookId,revision:version,config:d}
 }
-export async function enroll(db:D1Database,actor:Actor|undefined,bookId:string,input:Record<string,unknown>,at=new Date(),intakeFence:D1PreparedStatement[]=[]){
+export async function enroll(db:D1Database,actor:Actor|undefined,bookId:string,input:Record<string,unknown>,at=new Date(),intakeFence:D1PreparedStatement[]=[],versionId?:string,effects?:(childId:string)=>D1PreparedStatement[]){
  if(actor)requirePerson(actor)
  const key=text(input.operationKey,'Enrollment operation key',100),accountId=text(input.accountId,'Account',100),book=await stmt(db,'SELECT * FROM buoy_playbooks WHERE id=?',bookId).first<Book>()
  insist(book?.enabled,'Enable the playbook before enrollment.',409)
- const prior=await stmt(db,'SELECT id FROM buoy_playbook_runs WHERE playbook_id=? AND account_id=? AND entry_key=?',bookId,accountId,key).first<{id:string}>();if(prior)return {id:prior.id,replayed:true}
- const d=JSON.parse(book.document) as Definition,image=await snapshot(db),a=evaluated(image.value,at.toISOString().slice(0,10)).find(a=>a.account.id===accountId)
+ const prior=await stmt(db,'SELECT id FROM buoy_playbook_runs WHERE playbook_id=? AND account_id=? AND entry_key=?',bookId,accountId,key).first<{id:string}>();if(prior){insist(!effects,'The child launch operation already exists. Reload the parent run.',409);return {id:prior.id,replayed:true}}
+ const selected=versionId?await stmt(db,'SELECT id,document FROM buoy_playbook_versions WHERE id=? AND playbook_id=?',versionId,bookId).first<{id:string;document:string}>():{id:book.revision,document:book.document};insist(selected,'Playbook version not found.',409)
+ const d=JSON.parse(selected.document) as Definition,image=await snapshot(db),a=evaluated(image.value,at.toISOString().slice(0,10)).find(a=>a.account.id===accountId)
  insist(a,'Account not found.',404)
  insist(!d.entry||matches(d.entry,a.values,a.people),'Account does not meet entry criteria.',409)
  insist(!d.exit||!matches(d.exit,a.values,a.people),'Account already meets exit criteria.',409)
  const cutoff=new Date(at.getTime()-d.reentryDays*86400000).toISOString()
  const runId=id(),revision=id()
- await db.batch([...(actor?[authority(db,actor,true)]:[]),...intakeFence,fence(db,image),guard(db,"EXISTS(SELECT 1 FROM buoy_playbooks WHERE id=? AND revision=? AND enabled=1)",bookId,book.revision),guard(db,"EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')",d.ownerId),guard(db,`NOT EXISTS(SELECT 1 FROM buoy_playbook_runs WHERE playbook_id=? AND account_id=? AND (${active} OR started_at>?))`,bookId,accountId,cutoff),stmt(db,"INSERT INTO buoy_playbook_runs(id,playbook_id,version_id,account_id,entry_key,owner_id,status,revision,account_revision,started_at,updated_at) VALUES(?,?,?,?,?,?,'running',?,?,?,?)",runId,bookId,book.revision,accountId,key,d.ownerId,revision,a.account.revision,at.toISOString(),at.toISOString()),stmt(db,"INSERT INTO buoy_playbook_events(id,run_id,step_index,attempt,status,inputs,result,recorded_at,event_seq) VALUES(?,?,-1,1,'enrolled',?,?,?,0)",id(),runId,JSON.stringify({accountRevision:a.account.revision,trigger:d.trigger.kind}),JSON.stringify({actor:actor?'person:'+actor.id:'automation',version:book.revision}),at.toISOString()),...accountAudit(db,actor??{kind:'agent',id:'playbook:'+runId},accountId,'playbook.enrolled'),stmt(db,'DELETE FROM buoy_assertions')])
+ await db.batch([...(actor?[authority(db,actor,true)]:[]),...intakeFence,fence(db,image),guard(db,"EXISTS(SELECT 1 FROM buoy_playbooks WHERE id=? AND revision=? AND enabled=1)",bookId,book.revision),guard(db,"EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')",d.ownerId),guard(db,`NOT EXISTS(SELECT 1 FROM buoy_playbook_runs WHERE playbook_id=? AND account_id=? AND (${active} OR started_at>?))`,bookId,accountId,cutoff),stmt(db,"INSERT INTO buoy_playbook_runs(id,playbook_id,version_id,account_id,entry_key,owner_id,status,revision,account_revision,started_at,updated_at) VALUES(?,?,?,?,?,?,'running',?,?,?,?)",runId,bookId,selected.id,accountId,key,d.ownerId,revision,a.account.revision,at.toISOString(),at.toISOString()),stmt(db,"INSERT INTO buoy_playbook_events(id,run_id,step_index,attempt,status,inputs,result,recorded_at,event_seq) VALUES(?,?,-1,1,'enrolled',?,?,?,0)",id(),runId,JSON.stringify({accountRevision:a.account.revision,trigger:d.trigger.kind}),JSON.stringify({actor:actor?'person:'+actor.id:'automation',version:selected.id}),at.toISOString()),...(effects?effects(runId):[]),...accountAudit(db,actor??{kind:'agent',id:'playbook:'+runId},accountId,'playbook.enrolled'),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:runId,replayed:false}
 }
 export async function advance(db:D1Database,runId:string,clock=new Date()){
@@ -78,13 +88,14 @@ export async function advance(db:D1Database,runId:string,clock=new Date()){
    if(link?.status==='approved'){await finish({proposalId:link.id,taskCreated:true});continue}
    if(r.status==='approval')return
    if(!await stmt(db,"SELECT id FROM oa_operators WHERE id=? AND status='active'",r.owner_id).first()){await transition(db,r,'failed',at,{}, {step:s.id,error:'Run owner is inactive. Choose an active owner when retrying.'},attempt,[],r.cursor,null,'Run owner is inactive. Choose an active owner when retrying.');return}
+   const timingRow=await stmt(db,"SELECT value FROM buoy_settings WHERE key='tasks'").first<{value:string}>(),timing=timingRow?JSON.parse(timingRow.value):DEFAULT_TASK_TIMING,on=localTime(timing.timeZone??null,clock).date
    const hierarchy=await hierarchyApprovalImage(db,r.account_id),adoptionProof=await hasAggregateHealth(db)?await aggregateProof(image.value,r.account_id):undefined
-   const proposalId=id(),payload={title:s.title,dueDate:new Date(clock.getTime()+s.dueDays!*86400000).toISOString().slice(0,10),ownerId:r.owner_id,priority:'medium',type:'general',playRun:r.id,playStep:r.cursor,...(hierarchy.proof?{hierarchyProof:hierarchy.proof}:{}),...(adoptionProof?{adoptionProof}:{})}
-   await transition(db,r,'approval',at,{}, {step:s.id,proposalId,accountRevision:a.account.revision},attempt,[fence(db,image),hierarchyApprovalFence(db,hierarchy),stmt(db,"INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,'playbook',?,?,?,'prepared',?,?)",proposalId,r.account_id,a.account.revision,JSON.stringify(a.account),JSON.stringify(payload),'playbook:'+r.playbook_id,at),stmt(db,'INSERT INTO buoy_playbook_proposals(run_id,step_index,proposal_id) VALUES(?,?,?) ON CONFLICT(run_id,step_index) DO UPDATE SET proposal_id=excluded.proposal_id',r.id,r.cursor,proposalId),stmt(db,'UPDATE buoy_playbook_runs SET account_revision=? WHERE id=?',a.account.revision,r.id),...accountAudit(db,automation(r),r.account_id,'playbook.step-prepared')]);return
+   const proposalId=id(),payload={title:s.title,dueDate:new Date(Date.parse(on)+s.dueDays!*86400000).toISOString().slice(0,10),ownerId:r.owner_id,priority:'medium',type:'general',playRun:r.id,playStep:r.cursor,playTimeZone:timing.timeZone??'UTC',...(hierarchy.proof?{hierarchyProof:hierarchy.proof}:{}),...(adoptionProof?{adoptionProof}:{})}
+   await transition(db,r,'approval',at,{}, {step:s.id,proposalId,accountRevision:a.account.revision},attempt,[fence(db,image),guard(db,"COALESCE((SELECT value FROM buoy_settings WHERE key='tasks'),'')=?",timingRow?.value??''),hierarchyApprovalFence(db,hierarchy),stmt(db,"INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,'playbook',?,?,?,'prepared',?,?)",proposalId,r.account_id,a.account.revision,JSON.stringify(a.account),JSON.stringify(payload),'playbook:'+r.playbook_id,at),stmt(db,'INSERT INTO buoy_playbook_proposals(run_id,step_index,proposal_id) VALUES(?,?,?) ON CONFLICT(run_id,step_index) DO UPDATE SET proposal_id=excluded.proposal_id',r.id,r.cursor,proposalId),stmt(db,'UPDATE buoy_playbook_runs SET account_revision=? WHERE id=?',a.account.revision,r.id),...accountAudit(db,automation(r),r.account_id,'playbook.step-prepared')]);return
   }
-  if(s.kind==='approval'||s.kind==='external'||s.kind==='fields'){
+  if(s.kind==='approval'||s.kind==='external'||s.kind==='fields'||s.kind==='playbook'){
    const status=s.kind==='external'?'receipt':'approval';if(r.status===status)return
-   await transition(db,r,status,at,{}, {step:s.id,title:s.title,channel:s.channel??null,externalWork:s.kind==='external',...(s.kind==='fields'?{changes:fieldDiff(image.value,r.account_id,s.values!)}:{}),accountRevision:a.account.revision},attempt,[fence(db,image),stmt(db,'UPDATE buoy_playbook_runs SET account_revision=? WHERE id=?',a.account.revision,r.id)]);return
+   await transition(db,r,status,at,{}, {step:s.id,title:s.title,channel:s.channel??null,externalWork:s.kind==='external',...(s.kind==='fields'?{changes:fieldDiff(image.value,r.account_id,s.values!)}:{}),...(s.kind==='playbook'?{childPlaybookId:s.playbookId,childVersion:s.playbookVersion}:{}),accountRevision:a.account.revision},attempt,[fence(db,image),stmt(db,'UPDATE buoy_playbook_runs SET account_revision=? WHERE id=?',a.account.revision,r.id)]);return
   }
  }
 }
@@ -104,14 +115,20 @@ export async function act(db:D1Database,actor:Actor,runId:string,input:Record<st
   const ownerId=input.ownerId===undefined?r.owner_id:text(input.ownerId,'Run owner',100)
   await transition(db,r,'running',at,{}, {retriedBy:'person:'+actor.id,previousAttempt:attempt},attempt+1,[...extra,guard(db,"EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')",ownerId),stmt(db,'UPDATE buoy_playbook_runs SET owner_id=? WHERE id=?',ownerId,r.id)])
  }else{
-  insist((input.action==='approve'&&(s.kind==='approval'||s.kind==='fields')&&r.status==='approval')||(input.action==='receipt'&&s.kind==='external'&&r.status==='receipt'),'This step does not accept that action.',409)
+  insist((input.action==='approve'&&(s.kind==='approval'||s.kind==='fields'||s.kind==='playbook')&&r.status==='approval')||(input.action==='receipt'&&s.kind==='external'&&r.status==='receipt'),'This step does not accept that action.',409)
   insist(a.account.revision===r.account_revision,'Account evidence changed. Review current inputs before acting.',409)
   insist(!d.exit||!matches(d.exit,a.values,a.people),'Exit criteria are met. Advance the run before acting.',409)
   const reference=text(input.reference,'Approval or external-work evidence',1000)
   if(s.kind==='fields')extra.push(...fieldWrites(db,actor,image.value,r.account_id,s.values!,reference))
   const failed=input.action==='receipt'&&input.outcome==='failed'
   if(input.action==='receipt')insist(input.outcome==='succeeded'||input.outcome==='failed','Choose succeeded or failed external work.')
-  await transition(db,r,failed?'failed':'running',at,inputs(s,a.values),{step:s.id,recordedBy:'person:'+actor.id,reference,outcome:input.outcome??'approved',providerVerified:false,...(s.kind==='fields'?{changedFields:Object.keys(s.values!)}:{})},attempt,extra,failed?r.cursor:s.next,null,failed?'External work was reported failed. Review the recorded evidence before retrying.':null)
+  if(s.kind==='playbook'){
+   await enroll(db,actor,s.playbookId!,{accountId:r.account_id,operationKey:'child:'+r.id+':'+r.cursor},new Date(),[enabled(db,r),...extra],s.playbookVersion,childId=>[
+    event(db,r,'running',at,{}, {step:s.id,recordedBy:'person:'+actor.id,reference,childRunId:childId,childVersion:s.playbookVersion},attempt),
+    stmt(db,'UPDATE buoy_playbook_runs SET parent_run_id=?,parent_step=? WHERE id=?',r.id,r.cursor,childId),
+    stmt(db,"UPDATE buoy_playbook_runs SET status='running',cursor=?,revision=?,updated_at=?,due_at=NULL,error=NULL WHERE id=?",s.next,id(),at,r.id)
+   ])
+  }else await transition(db,r,failed?'failed':'running',at,inputs(s,a.values),{step:s.id,recordedBy:'person:'+actor.id,reference,outcome:input.outcome??'approved',providerVerified:false,...(s.kind==='fields'?{changedFields:Object.keys(s.values!)}:{})},attempt,extra,failed?r.cursor:s.next,null,failed?'External work was reported failed. Review the recorded evidence before retrying.':null)
  }
  if(s.kind==='fields'&&input.action==='approve'){const {recalculateScorecards}=await import('../scorecards');const {reconcile}=await import('../segments');await recalculateScorecards(db);await reconcile(db,actor)}
  await advance(db,runId)
@@ -130,13 +147,13 @@ export async function alertFailures(db:D1Database){
 export async function runPlaybooks(db:D1Database,clock=new Date()){
  const books=(await db.prepare('SELECT * FROM buoy_playbooks WHERE enabled=1 ORDER BY id').all<Book>()).results
  if(!books.length)return
- const image=await snapshot(db),accounts=evaluated(image.value,clock.toISOString().slice(0,10))
+ const image=await snapshot(db),accounts=evaluated(image.value,clock.toISOString().slice(0,10)),calendar=localTime((await taskTiming(db)).timeZone,clock).date
  for(const book of books){const d=JSON.parse(book.document) as Definition;if(d.trigger.kind==='manual'||d.trigger.kind==='webhook')continue
   for(const a of accounts){let matching=false
    if(d.trigger.kind==='rule')matching=matches(d.trigger.rules!,a.values,a.people)
    if(d.trigger.kind==='stage')matching=a.stage===d.trigger.stage
-   if(d.trigger.kind==='contract-start'){const day=a.values['revenue.contractStart'];matching=typeof day==='string'&&(Date.parse(day)-Date.parse(clock.toISOString().slice(0,10)))/86400000===d.trigger.days}
-   if(d.trigger.kind==='renewal')matching=a.values.daysToRenewal===d.trigger.days
+   if(d.trigger.kind==='contract-start'){const day=a.values['revenue.contractStart'];matching=typeof day==='string'&&(Date.parse(day)-Date.parse(calendar))/86400000===d.trigger.days}
+   if(d.trigger.kind==='renewal')matching=(Date.parse(a.account.renewalDate)-Date.parse(calendar))/86400000===d.trigger.days
    if(d.trigger.kind==='segment')matching=image.value.entries.some(e=>e.accountId===a.account.id&&e.segmentId===d.trigger.segmentId&&!e.exitedAt)
    const previous=await stmt(db,'SELECT matching,interval_id FROM buoy_playbook_triggers WHERE playbook_id=? AND account_id=?',book.id,a.account.id).first<{matching:number;interval_id:string}>()
    const interval=matching&&!previous?.matching?id():previous?.interval_id??id()
@@ -153,8 +170,9 @@ export async function runPlaybooks(db:D1Database,clock=new Date()){
 export async function playState(db:D1Database,actor:Actor,accountId?:string){
  requirePerson(actor)
  const books=(await db.prepare('SELECT * FROM buoy_playbooks ORDER BY published_at,id').all<Book>()).results
- const runs=(await stmt(db,`SELECT id,playbook_id,version_id,account_id,entry_key,owner_id,cursor,status,revision,account_revision,started_at,updated_at,due_at,error FROM buoy_playbook_runs ${accountId?'WHERE account_id=?':''} ORDER BY started_at DESC,id LIMIT 100`,...(accountId?[accountId]:[])).all<Run>()).results
+ const runs=(await stmt(db,`SELECT id,playbook_id,version_id,account_id,entry_key,owner_id,cursor,status,revision,account_revision,started_at,updated_at,due_at,error,parent_run_id,parent_step FROM buoy_playbook_runs ${accountId?'WHERE account_id=?':''} ORDER BY started_at DESC,id LIMIT 100`,...(accountId?[accountId]:[])).all<Run>()).results
  const events=await Promise.all(runs.map(async r=>({runId:r.id,events:(await stmt(db,'SELECT step_index AS stepIndex,attempt,status,inputs,result,recorded_at AS recordedAt FROM buoy_playbook_events WHERE run_id=? ORDER BY event_seq',r.id).all<{stepIndex:number;attempt:number;status:string;inputs:string;result:string;recordedAt:string}>()).results.map(e=>({...e,inputs:JSON.parse(e.inputs),result:JSON.parse(e.result)}))})))
+ const versions=(await stmt(db,'SELECT id,document FROM buoy_playbook_versions WHERE id IN(SELECT value FROM json_each(?))',JSON.stringify(runs.map(r=>r.version_id))).all<{id:string;document:string}>()).results
  const links=(await db.prepare('SELECT * FROM buoy_playbook_proposals').all<{run_id:string;step_index:number;proposal_id:string}>()).results
- return {fields:segmentFields((await snapshot(db)).value),definitions:books.map(b=>({id:b.id,revision:b.revision,config:JSON.parse(b.document) as Definition})),runs:runs.map(r=>({...r,events:events.find(e=>e.runId===r.id)!.events,proposalId:links.find(x=>x.run_id===r.id&&x.step_index===r.cursor)?.proposal_id??null})),interpretation:'External work is performed outside Buoy and recorded by an owner/admin. A receipt is not provider verification or automatic delivery. Disabled playbooks freeze existing runs; earlier versions remain pinned.'}
+ return {fields:segmentFields((await snapshot(db)).value),definitions:books.map(b=>({id:b.id,revision:b.revision,config:JSON.parse(b.document) as Definition})),runs:runs.map(r=>({...r,config:JSON.parse(versions.find(v=>v.id===r.version_id)!.document) as Definition,events:events.find(e=>e.runId===r.id)!.events,proposalId:links.find(x=>x.run_id===r.id&&x.step_index===r.cursor)?.proposal_id??null})),interpretation:'External work is performed outside Buoy and recorded by an owner/admin. A receipt is not provider verification or automatic delivery. Disabled playbooks freeze existing runs; earlier versions remain pinned.'}
 }

@@ -30,6 +30,8 @@ export async function seedRecordPortability(call,fixture,personId){
  const pending=(await call('/playbooks?accountId='+child)).runs.find(r=>r.id===playRun.id);await call('/proposals/'+pending.proposalId+'/approve','POST',{});
  await call('/playbook-runs/'+playRun.id+'/action','POST',{revision:(await call('/playbooks?accountId='+child)).runs.find(r=>r.id===playRun.id).revision,action:'receipt',outcome:'failed',reference:'synthetic-buoy-1404'});
  await call('/playbook-runs/'+playRun.id+'/action','POST',{revision:(await call('/playbooks?accountId='+child)).runs.find(r=>r.id===playRun.id).revision,action:'retry'});
+ const childBook=await call('/playbooks','POST',{config:playConfig(operator,{name:'Portable pinned child',steps:[{id:'review',kind:'approval',title:'Review portable child'}]})}),parentBook=await call('/playbooks','POST',{config:playConfig(operator,{name:'Portable approved parent',steps:[{id:'start',kind:'playbook',title:'Start portable child',playbookId:childBook.id}]})}),parentRun=await call('/playbooks/'+parentBook.id+'/enroll','POST',{accountId:child,operationKey:'synthetic-buoy-1405'});
+ await call('/playbook-runs/'+parentRun.id+'/action','POST',{revision:(await call('/playbooks?accountId='+child)).runs.find(r=>r.id===parentRun.id).revision,action:'approve',reference:'synthetic-buoy-1406'});
  return {playbook,playRun,parent,child,viewId:view.id,bulk,card,personId}
 }
 export async function recordPortabilityImage(call,ids){
