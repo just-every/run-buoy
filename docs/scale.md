@@ -50,6 +50,16 @@ restored Worker must serve account pages within target and return the last
 new intake payload unchanged. Scratch installations and owned Workers are
 removed in `finally`; archive credentials never enter the workflow artifact.
 
+## Current measured failure
+
+The committed journey was run outside push Verify at
+`3c4e44ea044e245d7b2d196469561659ad14613e`, in heavy-slot run
+20261022T214617142128Z-heavy-slot-0e8958d1. The reviewed native import and
+reconciliation passed, then the actual 10,000-account directory load failed at
+D1 with `BUOY_ACCOUNT_LIMIT` / `SQLITE_CONSTRAINT`. No full-volume timing, event
+storage projection, archive export or restore passed. The test refuses that
+limitation; it does not drop the product trigger or claim a smaller-volume pass.
+
 ## Storage constraint and bounded failure
 
 Cloudflare D1 has a hard 10 GB database limit. The present installation has one
@@ -85,7 +95,7 @@ Current shared paths prevent a full-volume claim:
   indexes in one D1 database requires measured storage proof; it must not be
   assumed to fit.
 
-These shared implementations are owned by the parent integration task.
+These shared implementations remain work within SCALE-001.
 Pagination, bounded per-account projection and incremental calculation must
 preserve authorization, explicit identity attribution, source revision fences,
 erasure custody and complete archive restoration. Splitting event storage

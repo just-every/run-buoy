@@ -13,9 +13,8 @@ export async function command(root, script, args, {timeout=3_600_000,json=false,
  const timer=setTimeout(()=>child.kill('SIGTERM'),timeout)
  try {
   const code=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('close',resolve)})
-  // Scale D1 files contain synthetic rows only. Keep a bounded diagnostic,
-  // removing URLs, long opaque identifiers and terminal escape sequences.
-  const diagnostic=args[0]==='d1'?(output+errorOutput).replace(/\x1b\[[0-9;]*m/g,'').replace(/https?:\/\/[^\s]+/g,'[URL]').replace(/[A-Za-z0-9_+./=-]{24,}/g,'[identifier]').slice(-1800):''
+  // Error classes explain the failed load without printing SQL or CLI secrets.
+  const diagnostic=args[0]==='d1'?[...new Set((output+errorOutput).match(/\b(?:BUOY_[A-Z_]+|SQLITE_[A-Z_]+)\b/g)??[])].join(' '):''
   assert.equal(code,expected,`${args[0]} failed (exit ${code}; signal ${child.signalCode??'none'}). CLI output withheld. ${diagnostic}`)
   if(json)return JSON.parse(output)
  } finally {clearTimeout(timer)}
