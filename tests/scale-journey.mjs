@@ -36,7 +36,7 @@ try {
  // Publish through the real door before loading; the hourly Cron must refresh
  // this existing configuration for every actual account, not an empty no-op.
  const current=await json(await call('/scorecards'))
- await json(await call('/scorecards/publish','POST',{revision:current.revision,config:{name:synthetic(90_000_008),measures:[{key:'billing',name:synthetic(90_000_009),field:'billing.allocatedMinor',min:0,max:10000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}}))
+ await json(await call('/scorecards/publish','POST',{revision:current.revision,config:{name:synthetic(90_000_008),measures:[{key:'billing',name:synthetic(90_000_009),field:'billing.allocatedMinor',min:0,max:10000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}}),201)
  await measure('load account/user directory',null,()=>seedDirectory(source,on,usage.id,owner))
  const baseBytes=await databaseBytes(source),pilot=100_000
  await measure('load 100000 real usage rows for storage projection',null,()=>seedEvents(source,usage.id,on,0,pilot))
