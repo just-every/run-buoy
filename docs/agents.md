@@ -28,6 +28,13 @@ Send agent requests to the installed app’s origin, with `Authorization: Bearer
 
 With all four classes, the response retains the full existing account representation, ordered by renewal date. A partial grant returns account ID/revision plus only the selected class fields; derived health, reasons, segments and outlook are omitted so excluded sources cannot leak. Preparation requires all four classes because the reviewed snapshot contains them. This is a data-class grant over the current team portfolio, not a new record-scope role.
 
+The full representation can include stored normalized Stripe test-mode evidence
+and its freshness/confidence. Reading it makes no request to Stripe and grants no
+connector, customer-binding or webhook authority. API and webhook-signing secrets,
+raw provider bodies, customer names/emails from Stripe and card details are not
+part of that stored source projection. A restored snapshot is retained evidence;
+it does not restore credentials or establish a fresh source read.
+
 ### Prepare a playbook
 
 Use an account ID returned by the list command. This example uses `harbor` as an illustrative ID; replace it with your account’s actual ID and choose a real action and date.
@@ -89,4 +96,12 @@ The Audit screen shows current grants and the latest 100 durable attempt/outcome
 
 ## Metered USD budget
 
-No metered agent charge; internal notification mail may use your provider. Today's three local commands record USD0 in metered agent operations, including with a zero budget. Automatic NOTIFY-001/PLAY-002 internal team notices retain the owner's provider and preferences; provider fees are not measured or included in this budget. This budget does not authorize a customer send, model call or field/commercial change. Every future paid, send or update scope inherits GOVERN-001 reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before shipping (EMAIL-001/002/003, JOURNEY-001 and AI-001/002/003).
+No metered agent charge; internal notification mail may use your provider. Today's three local commands record USD0 in metered agent operations, including with a zero budget. Automatic NOTIFY-001/PLAY-002 internal team notices retain the owner's provider and recipient preferences; provider fees are not measured or included in this budget. This budget does not authorize a customer send, model call or field/commercial change. Every future paid, send or update scope inherits GOVERN-001 reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before shipping (EMAIL-001/002/003, JOURNEY-001 and AI-001/002/003).
+
+Existing internal mail also enforces the human recipient's current ROLE-001
+profile. An assigned recipient gets only an in-scope account name, generic update
+and account link, with task/source/free text and exact commercial values omitted.
+Outside-scope or invalidated assignments receive no account notice or reminder.
+Aggregate digests remain excluded for assigned profiles until ported. This mail
+projection does not give an agent a send scope or change its command/data-class
+grant. See [providers and data flows](providers.md) and [staff profiles](roles.md).

@@ -67,7 +67,7 @@ try{
   const url=new URL(request.url);assert.equal(url.origin,'https://api.stripe.com');assert.equal(request.method,'GET','Buoy never writes to Stripe')
   assert.match(url.pathname,/^\/v1\/(customers\/[A-Za-z0-9_-]+|customers|subscriptions|subscription_items|invoices|payment_intents|charges(?:\/[A-Za-z0-9_-]+)?|refunds|credit_notes)$/)
   productCalls.push({method:request.method,path:url.pathname,at:new Date().toISOString()})
-  return fetch(request,{redirect:'manual'})
+  return fetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',signal:AbortSignal.timeout(30000)})
  }})
  const on=new Date().toISOString().slice(0,10),renewal=new Date(Date.now()+365*86400000).toISOString().slice(0,10)
  const createAccount=(id,name)=>api('/accounts','POST',{id,name,renewalDate:renewal,noticeDays:30,renewalEvidence:'Stripe sandbox synthetic test order',billing:null,support:null},201)

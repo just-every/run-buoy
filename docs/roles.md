@@ -70,6 +70,21 @@ checked again in the write transaction. A native status or role change invalidat
 the assignment's native version; a fresh sign-in does not revive the old grant.
 A native administrator must deliberately assign the profile again.
 
+## Restore and reassignment
+
+Installation archives retain custom role definitions and their permission/scope
+configuration. They exclude per-person assignments, including explicit shared
+account IDs and named concession/renewal grants stored with those assignments.
+Restoring a definition therefore restores no person's product-role authority.
+The destination's native owner or admin must explicitly select current native
+member identities and assign their profiles, scope, shares and grants again.
+
+The existing native unassigned-member policy still applies; restrictive profile
+assignments themselves are not restored. This is the conservative archive default
+pending ct approval, not a claim that the complete ROLE-001 portability or role
+matrix acceptance has shipped. Agent and connector credentials are separately
+excluded and require their own deliberate reissue or reconnect.
+
 ## Current account and search boundary
 
 The assigned profile's record scope intersects its role definition's current

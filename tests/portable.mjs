@@ -1,7 +1,10 @@
+import {billingSource} from './billing-journey.mjs'
+import {billingFixtureKey} from './billing-fixture.mjs'
+import {seedBillingPortability,billingPortabilityImage,assertBillingArchiveRows,assertBillingPortability,assertBillingAwareAccounts,assertBillingAwareRevenue,assertBillingAwareScorecardHistory} from './billing-portability.mjs'
 import {seedRecordPortability,recordPortabilityImage,assertRecordPortability} from './record-portability.mjs'
 import { importClient } from './import-door-client.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
-// Source and destination run sequentially; no provider calls or data fakes.
+// Source and destination run sequentially; only Stripe/mail network edges use synthetic provider records.
 import assert from 'node:assert/strict'
 import {randomUUID,createHmac,createHash} from 'node:crypto'
 import { cp, mkdtemp, rm, symlink, mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -28,9 +31,10 @@ async function command(cwd,args,expected=0){
  if(expected===0)assert.equal(code,0,safe.slice(-3000));else assert.notEqual(code,0,'Restore should refuse this destination or archive')
 }
 let running
+const stripe=billingSource()
 try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
- running=await startWorker({root:source,directory:join(source,'.wrangler/state'),keep:true})
+ running=await startWorker({root:source,secure:false,providerFetch:stripe.fetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
  const allAudit=async()=>{const entries=[];let offset=0;do{const page=await call('/audit?offset='+offset);entries.push(...page.entries);offset=page.nextOffset}while(offset!==null);return entries}
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
@@ -104,7 +108,8 @@ try{
  assert.equal(adoptionBefore.personLicenseHistory.length,2);
  personState=await call('/customer-people'); // Include the intended account revision from the new seat observation.
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
- const connection=await call('/connections','POST',{name:'Portable Stripe source',key:['rk','test','portableFixtureOnly'].join('_')});
+ const connection=await call('/connections','POST',{name:'Portable Stripe source',key:billingFixtureKey});
+ const billingIds=await seedBillingPortability(call,running.request,running.cookie,stripe,connection.id);
  const surveyBeforeRecord=await call('/surveys/responses','POST',{accountId,personId:usagePerson.id,surveyName:'Portable relationship review',kind:'nps',value:9,observedAt:new Date(Date.now()-1000).toISOString(),reference:'Received customer survey export',sourceResponseId:'synthetic-buoy-portable-survey',accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision});
  const contractBefore=await call('/accounts/'+accountId+'/contract','POST',{revision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,contract:{currency:'USD',contractStart:'2026-01-01',contractEnd:'2027-12-31',lines:[{product:'Portable recurring workspace',quantity:20,amountMinor:6000000,frequency:'annual',entitlements:'20 reporting workspace seats'}],source:{reference:'Confirmed portable customer contract',confirmedOn:new Date().toISOString().slice(0,10)}}});
  const recordIds=await seedRecordPortability(call,fixture.accounts[0],usagePerson.id);
@@ -121,7 +126,8 @@ try{
  adoptionBefore=await call('/adoption');
  consumersBefore=await call('/adoption/consumers');
  const recordImage=await recordPortabilityImage(call,recordIds);
- const before=await call('/state'), beforeAudit=await allAudit()
+ const billingImage=await billingPortabilityImage(call,billingIds);
+ const before=await call('/state'), beforeAudit=await allAudit(),sourceCallsBeforeRestore=stripe.calls.length
  assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
  assert.doesNotMatch(JSON.stringify(beforeAudit),/Retired account|erase-before-backup|example\.test|Ana Lyst|Harbour CS owner/,'AUDIT-001 erased account and people stay unnamed')
@@ -139,6 +145,7 @@ try{
  // would also satisfy. No generated installation key is logged on failure.
  const archiveRows=(await readFile(archive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
  assert.ok(!archiveRows.some(item=>['buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
+ assertBillingArchiveRows(archiveRows,billingImage);
  const replayKey=archiveRows.find(item=>item.table==='buoy_privacy_key')?.row.secret
  assert.ok(typeof replayKey==='string'&&/^[a-f0-9]{64}$/.test(replayKey),'Archive carries a 256-bit installation replay key')
  const fences=archiveRows.filter(item=>item.table==='buoy_erased_usage_identities').map(item=>item.row)
@@ -151,8 +158,10 @@ try{
  const bytes=await readFile(archive);bytes[Math.floor(bytes.length/2)]^=1
  const damaged=join(parent,'damaged.rer');await writeFile(damaged,bytes)
  await command(broken,['import','--input',damaged,'--yes'],1)
- running=await startWorker({root:destination,directory:join(destination,'.wrangler/state'),keep:true})
+ running=await startWorker({root:destination,secure:false,providerFetch:stripe.fetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
+ await assertBillingPortability(call,running.request,running.cookie,billingImage)
+ assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'Restored native reads and rejected source/webhook attempts never call Stripe without fresh authority')
  await assertRecordPortability(call,(path,options)=>running.request(path,{...options,cookie:running.cookie}),recordIds,recordImage)
  assert.deepEqual(await call('/adoption/consumers'),consumersBefore,'ADOPT-001 configured adoption health thresholds and measured source evidence survive archive restore');
  assert.deepEqual(await call('/adoption'),adoptionBefore,'ADOPT-001 definitions, seats, current identities, metrics and gaps survive the real installation archive');
@@ -169,15 +178,15 @@ try{
  assert.match(await (await running.request('/app/audit?action=data.exported',{cookie:running.cookie})).text(),/portability:direct/)
  assert.deepEqual((await call('/surveys')).responses,surveysBefore.responses,'Recorded survey response values, source references and immutable history restore exactly');
  assert.ok(restored.some(e=>e.action==='survey.response-recorded'),'Recorded survey audit restores');
- assert.deepEqual(await call('/revenue'),revenueBefore,'Confirmed recurring terms, provenance and immutable versions restore exactly');
+ assertBillingAwareRevenue(await call('/revenue'),revenueBefore,billingImage);
  assert.ok(restored.some(e=>e.action==='revenue.contract-confirmed'),'Recurring confirmation audit survives archive restore');
  const scorecardAfter=await call('/scorecards');
  assert.deepEqual(scorecardAfter.versions,scorecardBefore.versions,'Published scorecard versions and their dependency image restore exactly');
- assert.deepEqual(scorecardAfter.history,scorecardBefore.history,'Retained calculation history restores exactly');
+ assertBillingAwareScorecardHistory(scorecardAfter.history,scorecardBefore.history,billingImage);
  assert.equal(scorecardAfter.published.id,portableCard.versionId);
  assert.deepEqual(await call('/scorecards/preview','POST',{historyId:scorecardBefore.history.find(h=>h.accountId===accountId).id}),retainedScorecard,'Historical inputs, source evidence and calculation survive archive restore');
  assert.ok(restored.some(e=>e.action==='health.scorecard-published'&&e.subject==='scorecard:'+portableCard.versionId),'Scorecard publish audit restores with its opaque subject');
- assert.deepEqual(after.accounts,before.accounts)
+ assertBillingAwareAccounts(after.accounts,before.accounts,billingImage)
  assert.deepEqual(after.proposals,before.proposals)
  assert.deepEqual(after.decisions,before.decisions)
  assert.notEqual(after.operator.id,before.operator.id,'RESTORE-001 establishes a fresh owner, not the original native operator');
@@ -217,5 +226,8 @@ try{
  const followup=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'deferred',reason:'Review next year',evidence:'Account review note CS-18'}})
  await call(`/proposals/${followup.id}/approve`,'POST',{})
  assert.equal((await call('/state')).decisions.length,before.decisions.length+1)
+ const restoredBillingBeforeSchedule=await call('/billing');await running.scheduled();const restoredBillingAfterSchedule=await call('/billing');
+ assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'The restored scheduled Worker makes no next Stripe source call');
+ assert.deepEqual(restoredBillingAfterSchedule,restoredBillingBeforeSchedule,'No restored source observation or billing run advances until the new owner reconnects');
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
 }finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}
