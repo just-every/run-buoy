@@ -5,13 +5,16 @@ import {startWorker} from './worker.mjs'
 import {scan,submit,failures} from './a11y-checks.mjs'
 
 export async function privacyBrowser(browser,evidence){
+ console.log('Privacy browser: starting isolated Worker')
  const app=await startWorker()
+ console.log('Privacy browser: Worker ready')
  const call=async(path,method='GET',body)=>{const r=await app.request('/api/buoy'+path,{cookie:app.cookie,method,body});assert.ok(r.ok,await r.clone().text());return r.json()}
  try{
   const account=await call('/accounts','POST',{id:'synthetic-buoy-360',name:'Customer privacy workspace',renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Confirmed customer terms',billing:null,support:null})
   const source=await call('/usage/sources','POST',{name:'synthetic-buoy-3900',kind:'native',reference:'Reviewed privacy browser source'})
   const credential=await call('/usage/sources/'+source.id+'/credentials','POST',{label:'synthetic-buoy-3901'})
   for(const width of [1440,390]){
+   console.log('Privacy browser: fixture',width)
    const person=await call('/customer-people','POST',{kind:width===1440?'contact':'user',name:'synthetic-buoy-'+width,accountIds:[account.id],source:'Reviewed customer directory'})
    const email='synthetic-buoy-'+width+'@example.test'
    const intake=await app.dispatch(new Request(app.origin+'/api/buoy/usage/intake/'+source.id,{method:'POST',headers:{authorization:'Bearer '+credential.secret,'content-type':'application/json'},body:JSON.stringify({type:'event',event:'Privacy browser event',messageId:'synthetic-buoy-'+width,userId:'synthetic-buoy-3902',properties:{customerName:'synthetic-buoy-'+width,email}})}));assert.equal(intake.status,202)
@@ -19,9 +22,10 @@ export async function privacyBrowser(browser,evidence){
    try{
     await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return {name,value:rest.join('='),url:app.origin}}))
     const page=await context.newPage(),path=app.origin+'/app/customer-people?person='+person.id
-    const proof=async label=>{await scan(page,'ERASE-002 '+label+' '+width);await page.screenshot({path:join(evidence,'privacy-'+label+'-'+width+'.png'),fullPage:true});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:join(evidence,'privacy-'+label+'-viewport-'+width+'.png')});for(const [part,selector]of [["owner-controls", "#privacy-export-panel"], ["receipt", "#privacy-receipts"]]){const target=page.locator(selector).first();if(await target.count())await target.screenshot({path:join(evidence,'privacy-'+label+'-'+part+'-'+width+'.png')})}}
+    const proof=async label=>{console.log('Privacy browser:',width,label);await scan(page,'ERASE-002 '+label+' '+width);await page.screenshot({path:join(evidence,'privacy-'+label+'-'+width+'.png'),fullPage:true});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:join(evidence,'privacy-'+label+'-viewport-'+width+'.png')});for(const [part,selector]of [["owner-controls", "#privacy-export-panel"], ["receipt", "#privacy-receipts"]]){const target=page.locator(selector).first();if(await target.count())await target.screenshot({path:join(evidence,'privacy-'+label+'-'+part+'-'+width+'.png')})}}
     const verified=async form=>{await form.getByLabel('Verification method',{exact:true}).selectOption('verified-offline');await form.getByLabel('Request received date (UTC)',{exact:true}).fill(new Date().toISOString().slice(0,10));await form.getByLabel('Opaque requester reference (UUID)',{exact:true}).fill(randomUUID())}
     const show=async id=>{const d=page.locator('#'+id);if(!await d.evaluate(e=>e.open))await d.locator('summary').click()}
+    console.log('Privacy browser: opening native screen',width)
     await page.goto(path,{waitUntil:'networkidle'});assert.match(await page.locator('#customer-privacy').innerText(),/Unlinked personal text/);await show('privacy-holders-panel')
     let form=page.locator('#privacy-holders')
     await form.getByLabel('External holders (JSON array)',{exact:true}).fill('invalid')
