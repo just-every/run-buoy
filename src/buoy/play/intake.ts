@@ -1,5 +1,5 @@
 import {Hono} from 'hono'
-import type {Bindings} from '../../auth.server'
+import {runtimeBindings,type Bindings} from '../../auth.server'
 import {jsonBody} from '../access'
 import {auditIfChanged,auditRecord} from '../audit-records'
 import {authority,guard,id,insist,now,requirePerson,stmt,text,type Actor} from '../core'
@@ -24,13 +24,18 @@ export async function intakeState(db:D1Database,actor:Actor,bookId:string){
  return {credentials:(await stmt(db,'SELECT id,version_id AS versionId,account_ids AS accountIds,created_at AS createdAt,revoked_at AS revokedAt,last_used_at AS lastUsedAt FROM buoy_playbook_credentials WHERE playbook_id=? ORDER BY created_at,id',bookId).all<{id:string;versionId:string;accountIds:string;createdAt:string;revokedAt:string|null;lastUsedAt:string|null}>()).results.map(r=>({...r,accountIds:JSON.parse(r.accountIds)}))}
 }
 export const playIngest=new Hono<{Bindings:Bindings}>()
-playIngest.post('/api/buoy/playbooks/intake/:id',async c=>{
- c.header('cache-control','no-store');c.header('x-content-type-options','nosniff')
- insist(!c.req.header('origin')&&!c.req.header('sec-fetch-site'),'Server intake only. Relay authenticated product events through your server.',403)
- const match=/^Bearer ([A-Za-z0-9_-]{43})$/.exec(c.req.header('authorization')??'');insist(match,'Intake credential required.',401)
- const hash=await digest(match[1]),bookId=c.req.param('id'),db=c.env.DB
+playIngest.post('/api/buoy/playbooks/intake/:id',async(c,next)=>{
+ c.header('cache-control','no-store');c.header('x-content-type-options','nosniff');c.header('referrer-policy','no-referrer')
+ const env=runtimeBindings(c.env),authorization=c.req.header('authorization'),match=/^Bearer ([A-Za-z0-9_-]{43})$/.exec(authorization??''),hash=match?await digest(match[1]):'',bookId=c.req.param('id'),db=env.DB
  const predicate="k.digest=? AND k.playbook_id=? AND k.revoked_at IS NULL AND p.enabled=1 AND p.revision=k.version_id AND json_extract(p.document,'$.trigger.kind')='webhook' AND o.role='owner' AND o.status='active'"
- const key=await stmt(db,`SELECT k.id,k.account_ids FROM buoy_playbook_credentials k JOIN buoy_playbooks p ON p.id=k.playbook_id JOIN oa_operators o ON o.id=k.created_by WHERE ${predicate}`,hash,bookId).first<{id:string;account_ids:string}>();insist(key,'Intake credential is unavailable or no longer current.',401)
+ const key=match?await stmt(db,`SELECT k.id,k.account_ids FROM buoy_playbook_credentials k JOIN buoy_playbooks p ON p.id=k.playbook_id JOIN oa_operators o ON o.id=k.created_by WHERE ${predicate}`,hash,bookId).first<{id:string;account_ids:string}>():null
+ // Only a recognized, current source grant takes this early path. Agent and
+ // other bearer credentials keep the parent's normal attempt/refusal ledger.
+ if(authorization&&!key){await next();return c.res}
+ const url=new URL(c.req.url)
+ insist(url.origin===env.AUTH_ORIGIN&&(!c.req.raw.headers.has('host')||c.req.header('host')===url.host),'Invalid request host.',403)
+ insist(!c.req.raw.headers.has('origin')&&!['sec-fetch-site','sec-fetch-dest','sec-fetch-user'].some(name=>c.req.raw.headers.has(name)),'Server intake only. Relay authenticated product events through your server.',403)
+ insist(key,'Intake credential required.',401)
  const minute=Math.floor(Date.now()/60000),at=now()
  const receipt=await db.batch([guard(db,`EXISTS(SELECT 1 FROM buoy_playbook_credentials k JOIN buoy_playbooks p ON p.id=k.playbook_id JOIN oa_operators o ON o.id=k.created_by WHERE ${predicate})`,hash,bookId),stmt(db,'INSERT INTO buoy_playbook_intake_limits(credential_id,minute,requests) VALUES(?,?,1) ON CONFLICT(credential_id,minute) DO UPDATE SET requests=requests+1 RETURNING requests',key.id,minute),stmt(db,'UPDATE buoy_playbook_credentials SET last_used_at=? WHERE id=?',at,key.id),stmt(db,'DELETE FROM buoy_assertions')])
  const reserved=Number((receipt[1].results[0] as {requests:number}).requests)

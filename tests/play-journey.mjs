@@ -116,7 +116,7 @@ export async function playTriggerJourney(){
 }
 
 export async function playIntakeJourney(){
- const f=await playFixture(),{app,api,ownerId,create,run}=f
+ const f=await playFixture(),{app,api,ownerId,create,run,customer}=f
  try{
   const allowed=await create('synthetic-buoy-1750'),other=await create('synthetic-buoy-1751'),config=playConfig(ownerId,{name:'Scoped webhook enrollment',trigger:{kind:'webhook'},steps:[{id:'approve',kind:'approval',title:'Review server-originated follow-up'}]}),book=await api('/playbooks','POST',{config})
   const email='play-intake-admin@example.test';await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email,displayName:'Intake admin',role:'admin'}});const admin=await app.signIn(email)
@@ -124,8 +124,15 @@ export async function playIntakeJourney(){
   const credential=await api('/playbooks/'+book.id+'/credentials','POST',{accountIds:[allowed]})
   const send=(key,body={accountId:allowed,operationKey:'synthetic-buoy-1752'},extra={})=>app.dispatch(new Request(app.origin+'/api/buoy/playbooks/intake/'+book.id,{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json',...extra},body:JSON.stringify(body)}))
   assert.equal((await send('synthetic-buoy-1753')).status,401)
+  assert.equal((await send('synthetic-buoy-1753',undefined,{cookie:app.cookie})).status,401,'An invalid bearer never falls back to the owner cookie')
   assert.equal((await app.request('/api/buoy/state',{token:credential.secret})).status,401,'Intake authority grants no account reads or session fallback')
   assert.equal((await send(credential.secret,undefined,{origin:app.origin})).status,403,'A browser cannot bypass the authenticated server relay')
+  // Workerd canonicalizes Host on fetch transport. Exercise the actual request
+  // target origin, rather than claiming an overwritten Host header reached it.
+  for(const origin of ['https://outside.invalid',app.origin.replace('https:','http:')]){const response=await app.dispatch(new Request(origin+'/api/buoy/playbooks/intake/'+book.id,{method:'POST',headers:{authorization:'Bearer '+credential.secret,'content-type':'application/json'},body:JSON.stringify({accountId:allowed,operationKey:'synthetic-buoy-1757'})}));assert.equal(response.status,403,'Foreign host or scheme cannot enroll through the source door')}
+  for(const header of ['sec-fetch-site','sec-fetch-dest','sec-fetch-user'])assert.equal((await send(credential.secret,undefined,{[header]:'synthetic-buoy-1758'})).status,403)
+  const agent=await api('/agent-tokens','POST',{label:'synthetic-buoy-1759'});assert.equal((await send(agent.token)).status,403)
+  const attempts=(await api('/agents')).entries.filter(e=>e.tokenId===agent.id);assert.equal(attempts.filter(e=>e.status==='attempt'&&e.command==='other.route').length,1);assert.equal(attempts.filter(e=>e.status==='refused'&&e.command==='other.route').length,1)
   assert.equal((await send(credential.secret,{accountId:other,operationKey:'synthetic-buoy-1754'})).status,403)
   let response=await send(credential.secret);assert.equal(response.status,202);const enrolled=await response.json();assert.equal((await run(enrolled.id)).status,'approval')
   response=await send(credential.secret);assert.equal(response.status,202);assert.equal((await response.json()).id,enrolled.id);assert.equal((await api('/playbooks')).runs.length,1)
@@ -139,6 +146,9 @@ export async function playIntakeJourney(){
   await api('/playbooks/'+book.id+'/credentials/'+credential.id,'DELETE',{});assert.equal((await send(credential.secret)).status,401)
   const fresh=await api('/playbooks/'+book.id+'/credentials','POST',{accountIds:[allowed]});await api('/playbooks','POST',{id:book.id,revision:book.revision,config:{...config,name:'Reviewed later version'}});assert.equal((await send(fresh.secret)).status,401,'Publishing cannot silently expand an earlier delegation')
   assert.equal((await api('/playbooks')).runs.length,1);assert.equal((await api('/state')).tasks.length,0,'Webhook intake cannot approve sensitive steps')
+  const cleanup=await api('/playbooks/'+book.id+'/credentials','POST',{accountIds:[allowed,other]})
+  await api('/accounts/'+other,'DELETE',{confirmation:customer(other).name});let grant=(await api('/playbooks/'+book.id+'/credentials')).credentials.find(c=>c.id===cleanup.id);assert.deepEqual(grant.accountIds,[allowed]);assert.equal(grant.revokedAt,null);assert.equal((await send(cleanup.secret)).status,202)
+  await api('/accounts/'+allowed,'DELETE',{confirmation:customer(allowed).name});grant=(await api('/playbooks/'+book.id+'/credentials')).credentials.find(c=>c.id===cleanup.id);assert.deepEqual(grant.accountIds,[]);assert.ok(grant.revokedAt);assert.equal((await send(cleanup.secret)).status,401);assert.equal((await api('/playbooks')).runs.length,0)
   console.log('PLAY-001 webhook intake: owner-only delegation, server-only request, one version/account scope, no reads/approvals, atomic source replay, per-credential limits, last use, secret-free status/audit and immediate revocation passed.')
  }finally{await app.close()}
 }
