@@ -69,7 +69,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     if(action==='workspace-bulk-preview'){
       const input={operationKey:fields.operationKey,kind:fields.kind,recordIds:Object.keys(fields).filter(k=>k.startsWith('record:')&&fields[k]==='on').map(k=>k.slice(7)),action:fields.bulkAction,...(fields.bulkAction==='assign'?{ownerId:fields.ownerId,note:fields.note}:fields.bulkAction==='enroll'?{title:fields.title,dueDate:fields.dueDate}:fields.bulkAction==='segment'?{segmentId:fields.segmentId}:{})};return {workspaceBulkPreview:await send<WorkspaceBulkPreview>('/api/buoy/workspace/bulk/preview',input)};
     }
-    if(action==='workspace-bulk-apply'){await send('/api/buoy/workspace/bulk/apply',{...parse(fields.input),fingerprint:fields.fingerprint});return {redirect:path,message:'Reviewed bulk change applied.',saved:'workspace-list'}}
+    if(action==='workspace-bulk-apply'){await send('/api/buoy/workspace/bulk/apply',{...parse(fields.input),fingerprint:fields.fingerprint});return {redirect:path,message:'Reviewed bulk change applied.',saved:'workspace-selection'}}
     throw new ApiError('This workspace action is unavailable.');
   }
   if(path==='/app/renewals'){
