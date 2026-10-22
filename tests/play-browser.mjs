@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict'
+import {join} from 'node:path'
+import {playFixture,playConfig} from './play-fixture.mjs'
+import {scan,submit,focused,failures} from './a11y-checks.mjs'
+export async function playBrowser(browser,evidence){
+ const f=await playFixture(),{app,api,ownerId,create,update,run,customer}=f
+ try{
+  for(const width of [1440,390]){
+   const accountId=await create('synthetic-buoy-160'+width),url=app.origin+'/app/accounts/'+accountId,context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
+   try{
+    await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}))
+    const page=await context.newPage(),show=async selector=>{const d=page.locator(selector);if(!await d.evaluate(el=>el.open))await d.locator('summary').click()},save=async(form,name)=>{await submit(page,form.getByRole('button',{name,exact:true}));assert.equal(await page.locator('[role=alert]').count(),0,await page.locator('#work').innerText())}
+    const proof=async label=>{await scan(page,'PLAY-001/003 '+label+' '+width);await page.locator('#playbooks').screenshot({path:join(evidence,'play-'+label+'-'+width+'.png')});await page.screenshot({path:join(evidence,'play-'+label+'-full-'+width+'.png'),fullPage:true})}
+    await page.goto(url,{waitUntil:'networkidle'});await show('#playbook-publish');let form=page.locator('#playbook-edit-new')
+    await focused(page,form.getByLabel('Playbook configuration (JSON)',{exact:true}),'Playbook JSON keyboard focus')
+    await form.getByLabel('Playbook configuration (JSON)',{exact:true}).fill('{invalid');await submit(page,form.getByRole('button',{name:'Publish playbook',exact:true}));assert.equal(await page.locator('[role=alert]').count(),1);assert.equal(await page.locator('#playbook-edit-new textarea').inputValue(),'{invalid');await proof('configuration-refusal')
+    const config=playConfig(ownerId,{name:'Native reviewed workflow '+width,steps:[{id:'task',kind:'task',title:'Native review '+width,dueDays:1},{id:'approval',kind:'approval',title:'Approve follow-up'},{id:'external',kind:'external',title:'Record external webhook work',channel:'webhook'}]})
+    form=page.locator('#playbook-edit-new');await form.getByLabel('Playbook configuration (JSON)',{exact:true}).fill(JSON.stringify(config));await save(form,'Publish playbook');const book=(await api('/playbooks')).definitions.find(d=>d.config.name===config.name);assert.ok(book)
+    await show('#playbook-definition-'+book.id);await proof('published-version');await save(page.locator('#playbook-enroll-'+book.id),'Enroll this account')
+    let r=(await api('/playbooks?accountId='+accountId)).runs[0];assert.equal(r.status,'approval');await proof('task-proposal')
+    await save(page.locator('#approve-'+r.proposalId),'Approve and create task');r=await run(r.id);assert.equal(r.cursor,1);await proof('approval-pause')
+    form=page.locator('#play-run-approve-'+r.id);await form.getByLabel('Approval evidence',{exact:true}).fill('synthetic-buoy-1610');await save(form,'Approve this step');r=await run(r.id);assert.equal(r.status,'receipt')
+    // Preserve entered values on a stale evidence refusal, then explicitly review and recover.
+    await update(accountId,{name:'Newer native evidence '+width});form=page.locator('#play-run-receipt-'+r.id);await form.getByLabel('External-work result',{exact:true}).selectOption('failed');await form.getByLabel('External-work evidence reference',{exact:true}).fill('synthetic-buoy-1611');await submit(page,form.getByRole('button',{name:'Record external-work result',exact:true}));assert.equal(await page.locator('[role=alert]').count(),1);assert.equal(await page.locator('#play-run-receipt-'+r.id+' textarea').inputValue(),'synthetic-buoy-1611');await proof('stale-receipt-refusal')
+    await save(page.locator('#play-run-review-'+r.id),'Review current inputs');form=page.locator('#play-run-receipt-'+r.id);await form.getByLabel('External-work result',{exact:true}).selectOption('failed');await form.getByLabel('External-work evidence reference',{exact:true}).fill('synthetic-buoy-1611');await save(form,'Record external-work result');assert.equal((await run(r.id)).status,'failed');await proof('failed-receipt')
+    await save(page.locator('#play-run-retry-'+r.id),'Retry failed step');assert.equal((await run(r.id)).status,'receipt');await proof('retry-only-failed')
+    form=page.locator('#play-run-receipt-'+r.id);await form.getByLabel('External-work result',{exact:true}).selectOption('succeeded');await form.getByLabel('External-work evidence reference',{exact:true}).fill('synthetic-buoy-1612');await save(form,'Record external-work result');assert.equal((await run(r.id)).status,'completed');assert.equal((await api('/state')).tasks.filter(t=>t.accountId===accountId).length,1);await proof('completed-history')
+    // The event details use the existing keyboard-trapped dialog and return focus.
+    const details=page.locator('#play-run-'+r.id+' [data-open]').first();await focused(page,details,'Run details keyboard focus');await page.keyboard.press('Enter');const dialog=page.locator('dialog[open]');assert.equal(await dialog.count(),1);await scan(page,'PLAY-001/003 run event dialog '+width);await page.keyboard.press('Escape');assert.equal(await page.locator('dialog[open]').count(),0);assert.ok(await details.evaluate(e=>e===document.activeElement))
+    const segment=await api('/segments','POST',{name:'Native run cohort '+width,mode:'static',rules:{match:'all',conditions:[]},accountIds:[accountId],tier:null,stage:null,playbook:null})
+    const outcome=page.locator('#play-outcome-'+r.id);await outcome.getByLabel('Outcome report name',{exact:true}).fill('Native run result '+width);await outcome.getByLabel('Current segment ID',{exact:true}).fill(segment.id);await outcome.getByLabel('Observation window (UTC days, 1–365)',{exact:true}).fill('2');await save(outcome,'Start run outcome tracking');assert.match(page.url(),/\/app\/outcomes/);assert.match(await page.locator('#work').innerText(),new RegExp('Playbook run '+r.id));await scan(page,'PLAY-004 automated run report '+width);await page.screenshot({path:join(evidence,'play-outcome-'+width+'.png'),fullPage:true})
+    const report=(await api('/outcomes')).reports.find(r=>r.name==='Native run result '+width),csv=await page.request.get(app.origin+'/api/buoy/outcomes/'+report.id+'/report.csv');assert.equal(csv.status(),200);assert.match(await csv.text(),/observational|causation/)
+   }finally{await context.close()}
+  }
+  assert.deepEqual(failures,[],'Native playbook and outcome states retain inherited accessibility')
+  console.log('PLAY-001/003 native publishing/refusal, enrollment/task approval, pause/stale evidence/review, honest external receipt/failure/retry/history, keyboard dialog and PLAY-004 report/CSV at 1440/390 passed; axe/contrast/320 reflow passed.')
+ }finally{await app.close()}
+}

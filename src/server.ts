@@ -1,3 +1,4 @@
+import {runPlaybooks} from './buoy/play/engine'
 import {generateRenewals} from './buoy/renewals'
 import {recalculateScorecards} from './buoy/scorecards'
 import { scheduledConnections } from './buoy/connectors/sync'
@@ -61,6 +62,7 @@ export default withDemo({
     await generateRenewals(env.DB,at)
     await recalculateScorecards(env.DB,at)
     await scheduledSegments(env.DB, at)
+    await runPlaybooks(env.DB,at)
     await runReminders(runtimeBindings(env), at)
     await runNotifications(runtimeBindings(env), at)
   },

@@ -1,3 +1,4 @@
+import {playbooksPanel,type PlayPage} from './playbooks';
 import type {accountActivity} from '../activity';
 import {hierarchyPage,type HierarchyPage} from './hierarchy';
 import {workspacePage,type WorkspacePage,type CsmHome,type WorkspaceListPreview,type WorkspaceBulkPreview} from './workspace';
@@ -142,6 +143,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     title = 'Backups'; body = backupsPage(state.operator.role === 'owner');
   } else if (account) {
     title = account.name; ({ head, body, style } = accountPage(state, account, fields, open, today));
+    if(canManage(state))body+=playbooksPanel(await apiCall<PlayPage>(api,request,'/api/buoy/playbooks?accountId='+encodeURIComponent(account.id)),state,account.id,fields);
     const organization=await apiCall<HierarchyPage>(api,request,'/api/buoy/accounts/'+encodeURIComponent(account.id)+'/hierarchy');
     const activityQuery=new URLSearchParams();for(const [pageKey,apiKey]of [['activityCursor','cursor'],['activityKind','kind'],['activityPerson','personId'],['activitySource','source']])if(url.searchParams.get(pageKey))activityQuery.set(apiKey,url.searchParams.get(pageKey)!);
     const activity=await apiCall<Awaited<ReturnType<typeof accountActivity>>>(api,request,'/api/buoy/accounts/'+encodeURIComponent(account.id)+'/activity?'+activityQuery);

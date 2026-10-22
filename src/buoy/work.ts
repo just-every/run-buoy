@@ -49,17 +49,22 @@ export async function approve(db: D1Database, actor: Actor, proposalId: string) 
  if (proposal.status === 'approved') return {id: proposalId, status: 'approved'}
  const current = await account(db, proposal.account_id), payload = JSON.parse(proposal.payload)
  insist(current.revision === proposal.account_revision, 'Evidence changed since preparation. Prepare a new proposal.', 409)
- if (proposal.kind === 'playbook' && !payload.segmentEntry) insist((await accountHealth(db, current)).status === 'at-risk', 'This account no longer has an at-risk signal. Prepare from current evidence.', 409)
+ if (proposal.kind === 'playbook' && !payload.segmentEntry && !payload.playRun) insist((await accountHealth(db, current)).status === 'at-risk', 'This account no longer has an at-risk signal. Prepare from current evidence.', 409)
  if(payload.segmentEntry)insist(await stmt(db,'SELECT 1 FROM buoy_segment_entries e JOIN buoy_segments s ON s.id=e.segment_id WHERE e.id=? AND e.proposal_id=? AND e.exited_at IS NULL AND s.revision=?',payload.segmentEntry,proposalId,payload.segmentRevision).first(),'Segment entry or configuration changed. Review a new entry.',409)
+ let playFence:D1PreparedStatement|undefined
+ if(payload.playRun){
+  const {checkPlayApproval}=await import('./play/approval');playFence=await checkPlayApproval(db,proposalId,payload,current.id)
+ }
  const image=payload.adoptionProof?await snapshot(db):undefined
  if(image)insist(payload.adoptionProof===await aggregateProof(image.value,current.id),'Aggregate adoption evidence changed since preparation. Prepare a new proposal.',409)
  const hierarchy=await hierarchyApprovalImage(db,current.id);insist(payload.hierarchyProof===hierarchy.proof,'Hierarchy sources or evidence day changed. Prepare a new proposal.',409)
  const linkedWrites=proposal.kind==='renewal'?await renewalApproval(db,actor,current.id,payload):[]
  if(proposal.kind==='playbook'&&payload.renewalId)await linkedRenewal(db,current.id,payload.renewalId)
- const at = now(), actorLabel = `person:${actor.id}:${actor.displayName}`, statements = [hierarchyApprovalFence(db,hierarchy),...linkedWrites,
+ const at = now(), actorLabel = `person:${actor.id}:${actor.displayName}`, statements = [...(playFence?[playFence]:[]),hierarchyApprovalFence(db,hierarchy),...linkedWrites,
   ...(image?[fence(db,image)]:[]),
   guard(db, "EXISTS(SELECT 1 FROM buoy_proposals p JOIN buoy_accounts a ON a.id=p.account_id WHERE p.id=? AND p.status='prepared' AND a.revision=p.account_revision)", proposalId),
   stmt(db, "UPDATE buoy_proposals SET status='approved',approved_by=?,approved_at=? WHERE id=?", actorLabel, at, proposalId)]
+ if(payload.playRun)statements.push(guard(db,"EXISTS(SELECT 1 FROM buoy_playbook_runs r JOIN buoy_playbooks b ON b.id=r.playbook_id JOIN buoy_playbook_proposals x ON x.run_id=r.id AND x.step_index=r.cursor WHERE r.id=? AND r.cursor=? AND r.status='approval' AND b.enabled=1 AND x.proposal_id=? AND r.account_revision=?)",payload.playRun,payload.playStep,proposalId,current.revision))
  if (payload.segmentEntry) statements.push(guard(db,'EXISTS(SELECT 1 FROM buoy_segment_entries e JOIN buoy_segments s ON s.id=e.segment_id WHERE e.id=? AND e.proposal_id=? AND e.exited_at IS NULL AND s.revision=?)',payload.segmentEntry,proposalId,payload.segmentRevision))
  if (proposal.kind === 'playbook') statements.push(
   ...(payload.ownerId ? [guard(db, "EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')", payload.ownerId)] : []),

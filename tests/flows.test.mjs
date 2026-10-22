@@ -1,3 +1,4 @@
+import {playJourney} from './play-journey.mjs'
 import {hierarchyJourney} from './hierarchy-journey.mjs'
 import {workspaceJourney} from './workspace-journey.mjs'
 import {renewalJourney} from './renewal-journey.mjs'
@@ -574,3 +575,5 @@ async function isolatedJourney(run){
 }
 test('USAGE-001 receiver credentials, relay-only intake and reviewed user/account attribution',async()=>isolatedJourney(usageJourney))
 test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>isolatedJourney(teamJourney))
+
+test('PLAY-001 PLAY-003 durable multi-step work and manual external failure recovery',playJourney)

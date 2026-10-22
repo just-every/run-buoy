@@ -1,3 +1,5 @@
+import {playApi} from './play'
+import {runPlaybooks,alertFailures} from './play/engine'
 import {accountActivity} from './activity'
 import {setScorecardAssignment} from './scorecards/assignments'
 import {hierarchyApi} from './hierarchy'
@@ -73,7 +75,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  await observeOutcomes(c.env.DB,actor)
  await next()
  if(c.req.method!=='GET'&&c.res.status<400){await generateRenewals(c.env.DB);await refreshRenewalFields(c.env.DB,actor);await refreshPeople(c.env.DB,actor);await refreshFields(c.env.DB,actor);if(!c.req.path.endsWith('/scorecards/preview'))await recalculateScorecards(c.env.DB);await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
- if (c.req.method !== 'GET' && c.res.status < 400) {await recordAdoptionAlerts(c.env.DB);await flushNotifications(c.env)}
+ if (c.req.method !== 'GET' && c.res.status < 400) {await runPlaybooks(c.env.DB);await alertFailures(c.env.DB);await recordAdoptionAlerts(c.env.DB);await flushNotifications(c.env)}
 })
 buoyApi.onError((error, c) => {
  if (error instanceof Problem) return c.json({error: error.message}, error.status as 400)
@@ -90,6 +92,7 @@ buoyApi.route('/',privacyApi)
 buoyApi.route('/',renewalsApi)
 buoyApi.route('/',workspaceApi)
 buoyApi.route('/',hierarchyApi)
+buoyApi.route('/',playApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)

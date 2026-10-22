@@ -1,5 +1,5 @@
 import { auditRecord } from '../audit-records'
-import { authority, id, insist, now, requirePerson, stmt, text, type Actor } from '../core'
+import { authority, guard, id, insist, now, requirePerson, stmt, text, type Actor } from '../core'
 import { evaluated } from '../segments'
 import { snapshot, fence, definitions } from '../segments/snapshot'
 
@@ -7,7 +7,7 @@ import type { Definition, Decision } from './types'
 
 export async function startOutcome(db:D1Database,actor:Actor,input:Record<string,unknown>) {
  requirePerson(actor)
- insist(Object.keys(input).every(k=>['name','segmentId','kind','windowDays','taskIds','operationKey'].includes(k)),'Unsupported outcome field.')
+ insist(Object.keys(input).every(k=>['name','segmentId','kind','windowDays','taskIds','runIds','operationKey'].includes(k)),'Unsupported outcome field.')
  const operationKey=text(input.operationKey,'Operation key',200),prior=await stmt(db,'SELECT id FROM buoy_outcomes WHERE operation_key=?',operationKey).first<{id:string}>()
  if(prior)return {id:prior.id}
  const image=await snapshot(db),segmentId=text(input.segmentId,'Segment',100),segment=definitions(image.value).find(s=>s.id===segmentId)
@@ -15,10 +15,14 @@ export async function startOutcome(db:D1Database,actor:Actor,input:Record<string
  const name=text(input.name,'Report name',100),kind=input.kind
  insist(kind==='healthy'||kind==='renewed','Choose healthy evidence or an approved renewed decision.')
  insist(Number.isInteger(input.windowDays)&&Number(input.windowDays)>=1&&Number(input.windowDays)<=365,'Observation window is 1 to 365 whole UTC days.')
- insist(Array.isArray(input.taskIds)&&input.taskIds.length>0&&input.taskIds.length<=500,'Choose 1 to 500 approved tasks.')
- const taskIds=input.taskIds.map(v=>text(v,'Task id',100));insist(new Set(taskIds).size===taskIds.length,'Task ids must be unique.')
+ const trackingRuns=input.runIds!==undefined
+ insist(!trackingRuns||input.taskIds===undefined,'Choose tasks or playbook runs, not both.')
+ const selectedIds=trackingRuns?input.runIds:input.taskIds
+ insist(Array.isArray(selectedIds)&&selectedIds.length>0&&selectedIds.length<=500,'Choose 1 to 500 approved tasks.')
+ const taskIds=selectedIds.map(v=>text(v,'Task id',100));insist(new Set(taskIds).size===taskIds.length,'Task ids must be unique.')
  const tasks=(await db.prepare('SELECT t.id,t.account_id,p.status FROM buoy_tasks t JOIN buoy_proposals p ON p.id=t.proposal_id ORDER BY t.id').all<{id:string;account_id:string;status:string}>()).results
- const selected=taskIds.map(tid=>{const task=tasks.find(t=>t.id===tid&&t.status==='approved');insist(task,'Only existing approved playbook tasks can be tracked.');return task})
+ const runs=(await db.prepare("SELECT id,account_id,version_id FROM buoy_playbook_runs WHERE status<>'exited' ORDER BY id").all<{id:string;account_id:string;version_id:string}>()).results
+ const selected=trackingRuns?taskIds.map(rid=>{const run=runs.find(r=>r.id===rid);insist(run,'Choose existing non-exited playbook enrollments.');return {...run,status:'enrolled'}}):taskIds.map(tid=>{const task=tasks.find(t=>t.id===tid&&t.status==='approved');insist(task,'Only existing approved playbook tasks can be tracked.');return task})
  insist(new Set(selected.map(t=>t.account_id)).size===selected.length,'Choose one approved task per enrolled account.')
  const accounts=evaluated(image.value,new Date().toISOString().slice(0,10))
  const members=new Set(image.value.entries.filter(e=>e.segmentId===segmentId&&!e.exitedAt).map(e=>e.accountId))
@@ -32,7 +36,8 @@ export async function startOutcome(db:D1Database,actor:Actor,input:Record<string
  const subjects=accounts.filter(a=>members.has(a.account.id)&&(enrolled.has(a.account.id)||!satisfied(a.account.id)))
  await db.batch([authority(db,actor,true),fence(db,image),
   stmt(db,'INSERT INTO buoy_outcomes(id,document,started_at,deadline,created_by,operation_key) VALUES(?,?,?,?,?,?)',reportId,JSON.stringify(definition),startedAt,deadline,actor.id,operationKey),
-  ...subjects.map(a=>stmt(db,'INSERT INTO buoy_outcome_accounts(report_id,account_id,task_id,cohort,baseline_revision) VALUES(?,?,?,?,?)',reportId,a.account.id,enrolled.get(a.account.id)??null,enrolled.has(a.account.id)?'enrolled':'comparison',a.account.revision)),
+  ...(trackingRuns?selected.map(r=>guard(db,"EXISTS(SELECT 1 FROM buoy_playbook_runs WHERE id=? AND account_id=? AND status<>'exited')",r.id,r.account_id)):[]),
+  ...subjects.map(a=>stmt(db,'INSERT INTO buoy_outcome_accounts(report_id,account_id,task_id,cohort,baseline_revision,run_id) VALUES(?,?,?,?,?,?)',reportId,a.account.id,trackingRuns?null:enrolled.get(a.account.id)??null,enrolled.has(a.account.id)?'enrolled':'comparison',a.account.revision,trackingRuns?enrolled.get(a.account.id)??null:null)),
   auditRecord(db,actor,'playbook.outcome-started',`outcome:${reportId}`),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:reportId}
 }

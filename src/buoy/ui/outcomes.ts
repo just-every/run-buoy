@@ -7,6 +7,7 @@ interface OutcomeAccount {
   accountId: string;
   name: string;
   taskId: string | null;
+  runId?:string|null;
   reachedAt: string | null;
   evidence: string | null;
   elapsedHours:number|null;
@@ -59,7 +60,7 @@ function cohort(title: string, accounts: OutcomeAccount[], rate: number, meanHou
   const reached = accounts.filter(account => account.status === 'reached').length;
   const records = accounts.map(account => `<li class="record"><h3><a href="/app/accounts/${pathId(account.accountId)}">${escape(account.name)}</a></h3>`
     + `<dl><dt>Status</dt><dd>${escape({ observing: 'Observing', reached: 'Reached', missed: 'Missed' }[account.status])}</dd>`
-    + `<dt>Attached task</dt><dd>${account.taskId ? `<a href="/app/accounts/${pathId(account.accountId)}#tasks">Task ${escape(account.taskId)}</a>` : 'No attached task'}</dd>`
+    + `<dt>Attached task</dt><dd>${account.taskId ? `<a href="/app/accounts/${pathId(account.accountId)}#tasks">Task ${escape(account.taskId)}</a>` : account.runId?`<a href="/app/accounts/${pathId(account.accountId)}#playbooks">Playbook run ${escape(account.runId)}</a>`:'No attached task'}</dd>`
     + `<dt>First observed outcome (UTC)</dt><dd>${account.reachedAt ? timestamp(account.reachedAt) : 'No observed outcomes'}</dd>`
     + `<dt>Elapsed UTC hours</dt><dd>${elapsed(account.elapsedHours)}</dd>`
     + `<dt>Outcome evidence</dt><dd>${account.evidence ? escape(account.evidence) : 'No observed evidence'}</dd><dt>Current inputs (not the baseline or outcome snapshot)</dt><dd>As of ${escape(account.currentInputs.asOf)}. Billing: ${account.currentInputs.billing ? `${escape(account.currentInputs.billing.reference)} observed ${escape(account.currentInputs.billing.observedAt)}` : 'missing'}. Support: ${account.currentInputs.support ? `${escape(account.currentInputs.support.reference)} observed ${escape(account.currentInputs.support.observedAt)}` : 'missing'}. ${escape(account.currentInputs.health.reasons.join('; '))}</dd></dl></li>`).join('');

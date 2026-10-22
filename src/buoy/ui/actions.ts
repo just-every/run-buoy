@@ -43,6 +43,13 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(accountId&&action==='play-publish'){
+    let config:unknown;try{config=JSON.parse(fields.config)}catch{throw new ApiError('Enter valid JSON for the playbook configuration.')}
+    await send('/api/buoy/playbooks',{...(fields.playbookId?{id:fields.playbookId,revision:fields.revision}:{}),config});return {redirect:path+'#playbooks',message:'Playbook version published.'};
+  }
+  if(accountId&&action==='play-enroll'){await send('/api/buoy/playbooks/'+encodeURIComponent(fields.playbookId)+'/enroll',{accountId,operationKey:fields.operationKey});return {redirect:path+'#playbooks',message:'Playbook enrollment recorded.'}}
+  if(accountId&&action==='play-outcome'){await send('/api/buoy/outcomes',{name:fields.name,segmentId:fields.segmentId,kind:fields.kind,windowDays:Number(fields.windowDays),runIds:[fields.runId],operationKey:fields.operationKey});return {redirect:'/app/outcomes',message:'Run outcome tracking started.'}}
+  if(accountId&&action==='play-action'){await send('/api/buoy/playbook-runs/'+encodeURIComponent(fields.runId)+'/action',{revision:fields.revision,action:fields.runAction,...(fields.reference?{reference:fields.reference}:{}),...(fields.outcome?{outcome:fields.outcome}:{}),...(fields.ownerId?{ownerId:fields.ownerId}:{})});return {redirect:path+'#playbooks',message:'Run action recorded.'}}
   if(accountId&&action==='account-hierarchy'){
     const selected=new Map<string,string[]>();for(const [key,value]of Object.entries(fields))if(key.startsWith('stakeholder:')&&value==='on'){const [,personId,role]=key.split(':');selected.set(personId,[...(selected.get(personId)??[]),role]);}
     await send(accountPath+'/hierarchy',{revision:fields.revision,parentId:fields.parentId||null,kind:fields.kind,accountExecutiveId:fields.accountExecutiveId||null,executiveSponsorId:fields.executiveSponsorId||null,supportOwnerId:fields.supportOwnerId||null,stakeholders:[...selected].map(([personId,roles])=>({personId,roles})),source:fields.source},'PUT');return {redirect:path+'#account-hierarchy',message:'Organization and stakeholder roles saved.',saved:'account-hierarchy-form'};

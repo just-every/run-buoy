@@ -1,3 +1,4 @@
+import {playConfig} from './play-fixture.mjs'
 import assert from 'node:assert/strict'
 // Public-door fixtures and comparisons for the real rer archive journey.
 export async function seedRecordPortability(call,fixture,personId){
@@ -25,14 +26,18 @@ export async function seedRecordPortability(call,fixture,personId){
  const bulk={...input,fingerprint:review.fingerprint};await call('/workspace/bulk/apply','POST',bulk)
  const card=await call('/scorecards/publish','POST',{revision:null,config:{name:'Portable independent product scorecard',measures:[{key:'seats',name:'Product seats',field:'custom.portable_used',min:0,max:20,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}})
  await call('/accounts/'+child+'/scorecard','PUT',{revision:await revision(child),versionId:card.versionId})
- return {parent,child,viewId:view.id,bulk,card,personId}
+ const playbook=await call('/playbooks','POST',{config:playConfig(operator,{name:'Portable versioned follow-up'})}),playRun=await call('/playbooks/'+playbook.id+'/enroll','POST',{accountId:child,operationKey:'synthetic-buoy-1403'});
+ const pending=(await call('/playbooks?accountId='+child)).runs.find(r=>r.id===playRun.id);await call('/proposals/'+pending.proposalId+'/approve','POST',{});
+ await call('/playbook-runs/'+playRun.id+'/action','POST',{revision:(await call('/playbooks?accountId='+child)).runs.find(r=>r.id===playRun.id).revision,action:'receipt',outcome:'failed',reference:'synthetic-buoy-1404'});
+ await call('/playbook-runs/'+playRun.id+'/action','POST',{revision:(await call('/playbooks?accountId='+child)).runs.find(r=>r.id===playRun.id).revision,action:'retry'});
+ return {playbook,playRun,parent,child,viewId:view.id,bulk,card,personId}
 }
 export async function recordPortabilityImage(call,ids){
  const hierarchy=await call('/accounts/'+ids.parent+'/hierarchy'),relationship=await call('/accounts/'+ids.child+'/hierarchy'),workspace=await call('/workspace?view='+ids.viewId),cards=await call('/scorecards')
  assert.equal(hierarchy.rollup['hierarchy.userCount'],1);assert.equal(hierarchy.rollup.arrByCurrency.USD,120000)
  assert.equal(relationship.link.kind,'relationship');assert.ok(relationship.stakeholders.find(p=>p.id===ids.personId).roles.includes('champion'))
  const renewals=await call('/renewals');assert.equal(renewals.records.find(r=>r.accountId===ids.child).outcome,'renewed-with-expansion')
- return {hierarchy,relationship,view:workspace.selected,records:workspace.records,renewals,fields:await call('/fields'),assignments:cards.assignments}
+ return {plays:await call('/playbooks?accountId='+ids.child),hierarchy,relationship,view:workspace.selected,records:workspace.records,renewals,fields:await call('/fields'),assignments:cards.assignments}
 }
 export async function assertRecordPortability(call,request,ids,before){
  assert.deepEqual(await recordPortabilityImage(call,ids),before,'ACCOUNT-001 RENEW-001 ACCOUNT-003 full native records, sources, fields/formulas/history, independent card, shared view and expanded outcome restore exactly')
