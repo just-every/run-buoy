@@ -48,5 +48,7 @@ export const ADOPTION_SNAPSHOT=`SELECT CASE WHEN EXISTS (
  SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.health')=1
  UNION ALL SELECT 1 FROM buoy_segments s,json_each(s.document,'$.rules.conditions') c
  WHERE json_extract(c.value,'$.field') LIKE 'adoption.%' OR json_extract(c.value,'$.field') LIKE 'people.%.adoption.%'
+ UNION ALL SELECT 1 FROM buoy_playbooks WHERE document LIKE '%adoption.%'
+ UNION ALL SELECT 1 FROM buoy_playbook_versions v JOIN buoy_playbook_runs r ON r.version_id=v.id WHERE r.status NOT IN('completed','exited') AND v.document LIKE '%adoption.%'
  ) THEN (${measuredSnapshot}) ELSE json_object('on',date('now'),'subjects',json('[]'),'counts',json('[]'),'used',json('[]'),'first',json('[]'),
  'definitions',json((SELECT json_group_array(json_object('kind',kind,'key',key)) FROM (SELECT kind,key FROM buoy_adoption_definitions ORDER BY kind,key)))) END`

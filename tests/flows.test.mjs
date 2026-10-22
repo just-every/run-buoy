@@ -1,4 +1,4 @@
-import {playJourney} from './play-journey.mjs'
+import {playJourney,playTriggerJourney} from './play-journey.mjs'
 import {hierarchyJourney} from './hierarchy-journey.mjs'
 import {workspaceJourney} from './workspace-journey.mjs'
 import {renewalJourney} from './renewal-journey.mjs'
@@ -577,3 +577,5 @@ test('USAGE-001 receiver credentials, relay-only intake and reviewed user/accoun
 test('TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance',async()=>isolatedJourney(teamJourney))
 
 test('PLAY-001 PLAY-003 durable multi-step work and manual external failure recovery',playJourney)
+
+test('PLAY-001 typed enrollment triggers and observed usage recovery',playTriggerJourney)

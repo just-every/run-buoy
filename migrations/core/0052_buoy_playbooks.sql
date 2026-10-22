@@ -20,10 +20,11 @@ CREATE UNIQUE INDEX buoy_playbook_active ON buoy_playbook_runs(playbook_id,accou
  WHERE status NOT IN('completed','exited');
 CREATE TABLE buoy_playbook_events (
  id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES buoy_playbook_runs(id) ON DELETE CASCADE,
- step_index INTEGER NOT NULL, attempt INTEGER NOT NULL, status TEXT NOT NULL,
+ event_seq INTEGER NOT NULL, step_index INTEGER NOT NULL, attempt INTEGER NOT NULL, status TEXT NOT NULL,
  inputs TEXT NOT NULL CHECK(json_valid(inputs)), result TEXT NOT NULL CHECK(json_valid(result)), recorded_at TEXT NOT NULL
 );
-CREATE INDEX buoy_playbook_event_run ON buoy_playbook_events(run_id,step_index,recorded_at,id);
+CREATE UNIQUE INDEX buoy_playbook_event_sequence ON buoy_playbook_events(run_id,event_seq);
+CREATE INDEX buoy_playbook_event_run ON buoy_playbook_events(run_id,step_index,event_seq);
 CREATE TABLE buoy_playbook_proposals (
  run_id TEXT NOT NULL REFERENCES buoy_playbook_runs(id) ON DELETE CASCADE,
  step_index INTEGER NOT NULL, proposal_id TEXT NOT NULL UNIQUE REFERENCES buoy_proposals(id) ON DELETE CASCADE,

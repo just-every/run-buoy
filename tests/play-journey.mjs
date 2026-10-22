@@ -50,7 +50,7 @@ export async function playJourney(){
   const failures=[];for(let i=0;i<10;i++)failures.push(await create('synthetic-buoy-152'+i))
   const failureBook=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Webhook work receipts',failureThreshold:3})})
   const failed=[]
-  const cohort=await api('/segments','POST',{name:'Playbook enrolled/control cohort',mode:'static',rules:{match:'all',conditions:[]},accountIds:failures,rules:{match:'all',conditions:[]},tier:null,stage:null,playbook:null})
+  const cohort=await api('/segments','POST',{name:'Playbook enrolled/control cohort',mode:'static',rules:{match:'all',conditions:[]},accountIds:failures,tier:null,stage:null,playbook:null})
 
   for(const accountId of failures){const r=await api('/playbooks/'+failureBook.id+'/enroll','POST',{accountId,operationKey:'synthetic-buoy-1530'});await approveTask(r.id);await action(r.id,{action:'receipt',outcome:'failed',reference:'synthetic-buoy-1531'});failed.push(r.id)}
   for(const cookie of [app.cookie,admin]){const notices=await api('/notifications','GET',undefined,{cookie});assert.equal(notices.items.filter(n=>n.title==='Playbook failure threshold crossed').length,1)}
@@ -81,5 +81,36 @@ export async function playJourney(){
   // Account erasure cascades private run inputs/results while opaque publish audit remains.
   await api('/accounts/'+pin,'DELETE',{confirmation:customer(pin).name});assert.ok(!(await state()).runs.some(r=>r.id===pinned.id))
   console.log('PLAY-001/003 public HTTP: health-score entry, both branches, waits, mid-run exit, stale review, pinned versions, re-enrollment, timeline, ten manual external failures, one admin episode/email, retry without duplicate completed steps, freeze and erasure passed. Automatic outbound/provider delivery remains unimplemented.')
+ }finally{await app.close()}
+}
+
+export async function playTriggerJourney(){
+ const f=await playFixture(),{app,api,ownerId,create,customer,run,action}=f
+ try{
+  const accountId=await create('synthetic-buoy-1701'),entry=condition('id','eq',accountId),steps=[{id:'review',kind:'approval',title:'Review triggered work'}]
+  await api('/fields','POST',{key:'play_ready',label:'Reviewed play readiness',type:'boolean'})
+  const putReady=async value=>{const a=(await api('/state')).accounts.find(a=>a.id===accountId);await api('/accounts/'+accountId+'/fields','PUT',{revision:a.revision,values:{play_ready:value},source:'synthetic-buoy-1702'})}
+  const typed=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Typed-field entry',trigger:{kind:'rule',rules:condition('custom.play_ready','eq',1)},entry,steps})});assert.equal((await api('/playbooks')).runs.length,0)
+  await putReady(true);assert.equal((await api('/playbooks')).runs.filter(r=>r.playbook_id===typed.id).length,1);await putReady(true);assert.equal((await api('/playbooks')).runs.filter(r=>r.playbook_id===typed.id).length,1)
+  const segment=await api('/segments','POST',{name:'Play entry cohort',mode:'static',rules:{match:'all',conditions:[]},accountIds:[],tier:null,stage:null,playbook:null}),segmentBook=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Segment entry',trigger:{kind:'segment',segmentId:segment.id},entry,steps})})
+  await api('/segments','POST',{...segment,id:segment.id,revision:(await api('/segments')).segments.find(s=>s.id===segment.id).revision,name:'Play entry cohort',mode:'static',rules:{match:'all',conditions:[]},accountIds:[accountId],tier:null,stage:null,playbook:null});assert.equal((await api('/playbooks')).runs.filter(r=>r.playbook_id===segmentBook.id).length,1)
+  const stageBook=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Lifecycle entry',trigger:{kind:'stage',stage:'adoption'},entry,steps})})
+  await api('/accounts/'+accountId+'/classification','PUT',{tier:'__rules__',stage:'adoption'});assert.equal((await api('/playbooks')).runs.filter(r=>r.playbook_id===stageBook.id).length,1)
+  const on=new Date().toISOString().slice(0,10),current=(await api('/state')).accounts.find(a=>a.id===accountId)
+  await api('/accounts/'+accountId,'PUT',{...customer(accountId),revision:current.revision,renewalDate:on})
+  const renewalBook=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Renewal date entry',trigger:{kind:'renewal',days:0},entry,steps})});assert.equal((await api('/playbooks')).runs.filter(r=>r.playbook_id===renewalBook.id).length,1)
+  const contractBook=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Contract start entry',trigger:{kind:'contract-start',days:0},entry,steps})})
+  await api('/accounts/'+accountId+'/contract','POST',{revision:(await api('/state')).accounts.find(a=>a.id===accountId).revision,contract:{currency:'USD',contractStart:on,contractEnd:'2027-03-31',lines:[],source:{reference:'synthetic-buoy-1703',confirmedOn:on}}});assert.equal((await api('/playbooks')).runs.filter(r=>r.playbook_id===contractBook.id).length,1)
+  // Use the real authenticated receiver, reviewed identity mapping and adoption metric, not a data-layer fake.
+  const source=await api('/usage/sources','POST',{name:'Playbook recovery product',kind:'native',reference:'synthetic-buoy-1704'}),credential=await api('/usage/sources/'+source.id+'/credentials','POST',{label:'synthetic-buoy-1705',scope:['event']}),person=await api('/customer-people','POST',{kind:'user',name:'synthetic-buoy-1706',accountIds:[accountId],source:'synthetic-buoy-1707'})
+  const mapping={sourceId:source.id,userId:'synthetic-buoy-1708',groupId:'synthetic-buoy-1709',accountId,personId:person.id},preview=await api('/usage/mappings/preview','POST',mapping);await api('/usage/mappings','POST',{...mapping,fingerprint:preview.fingerprint})
+  const recovery=condition('adoption.current.eventCount','gte',1),usageBook=await api('/playbooks','POST',{config:playConfig(ownerId,{name:'Observed usage recovery',entry,steps:[{id:'wait',kind:'wait',title:'Wait for actual usage',seconds:0,rules:recovery,timeoutSeconds:1},{id:'branch',kind:'branch',title:'Branch on actual usage',rules:recovery,next:2,otherwise:3},{id:'approved',kind:'approval',title:'Approve recovered usage follow-up'}]})}),enrolled=await api('/playbooks/'+usageBook.id+'/enroll','POST',{accountId,operationKey:'synthetic-buoy-1710'})
+  assert.equal((await run(enrolled.id)).status,'waiting');await app.scheduled('0 * * * *',Date.now()+1500);assert.equal((await run(enrolled.id)).status,'failed');await action(enrolled.id,{action:'retry'});assert.equal((await run(enrolled.id)).status,'waiting')
+  const received=await app.dispatch(new Request(app.origin+'/api/buoy/usage/intake/'+source.id,{method:'POST',headers:{authorization:'Bearer '+credential.secret,'content-type':'application/json'},body:JSON.stringify({type:'event',event:'Reviewed feature used',messageId:'synthetic-buoy-1711',userId:mapping.userId,groupId:mapping.groupId})}));assert.equal(received.status,202,await received.clone().text())
+  // Ingestion has its own early authenticated route; cron observes the successfully committed source.
+  await app.scheduled();const recovered=await run(enrolled.id);assert.equal(recovered.status,'approval');assert.equal(recovered.cursor,2);assert.ok(recovered.events.some(e=>e.stepIndex===1&&e.inputs['adoption.current.eventCount']===1&&e.result.matched===true))
+  await action(enrolled.id,{action:'approve',reference:'synthetic-buoy-1712'});assert.equal((await run(enrolled.id)).status,'completed')
+  const counts=Object.fromEntries([typed,segmentBook,stageBook,renewalBook,contractBook].map(b=>[b.id,1]));await app.scheduled();for(const [id,count]of Object.entries(counts))assert.equal((await api('/playbooks')).runs.filter(r=>r.playbook_id===id).length,count)
+  console.log('PLAY-001 typed field/segment/lifecycle/renewal/confirmed-contract triggers deduplicate; authenticated usage recovery satisfies a persisted wait/branch after timeout retry.')
  }finally{await app.close()}
 }
