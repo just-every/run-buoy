@@ -17,9 +17,15 @@ const RECORDS = `
  UNION ALL
  SELECT 'task',t.id,t.title,json_array(t.account_id),
  t.id||char(10)||t.title||char(10)||COALESCE(t.outcome,'')||char(10)||COALESCE(t.evidence,'')
- FROM buoy_tasks t JOIN buoy_accounts a ON a.id=t.account_id`
+ FROM buoy_tasks t JOIN buoy_accounts a ON a.id=t.account_id
+ UNION ALL
+ SELECT 'renewal',r.id,json_extract(r.document,'$.name'),json_array(r.account_id),
+ r.id||char(10)||r.account_id||char(10)||json_extract(r.document,'$.name')||char(10)||
+ COALESCE(json_extract(r.document,'$.sourceReference'),'')||char(10)||COALESCE(json_extract(r.document,'$.evidence'),'')||char(10)||
+ COALESCE(json_extract(r.document,'$.reason'),'')||char(10)||${fieldText('f.document')}
+ FROM buoy_renewals r JOIN buoy_accounts a ON a.id=r.account_id LEFT JOIN buoy_renewal_results f ON f.record_id=r.id`
 
-export interface SearchResult {kind:'account'|'contact'|'user'|'task';id:string;title:string;accountIds:string[];excerpt:string;href:string}
+export interface SearchResult {kind:'account'|'contact'|'user'|'task'|'renewal';id:string;title:string;accountIds:string[];excerpt:string;href:string}
 export async function search(db:D1Database,actor:Actor,query:URLSearchParams){
  // This is precisely today's ordinary account/customer read boundary. Future
  // ROLE-001 record and field scope must extend this door before those roles ship.
@@ -33,7 +39,7 @@ export async function search(db:D1Database,actor:Actor,query:URLSearchParams){
  if(query.has('cursor')){
   let cursor:unknown
   try{cursor=JSON.parse(atob(query.get('cursor')!))}catch{insist(false,'Invalid search cursor.')}
-  insist(Array.isArray(cursor)&&cursor.length===3&&cursor[0]===encodeURIComponent(q)&&['account','contact','user','task'].includes(cursor[1])&&typeof cursor[2]==='string'&&cursor[2].length>0&&cursor[2].length<=200,'Invalid search cursor for this query.')
+  insist(Array.isArray(cursor)&&cursor.length===3&&cursor[0]===encodeURIComponent(q)&&['account','contact','user','task','renewal'].includes(cursor[1])&&typeof cursor[2]==='string'&&cursor[2].length>0&&cursor[2].length<=200,'Invalid search cursor for this query.')
   after=cursor.slice(1)
  }
  const result=await db.batch([authority(db,actor),stmt(db,`WITH records AS (${RECORDS}),matches AS (
@@ -45,6 +51,7 @@ export async function search(db:D1Database,actor:Actor,query:URLSearchParams){
  const results:SearchResult[]=rows.slice(0,limit).map(row=>{
   const accountIds=JSON.parse(row.accountIds) as string[]
   const href=row.kind==='contact'||row.kind==='user'?'/app/customer-people?person='+encodeURIComponent(row.id)
+   :row.kind==='renewal'?'/app/renewals?renewal='+encodeURIComponent(row.id)
    :'/app/accounts/'+encodeURIComponent(accountIds[0])+(row.kind==='task'?'#tasks':'')
   return {...row,accountIds,href}
  })
