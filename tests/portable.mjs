@@ -93,7 +93,7 @@ try{
  const portableAggregate=await call('/adoption/consumers','POST',{name:'Portable segment adoption health and alert',scope:'segment',segmentId:inappSegment.id,metric:'adoption.current.feature.license',op:'gte',value:1,health:true,alert:true,enabled:true});
  const portableNotice=(await call('/notifications')).items.find(i=>i.adoptionRuleId===portableMeasure.id);
  await call('/notifications/'+portableNotice.id+'/dismiss','POST',{reason:'Customer archive review is scheduled.',until:new Date(Date.now()+86400000).toISOString()});
- const consumersBefore=await call('/adoption/consumers');
+ let consumersBefore=await call('/adoption/consumers');
  assert.equal(consumersBefore.evaluations.find(e=>e.accountId===accountId).measures.find(m=>m.ruleId===portableAggregate.id).matched,true,'ADOPT-001 segment aggregate alert measures are present before archive export');
  const adoptionAlertsBefore=(await call('/notifications')).items.filter(i=>i.title===portableMeasure.name);assert.equal(adoptionAlertsBefore.length,1,'ADOPT-001 source installation has one routed alert episode');
  let adoptionBefore=await call('/adoption');
@@ -112,6 +112,7 @@ try{
  const retainedScorecard=await call('/scorecards/preview','POST',{historyId:scorecardBefore.history.find(h=>h.accountId===accountId).id});
  personState=await call('/customer-people');
  adoptionBefore=await call('/adoption');
+ consumersBefore=await call('/adoption/consumers');
  const recordImage=await recordPortabilityImage(call,recordIds);
  const before=await call('/state'), beforeAudit=await allAudit()
  assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')

@@ -1,5 +1,5 @@
 import {descendantIds} from '../fields/model'
-import {usesPortfolio,usesHierarchy} from './custody'
+import {usesPortfolio,usesHierarchy,usesHierarchyPeople} from './custody'
 import {customFields,relatedInputs,scalar} from './related'
 import {parseSurveyImage} from '../surveys/snapshot'
 import {parseRevenueImage} from '../revenue/snapshot'
@@ -36,6 +36,7 @@ export async function inputImage(db:D1Database,at:Date){
   ...Object.keys(adoptionRuleFields(image.adoption)).map(key=>({key,name:`Recorded ${key}`,kind:'adoption' as const})),
   {key:'sentiment.score',name:'Current CSM sentiment (red 0, amber 50, green 100)',kind:'sentiment',unit:'0–100 judgment'}
  ]
+ const hierarchyPeople=usesHierarchyPeople(image.custom.definitions),hierarchySources=usesHierarchy(image.custom.definitions),portfolioSources=usesPortfolio([...image.custom.definitions,...image.people.definitions])
  const accounts=evaluated(image,on,false).map(account=>{
   const relatedValues:NonNullable<RetainedInputs['relatedValues']>={},values:RetainedInputs['values']={},sources:RetainedInputs['sources']={}
   const usage=image.adoption.sources??[],hasUsageEvidence=usage.some(s=>s.lastObservedAt!==null)
@@ -71,11 +72,12 @@ export async function inputImage(db:D1Database,at:Date){
    values[field.key]=scalar(raw);sources[field.kind==='adoption'?'adoption':field.key]=evidence
   }
   const sourceAccountIds=new Set<string>([account.account.id,...customSources.filter(s=>s.accountId===account.account.id).flatMap(s=>s.sourceAccountId?[s.sourceAccountId]:[])])
-  if(usesHierarchy(image.custom.definitions))descendantIds(image.custom,account.account.id).forEach(id=>sourceAccountIds.add(id))
-  if(usesPortfolio([...image.custom.definitions,...image.people.definitions]))image.accounts.forEach(a=>sourceAccountIds.add(a.id))
+  const hierarchyAccounts=new Set([account.account.id,...(hierarchySources||hierarchyPeople?descendantIds(image.custom,account.account.id):[])])
+  if(hierarchySources||hierarchyPeople)hierarchyAccounts.forEach(id=>sourceAccountIds.add(id))
+  if(portfolioSources)image.accounts.forEach(a=>sourceAccountIds.add(a.id))
   const relevantPeople=image.people.records.filter(p=>p.accountIds.includes(account.account.id))
   for(const p of relevantPeople)for(const ids of [...Object.values(p.valueAccounts??{}),...Object.values(p.previousAccounts??{})])ids.forEach(id=>sourceAccountIds.add(id))
-  const sourcePersonIds=[...new Set([...relevantPeople.map(p=>p.id),...image.surveys.responses.filter(r=>r.accountId===account.account.id).map(r=>r.personId)])].sort()
+  const sourcePersonIds=[...new Set([...relevantPeople.map(p=>p.id),...(hierarchyPeople?image.people.records.filter(p=>p.kind==='user'&&p.accountIds.some(id=>hierarchyAccounts.has(id))).map(p=>p.id):[]),...image.surveys.responses.filter(r=>r.accountId===account.account.id).map(r=>r.personId)])].sort()
   const inputs:RetainedInputs={values,relatedValues,sources,fields,sourceAccountIds:[...sourceAccountIds].sort(),sourcePersonIds,segments:segments.filter(s=>!layerOneDependency(s,segments)&&includes(s,account.account.id,account.values,account.people)).map(s=>({id:s.id,revision:s.revision,name:s.name})),measuredOn:on}
   return {accountId:account.account.id,accountRevision:account.account.revision,inputs}
  })
