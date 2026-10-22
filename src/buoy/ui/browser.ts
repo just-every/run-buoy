@@ -16,6 +16,9 @@ export const browserScript = `(() => {
   }
   const saved = url.searchParams.get('saved');
   if (saved && storage) { const split = saved.indexOf('|'); if (split > 0 && saved.startsWith('/app')) storage.removeItem('buoy:draft:' + saved.slice(0, split) + ':' + saved.slice(split + 1)); }
+  // A successful reviewed multi-form operation clears drafts of its whole group
+  // before restoration, so a prior receipt cannot put its stale revision back.
+  if (saved && storage) { const split = saved.indexOf('|'); if (split > 0) { const path = saved.slice(0, split), group = saved.slice(split + 1); for (const form of document.querySelectorAll('form[data-draft-group]')) if (form.dataset.draftGroup === group) storage.removeItem('buoy:draft:' + path + ':' + form.id); } }
   if (saved && storage && saved.endsWith('|delete')) { for (const key of Object.keys(storage)) if (key.startsWith('buoy:draft:')) storage.removeItem(key); }
   if (saved) { url.searchParams.delete('saved'); history.replaceState(null, '', url); }
   const error = document.querySelector('[data-form-error]');
