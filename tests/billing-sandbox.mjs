@@ -1,14 +1,13 @@
 // Held-key qualification, deliberately outside push Verify. Setup writes belong
 // to this fixture actor. Every request made by Buoy is independently checked GET.
 import assert from 'node:assert/strict'
-import {createServer} from 'node:http'
-import {spawn} from 'node:child_process'
+import {startBillingTunnel} from './billing-tunnel.mjs'
 import {setTimeout as delay} from 'node:timers/promises'
 import {startWorker} from './worker.mjs'
 const key=process.env.STRIPE_TEST_KEY??process.env.STRIPE_TEST_SECRET_KEY
 assert.ok(key&&/^(sk|rk)_test_/.test(key),'A held Stripe test key must be injected by name')
 const version='2025-02-24.acacia',setupCalls=[],productCalls=[],delivered=[],runTag='synthetic-buoy-'+Date.now()
-let app,relay,tunnel,endpoint,clock,connectionId,monthly,annual
+let app,tunnel,endpoint,clock,connectionId,monthly,annual
 const created={customers:[],prices:[],product:null,subscriptions:[]}
 async function stripe(method,path,values={},allowed=[200]){
  const url=new URL('https://api.stripe.com/v1'+path),params=new URLSearchParams()
@@ -35,32 +34,14 @@ async function webhookAfter(count,predicate,label){
  assert.ok(delivered.slice(count).some(d=>d.status===200),'Stripe delivered a provider-signed event accepted through the public webhook door')
 }
 async function startRelay(){
- relay=createServer(async(req,res)=>{
-  if(req.method!=='POST'||req.url!=='/stripe-billing/webhook'){res.writeHead(404);res.end();return}
-  try{
-   const chunks=[];let size=0
-   for await(const chunk of req){size+=chunk.length;if(size>256000){res.writeHead(413);res.end();return}chunks.push(chunk)}
-   const response=await app.dispatch(new Request(app.origin+'/api/buoy/billing/'+connectionId+'/webhook',{method:'POST',headers:{'content-type':'application/json','stripe-signature':String(req.headers['stripe-signature']??'')},body:Buffer.concat(chunks)}))
-   // Store no signature, body, personal data or endpoint credential in evidence.
-   delivered.push({status:response.status,at:new Date().toISOString()})
-   res.writeHead(response.status,{'content-type':'application/json'});res.end(await response.text())
-  }catch{res.writeHead(503);res.end('{"error":"Receiver could not reconcile."}')}
+ tunnel=await startBillingTunnel(async request=>{
+  const response=await app.dispatch(new Request(app.origin+'/api/buoy/billing/'+connectionId+'/webhook',{method:'POST',headers:{'content-type':'application/json','stripe-signature':request.headers.get('stripe-signature')??''},body:await request.arrayBuffer()}))
+  delivered.push({status:response.status,at:new Date().toISOString()})
+  return response
  })
- await new Promise((resolve,reject)=>{relay.once('error',reject);relay.listen(0,'127.0.0.1',resolve)})
- const port=relay.address().port,binary=process.env.CLOUDFLARED_BIN??'/usr/local/homebrew/bin/cloudflared'
- tunnel=spawn(binary,['tunnel','--url','http://127.0.0.1:'+port,'--no-autoupdate','--protocol','http2'],{stdio:['ignore','pipe','pipe']})
- let output='',failed=false
- tunnel.on('error',()=>{failed=true})
- for(const stream of [tunnel.stdout,tunnel.stderr])stream.on('data',chunk=>{output=(output+chunk.toString()).slice(-32000)})
- const origin=await waitFor('private quick tunnel readiness',()=>{
-  if(failed||tunnel.exitCode!==null)throw new Error('The Stripe sandbox quick tunnel could not start.')
-  return output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/)?.[0]
- },60000)
- // This public receiver exposes one signed webhook ingress, never the Worker,
- // owner session, auth routes or credentials. Unknown routes always return 404.
- await waitFor('public webhook-only tunnel route',async()=>{try{return (await fetch(origin+'/health',{redirect:'manual',signal:AbortSignal.timeout(5000)})).status===404}catch{return false}},60000)
- return origin+'/stripe-billing/webhook'
+ return tunnel.url
 }
+
 try{
  console.log('Stripe sandbox: preparing real test subscriptions and read-only Buoy transport.')
  app=await startWorker({providerFetch:async request=>{
@@ -143,12 +124,12 @@ try{
 }finally{
  // Tear down the provider sender first; then stop only exact children owned here.
  if(endpoint){try{await stripe('DELETE','/webhook_endpoints/'+endpoint.id)}catch{console.error('Stripe sandbox cleanup: webhook endpoint requires manual removal by fixture metadata.')}}
- if(tunnel&&tunnel.exitCode===null){tunnel.kill('SIGTERM');await Promise.race([new Promise(resolve=>tunnel.once('exit',resolve)),delay(5000)]);if(tunnel.exitCode===null)tunnel.kill('SIGKILL')}
- if(relay)await new Promise(resolve=>relay.close(resolve))
+ let tunnelCleanupError;if(tunnel){try{await tunnel.close()}catch(error){tunnelCleanupError=error}}
  if(app)await app.close()
  // Clock deletion removes its test customers and their subscriptions. Prices
  // are archived explicitly; Stripe retains financial test records by design.
  if(clock){try{await stripe('DELETE','/test_helpers/test_clocks/'+clock.id)}catch{console.error('Stripe sandbox cleanup: test clock requires manual removal by fixture metadata.')}}
  for(const price of created.prices){try{await stripe('POST','/prices/'+price.id,{active:false})}catch{console.error('Stripe sandbox cleanup: price requires manual archival by fixture metadata.')}}
  if(created.product){try{await stripe('POST','/products/'+created.product.id,{active:false})}catch{console.error('Stripe sandbox cleanup: product requires manual archival by fixture metadata.')}}
+ if(tunnelCleanupError)throw tunnelCleanupError
 }
