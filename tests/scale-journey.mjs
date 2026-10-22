@@ -30,14 +30,15 @@ try {
  assert.equal(reconciliation.ok,true);assert.equal(reconciliation.counts.sourceRecords,1)
  assert.equal(reconciliation.counts.present,1);assert.equal(reconciliation.counts.nativeTargets,1)
  assert.deepEqual(reconciliation.sourceIds.map(row=>({sourceId:row.sourceId,status:row.status})),[{sourceId:synthetic(0),status:'present'}])
- const owner=(await json(await call('/state'))).operator.id
+ const baseline=await json(await call('/state')),owner=baseline.operator.id,baselineAccountId=baseline.accounts.find(row=>row.name===synthetic(0))?.id
+ assert.ok(baselineAccountId,'Native import created the reconciled baseline account')
  const usage=await json(await call('/usage/sources','POST',{name:synthetic(90_000_006),kind:'native',reference:synthetic(90_000_005),staleDays:30}),201)
  const credential=await json(await call('/usage/sources/'+usage.id+'/credentials','POST',{label:synthetic(90_000_007),scope:['event']}),201)
  // Publish through the real door before loading; the hourly Cron must refresh
  // this existing configuration for every actual account, not an empty no-op.
  const current=await json(await call('/scorecards'))
  await json(await call('/scorecards/publish','POST',{revision:current.revision,config:{name:synthetic(90_000_008),measures:[{key:'billing',name:synthetic(90_000_009),field:'billing.allocatedMinor',min:0,max:10000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}}),201)
- await measure('load account/user directory',null,()=>seedDirectory(source,on,usage.id,owner))
+ await measure('load account/user directory',null,()=>seedDirectory(source,on,usage.id,owner,baselineAccountId))
  const baseBytes=await databaseBytes(source),pilot=100_000
  await measure('load 100000 real usage rows for storage projection',null,()=>seedEvents(source,usage.id,on,0,pilot))
  const pilotBytes=await databaseBytes(source),bytesPerEvent=(pilotBytes-baseBytes)/pilot,projectedBytes=baseBytes+Math.ceil(bytesPerEvent*volume.events)
@@ -52,7 +53,7 @@ try {
  assert.deepEqual({accounts:loaded.accounts,people:loaded.people,events:loaded.events},volume)
  assert.equal(loaded.memberships,volume.people);assert.equal(loaded.mappings,volume.people)
  assert.ok(await databaseBytes(source)<=10_000_000_000,'Actual persisted database fits the installed D1 limit')
- await accountPages(worker,[synthetic(0),synthetic(4999),synthetic(9999)])
+ await accountPages(worker,[baselineAccountId,synthetic(4999),synthetic(9999)])
  // Wrangler's public Cron middleware supplies real Date.now(), not a custom
  // time query parameter. Age the stored fixture to make an actual hour due.
  const stale=new Date(Date.now()-3_600_001).toISOString()
@@ -96,7 +97,7 @@ try {
  await measure('rer archive restore',null,()=>rer(destination,['import','--input',archive,'--yes']))
  assert.deepEqual(await inventory(destination),before,'Every retained usage row/count/payload byte/identity aggregate restores')
  worker=await startWorker({root:destination,directory:join(destination,'.wrangler/state'),keep:true,testScheduled:true})
- await accountPages(worker,[synthetic(0),synthetic(9999)])
+ await accountPages(worker,[baselineAccountId,synthetic(9999)])
  const restored=await json(await worker.request('/api/buoy/usage/events?messageId='+synthetic(60_000_499),{cookie:worker.cookie}))
  assert.equal(restored.events.length,1);assert.equal(restored.nextCursor,null)
  assert.equal(restored.events[0].sourceId,usage.id);assert.equal(restored.events[0].sourceSystem,'native')

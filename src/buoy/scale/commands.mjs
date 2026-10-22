@@ -9,12 +9,12 @@ export async function command(root, script, args, {timeout=3_600_000,json=false,
  const child=spawn(process.execPath,[join(root,script),...args],{cwd:root,env,stdio:['ignore','pipe','pipe']})
  let output=''
  child.stdout.on('data',chunk=>{output=(output+chunk).slice(-4_000_000)})
- child.stderr.resume()
+ child.stderr.on('data',chunk=>{output=(output+chunk).slice(-4_000_000)})
  const timer=setTimeout(()=>child.kill('SIGTERM'),timeout)
  try {
   const code=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('close',resolve)})
   // Error bodies and CLI output may contain credentials; report operation/status only.
-  assert.equal(code,expected,`${args[0]} failed (exit ${code}; signal ${child.signalCode??'none'}). CLI output withheld.`)
+  assert.equal(code,expected,`${args[0]} failed (exit ${code}; signal ${child.signalCode??'none'}). CLI output withheld. ${output.match(/(?:no such (?:table|column): [A-Za-z0-9_.]+|(?:NOT NULL|UNIQUE) constraint failed: [A-Za-z0-9_., ]+|FOREIGN KEY constraint failed)/)?.[0]??''}`)
   if(json)return JSON.parse(output)
  } finally {clearTimeout(timer)}
 }

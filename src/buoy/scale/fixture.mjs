@@ -12,13 +12,13 @@ async function execute(root,name,sql){
  const path=join(root,name+'.sql');await writeFile(path,sql,{mode:0o600})
  await d1(root,['--file',path])
 }
-export async function seedDirectory(root,on,sourceId,ownerId){
+export async function seedDirectory(root,on,sourceId,ownerId,baselineAccountId){
  const stamp=on+'T12:00:00.000Z',account=accountInput(0,on)
  await execute(root,'scale-directory',[
   `${range(1,volume.accounts)} INSERT INTO buoy_accounts(id,document,revision,created_at) SELECT 'synthetic-buoy-'||i,json_set(${literal(JSON.stringify(account))},'$.id','synthetic-buoy-'||i,'$.name','synthetic-buoy-'||i),'synthetic-buoy-'||i,${literal(stamp)} FROM n;`,
   chunked(volume.people,cte=>`${cte} INSERT INTO buoy_customer_people(id,kind,name,revision,created_at) SELECT 'synthetic-buoy-'||(1000000+i),'user','synthetic-buoy-'||(1000000+i),'synthetic-buoy-'||(1000000+i),${literal(stamp)} FROM n;`),
-  chunked(volume.people,cte=>`${cte} INSERT INTO buoy_customer_memberships(person_id,account_id) SELECT 'synthetic-buoy-'||(1000000+i),'synthetic-buoy-'||(i%${volume.accounts}) FROM n;`),
-  chunked(volume.people,cte=>`${cte} INSERT INTO buoy_usage_mappings(source_id,claim_key,user_id,group_id,account_id,person_id,revision,reviewed_by,reviewed_at) SELECT ${literal(sourceId)},json_array('synthetic-buoy-'||(1000000+i),'synthetic-buoy-'||(i%${volume.accounts})),'synthetic-buoy-'||(1000000+i),'synthetic-buoy-'||(i%${volume.accounts}),'synthetic-buoy-'||(i%${volume.accounts}),'synthetic-buoy-'||(1000000+i),'synthetic-buoy-'||(1000000+i),${literal(ownerId)},${literal(stamp)} FROM n;`)
+  chunked(volume.people,cte=>`${cte} INSERT INTO buoy_customer_memberships(person_id,account_id) SELECT 'synthetic-buoy-'||(1000000+i),CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END FROM n;`),
+  chunked(volume.people,cte=>`${cte} INSERT INTO buoy_usage_mappings(source_id,claim_key,user_id,group_id,account_id,person_id,revision,reviewed_by,reviewed_at) SELECT ${literal(sourceId)},json_array('synthetic-buoy-'||(1000000+i),CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END),'synthetic-buoy-'||(1000000+i),CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END,CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END,'synthetic-buoy-'||(1000000+i),'synthetic-buoy-'||(1000000+i),${literal(ownerId)},${literal(stamp)} FROM n;`)
  ].join('\n'))
 }
 export async function seedEvents(root,sourceId,on,start,end){
@@ -27,9 +27,9 @@ export async function seedEvents(root,sourceId,on,start,end){
  for(let offset=start;offset<end;offset+=10000){
   const until=Math.min(end,offset+10000)
   statements.push(`${range(offset,until)} INSERT INTO buoy_usage_events(id,source_id,message_id,type,event,user_id,group_id,observed_at,received_at,source_reference,source_system,payload)
- SELECT 'synthetic-buoy-'||(2000000+i),${literal(sourceId)},'synthetic-buoy-'||(2000000+i),'event',${literal(synthetic(90_000_004))},'synthetic-buoy-'||(1000000+i%${volume.people}),'synthetic-buoy-'||(i%${volume.accounts}),
+ SELECT 'synthetic-buoy-'||(2000000+i),${literal(sourceId)},'synthetic-buoy-'||(2000000+i),'event',${literal(synthetic(90_000_004))},'synthetic-buoy-'||(1000000+i%${volume.people}),CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END,
  strftime('%Y-%m-%dT%H:%M:%fZ',${literal(on+'T23:59:59Z')},'-'||(i%2592000)||' seconds'),${literal(on+'T23:59:59.000Z')},${literal(synthetic(90_000_005))},'native',
- json_object('messageId','synthetic-buoy-'||(2000000+i),'type','event','event',${literal(synthetic(90_000_004))},'userId','synthetic-buoy-'||(1000000+i%${volume.people}),'groupId','synthetic-buoy-'||(i%${volume.accounts}),'timestamp',strftime('%Y-%m-%dT%H:%M:%fZ',${literal(on+'T23:59:59Z')},'-'||(i%2592000)||' seconds'),'properties',json_object('value',i%100)) FROM n;`)
+ json_object('messageId','synthetic-buoy-'||(2000000+i),'type','event','event',${literal(synthetic(90_000_004))},'userId','synthetic-buoy-'||(1000000+i%${volume.people}),'groupId',CASE WHEN i%${volume.accounts}=0 THEN ${literal(baselineAccountId)} ELSE 'synthetic-buoy-'||(i%${volume.accounts}) END,'timestamp',strftime('%Y-%m-%dT%H:%M:%fZ',${literal(on+'T23:59:59Z')},'-'||(i%2592000)||' seconds'),'properties',json_object('value',i%100)) FROM n;`)
  }
  await execute(root,'scale-events',statements.join('\n'))
 }
