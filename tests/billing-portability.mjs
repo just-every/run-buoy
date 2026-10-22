@@ -4,7 +4,7 @@ import {billingFixtureKey,billingWebhookSecret} from './billing-fixture.mjs'
 
 // Only public Worker doors seed domain records. The caller supplies the Stripe
 // network-edge fixture; the real CLI later exports/imports the persisted D1.
-export async function seedBillingPortability(call,request,cookie,source,connectionId){
+export async function seedBillingPortability(call,request,cookie,source,connectionId,signIn){
  const accountId='synthetic-buoy-2200',on=new Date().toISOString().slice(0,10)
  await call('/accounts','POST',{id:accountId,name:'Portable Stripe billing account',renewalDate:new Date(Date.now()+365*86400000).toISOString().slice(0,10),noticeDays:30,renewalEvidence:'Synthetic portable Stripe order',billing:null,support:null})
  const base='/billing/'+connectionId,preview=await call(base+'/bindings/preview','POST',{customerId:'synthetic-buoy-101',accountId})
@@ -26,7 +26,7 @@ export async function seedBillingPortability(call,request,cookie,source,connecti
  assert.equal(billing.connections.find(c=>c.id===connectionId).webhook_present,1)
  const role=await call('/roles/definitions','POST',{revision:(await call('/roles')).revision,name:'Portable reviewed account reader',permissions:{read:'scope',commercialRead:'band'},scope:{kind:'own'},commercial:'band'})
  const email='synthetic-buoy-2202@example.test',invite=await request('/auth/invite',{method:'POST',cookie,body:{email,displayName:'Portable reviewed colleague',role:'member'}})
- assert.equal(invite.status,202)
+ assert.equal(invite.status,202);await signIn(email)
  const person=(await call('/roles')).people.find(p=>p.displayName==='Portable reviewed colleague');assert.ok(person)
  await call('/roles/assignments','PUT',{revision:(await call('/roles')).revision,personId:person.id,roleId:role.id,sharedAccountIds:[accountId],grants:{concessionLimitMinor:25000,renewalOutcome:true}})
  const roles=await call('/roles'),assignment=roles.assignments.find(a=>a.personId===person.id)
