@@ -1,3 +1,4 @@
+import {scopedRenewalApprovals,approveScopedRenewal} from './roles/renewal-approval'
 import {scopedRetentionReport,scopedRetentionExport} from './roles/reports'
 import {editScopedAccount} from './roles/account-edit'
 import {refreshAccountConsumers} from './account-consumers'
@@ -82,12 +83,18 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  }
  const profile=await roleAccess(c.env.DB,actor)
  if(profile.restricted){
+  if(c.req.method==='GET'&&c.req.path==='/api/buoy/renewals/approvals')return c.json(await scopedRenewalApprovals(c.env.DB,actor,profile))
+  if(c.req.method==='POST'&&/^\/api\/buoy\/proposals\/[^/]+\/approve$/.test(c.req.path)){
+   let proposalId:string;try{proposalId=decodeURIComponent(c.req.path.split('/').at(-2)!)}catch{throw new Problem(400,'Invalid proposal reference.')}
+   const result=await approveScopedRenewal(c.env.DB,actor,proposalId,await jsonBody(c.req.raw),profile)
+   await refreshAccountConsumers(c.env,actor);return c.json(result)
+  }
   if(c.req.method==='PATCH'&&/^\/api\/buoy\/accounts\/[^/]+$/.test(c.req.path))return next()
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/state')return c.json(await projectState(c.env.DB,actor,await state(c.env.DB,actor),profile))
   if(c.req.method==='GET'&&['/api/buoy/revenue/retention','/api/buoy/revenue/retention.csv'].includes(c.req.path))return next()
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/workspace/home')return c.json(await scopedWorkspaceHome(c.env.DB,actor,c.req.query('person'),profile))
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/search')return c.json(await scopedSearch(c.env.DB,actor,new URL(c.req.url).searchParams,profile))
-  throw new Problem(403,'This door is not available to assigned profiles yet. Scoped account reads, home and search remain available.')
+  throw new Problem(403,'This door is not available to assigned profiles yet. Scoped account reads, permitted edits, home, search, reports and renewal reviews use their own permissions.')
  }
  await generateRenewals(c.env.DB)
  await refreshPeople(c.env.DB,actor)

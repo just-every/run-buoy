@@ -1,3 +1,4 @@
+import {roleRenewalApprovalJourney} from './roles-renewal-approval.mjs'
 import {roleReportsJourney} from './roles-reports.mjs'
 import {roleAccountEditJourney} from './roles-account-edit.mjs'
 import {roleWorkspaceJourney} from './roles-workspace.mjs'
@@ -605,3 +606,5 @@ test('ROLE-001 scoped homes use current books, handlers and safe commercial fiel
 test('ROLE-001 scoped account details preserve commercial sources and current authority', roleAccountEditJourney)
 
 test('ROLE-001 financial reports and CSV contain only permitted records', roleReportsJourney)
+
+test('ROLE-001 renewal approvals retain current team, grants and native source authority',roleRenewalApprovalJourney)

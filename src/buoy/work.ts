@@ -7,6 +7,7 @@ import { account } from './accounts'
 import { accountHealth } from './sentiment'
 import { insist, text, date, object, stmt, guard, commit, id, now, requirePerson, type Actor } from './core'
 import { PRIORITIES, TYPES } from './tasks'
+import {accountAudit} from './audit-records'
 
 // Revision-bound drafts and guarded approval adapted from Orbit approval-repository
 // 38cef87571a413802dbaa7aa6afbab332d8cd778 and Nectar subscriptions
@@ -43,10 +44,23 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
 }
 export async function approve(db: D1Database, actor: Actor, proposalId: string) {
  requirePerson(actor)
+ return applyApproval(db,actor,proposalId)
+}
+/** Internal alternate authority door. Its callback must authorize the actual
+ * actor and return transaction fences; all native domain checks stay here. */
+export async function approveWithAuthorization(db:D1Database,actor:Actor,proposalId:string,authorize:(proposal:Record<string,string>)=>Promise<D1PreparedStatement[]>){
+ insist(actor.kind==='person','A staff session is required.',403)
+ return applyApproval(db,actor,proposalId,authorize)
+}
+async function applyApproval(db:D1Database,actor:Actor,proposalId:string,authorize?:(proposal:Record<string,string>)=>Promise<D1PreparedStatement[]>){
  const proposal = await stmt(db, 'SELECT * FROM buoy_proposals WHERE id=?', proposalId).first<Record<string, string>>()
  insist(proposal, 'Proposal not found.', 404)
+ const authorization=authorize?await authorize(proposal):undefined
  // Replay does not duplicate the effect or overwrite the original approver.
- if (proposal.status === 'approved') return {id: proposalId, status: 'approved'}
+ if (proposal.status === 'approved') {
+  if(authorization)await db.batch([...authorization,stmt(db,'DELETE FROM buoy_assertions')])
+  return {id: proposalId, status: 'approved'}
+ }
  const current = await account(db, proposal.account_id), payload = JSON.parse(proposal.payload)
  insist(current.revision === proposal.account_revision, 'Evidence changed since preparation. Prepare a new proposal.', 409)
  if (proposal.kind === 'playbook' && !payload.segmentEntry && !payload.playRun) insist((await accountHealth(db, current)).status === 'at-risk', 'This account no longer has an at-risk signal. Prepare from current evidence.', 409)
@@ -75,7 +89,8 @@ export async function approve(db: D1Database, actor: Actor, proposalId: string) 
   if(variant)statements.push(stmt(db,'INSERT INTO buoy_decision_outcomes(decision_id,outcome) VALUES(?,?)',decisionId,payload.outcome))
  }
  statements.push(stmt(db, 'UPDATE buoy_accounts SET revision=? WHERE id=?', id(), current.id))
- await commit(db, actor, current.id, `${proposal.kind}.approved`, statements, true)
+ if(authorization)await db.batch([...authorization,...statements,...accountAudit(db,actor,current.id,`${proposal.kind}.approved`),stmt(db,'DELETE FROM buoy_assertions')])
+ else await commit(db, actor, current.id, `${proposal.kind}.approved`, statements, true)
  return {id: proposalId, status: 'approved'}
 }
 export async function completeTask(db: D1Database, actor: Actor, taskId: string, input: Record<string, unknown>) {

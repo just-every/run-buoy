@@ -1,3 +1,5 @@
+import {scopedRenewalApprovalPage} from './scoped-renewal-approval'
+import type {ScopedRenewalApprovals} from '../roles/renewal-approval'
 import {scopedReportsPage} from './scoped-reports'
 import type {ScopedRetentionReport} from '../roles/reports'
 import type {ScopedWorkspaceHome} from '../roles/workspace'
@@ -16,6 +18,15 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  let title='Accounts',status=200,body:string,error:string|undefined,fields:Fields|undefined
  let accountId='';try{if(/^\/app\/accounts\/[^/]+$/.test(path))accountId=decodeURIComponent(path.slice('/app/accounts/'.length))}catch{}
  const selected=state.accounts.find(a=>a.id===accountId)
+ if(request.method==='POST'&&path==='/app/approvals'){
+  try{
+   if(request.headers.get('origin')!==url.origin)throw new ApiError('Submit this form from this installation.',403)
+   fields=Object.fromEntries([...await request.formData()].map(([key,value])=>[key,typeof value==='string'?value:'']))
+   if(fields.action!=='scoped-renewal-approve'||!fields.proposalId)throw new ApiError('This approval action is unavailable.',403)
+   await apiCall(api,request,'/api/buoy/proposals/'+encodeURIComponent(fields.proposalId)+'/approve','POST',{revision:fields.revision,sourceRevision:fields.sourceRevision||null})
+   return new Response(null,{status:303,headers:{location:'/app/approvals?recorded=1#scoped-renewal-approvals','cache-control':'no-store'}})
+  }catch(caught){status=caught instanceof ApiError?caught.status:503;error=caught instanceof Error?caught.message:'The renewal outcome could not be approved.'}
+ }
  if(request.method==='POST'&&selected?.canEdit){
   try{
    if(request.headers.get('origin')!==url.origin)throw new ApiError('Submit this form from this installation.',403)
@@ -25,7 +36,11 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
    return new Response(null,{status:303,headers:{location:path+'?saved='+encodeURIComponent(path+'|scoped-account-edit')+'#scoped-account','cache-control':'no-store'}})
   }catch(caught){status=caught instanceof ApiError?caught.status:503;error=caught instanceof Error?caught.message:'The account could not be changed.'}
  }
- if(request.method==='POST'&&selected?.canEdit){title=selected.name;body=scopedAccountsPage(state,accountId,fields)}else if(!['GET','HEAD'].includes(request.method)){
+ if(path==='/app/approvals'&&(['GET','HEAD'].includes(request.method)||fields?.action==='scoped-renewal-approve')){
+  title='Renewal reviews'
+  try{body=scopedRenewalApprovalPage(await apiCall<ScopedRenewalApprovals>(api,request,'/api/buoy/renewals/approvals'),fields)}
+  catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Review unavailable','<p>Your current profile cannot review renewal decisions.</p>')}
+ }else if(request.method==='POST'&&selected?.canEdit){title=selected.name;body=scopedAccountsPage(state,accountId,fields)}else if(!['GET','HEAD'].includes(request.method)){
   status=403;body=section('Action unavailable','<p>This action is not available to your assigned profile.</p>')
  }else if(path==='/app/revenue'){
   title='Retention'
@@ -43,6 +58,6 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  else if(/^\/app\/accounts\/[^/]+$/.test(path)){
   const account=state.accounts.find(a=>a.id===accountId);title=account?.name??'Account unavailable';status=account?200:404;body=scopedAccountsPage(state,accountId)
  }else{status=403;title='Access unavailable';body=section(title,'<p>This page is not available to your assigned profile.</p><p><a href="/app">Open accounts in your scope</a></p>')}
- const response=await shell({title,body,state,current:['/app/search','/app/workspace','/app/revenue'].includes(path)?path:'/app',status,error,backToAccounts:path.startsWith('/app/accounts/')})
+ const response=await shell({title,body,state,current:['/app/search','/app/workspace','/app/revenue','/app/approvals'].includes(path)?path:'/app',status,error,success:path==='/app/approvals'&&url.searchParams.get('recorded')==='1'?'Renewal outcome recorded.':undefined,backToAccounts:path.startsWith('/app/accounts/')})
  return request.method==='HEAD'?new Response(null,{status:response.status,headers:response.headers}):response
 }
