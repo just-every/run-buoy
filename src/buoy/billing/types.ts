@@ -1,11 +1,21 @@
 export type StripeRecord=Record<string,unknown>
+export interface BillingTier {upTo:number|null;unitAmountDecimal:string|null;flatAmountDecimal:string|null}
+export interface BillingDiscount {
+ id:string;couponId:string;promotionCodeId:string|null;startAt:string;endAt:string|null;
+ duration:'forever'|'repeating'|'once';durationMonths:number|null;
+ percentOffDecimal:string|null;amountOffMinor:number|null;currency:string|null;
+ currencyAmounts:Record<string,number>;products:string[]|null;couponRedeemable:boolean
+}
 export interface BillingLine {
- id:string;priceId:string;productId:string;quantity:number;currency:string;
- unitAmountDecimal:string;interval:'month'|'year'|'week'|'day';intervalCount:number
+ id:string;priceId:string;productId:string;quantity:number|null;currency:string;
+ unitAmountDecimal:string|null;interval:'month'|'year'|'week'|'day';intervalCount:number;
+ usageType:'licensed'|'metered';billingScheme:'per_unit'|'tiered';
+ tiersMode:'volume'|'graduated'|null;tiers:BillingTier[];
+ transformQuantity:{divideBy:number;round:'up'|'down'}|null;discounts:BillingDiscount[]
 }
 export interface BillingSubscription {
  id:string;status:string;createdAt:string;cancelAtPeriodEnd:boolean;canceledAt:string|null;
- periodStart:string;periodEnd:string;lines:BillingLine[]
+ periodStart:string;periodEnd:string;lines:BillingLine[];discounts:BillingDiscount[]
 }
 export interface BillingInvoice {
  id:string;currency:string;status:string;amountDueMinor:number;amountPaidMinor:number;

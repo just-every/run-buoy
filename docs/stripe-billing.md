@@ -39,20 +39,57 @@ Subscription or plan differences retain before/after documents and their source
 observation. Earlier proposals retain their original revision and must be
 reviewed again after a refresh.
 
-ARR annualizes each licensed recurring unit price multiplied by its quantity.
+ARR annualizes the licensed recurring amount after quantity pricing and
+recurring discounts. Per-unit prices multiply by the licensed quantity;
+`transform_quantity` first divides and rounds that quantity up or down as Stripe
+specifies. Volume pricing uses the matching tier's unit price for every unit
+plus that tier's flat amount. Graduated pricing sums each occupied tier's units
+and flat amount; zero quantity uses the first tier's flat amount. The source
+retains every tier and transformation. See Stripe's [quantity
+rules](https://docs.stripe.com/billing/subscriptions/quantities) and [tiered
+pricing](https://docs.stripe.com/subscriptions/pricing-models/tiered-pricing).
+
+Item discounts apply before subscription discounts, preserving Stripe's stack
+order. Percentage and fixed discounts respect product restrictions and the
+selected native currency; fixed discounts cap the eligible amount at zero.
+Each fixed subscription discount applies once to its eligible period subtotal,
+with an exact proportional allocation across eligible items before
+annualization. A customer discount applies when the subscription has none.
+Previously redeemed permanent discounts still apply when their coupon is no
+longer redeemable. The source retains coupon, promotion-code, duration,
+start/end, currency and product facts. See Stripe's [discount
+rules](https://docs.stripe.com/billing/subscriptions/coupons).
+
+Buoy deducts currently active `forever` and `repeating` discounts from contracted
+recurring revenue; it retains `once` discounts as source facts without reducing
+the recurring amount. Stripe lets owners configure whether repeating and
+one-time discounts reduce Dashboard MRR. Those Dashboard settings are not
+inferred from subscription reads, so Buoy's stated convention can differ from a
+customized Dashboard. See Stripe's [MRR discount
+settings](https://support.stripe.com/questions/impact-of-discounts-and-coupons-on-monthly-recurring-revenue-%28mrr%29-in-billing).
+
 Monthly intervals multiply by twelve, yearly intervals retain their annual
 amount, weekly intervals use 365/7 and daily intervals use 365. An interval count
-divides the result. MRR is exact ARR divided by twelve. Decimal minor-unit unit
-prices and all intermediate sums use integer fractions, and displayed native
-minor units round half up once, after summing. Currencies are never combined.
-Active and past-due subscriptions contribute their recurring amount; trialing,
-unpaid, paused, incomplete and canceled subscriptions contribute zero. A
-period-end cancellation stays recurring until Stripe actually cancels it.
-Taxes, invoice proration, one-time items, refunds and credit notes do not inflate
-or reduce the recurring subscription price. Tiered, metered, transformed and
-discounted subscription pricing is explicitly unsupported: the whole customer
-read fails and leaves the prior evidence visible with reduced confidence. It
-never substitutes a guessed amount.
+divides the result. MRR is exact ARR divided by twelve. Decimal minor-unit prices,
+discounts and intermediate sums use integer fractions; displayed native minor
+units round half up once, after summing. Currencies are never combined. Active
+and past-due subscriptions contribute their recurring amount; trialing, unpaid,
+paused, incomplete and canceled subscriptions contribute zero. A period-end
+cancellation stays recurring until Stripe actually cancels it. Taxes, invoice
+proration, one-time items, refunds and credit notes do not change contracted
+recurring revenue. Metered prices and discounts remain visible, while
+uncommitted metered usage contributes zero ARR/MRR, following Stripe's [MRR
+definition](https://docs.stripe.com/billing/subscriptions/analytics).
+
+Discounts are expanded on their owning subscription or item; missing price tiers
+and coupon details use fixed, encoded `GET /v1/prices/:id` and
+`GET /v1/coupons/:id` reads. Buyer-chosen coupon IDs are accepted as bounded
+identifiers, never as URLs. Unknown or malformed pricing fails the complete
+customer read, retaining prior evidence with reduced confidence. Fixed
+subscription discounts across different billing intervals also fail rather
+than invent an allocation: [mixed-interval flexible
+billing](https://docs.stripe.com/billing/subscriptions/mixed-interval?dashboard-or-api=api)
+requires a newer API than this connector's pinned Acacia version.
 
 An open invoice with a positive remaining amount and an explicitly failed linked
 payment intent produces a failed-payment risk. An attempt counter alone does not

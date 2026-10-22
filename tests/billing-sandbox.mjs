@@ -16,7 +16,7 @@ async function stripe(method,path,values={},allowed=[200]){
  setupCalls.push({method,path})
  const response=await fetch(url,{method,redirect:'manual',headers:{Authorization:'Bearer '+key,'Stripe-Version':version,...(method==='GET'?{}:{'content-type':'application/x-www-form-urlencoded'})},...(method==='GET'?{}:{body:params}),signal:AbortSignal.timeout(30000)})
  const body=await response.json()
- if(!allowed.includes(response.status))throw new Error(`Stripe sandbox setup ${method} ${path.split('/').slice(0,2).join('/')} failed HTTP ${response.status} (${body.error?.type??'unknown'}/${body.error?.code??'unknown'}).`)
+ if(!allowed.includes(response.status))throw new Error(`Stripe sandbox setup ${method} ${path.split('/').slice(0,2).join('/')} failed HTTP ${response.status} (${body.error?.type??'unknown'}/${body.error?.code??'unknown'}; param ${/^[A-Za-z0-9_\[\]]{1,120}$/.test(body.error?.param??'')?body.error.param:'unspecified'}).`)
  return body
 }
 async function waitFor(label,check,timeout=120000){
@@ -46,7 +46,7 @@ try{
  console.log('Stripe sandbox: preparing real test subscriptions and read-only Buoy transport.')
  app=await startWorker({providerFetch:async request=>{
   const url=new URL(request.url);assert.equal(url.origin,'https://api.stripe.com');assert.equal(request.method,'GET','Buoy never writes to Stripe')
-  assert.match(url.pathname,/^\/v1\/(customers\/[A-Za-z0-9_-]+|customers|subscriptions|subscription_items|invoices|payment_intents|charges(?:\/[A-Za-z0-9_-]+)?|refunds|credit_notes)$/)
+  assert.match(url.pathname,/^\/v1\/(customers\/[A-Za-z0-9_-]+|customers|subscriptions|subscription_items|invoices|payment_intents|charges(?:\/[A-Za-z0-9_-]+)?|refunds|credit_notes|prices\/[^/]+|coupons\/[^/]+)$/)
   productCalls.push({method:request.method,path:url.pathname,at:new Date().toISOString()})
   return fetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',signal:AbortSignal.timeout(30000)})
  }})
@@ -62,7 +62,7 @@ try{
  const [basePrice,annualPrice,upgradePrice,downgradePrice]=[await createPrice(2500,'month'),await createPrice(60001,'year'),await createPrice(5500,'month'),await createPrice(1500,'month')]
  for(let i=0;i<2;i++){
   const method=await stripe('POST','/payment_methods',{type:'card','card[token]':'tok_visa'})
-  const customer=await stripe('POST','/customers',{name:runTag+'-'+(i+1),test_clock:clock.id,payment_method:method.id,'invoice_settings[default_payment_method]':method.id,'metadata[fixture]':runTag});assert.equal(customer.livemode,false);created.customers.push(customer)
+  const customer=await stripe('POST','/customers',{name:runTag+'-'+(i+1),email:runTag+'-'+(i+1)+'@example.test',test_clock:clock.id,payment_method:method.id,'invoice_settings[default_payment_method]':method.id,'metadata[fixture]':runTag});assert.equal(customer.livemode,false);created.customers.push(customer)
  }
  monthly=await stripe('POST','/subscriptions',{customer:created.customers[0].id,'items[0][price]':basePrice.id,'items[0][quantity]':3,payment_behavior:'error_if_incomplete','metadata[fixture]':runTag});created.subscriptions.push(monthly.id)
  annual=await stripe('POST','/subscriptions',{customer:created.customers[1].id,'items[0][price]':annualPrice.id,'items[0][quantity]':2,payment_behavior:'error_if_incomplete','metadata[fixture]':runTag});created.subscriptions.push(annual.id)
