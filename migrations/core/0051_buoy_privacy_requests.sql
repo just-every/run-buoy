@@ -1,6 +1,7 @@
 -- Installation-local replay key is product custody and travels with the archive.
 CREATE TABLE buoy_privacy_key (singleton INTEGER PRIMARY KEY CHECK(singleton=1), secret TEXT NOT NULL);
-INSERT INTO buoy_privacy_key VALUES(1,lower(hex(randomblob(32))));
+-- Created on first authorized privacy/intake use, so an empty restore target
+-- has no random migration seed that could masquerade as existing product data.
 CREATE TABLE buoy_privacy_requests (
  id TEXT PRIMARY KEY REFERENCES buoy_privacy_receipts(id), subject TEXT NOT NULL,
  verification_method TEXT NOT NULL, received_date TEXT NOT NULL, requester_reference TEXT NOT NULL
