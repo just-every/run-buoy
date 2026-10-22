@@ -7,7 +7,7 @@ provider object with a mode flag must be test mode; refund mode is inherited
 from its separately verified test charge (Stripe refunds have no mode flag).
 
 Use a restricted test key with **read** access to Customers, Subscriptions,
-Subscription Items, Prices, Invoices, Payment Intents, Charges, Refunds and Credit
+Subscription Items, Prices, Coupons, Invoices, Payment Intents, Charges, Refunds and Credit
 Notes. Buoy requests no write scope. The transport makes only GET requests to
 `https://api.stripe.com`, pins API version `2025-02-24.acacia`, refuses redirects,
 and has no caller-selectable provider URL or HTTP method. Saving a full test key
