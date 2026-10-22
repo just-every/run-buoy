@@ -1,3 +1,4 @@
+import {roleReportsJourney} from './roles-reports.mjs'
 import {roleAccountEditJourney} from './roles-account-edit.mjs'
 import {roleWorkspaceJourney} from './roles-workspace.mjs'
 import {roleConfigurationJourney,roleReadJourney,roleScopeJourney,roleIsolationJourney} from './roles-journey.mjs'
@@ -602,3 +603,5 @@ test('ROLE-001 commercial, search and unported door isolation',roleIsolationJour
 test('ROLE-001 scoped homes use current books, handlers and safe commercial fields', roleWorkspaceJourney)
 
 test('ROLE-001 scoped account details preserve commercial sources and current authority', roleAccountEditJourney)
+
+test('ROLE-001 financial reports and CSV contain only permitted records', roleReportsJourney)

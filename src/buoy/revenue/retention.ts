@@ -1,4 +1,4 @@
-import {authority,date,insist} from '../core'
+import {authority,date,guard,insist} from '../core'
 import type {Actor} from '../core'
 import {SNAPSHOT,evaluated,definitions,type Image} from '../segments/snapshot'
 import {includes} from '../segments/rules'
@@ -22,14 +22,25 @@ export function reportingWindow(query:URLSearchParams){
 function selected(versions:ContractVersion[],on:string){
  return versions.filter(v=>v.contract.source.confirmedOn<=on).sort((a,b)=>b.contract.source.confirmedOn.localeCompare(a.contract.source.confirmedOn)||b.recordedAt.localeCompare(a.recordedAt)||b.id.localeCompare(a.id))[0]??null
 }
-export async function retentionReport(db:D1Database,actor:Actor,query:URLSearchParams){
+const HISTORY_SQL=`SELECT json_group_array(json_object('id',id,'accountId',account_id,'revision',revision,'sourceKind',source_kind,'document',document,'recordedBy',recorded_by,'recordedAt',recorded_at)) FROM(SELECT * FROM buoy_recurring_contract_versions ORDER BY recorded_at DESC,id DESC)`
+export async function retentionReport(db:D1Database,actor:Actor,query:URLSearchParams,accountAllowlist?:readonly string[],readFences:D1PreparedStatement[]=[]){
  insist(actor.kind==='person'&&['owner','admin','member'].includes(actor.role),'Retention reports require a staff session.',403)
  const window=reportingWindow(query)
  // All report sources, rate versions and filter membership come from one read transaction.
- const result=await db.batch<Record<string,unknown>>([authority(db,actor),db.prepare(revenueImageSql(window.end)),db.prepare('SELECT id,account_id AS accountId,revision,source_kind AS sourceKind,document,recorded_by AS recordedBy,recorded_at AS recordedAt FROM buoy_recurring_contract_versions ORDER BY recorded_at DESC,id DESC'),db.prepare(SNAPSHOT),db.prepare('DELETE FROM buoy_assertions')])
+ const result=(await db.batch<Record<string,unknown>>([...readFences,authority(db,actor),db.prepare(revenueImageSql(window.end)),db.prepare('SELECT id,account_id AS accountId,revision,source_kind AS sourceKind,document,recorded_by AS recordedBy,recorded_at AS recordedAt FROM buoy_recurring_contract_versions ORDER BY recorded_at DESC,id DESC'),db.prepare(SNAPSHOT),db.prepare('DELETE FROM buoy_assertions')])).slice(readFences.length)
  const raw=String(result[1].results[0].snapshot),revenueImage=JSON.parse(raw) as Exclude<RevenueImage,unknown[]>,rates:RateTable=revenueImage.rateDocument?{...JSON.parse(revenueImage.rateDocument),revision:revenueImage.rateVersionId}:{name:'Corporate budget rates',mode:'corporate',rates:[],revision:null}
- const data={accounts:parseRevenueImage(raw,window.end),versions:result[2].results.map(({document,...row})=>({...row,contract:JSON.parse(String(document))}) as unknown as ContractVersion)}
- const image=JSON.parse(String(result[3].results[0].snapshot)) as Image,current=evaluated(image,new Date().toISOString().slice(0,10)),segmentId=query.get('segmentId'),segment=segmentId?definitions(image).find(s=>s.id===segmentId):null
+ const allowed=accountAllowlist===undefined?null:new Set(accountAllowlist)
+ // Scope the source rows before parsing report money, selecting versions,
+ // matching requested filters or collecting exceptions. A hidden record never
+ // contributes a report total.
+ const scopedRevenue=allowed?{...revenueImage,accounts:revenueImage.accounts.filter(row=>allowed.has(row.accountId))}:revenueImage
+ const history=result[2].results as unknown as {id:string;accountId:string;revision:string;sourceKind:string;document:string;recordedBy:string;recordedAt:string}[],historyRaw=JSON.stringify(history.map(row=>({id:row.id,accountId:row.accountId,revision:row.revision,sourceKind:row.sourceKind,document:row.document,recordedBy:row.recordedBy,recordedAt:row.recordedAt})))
+ const data={accounts:parseRevenueImage(JSON.stringify(scopedRevenue),window.end),versions:history.filter(row=>!allowed||allowed.has(row.accountId)).map(({document,...row})=>({...row,contract:JSON.parse(document)}) as unknown as ContractVersion)}
+ // Native formulas need their complete graph (including terminal descendants).
+ // Keep that context internal, then scope its account rows before any requested
+ // segment/owner/tier filter is matched or any exception/detail is assembled.
+ const sourceRaw=String(result[3].results[0].snapshot),image=JSON.parse(sourceRaw) as Image
+ const current=evaluated(image,new Date().toISOString().slice(0,10)).filter(row=>!allowed||allowed.has(row.account.id)),segmentId=query.get('segmentId'),segment=segmentId?definitions(image).find(s=>s.id===segmentId):null
 
  insist(!segmentId||segment,'Report segment not found.',404)
  const accounts=data.accounts.filter(a=>{const row=current.find(r=>r.account.id===a.accountId)!;return (!segment||includes(segment,a.accountId,row.values,row.people))&&(!query.has('ownerId')||row.values.ownerId===query.get('ownerId'))&&(!query.has('tier')||row.tier===query.get('tier'))})
@@ -57,6 +68,8 @@ export async function retentionReport(db:D1Database,actor:Actor,query:URLSearchP
   const grossMinor=available?sum(cohort.map(r=>Math.min(amount(r),amount(r,true)))):null
   return {currency,available,startMinor,endCohortMinor,grossMinor,expansionMinor:available?sum(cohort.map(r=>Math.max(0,amount(r,true)-amount(r)))):null,contractionMinor:available?sum(cohort.filter(r=>r.endMinor>0).map(r=>Math.max(0,amount(r)-amount(r,true)))):null,churnMinor:available?sum(cohort.filter(r=>r.endMinor===0).map(r=>amount(r))):null,newMinor:available?sum(selected.filter(r=>r.movement==='new').map(r=>amount(r,true))):null,reactivationMinor:available?sum(selected.filter(r=>r.movement==='reactivation').map(r=>amount(r,true))):null,endPortfolioMinor:available?sum(selected.map(r=>usd?r.usdEndMinor!:r.endMinor)):null,fxMinor:usd&&available?sum(selected.map(r=>r.fxMinor!)):usd?null:0,nrr:startMinor?{numeratorMinor:endCohortMinor!,denominatorMinor:startMinor}:null,grr:startMinor?{numeratorMinor:grossMinor!,denominatorMinor:startMinor}:null,logoRetention:{retained:(usd?blockedCurrencies.size===0:!blockedCurrencies.has(currency))?cohort.filter(r=>r.endMinor>0).length:null,starting:(usd?blockedCurrencies.size===0:!blockedCurrencies.has(currency))?cohort.length:null}}
  }
- return {window,filters:Object.fromEntries(query),count:rows.length,cohortCount:rows.filter(r=>r.inCohort).length,rateTable:{name:rates.name,revision:rates.revision},native:[...new Set([...rows.map(r=>r.currency),...blockedCurrencies])].sort().map(c=>totals(c)),usd:totals('USD',true),rows,exceptions,
+ const report={window,filters:Object.fromEntries(query),count:rows.length,cohortCount:rows.filter(r=>r.inCohort).length,rateTable:{name:rates.name,revision:rates.revision},native:[...new Set([...rows.map(r=>r.currency),...blockedCurrencies])].sort().map(c=>totals(c)),usd:totals('USD',true),rows,exceptions,
   reconciliation:'unavailable-person-confirmed-sources-only',interpretation:'Person-confirmed recurring terms, not a reconciled billing report. Starting ARR cohort is positive ARR on the UTC day before the period. End ARR uses the last confirmation dated on or before each boundary; same-day ties use recording time then version ID. Terms count through their inclusive end. New and reactivated logos are shown separately and excluded from retention numerators. USD movements use the starting-boundary rate for both amounts; ending-rate difference is FX only. Missing sources/rates and currency changes are exceptions, never adjustments. Segment, CSM and tier filters use current membership/assignment; plan matches either boundary and cohort is earliest confirmed contract start month. Provider feeds, invoice reconciliation and live mixed-currency source proof remain required.'}
+ if(accountAllowlist!==undefined)await db.batch([...readFences,guard(db,`(${revenueImageSql(window.end)})=?`,raw),guard(db,`(${HISTORY_SQL})=?`,historyRaw),guard(db,`(${SNAPSHOT})=?`,sourceRaw),db.prepare('DELETE FROM buoy_assertions')])
+ return report
 }

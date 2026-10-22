@@ -1,3 +1,5 @@
+import {scopedReportsPage} from './scoped-reports'
+import type {ScopedRetentionReport} from '../roles/reports'
 import type {ScopedWorkspaceHome} from '../roles/workspace'
 import {scopedWorkspacePage} from './scoped-workspace'
 import type {ProjectedState} from '../roles'
@@ -25,6 +27,10 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  }
  if(request.method==='POST'&&selected?.canEdit){title=selected.name;body=scopedAccountsPage(state,accountId,fields)}else if(!['GET','HEAD'].includes(request.method)){
   status=403;body=section('Action unavailable','<p>This action is not available to your assigned profile.</p>')
+ }else if(path==='/app/revenue'){
+  title='Retention'
+  try{body=scopedReportsPage(url.searchParams,await apiCall<ScopedRetentionReport>(api,request,'/api/buoy/revenue/retention?'+url.searchParams))}
+  catch(caught){status=caught instanceof ApiError?caught.status:503;body=scopedReportsPage(url.searchParams,undefined,caught instanceof Error?caught.message:'The report is unavailable.')}
  }else if(path==='/app/workspace'){
   title='Your workspace'
   try{body=scopedWorkspacePage(await apiCall<ScopedWorkspaceHome>(api,request,'/api/buoy/workspace/home'+(url.searchParams.has('person')?'?person='+encodeURIComponent(url.searchParams.get('person')!):'')))}
@@ -37,6 +43,6 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  else if(/^\/app\/accounts\/[^/]+$/.test(path)){
   const account=state.accounts.find(a=>a.id===accountId);title=account?.name??'Account unavailable';status=account?200:404;body=scopedAccountsPage(state,accountId)
  }else{status=403;title='Access unavailable';body=section(title,'<p>This page is not available to your assigned profile.</p><p><a href="/app">Open accounts in your scope</a></p>')}
- const response=await shell({title,body,state,current:['/app/search','/app/workspace'].includes(path)?path:'/app',status,error,backToAccounts:path.startsWith('/app/accounts/')})
+ const response=await shell({title,body,state,current:['/app/search','/app/workspace','/app/revenue'].includes(path)?path:'/app',status,error,backToAccounts:path.startsWith('/app/accounts/')})
  return request.method==='HEAD'?new Response(null,{status:response.status,headers:response.headers}):response
 }

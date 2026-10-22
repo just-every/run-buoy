@@ -1,3 +1,4 @@
+import {scopedRetentionReport,scopedRetentionExport} from './roles/reports'
 import {editScopedAccount} from './roles/account-edit'
 import {refreshAccountConsumers} from './account-consumers'
 import {scopedWorkspaceHome} from './roles/workspace'
@@ -83,6 +84,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  if(profile.restricted){
   if(c.req.method==='PATCH'&&/^\/api\/buoy\/accounts\/[^/]+$/.test(c.req.path))return next()
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/state')return c.json(await projectState(c.env.DB,actor,await state(c.env.DB,actor),profile))
+  if(c.req.method==='GET'&&['/api/buoy/revenue/retention','/api/buoy/revenue/retention.csv'].includes(c.req.path))return next()
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/workspace/home')return c.json(await scopedWorkspaceHome(c.env.DB,actor,c.req.query('person'),profile))
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/search')return c.json(await scopedSearch(c.env.DB,actor,new URL(c.req.url).searchParams,profile))
   throw new Problem(403,'This door is not available to assigned profiles yet. Scoped account reads, home and search remain available.')
@@ -124,7 +126,8 @@ buoyApi.delete('/api/buoy/roles/assignments/:id',async c=>c.json(await clearAssi
 buoyApi.get('/api/buoy/surveys',async c=>c.json(await surveyState(c.env.DB,c.get('actor'))))
 buoyApi.post('/api/buoy/surveys/responses',async c=>c.json(await recordResponse(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/revenue',async c=>c.json(await revenueState(c.env.DB,c.get('actor'),c.req.query('on'))))
-buoyApi.get('/api/buoy/revenue/retention',async c=>c.json(await retentionReport(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)))
+buoyApi.get('/api/buoy/revenue/retention',async c=>{const actor=c.get('actor'),profile=await roleAccess(c.env.DB,actor),query=new URL(c.req.url).searchParams;return c.json(await(profile.restricted?scopedRetentionReport(c.env.DB,actor,query,profile):retentionReport(c.env.DB,actor,query)))})
+buoyApi.get('/api/buoy/revenue/retention.csv',async c=>c.body(await scopedRetentionExport(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=buoy-retention.csv'}))
 buoyApi.get('/api/buoy/revenue/rates',async c=>{requirePerson(c.get('actor'));return c.json(await fxState(c.env.DB))})
 buoyApi.post('/api/buoy/revenue/rates',async c=>c.json(await publishRates(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.post('/api/buoy/accounts/:id/contract',async c=>c.json(await saveContract(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
