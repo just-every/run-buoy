@@ -1,6 +1,6 @@
 import {billingSource} from './billing-journey.mjs'
 import {billingFixtureKey} from './billing-fixture.mjs'
-import {seedBillingPortability,billingPortabilityImage,assertBillingArchiveRows,assertBillingPortability,assertBillingAwareAccounts,assertBillingAwareRevenue,assertBillingAwareScorecardHistory,billingAwareRecordImage} from './billing-portability.mjs'
+import {seedBillingPortability,billingPortabilityImage,assertBillingArchiveRows,assertBillingPortability,assertBillingAwareAccounts,assertBillingAwareRevenue,assertBillingAwareScorecardHistory,billingAwareRecordImage,billingAwareAccountCatalog} from './billing-portability.mjs'
 import {seedRecordPortability,recordPortabilityImage,assertRecordPortability} from './record-portability.mjs'
 import { importClient } from './import-door-client.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
@@ -168,7 +168,7 @@ try{
  await assertRecordPortability(call,(path,options)=>running.request(path,{...options,cookie:running.cookie}),recordIds,billingAwareRecordImage(recordImage,before.accounts,after.accounts,billingImage))
  assert.deepEqual(await call('/adoption/consumers'),consumersBefore,'ADOPT-001 configured adoption health thresholds and measured source evidence survive archive restore');
  assert.deepEqual(await call('/adoption'),adoptionBefore,'ADOPT-001 definitions, seats, current identities, metrics and gaps survive the real installation archive');
- assert.deepEqual(await call('/customer-people'),personState,'USAGE-001 ACCOUNT-004 customer records, memberships, typed fields, calculations and source history restore exactly');
+ assert.deepEqual(await call('/customer-people'),{...personState,accounts:billingAwareAccountCatalog(personState.accounts,before.accounts,after.accounts,billingImage)},'USAGE-001 ACCOUNT-004 customer records, memberships, typed fields, calculations and source history restore exactly');
  assert.equal((await call('/usage')).mappings[0].personId,usagePerson.id,'USAGE-001 reviewed mapping survives restore without an intake credential');
  const restoredConnection=(await call('/connections')).connections.find(row=>row.id===connection.id)
  assert.equal(restoredConnection.name,'Portable Stripe source')

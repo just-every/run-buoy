@@ -97,9 +97,13 @@ export function assertBillingAwareScorecardHistory(after,before,image){
 
 // Restoring without provider authority intentionally advances only the bound
 // account's confidence revision. Keep exact parity for every other row/value.
-export function billingAwareRecordImage(before,sourceAccounts,restoredAccounts,image){
+export function billingAwareAccountCatalog(rows,sourceAccounts,restoredAccounts,image){
  const source=sourceAccounts.find(row=>row.id===image.accountId),restored=restoredAccounts.find(row=>row.id===image.accountId)
  assert.ok(source&&restored);assert.notEqual(restored.revision,source.revision)
- const revisions=rows=>{assert.ok(rows.some(row=>row.id===image.accountId));return rows.map(row=>{if(row.id!==image.accountId)return row;assert.equal(row.revision,source.revision);return {...row,revision:restored.revision}})}
+ assert.ok(rows.some(row=>row.id===image.accountId))
+ return rows.map(row=>{if(row.id!==image.accountId)return row;assert.equal(row.revision,source.revision);return {...row,revision:restored.revision}})
+}
+export function billingAwareRecordImage(before,sourceAccounts,restoredAccounts,image){
+ const revisions=rows=>billingAwareAccountCatalog(rows,sourceAccounts,restoredAccounts,image)
  return {...before,fields:{...before.fields,accounts:revisions(before.fields.accounts)},hierarchy:{...before.hierarchy,accounts:revisions(before.hierarchy.accounts)},relationship:{...before.relationship,accounts:revisions(before.relationship.accounts)}}
 }

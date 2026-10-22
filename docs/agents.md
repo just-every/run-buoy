@@ -74,7 +74,7 @@ Replace the illustrative account and evidence with confirmed records. Outcomes a
 
 ## Review with a person
 
-An owner or admin opens the account, checks the proposal’s retained evidence, then approves in the app. A changed account revision refuses stale approval. Review and prepare again from current evidence when needed.
+A native owner or admin opens the account, checks the proposal’s retained evidence, then approves in the app. Assigned CS managers can review current team renewal outcomes, and explicitly granted CSMs can review their own book through the scoped renewal review page; scoped custom profiles follow their declared renewal and commercial rules. A changed account revision refuses stale approval. Review and prepare again from current evidence when needed.
 
 The agent credential can access only `/api/buoy/commands`. It cannot approve, complete tasks, edit accounts, import records, erase accounts or manage credentials, even when its issuing owner could do those things. It cannot change commercial terms either: a preparation carries only the fields shown above, so a price, discount, credit or term change is refused.
 

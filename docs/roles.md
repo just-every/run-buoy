@@ -9,10 +9,10 @@ returns that person to the existing native member policy.
 
 The default declarations mirror the role matrix in `CONTRACT.md`. Current
 account reads/search, scoped workspace homes, a narrow account-details PATCH and
-scoped confirmed-term retention reports with audited CSV export are implemented.
+scoped confirmed-term retention reports with audited CSV export, and reviewed renewal-outcome approvals are implemented.
 A declared permission does not enable every action in its row. Assigned profiles
 still receive server-side refusals on unported linked records, complete-data
-exports, bulk actions, publishing, broader edits, approvals, connectors,
+exports, bulk actions, publishing, broader edits, concession approvals, connectors,
 credentials and audit. Custom objects, CRM identities, AI answers and embedded
 provider surfaces do not ship. ROLE-001 remains partial; complete acceptance and
 verification are not claimed here.
@@ -59,9 +59,9 @@ Assign a profile with `PUT /api/buoy/roles/assignments`:
 Scope, commercial visibility, shared accounts and named grants can be omitted to
 use the role's defaults and empty grants. Valid scope kinds are `all`, `team`,
 `own` and `segment`; only segment scope accepts a `segmentId`. Grant limits are
-nonnegative whole USD cents, or null for no concession right. Named grants are
-stored declarations; approval endpoints remain unavailable to assigned profiles.
-They do not authorize a discount or external commercial change today.
+nonnegative whole USD cents, or null for no concession right. A renewal outcome grant permits a CSM to approve within their own current book.
+Concession limits remain stored declarations; they authorize no discount, credit
+or external commercial change today.
 
 Remove an assignment with `DELETE /api/buoy/roles/assignments/:personId` and a JSON
 body containing the current `revision`. Every configuration change advances the
@@ -222,13 +222,37 @@ complete-data export. The screen has no rate-publishing controls. Provider invoi
 reconciliation and the remaining REPORT-001 acceptance remain unavailable or
 unproved; this role boundary does not change that report's meaning.
 
+## Review a renewal outcome
+
+`GET /api/buoy/renewals/approvals` and `/app/approvals` expose current pending
+renewal proposals within the assigned profile's approval authority. A CS manager
+reviews direct active reports' accounts; a CSM needs the named outcome grant and
+owns the account. Explicit sharing gives no outcome right. A custom profile uses
+its current renewal permission and intersecting assignment/definition scopes.
+Every reviewer needs full commercial-field access for the selected account.
+
+The projection contains the account name, proposed outcome, reason, evidence and
+linked renewal's expected/result ARR. It excludes raw account snapshots,
+preparer names and other proposal kinds. Account-, source- or hierarchy-stale
+proposals leave the queue. A person must prepare a fresh native proposal when
+its evidence changes.
+
+POST the shown `revision` and `sourceRevision` to the existing
+`/api/buoy/proposals/:id/approve` door. The native approval transaction still
+checks account, source and hierarchy evidence, records its existing decision,
+updates a linked native renewal and writes the opaque approval audit. Current
+role, grant, native identity/version and scope are fenced in that same write.
+Approved replay creates no second decision and still requires current authority.
+The source-consumer path completes before the successful response. No provider
+subscription, payment or commercial contract is changed by recording an outcome.
+
 ## Remaining ROLE-001 acceptance
 
 The complete role matrix still needs per-row UI and API proofs inside and outside
 scope. Unported work includes linked contacts/custom objects/plans/tasks,
 commercial custom-field classification and editing, saved-view/bulk workspace
 authority, draft/publish authority, complete-data exports and other report kinds,
-named concession and renewal approval execution, connector and agent management,
+named concession approval execution, connector and agent management,
 AI settings/answers and the listed
 embedded provider surfaces. Existing GOVERN-001 agent command/data-class policies
 remain separate; this foundation does not add agent record scopes or widen their
