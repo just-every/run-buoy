@@ -52,13 +52,24 @@ removed in `finally`; archive credentials never enter the workflow artifact.
 
 ## Current measured failure
 
-The committed journey was run outside push Verify at
-`3c4e44ea044e245d7b2d196469561659ad14613e`, in heavy-slot run
-20261022T214617142128Z-heavy-slot-0e8958d1. The reviewed native import and
-reconciliation passed, then the actual 10,000-account directory load failed at
-D1 with `BUOY_ACCOUNT_LIMIT` / `SQLITE_CONSTRAINT`. No full-volume timing, event
-storage projection, archive export or restore passed. The test refuses that
-limitation; it does not drop the product trigger or claim a smaller-volume pass.
+Outside-Verify heavy-slot run 20261022T221817625242Z-heavy-slot-70ce74e9
+at `5c993c0bbd9bbf039b419f5057b00496709caf60` loaded 100,000 real retained
+usage rows in 1,497 ms. D1's logical size grew from 2,433,024 to 87,977,984 bytes:
+855.4496 bytes per event and a 42,774,913,024-byte projection for 50 million.
+That exceeds the present single D1 binding's 10 GB limit, so the journey failed
+before the complete load. This is a capacity projection, not a full-volume pass.
+Logical size comes from the public D1 SDK's `meta.size_after`; transient SQLite
+WAL checkpoint traffic is excluded. Wrangler's local CLI omits that metadata.
+
+An earlier run, 20261022T214617142128Z-heavy-slot-0e8958d1 at
+`3c4e44ea044e245d7b2d196469561659ad14613e`, passed reviewed native import and
+reconciliation, then D1 refused the actual 10,000-account directory load with
+`BUOY_ACCOUNT_LIMIT` / `SQLITE_CONSTRAINT`. The capacity preflight now runs
+first: valid raw inbound usage may precede reviewed identity mapping, and the
+complete directory still must exist before product timings. The journey does
+not remove the product trigger or claim a smaller-volume success. Full monthly
+volume, hourly health, page/report targets and full archive restore remain
+unproved.
 
 ## Storage constraint and bounded failure
 
