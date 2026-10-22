@@ -3,6 +3,7 @@ import { importClient } from './import-door-client.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
 // Source and destination run sequentially; no provider calls or data fakes.
 import assert from 'node:assert/strict'
+import {randomUUID} from 'node:crypto'
 import { cp, mkdtemp, rm, symlink, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { join, resolve } from 'node:path'
@@ -67,9 +68,11 @@ try{
  assert.equal((await privacyIntake(usageCredential.secret)).status,202);
  const privacyMapping={sourceId:usageSource.id,userId:privacyIdentity.userId,groupId:privacyIdentity.groupId,accountId,personId:privacyPerson.id};
  const privacyPreview=await call('/usage/mappings/preview','POST',privacyMapping);await call('/usage/mappings','POST',{...privacyMapping,fingerprint:privacyPreview.fingerprint});
- const privacyBody={revision:(await call('/customer-people')).records.find(p=>p.id===privacyPerson.id).revision,confirmation:'synthetic-buoy-370'};
+ const privacyBody={revision:(await call('/customer-people')).records.find(p=>p.id===privacyPerson.id).revision,confirmation:'synthetic-buoy-370',request:{verificationMethod:'verified-offline',receivedDate:new Date().toISOString().slice(0,10),requesterReference:randomUUID()}};
  const privacyExport=await call('/customer-people/'+privacyPerson.id+'/privacy/export','POST',privacyBody);
- const privacyErased=await call('/customer-people/'+privacyPerson.id+'/privacy/erase','POST',privacyBody);
+ const privacyDiscovery=await call('/customer-people/'+privacyPerson.id+'/privacy/preview','POST',{revision:privacyBody.revision,emails:[]});
+ const privacyErased=await call('/customer-people/'+privacyPerson.id+'/privacy/erase','POST',{...privacyBody,fingerprint:privacyDiscovery.fingerprint,emails:[],redactions:[]});
+ const privacyRequestsBefore=await call('/privacy/requests');
  const privacyReceiptsBefore=await call('/privacy/receipts');
  assert.equal(privacyExport.receipt.subject,privacyErased.receipt.subject);
  personState=await call('/customer-people');
@@ -175,6 +178,7 @@ try{
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
  assert.equal((await usageIntake()).status,401,'USAGE-001 archived ingestion credentials cannot authorize restored intake')
  assert.equal((await call('/usage')).credentials.length,0,'No archived ingestion credentials restore');
+ assert.deepEqual(await call('/privacy/requests'),privacyRequestsBefore,'Verified request records survive real archive restoration');
  assert.deepEqual(await call('/privacy/receipts'),privacyReceiptsBefore,'ERASE-002 opaque receipts restore exactly without exported customer contents');
  assert.ok(restored.some(e=>e.action==='customer.exported'&&e.subject===privacyErased.receipt.subject));
  assert.ok(restored.some(e=>e.action==='customer.erased'&&e.subject===privacyErased.receipt.subject));

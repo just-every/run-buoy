@@ -1,3 +1,4 @@
+import {replayKey,replayIdentities} from '../privacy/replay'
 import {recalculateScorecards} from '../scorecards'
 import { MAPPED_JOIN, ATTRIBUTED } from './mappings'
 import { Hono } from 'hono'
@@ -32,7 +33,8 @@ usageIngest.post('/api/buoy/usage/intake/:sourceId',async(c,next)=>{
  const stamp=now(),events=parseEvents(await jsonBody(request),authentication.kind,stamp),scope=JSON.parse(authentication.scope) as string[]
  insist(events.every(event=>scope.includes(event.type)),'Credential does not permit this event type.',403)
  const serialized=JSON.stringify(events)
- const identityHashes=JSON.stringify(await Promise.all([...new Set(events.map(e=>e.userId).filter((v):v is string=>!!v))].map(digest)))
+ const replay=await replayKey(env.DB)
+ const identityHashes=JSON.stringify((await Promise.all([...new Set(events.map(e=>e.userId).filter((v):v is string=>!!v))].map(user=>replayIdentities(replay.key,sourceId,user)))).flat())
  // Credential authority and the insert share one write transaction. No cache
  // can keep a revoked credential alive while a batch is waiting to commit.
  const results=await env.DB.batch([
@@ -44,7 +46,7 @@ usageIngest.post('/api/buoy/usage/intake/:sourceId',async(c,next)=>{
   stmt(env.DB,`INSERT OR IGNORE INTO buoy_audit_subjects(account_id,subject) SELECT account_id,lower(hex(randomblob(16))) FROM (SELECT DISTINCT m.account_id FROM buoy_usage_events e ${MAPPED_JOIN} WHERE ${ATTRIBUTED} AND e.source_id=? AND e.id IN (SELECT json_extract(value,'$.id') FROM json_each(?)))`,sourceId,serialized),
   stmt(env.DB,`INSERT INTO buoy_audit(id,actor,action,subject,detail,occurred_at) SELECT lower(hex(randomblob(16))),?,'account.usage-refreshed',s.subject,'',? FROM buoy_audit_subjects s WHERE s.account_id IN (SELECT DISTINCT m.account_id FROM buoy_usage_events e ${MAPPED_JOIN} WHERE ${ATTRIBUTED} AND e.source_id=? AND e.id IN (SELECT json_extract(value,'$.id') FROM json_each(?)))`,'usage-source:'+sourceId,stamp,sourceId,serialized),
   stmt(env.DB,'UPDATE buoy_usage_credentials SET last_used_at=? WHERE id=?',stamp,authentication.id),
-  stmt(env.DB,'DELETE FROM buoy_assertions')
+  replay.guard(),stmt(env.DB,'DELETE FROM buoy_assertions')
  ])
  await recalculateScorecards(env.DB)
  const accepted=results[2].meta.changes

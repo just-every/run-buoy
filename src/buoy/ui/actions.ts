@@ -1,3 +1,4 @@
+import type {PrivacyPreview,PrivacyReceipt} from './privacy';
 import type {WorkspaceListPreview,WorkspaceBulkPreview} from './workspace';
 import type {RenewalPreview} from './renewals';
 import {surveyForm} from './surveys';
@@ -34,7 +35,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { workspaceListPreview?:WorkspaceListPreview; workspaceBulkPreview?:WorkspaceBulkPreview; renewalFieldPreview?:RenewalPreview; privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { privacyPreview?:PrivacyPreview; workspaceListPreview?:WorkspaceListPreview; workspaceBulkPreview?:WorkspaceBulkPreview; renewalFieldPreview?:RenewalPreview; privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -111,15 +112,21 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     else throw new ApiError('This adoption action is not available.');
     return {redirect:path,message:'Adoption configuration saved.',saved:action==='adoption-consumer'?(fields.consumerId?'adoption-consumer-form-'+fields.consumerId:'adoption-consumer-new'):action};
   }
-  if(path==='/app/customer-people'&&['privacy-holders','privacy-export','privacy-erase'].includes(action)){
+  if(path==='/app/customer-people'&&['privacy-holders','privacy-export','privacy-erase','privacy-preview','privacy-hold'].includes(action)){
     const base='/api/buoy/customer-people/'+encodeURIComponent(fields.personId)+'/privacy/';
     if(action==='privacy-holders'){
       let holders:unknown;try{holders=JSON.parse(fields.holders)}catch{throw new ApiError('Enter a valid JSON array of external holders.')}
       await send(base+'holders',{revision:fields.revision,holders},'PUT');
       return {redirect:path+'?person='+encodeURIComponent(fields.personId),message:'External holders recorded.'};
     }
-    const result=await send(base+(action==='privacy-export'?'export':'erase'),{revision:fields.revision,confirmation:fields.confirmation});
-    return action==='privacy-export'?{privacyExport:result}:{redirect:path+'#privacy-receipts',message:'Customer erased. Review the privacy receipt.'};
+    if(action==='privacy-hold'){
+      await send(base+'hold',{revision:fields.revision,confirmation:fields.confirmation,operation:fields.operation,reason:fields.reason});
+      return {redirect:path+'?person='+encodeURIComponent(fields.personId),message:'Customer hold '+(fields.operation==='release'?'released':'set')+'.'};
+    }
+    const emails=(fields.emails??'').split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+    if(action==='privacy-preview')return {privacyPreview:await send<PrivacyPreview>(base+'preview',{revision:fields.revision,emails})};
+    const result=await send<{receipt:PrivacyReceipt}>(base+(action==='privacy-export'?'export':'erase'),{revision:fields.revision,confirmation:fields.confirmation,request:{verificationMethod:fields.verificationMethod,receivedDate:fields.receivedDate,requesterReference:fields.requesterReference},...(action==='privacy-erase'?{emails,fingerprint:fields.fingerprint,redactions:Object.keys(fields).filter(k=>k.startsWith('redact:')&&fields[k]==='on').map(k=>k.slice(7))}:{})});
+    return action==='privacy-export'?{privacyExport:result}:{redirect:path+'#privacy-receipts',message:result.receipt.outcome==='held'?'Customer retained under hold. Review the receipt.':'Customer erased. Review the privacy receipt.'};
   }
   if(path==='/app/customer-people')return mutateCustomerPeople(api,request,fields);
   if(path==='/app/usage')return mutateUsage(api,request,fields);

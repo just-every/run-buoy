@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import {randomUUID} from 'node:crypto'
 
 export async function eraseJourney({call,json,request,cookie,member,signIn,account,dispatch,origin}){
  const base='synthetic-buoy-260',ids=[base,base+'-other']
@@ -22,7 +23,7 @@ export async function eraseJourney({call,json,request,cookie,member,signIn,accou
  for(const [index,kind] of ['contact','user'].entries()){
   const name='synthetic-buoy-'+(265+index),target=await json(await call('/customer-people','POST',{kind,name,accountIds:ids,source:'Reviewed directory'}),201)
   await json(await call('/customer-people/'+target.id+'/fields','PUT',{revision:(await person(target.id)).revision,values:{privacy_units:7},source:'Customer-confirmed units'}))
-  const userId='synthetic-buoy-'+(270+index),events=['one','unreviewed'].map((groupId,i)=>({type:'event',event:'Privacy product use',messageId:'synthetic-buoy-'+(280+index*10+i),userId,groupId,properties:{customerName:name}}))
+  const userId='synthetic-buoy-'+(270+index),events=['one','unreviewed'].map((groupId,i)=>({type:'event',event:'Privacy product use',messageId:'synthetic-buoy-'+(280+index*10+i),userId,groupId,properties:{customerName:name,email:'synthetic-buoy-'+index+'@example.test',note:'Contact '+name+' now',longer:name+'son'}}))
   await json(await intake(events),202)
   await json(await intake([{...events[0],userId:'synthetic-buoy-299',messageId:'synthetic-buoy-'+(300+index)}]),202)
   const mapping={sourceId:source.id,userId,groupId:'one',accountId:base,personId:target.id}
@@ -37,9 +38,9 @@ export async function eraseJourney({call,json,request,cookie,member,signIn,accou
   await json(await call('/scorecards/publish','POST',{revision:card.revision,config:{name:'Privacy survey health',measures:[{key:'nps',name:'Received NPS',field:'survey.nps',min:-100,max:100,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}}),201)
   const beforeCards=await json(await call('/scorecards')),oldHistory=[],unrelatedHistory=[]
   for(const h of beforeCards.history.filter(h=>h.accountId===base)){const retained=await json(await call('/scorecards/preview','POST',{historyId:h.id}));(retained.accounts[0].inputs.sourcePersonIds.includes(target.id)?oldHistory:unrelatedHistory).push(h.id)}
-  let current=await person(target.id),url='/customer-people/'+target.id+'/privacy/',body={confirmation:name,revision:current.revision}
+  let current=await person(target.id),url='/customer-people/'+target.id+'/privacy/',body={confirmation:name,revision:current.revision,request:{verificationMethod:'verified-offline',receivedDate:new Date().toISOString().slice(0,10),requesterReference:randomUUID()}}
   for(const options of [{cookie:undefined},{cookie:member},{cookie:admin},{cookie:undefined,token:agent.token},{headers:{origin:'https://foreign.invalid'}}]){
-   for(const action of ['export','erase'])assert.equal((await call(url+action,'POST',body,options)).status,options.cookie===undefined&&!options.token&&!options.headers?401:403)
+   for(const action of ['export','erase','preview','hold'])assert.equal((await call(url+action,'POST',body,options)).status,options.cookie===undefined&&!options.token&&!options.headers?401:403)
   }
   assert.equal((await call(url+'erase','POST',{...body,confirmation:'wrong'})).status,400)
   assert.equal((await call(url+'export','POST',{...body,revision:'stale'})).status,409)
@@ -49,6 +50,9 @@ export async function eraseJourney({call,json,request,cookie,member,signIn,accou
   assert.equal((await call(url+'erase','POST',body)).status,409,'Holder change invalidates old confirmation revision')
   current=await person(target.id);body.revision=current.revision
   assert.equal((await json(await call(url.slice(0,-1)))).holders.length,2)
+  assert.equal((await call(url+'export','POST',{...body,request:undefined})).status,400,'Name confirmation alone is not requester verification')
+  assert.equal((await call(url+'export','POST',{...body,request:{...body.request,requesterReference:name}})).status,400,'The request reference cannot contain customer narrative')
+  assert.equal((await call(url+'export','POST',{...body,request:{...body.request,receivedDate:'2999-01-01'}})).status,400)
   const exported=await json(await call(url+'export','POST',body))
   assert.equal(exported.format,'buoy-customer-export/v1');assert.equal(exported.records.person[0].name,name)
   assert.equal(exported.records.memberships.length,2);assert.equal(exported.records.usageEvents.length,3)
@@ -56,7 +60,39 @@ export async function eraseJourney({call,json,request,cookie,member,signIn,accou
   assert.equal(exported.records.licenses.length,1);assert.ok(exported.records.licenseHistory.length)
   assert.ok(exported.records.fieldHistory.length);assert.equal(exported.records.declaredHolders.length,1)
   assert.deepEqual(await person(target.id),current,'Export retains the current customer record')
-  const erased=await json(await call(url+'erase','POST',body))
+  const emails=['synthetic-buoy-'+index+'@example.test']
+  const previewBody=()=>({revision:body.revision,emails})
+  let discovery=await json(await call(url+'preview','POST',previewBody()))
+  assert.equal(discovery.matches.length,3,'Name, email and exact phrase in the surviving event are previewed; longer words are untouched')
+  assert.ok(discovery.matches.some(m=>m.before===name&&m.after==='[redacted]'))
+  assert.ok(discovery.matches.some(m=>m.before===emails[0]))
+  assert.ok((await json(await call('/usage/events?sourceId='+source.id))).events.some(e=>JSON.stringify(e).includes(name)),'Preview changes nothing')
+  assert.equal((await call(url+'erase','POST',{...body,emails,fingerprint:'stale',redactions:[]})).status,409)
+  assert.equal((await call(url+'erase','POST',{...body,emails,fingerprint:discovery.fingerprint,redactions:['invented']})).status,400)
+  if(index===0){
+   const hold={revision:body.revision,confirmation:name,operation:'set',reason:'legal-obligation'}
+   assert.equal((await call(url+'hold','POST',hold,{cookie:admin})).status,403)
+   await json(await call(url+'hold','POST',hold))
+   body.revision=(await person(target.id)).revision
+   const heldDiscovery=await json(await call(url+'preview','POST',previewBody()))
+   assert.equal(heldDiscovery.held,true)
+   const held=await json(await call(url+'erase','POST',{...body,emails,fingerprint:heldDiscovery.fingerprint,redactions:[]}))
+   assert.equal(held.receipt.outcome,'held');assert.equal(held.receipt.retained.person,1)
+   assert.equal(held.receipt.retained.usageEvents,3);assert.ok(await person(target.id))
+   assert.equal((await call('/accounts/'+base,'DELETE',{confirmation:base})).status,409,'Other deletion doors cannot discard held records')
+   const heldExport=await json(await call(url+'export','POST',body));assert.equal(JSON.parse(heldExport.records.hold[0].snapshot).person[0].name,name)
+   assert.equal((await call(url+'hold','POST',{...hold,revision:body.revision,operation:'release'},{cookie:admin})).status,403)
+   await json(await call(url+'hold','POST',{...hold,revision:body.revision,operation:'release',reason:'review-completed'}))
+   body.revision=(await person(target.id)).revision
+   assert.equal((await call(url+'erase','POST',{...body,emails,fingerprint:heldDiscovery.fingerprint,redactions:[]})).status,409,'Hold release invalidates the old review')
+   discovery=await json(await call(url+'preview','POST',previewBody()))
+  }
+  const erased=await json(await call(url+'erase','POST',{...body,emails,fingerprint:discovery.fingerprint,redactions:discovery.matches.filter(m=>!m.held).map(m=>m.id)}))
+  assert.equal(erased.receipt.redacted,3);assert.equal(erased.receipt.unreviewedMatches,0)
+  const requests=(await json(await call('/privacy/requests'))).requests
+  assert.deepEqual(requests.find(r=>r.id===erased.receipt.id),{id:erased.receipt.id,subject:erased.receipt.subject,...body.request})
+  assert.equal((await call('/privacy/requests','GET',undefined,{cookie:admin})).status,403)
+  assert.ok(!JSON.stringify(erased.receipt).includes(body.request.requesterReference),'Verification reference is separate from the minimal receipt')
   assert.equal(erased.receipt.subject,exported.receipt.subject)
   for(const system of ['Salesforce','Zendesk'])assert.ok(erased.receipt.externalHolders.includes(system))
   assert.equal((await call(url+'erase','POST',body)).status,404)
@@ -66,6 +102,8 @@ export async function eraseJourney({call,json,request,cookie,member,signIn,accou
   const survey=(await json(await call('/surveys'))).accounts.find(a=>a.accountId===base)
   assert.equal(survey.nps,100);assert.equal(survey.npsResponses,1)
   const eventsAfter=await json(await call('/usage/events?sourceId='+source.id))
+  const survivor=eventsAfter.events.find(e=>e.userId==='synthetic-buoy-299'&&e.messageId==='synthetic-buoy-'+(300+index))
+  assert.ok(survivor);assert.ok(JSON.stringify(survivor).includes('[redacted]'));assert.ok(!JSON.stringify(survivor).includes(emails[0]));assert.ok(JSON.stringify(survivor).includes(name+'son'),'Longer word remains unchanged')
   assert.ok(!eventsAfter.events.some(e=>e.userId===userId));assert.ok(eventsAfter.events.some(e=>e.userId==='synthetic-buoy-299'))
   assert.equal((await intake([{...events[0],groupId:'new-group',messageId:'synthetic-buoy-'+(340+index)}])).status,409,'Erased source/user cannot return as another group')
   assert.equal((await inappCall('deliver',{userId,groupId:'one'})).status,409)

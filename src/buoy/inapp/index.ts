@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { runtimeBindings, type Bindings } from '../../auth.server'
 import { jsonBody } from '../access'
 import { Problem, insist, guard, stmt, type Actor } from '../core'
-import {digest} from '../usage/model'
+import {replayKey,replayIdentities} from '../privacy/replay'
 import { credentialFor, identity, mapping, mappingGuard, only } from './model'
 import { deliveries } from './delivery'
 import { receipt } from './receipts'
@@ -24,10 +24,10 @@ for(const action of ['deliver','receipts'] as const)inappIngest.post('/api/buoy/
  const credential=await credentialFor(env.DB,sourceId,authorization),input=await jsonBody(request)
  only(input,action==='deliver'?['userId','groupId']:['userId','groupId','campaignId','deliveryId','kind','messageId'])
  const {userId,groupId}=identity(input)
- const identityHash=await digest(userId)
- const erased=await stmt(env.DB,'SELECT 1 FROM buoy_erased_usage_identities WHERE source_id=? AND identity_hash=?',sourceId,identityHash).first()
+ const replay=await replayKey(env.DB),identityHash=JSON.stringify(await replayIdentities(replay.key,sourceId,userId))
+ const erased=await stmt(env.DB,'SELECT 1 FROM buoy_erased_usage_identities WHERE source_id=? AND identity_hash IN(SELECT value FROM json_each(?))',sourceId,identityHash).first()
  insist(!erased,'This source identity was erased; no intake or delivery is allowed.',409)
- const erasureGuard=guard(env.DB,'NOT EXISTS(SELECT 1 FROM buoy_erased_usage_identities WHERE source_id=? AND identity_hash=?)',sourceId,identityHash)
+ const erasureGuard=guard(env.DB,'NOT EXISTS(SELECT 1 FROM buoy_erased_usage_identities WHERE source_id=? AND identity_hash IN(SELECT value FROM json_each(?)))',sourceId,identityHash)
  const m=await mapping(env.DB,sourceId,userId,groupId),fence=mappingGuard(env.DB,sourceId,userId,groupId,m)
  if(action==='deliver')return c.json(await deliveries(env.DB,sourceId,m,credential.guard,fence,credential.id,erasureGuard))
  return c.json(await receipt(env.DB,sourceId,userId,groupId,m,input,credential.guard,fence,credential.id,erasureGuard),202)

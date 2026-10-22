@@ -2,7 +2,7 @@ import type {accountActivity} from '../activity';
 import {hierarchyPage,type HierarchyPage} from './hierarchy';
 import {workspacePage,type WorkspacePage,type CsmHome,type WorkspaceListPreview,type WorkspaceBulkPreview} from './workspace';
 import {renewalsPage,type RenewalPage,type RenewalPreview} from './renewals';
-import {privacyControls,privacyReceipts,type PrivacyReceipt} from './privacy';
+import {privacyControls,privacyReceipts,type PrivacyReceipt,type PrivacyPreview,type PrivacyHold} from './privacy';
 import {surveyPage,surveyPersonTimeline,type SurveyPage} from './surveys';
 import {revenuePage,type RevenuePage} from './revenue';
 import {scorecardsPage,type ScorecardPage,type ScorecardPreview} from './scorecards';
@@ -58,6 +58,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   let usageCredential:UsageCredential|undefined;
   let inappCredential:InappCredential|undefined;
   let fieldPreview:unknown,scorecardPreview:ScorecardPreview|undefined;
+  let privacyPreview:PrivacyPreview|undefined;
   let customerFieldPreview:CustomerFieldPreview|undefined,usageMappingPreview:MappingPreview|undefined;
   let agentCredential:AgentCredential|undefined;
   let fields: Fields | undefined, error: string | undefined, teamPreview: TeamPreview | undefined, status = 200;
@@ -73,7 +74,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
       renewalFieldPreview=result.renewalFieldPreview;
       teamPreview = result.teamPreview;
       fieldPreview=result.fieldPreview;scorecardPreview=result.scorecardPreview;
-      customerFieldPreview=result.customerFieldPreview;usageMappingPreview=result.usageMappingPreview;
+      privacyPreview=result.privacyPreview;customerFieldPreview=result.customerFieldPreview;usageMappingPreview=result.usageMappingPreview;
       usageCredential=result.usageCredential;inappCredential=result.inappCredential;
       agentCredential=result.agentCredential;
       if (result.redirect) {
@@ -104,7 +105,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     const personId=url.searchParams.get('person')??fields?.personId??(await apiCall<CustomerPeoplePage>(api,request,'/api/buoy/customer-people')).records[0]?.id;
     if(state.operator.role==='owner'){
       const data=await apiCall<CustomerPeoplePage>(api,request,'/api/buoy/customer-people'),person=data.records.find(p=>p.id===personId);
-      if(person){const privacy=await apiCall<{holders:unknown[]}>(api,request,'/api/buoy/customer-people/'+encodeURIComponent(person.id)+'/privacy');body+=privacyControls(person,privacy.holders,fields);}
+      if(person){const privacy=await apiCall<{holders:unknown[];hold:PrivacyHold|null}>(api,request,'/api/buoy/customer-people/'+encodeURIComponent(person.id)+'/privacy');body+=privacyControls(person,privacy.holders,fields,privacyPreview,privacy.hold);}
       body+=privacyReceipts((await apiCall<{receipts:PrivacyReceipt[]}>(api,request,'/api/buoy/privacy/receipts')).receipts);
     }
     if(personId)body+=surveyPersonTimeline(await apiCall<SurveyPage>(api,request,'/api/buoy/surveys'),personId);
