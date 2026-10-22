@@ -59,7 +59,10 @@
     "test:records-browser": "node tests/record-browser.mjs",
     "test:privacy-renewal-browser": "node tests/record-browser.mjs privacy-renewals",
     "test:workspace-browser": "node tests/record-browser.mjs workspace",
-    "test:hierarchy-browser": "node tests/record-browser.mjs hierarchy"
+    "test:hierarchy-browser": "node tests/record-browser.mjs hierarchy",
+    "test:roles": "node --test --test-concurrency=1 --test-name-pattern=\"^ROLE-001\" tests/flows.test.mjs",
+    "test:roles-browser": "node tests/roles-browser.mjs",
+    "test:billing": "node tests/billing-journey.mjs --browser"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.41",

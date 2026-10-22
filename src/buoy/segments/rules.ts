@@ -3,7 +3,7 @@ import {REVENUE_FIELDS} from '../revenue/model'
 import { insist, object, text } from '../core'
 export const TIERS = ['high-touch', 'scaled', 'digital']
 export const STAGES = ['onboarding', 'adoption', 'expansion', 'renewal', 'churned']
-export const FIELDS: Record<string, 'text' | 'number'> = {...SURVEY_FIELDS,...REVENUE_FIELDS,
+export const FIELDS: Record<string, 'text' | 'number'> = {'stripe.arrMinor':'number','stripe.mrrMinor':'number','stripe.currency':'text','stripe.failedPayments':'number','stripe.overdueInvoices':'number','stripe.freshness':'text',...SURVEY_FIELDS,...REVENUE_FIELDS,
  'hierarchy.parentId':'text','hierarchy.kind':'text','hierarchy.childCount':'number','hierarchy.descendantCount':'number','hierarchy.userCount':'number','hierarchy.arrMinor':'number','hierarchy.currency':'text','hierarchy.arrByCurrency':'text','hierarchy.healthBand':'text','hierarchy.healthScore':'number','staff.accountExecutiveId':'text','staff.executiveSponsorId':'text','staff.supportOwnerId':'text',
  id:'text',name:'text',renewalDate:'text',noticeDays:'number',renewalEvidence:'text',revision:'text',createdAt:'text',ownerId:'text',territory:'text',tier:'text',stage:'text',
  'billing.observedAt':'text','billing.reference':'text','billing.currency':'text','billing.totalMinor':'number','billing.creditsMinor':'number','billing.allocatedMinor':'number','billing.dueDate':'text','billing.balanceMinor':'number',
@@ -41,7 +41,7 @@ export function segmentInput(input:Record<string,unknown>,accountIds:Set<string>
  })
  for(const c of conditions)if(c.field==='hierarchy.arrMinor'&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='hierarchy.currency'&&other.op==='eq'),'A hierarchy ARR comparison needs its exact currency.')
  for(const c of conditions)if(c.field==='records.renewal.expectedArrMinor'&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='records.renewal.currency'&&other.op==='eq'),'A renewal ARR comparison needs its exact currency.')
- for(const c of conditions)if(['revenue.arrMinor','revenue.mrrMinor'].includes(c.field)&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field==='revenue.currency'&&other.op==='eq'),'A recurring revenue comparison needs an all-rule with its exact currency.')
+ for(const c of conditions)if(['revenue.arrMinor','revenue.mrrMinor','stripe.arrMinor','stripe.mrrMinor'].includes(c.field)&&c.op!=='is-missing')insist(rules.match==='all'&&conditions.some(other=>other.field===(c.field.startsWith('stripe.')?'stripe.currency':'revenue.currency')&&other.op==='eq'),'A recurring revenue comparison needs an all-rule with its exact currency.')
  for(const c of conditions)if((c.field.startsWith('custom.')||c.field.startsWith('records.renewal.custom.')||/^people\.(contact|user)\.custom\./.test(c.field))&&c.field.endsWith('.amountMinor')&&c.op!=='is-missing'){
   const currency=c.field.replace(/\.amountMinor$/,'.currency')
   insist(rules.match==='all'&&conditions.some(other=>other.field===currency&&other.op==='eq'),'A custom money comparison needs an all-rule with its exact currency.')

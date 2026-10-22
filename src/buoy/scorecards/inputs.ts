@@ -1,3 +1,4 @@
+import {STRIPE_FIELDS,stripeFreshness} from '../billing-evidence'
 import {descendantIds} from '../fields/model'
 import {usesPortfolio,usesHierarchy,usesHierarchyPeople} from './custody'
 import {customFields,relatedInputs,scalar} from './related'
@@ -27,7 +28,7 @@ export async function inputImage(db:D1Database,at:Date){
  const related=await relatedInputs(db,image.people)
  const surveys=parseSurveyImage(JSON.stringify(image.surveys),on)
  const revenues=parseRevenueImage(JSON.stringify(image.revenue),on)
- const fields:ScorecardField[]=[
+ const fields:ScorecardField[]=[...STRIPE_FIELDS,
   ...['arrMinor','mrrMinor','seats'].map(key=>({key:`revenue.${key}`,name:`Confirmed recurring ${key}`,kind:'billing' as const,unit:key==='seats'?'purchased units':'native currency minor units'})),
   ...['totalMinor','creditsMinor','allocatedMinor','balanceMinor'].map(key=>({key:`billing.${key}`,name:`Recorded billing ${key} (minor currency units)`,kind:'billing' as const,unit:'minor currency units'})),
   ...['openTickets','urgentTickets'].map(key=>({key:`support.${key}`,name:`Recorded support ${key}`,kind:'support' as const,unit:'tickets'})),
@@ -51,6 +52,9 @@ export async function inputImage(db:D1Database,at:Date){
    }else if(field.key.startsWith('revenue.')){
     const row=revenues.find(r=>r.accountId===account.account.id)!,revenue=row.revenue
     evidence=[{kind:'recurring-contract',label:'Person-confirmed recurring contract',freshness:revenue.freshness,observedAt:revenue.confirmedOn,reference:revenue.reference,details:{sourceKind:revenue.sourceKind,currency:revenue.currency,status:revenue.status,versionId:row.versionId,contractRevision:row.contractRevision,recordedBy:row.recordedBy,recordedAt:row.recordedAt,contract:row.contract}}]
+   }else if(field.key.startsWith('stripe.')){
+    const row=image.stripeBilling?.find(r=>r.accountId===account.account.id),fresh=row?stripeFreshness(row,on):'missing'
+    evidence=[{kind:'billing',label:'Stripe test billing',freshness:fresh==='current'?'current':fresh==='missing'?'missing':'stale',observedAt:row?.observedAt??null,reference:row?.reference??null,details:{sourceSystem:'stripe-test',snapshotId:row?.snapshotId??null,staleAfterDays:row?.staleDays??30,currency:account.values['stripe.currency'],sourceFreshness:fresh,document:row?.document??null}}]
    }else if(field.kind==='billing'||field.kind==='support'){
     const kind=field.kind,record=account.account[kind],coverage=account.assessment.evidence.find(e=>e.kind===kind)!
     evidence=[{kind,label:`Manual ${kind} snapshot`,freshness:!record?'missing':coverage.stale?'stale':'current',observedAt:record?.observedAt??null,reference:record?.reference??null,details:{sourceSystem:'manual',staleAfterDays:coverage.staleAfterDays,...(kind==='billing'?{currency:account.account.billing?.currency??null}:{})}}]

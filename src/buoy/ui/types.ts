@@ -5,6 +5,7 @@ export interface Billing {
 }
 export interface Support { observedAt: string; reference: string; openTickets: number; urgentTickets: number }
 export interface Account {
+  stripeBilling?:import('../billing-evidence').StripeEvidence|null;
   id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string;
   billing: Billing | null; support: Support | null; revision: string; noticeDate: string; ownerId: string | null;
   tier:string|null;stage:string|null;segments:{id:string;name:string;enteredAt:string}[];
@@ -13,7 +14,7 @@ export interface Account {
   /** Today's band, then each later day before renewal on which today's evidence projects a new band. */
   outlook: { from: string; status: 'at-risk' | 'healthy' | 'unknown' | 'watch' }[];
 }
-export interface Evidence { kind: 'billing' | 'support'; sourceSystem: 'manual' | null; staleAfterDays: number; missing: boolean; stale: boolean }
+export interface Evidence { kind: 'billing' | 'support'; sourceSystem: 'manual' | 'stripe-test' | null; staleAfterDays: number; missing: boolean; stale: boolean }
 export interface Sentiment { rating: 'red' | 'amber' | 'green'; reason: string; by: string; recordedAt: string; expiresOn: string; expired: boolean }
 export interface Proposal {
   id: string; accountId: string; kind: 'playbook' | 'renewal';

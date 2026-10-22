@@ -1,3 +1,4 @@
+import {stripeEvidence} from './billing-evidence'
 import {currentScores,recalculateScorecards} from './scorecards'
 import {consumerMeasurements} from './adoption/consumers'
 import { insist, text, stmt, commit, id, now, type Actor } from './core'
@@ -18,7 +19,7 @@ export async function latestSentiment(db: D1Database, accountId: string) {
  return await stmt(db, `${LATEST} AND s.account_id=?`, accountId).first<Sentiment>() ?? null
 }
 export async function accountHealth(db: D1Database, current: Account, on = today()) {
- return health(current, on, await latestSentiment(db, current.id), await staleness(db), (await consumerMeasurements(db,on)).get(current.id)??[],(await currentScores(db)).get(current.id))
+ return health(current, on, await latestSentiment(db, current.id), await staleness(db), (await consumerMeasurements(db,on)).get(current.id)??[],(await currentScores(db)).get(current.id),(await stripeEvidence(db)).find(r=>r.accountId===current.id))
 }
 export async function recordSentiment(db: D1Database, actor: Actor, accountId: string, input: Record<string, unknown>) {
  insist(actor.kind === 'person', 'Sentiment is a person’s judgment. Agents cannot record it.', 403)

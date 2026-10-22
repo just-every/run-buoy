@@ -1,3 +1,4 @@
+import {roleConfigurationJourney,roleReadJourney,roleScopeJourney,roleIsolationJourney} from './roles-journey.mjs'
 import {reportingJourney} from './reporting-journey.mjs'
 import {playJourney,playTriggerJourney,playIntakeJourney,playFieldJourney,playChildJourney,playCalendarJourney} from './play-journey.mjs'
 import {hierarchyJourney} from './hierarchy-journey.mjs'
@@ -521,7 +522,8 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    // Full usage-volume, team and multi-step playbook journeys use isolated installations.
    // Keep the central write-door inventory and denied ordinary-member boundary here.
-   for(const [method,path]of [['POST','/playbooks'],['POST','/playbooks/synthetic-buoy-1790/enroll'],['POST','/playbook-runs/synthetic-buoy-1791/action'],['POST','/playbooks/synthetic-buoy-1790/credentials'],['DELETE','/playbooks/synthetic-buoy-1790/credentials/synthetic-buoy-1792'],['POST','/playbooks/intake/synthetic-buoy-1790'],['POST','/usage/intake/synthetic-buoy-1502'],['POST','/usage/sources'],['PUT','/usage/sources/synthetic-buoy-1500'],['POST','/usage/sources/synthetic-buoy-1500/credentials'],['DELETE','/usage/credentials/synthetic-buoy-1501'],['POST','/usage/mappings/preview'],['POST','/usage/mappings'],['PUT','/team/settings'],['POST','/team/preview'],['POST','/team/apply']])assert.equal((await call(path,method,{}, {cookie:member})).status,403)
+   for(const [method,path]of [['POST','/roles/definitions'],['PUT','/roles/assignments'],['DELETE','/roles/assignments/synthetic-buoy-2190'],['POST','/billing/synthetic-buoy-2190/bindings/preview'],['POST','/billing/synthetic-buoy-2190/bindings'],['DELETE','/billing/bindings/synthetic-buoy-2190'],['PUT','/billing/synthetic-buoy-2190/settings'],['PUT','/billing/synthetic-buoy-2190/webhook-secret'],['POST','/billing/synthetic-buoy-2190/sync'],['POST','/playbooks'],['POST','/playbooks/synthetic-buoy-1790/enroll'],['POST','/playbook-runs/synthetic-buoy-1791/action'],['POST','/playbooks/synthetic-buoy-1790/credentials'],['DELETE','/playbooks/synthetic-buoy-1790/credentials/synthetic-buoy-1792'],['POST','/playbooks/intake/synthetic-buoy-1790'],['POST','/usage/intake/synthetic-buoy-1502'],['POST','/usage/sources'],['PUT','/usage/sources/synthetic-buoy-1500'],['POST','/usage/sources/synthetic-buoy-1500/credentials'],['DELETE','/usage/credentials/synthetic-buoy-1501'],['POST','/usage/mappings/preview'],['POST','/usage/mappings'],['PUT','/team/settings'],['POST','/team/preview'],['POST','/team/apply']])assert.equal((await call(path,method,{}, {cookie:member})).status,403)
+   assert.equal((await call('/billing/synthetic-buoy-2190/webhook','POST',{})).status,404,'The public signed delivery door refuses an unknown connector')
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))
    for(const route of routes){
@@ -589,3 +591,8 @@ test('PLAY-001 reviewed field changes commit once before downstream branching',p
 test('PLAY-001 child playbook starts are pinned and recorded once',playChildJourney)
 
 test('PLAY-001 task offsets follow the installation calendar',playCalendarJourney)
+
+test('ROLE-001 configuration, native isolation and audited grants',roleConfigurationJourney)
+test('ROLE-001 default and custom account reads',roleReadJourney)
+test('ROLE-001 live book, manager, segment and identity withdrawal',roleScopeJourney)
+test('ROLE-001 commercial, search and unported door isolation',roleIsolationJourney)

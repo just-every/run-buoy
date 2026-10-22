@@ -1,3 +1,4 @@
+import {roleNotification} from './roles'
 import type { Bindings } from '../auth.server'
 import { operatorMail } from '../mail.server.mjs'
 import { stmt, id, now, usDay, type Actor } from './core'
@@ -40,15 +41,20 @@ async function mail(env: Bindings, sender: ReturnType<typeof operatorMail>, deli
  const recipient = await stmt(env.DB, "SELECT email FROM oa_operators WHERE id=? AND status='active'", personId).first<{email: string}>()
  if (!recipient) return 'no-recipient'
  const title = task.title.replace(/\s+/g, ' '), link = `${env.AUTH_ORIGIN}/app/accounts/${encodeURIComponent(task.accountId)}#tasks`
- const subject = kind === 'due-today' ? `Due today: ${title}` : kind === 'due-soon' ? `Due ${usDay(task.dueDate)}: ${title}` : `Escalated, overdue since ${usDay(task.dueDate)}: ${title}`
+ let subject = kind === 'due-today' ? `Due today: ${title}` : kind === 'due-soon' ? `Due ${usDay(task.dueDate)}: ${title}` : `Escalated, overdue since ${usDay(task.dueDate)}: ${title}`
  const lead = kind === 'escalated' ? `${task.ownerName ?? 'A team member'}'s task for ${task.accountName} was due ${usDay(task.dueDate)} and is still open, so it is escalated to you as their manager.` : `Your task for ${task.accountName} is due ${usDay(task.dueDate)}.`
- const html = `<p>${escape(lead)}</p><p><strong>${escape(title)}</strong></p><p><a href="${escape(link)}">Open it in Buoy</a></p>`
+ let html = `<p>${escape(lead)}</p><p><strong>${escape(title)}</strong></p><p><a href="${escape(link)}">Open it in Buoy</a></p>`
+ let content=`${lead}\n\n${title}\n\nOpen it in Buoy: ${link}\n`
+ const projection=await roleNotification(env.DB,personId,task.accountId,subject,content,env.AUTH_ORIGIN)
+ if(!projection.allowed)return 'scope-refused'
+ subject=projection.subject;content=projection.content
+ if(projection.restricted)html='<p>'+escape(content).replaceAll('\n','<br>')+'</p>'
  try {
-  const result = await sender.send({deliveryId, from: env.MAIL_FROM, to: [recipient.email], subject: subject.slice(0, 900), text: `${lead}\n\n${title}\n\nOpen it in Buoy: ${link}\n`, html, headers: {'Auto-Submitted': 'auto-generated'}})
+  const result = await sender.send({deliveryId, from: env.MAIL_FROM, to: [recipient.email], subject: subject.slice(0, 900), text: content, html, headers: {'Auto-Submitted': 'auto-generated'}})
   return result.status === 'accepted' || result.status === 'development' || result.status === 'uncertain' ? result.status : 'failed'
  } catch { return 'failed' }
 }
-const LABELS: Record<string, string> = {pending: 'Email not yet attempted', accepted: 'Email accepted by the mail provider', failed: 'Email refused by the mail provider', uncertain: 'Email outcome unknown: the mail provider did not confirm acceptance', development: 'Email not sent: development mail on this computer', 'no-provider': 'Email not sent: no mail provider is set up', 'no-recipient': 'Email not sent: the person is no longer active'}
+const LABELS: Record<string, string> = {'scope-refused':'Email not sent: outside current record scope',pending: 'Email not yet attempted', accepted: 'Email accepted by the mail provider', failed: 'Email refused by the mail provider', uncertain: 'Email outcome unknown: the mail provider did not confirm acceptance', development: 'Email not sent: development mail on this computer', 'no-provider': 'Email not sent: no mail provider is set up', 'no-recipient': 'Email not sent: the person is no longer active'}
 /** The signed-in person's own reminders and escalations, newest first. */
 export async function notifications(db: D1Database, actor: Actor) {
  if (actor.kind !== 'person') return []

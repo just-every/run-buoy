@@ -1,3 +1,4 @@
+import {roleNotification} from './roles'
 import {recordAdoptionAlerts} from './adoption/consumers-alerts'
 import type { Bindings } from '../auth.server'
 import { operatorMail } from '../mail.server.mjs'
@@ -6,10 +7,11 @@ import { localTime, taskTiming } from './settings'
 import { preferences, recordHealthAlerts, type NoticeType } from './notify'
 import { escape } from './ui/html'
 
-export const emailLabel = (status: string) => ({dismissed:'Email cancelled: alert dismissed', pending:'Email waiting', reserved:'Email outcome unconfirmed; will not resend automatically', accepted:'Email accepted by the mail provider', failed:'Email refused by the mail provider', uncertain:'Email outcome unconfirmed; will not resend automatically', development:'Email not sent: development mailer', 'no-provider':'Email not sent: no mail provider', 'no-recipient':'Email not sent: person inactive', digest:'Email included in digest', none:'Email disabled', queued:'Email waiting for digest'}[status] ?? status)
-async function send(env: Bindings, deliveryId: string, personId: string, subject: string, content: string) {
+export const emailLabel = (status: string) => ({'scope-refused':'Email not sent: outside current record scope',dismissed:'Email cancelled: alert dismissed', pending:'Email waiting', reserved:'Email outcome unconfirmed; will not resend automatically', accepted:'Email accepted by the mail provider', failed:'Email refused by the mail provider', uncertain:'Email outcome unconfirmed; will not resend automatically', development:'Email not sent: development mailer', 'no-provider':'Email not sent: no mail provider', 'no-recipient':'Email not sent: person inactive', digest:'Email included in digest', none:'Email disabled', queued:'Email waiting for digest'}[status] ?? status)
+async function send(env: Bindings, deliveryId: string, personId: string, subject: string, content: string, accountId?:string) {
  const recipient = await stmt(env.DB, "SELECT email FROM oa_operators WHERE id=? AND status='active'", personId).first<{email:string}>()
  if (!recipient) return 'no-recipient'
+ if(accountId){const projection=await roleNotification(env.DB,personId,accountId,subject,content,env.AUTH_ORIGIN);if(!projection.allowed)return 'scope-refused';subject=projection.subject;content=projection.content}
  const sender = operatorMail(env)
  if (!sender || !env.MAIL_FROM) return 'no-provider'
  try {
@@ -24,7 +26,7 @@ export async function flushNotifications(env: Bindings) {
   const mode = (await preferences(env.DB, row.personId)).modes[row.type]
   const claimed = await stmt(env.DB, "UPDATE buoy_inbox SET email=? WHERE id=? AND email='pending'", mode === 'immediate' ? 'reserved' : mode === 'digest' ? 'queued' : 'none', row.id).run()
   if (claimed.meta.changes !== 1 || mode !== 'immediate') continue
-  const status = await send(env, row.id, row.personId, `Buoy: ${row.title}`, `${row.title}\n${row.accountName}\n${row.body}\n${env.AUTH_ORIGIN}/app/accounts/${encodeURIComponent(row.accountId)}\n`)
+  const status = await send(env, row.id, row.personId, `Buoy: ${row.title}`, `${row.title}\n${row.accountName}\n${row.body}\n${env.AUTH_ORIGIN}/app/accounts/${encodeURIComponent(row.accountId)}\n`,row.accountId)
   await stmt(env.DB, 'UPDATE buoy_inbox SET email=? WHERE id=?', status, row.id).run()
  }
 }
@@ -32,7 +34,7 @@ export async function runDigests(env: Bindings, at = new Date()) {
  const db = env.DB, {date, hour} = localTime((await taskTiming(db)).timeZone, at)
  if (hour < 8) return
  const monday = new Date(date+'T00:00:00Z').getUTCDay() === 1
- const people = (await db.prepare("SELECT p.person_id AS personId FROM buoy_notification_preferences p JOIN oa_operators o ON o.id=p.person_id AND o.status='active' WHERE p.frequency<>'off'").all<{personId:string}>()).results
+ const people = (await db.prepare("SELECT p.person_id AS personId FROM buoy_notification_preferences p JOIN oa_operators o ON o.id=p.person_id AND o.status='active' WHERE p.frequency<>'off' AND (o.role IN ('owner','admin') OR NOT EXISTS(SELECT 1 FROM buoy_role_assignments a WHERE a.person_id=o.id))").all<{personId:string}>()).results
  for (const {personId} of people) {
   const p = await preferences(db, personId)
   if (p.frequency === 'off' || (p.frequency === 'weekly' && !monday)) continue

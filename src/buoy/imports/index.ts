@@ -52,6 +52,10 @@ export async function erase(db: D1Database, operator: Operator, id: string) {
     sql("INSERT INTO buoy_audit(id,actor,action,subject,detail,occurred_at) SELECT ?,?,'account.erased',subject,'',? FROM buoy_audit_subjects WHERE account_id=?", randomUUID(), `person:${operator.id}`, recordedAt, id),
     sql("UPDATE buoy_audit SET subject=(SELECT subject FROM buoy_audit_subjects WHERE account_id=?),detail='Agent request refused; subject erased.' WHERE action='agent.refused' AND (subject=? OR substr(subject,instr(subject,' ')+1)=? OR substr(subject,instr(subject,' ')+1,?)=?)", id, `account ${id}`, `/api/buoy/accounts/${encodeURIComponent(id)}`, `/api/buoy/accounts/${encodeURIComponent(id)}/`.length, `/api/buoy/accounts/${encodeURIComponent(id)}/`),
     sql("UPDATE buoy_segments SET document=json_set(document,'$.accountIds',json((SELECT json_group_array(value) FROM json_each(document,'$.accountIds') WHERE value<>?))) WHERE EXISTS(SELECT 1 FROM json_each(document,'$.accountIds') WHERE value=?)",id,id),
+    sql("UPDATE buoy_billing_runs SET customer_id=NULL,cursor_before=NULL,cursor_after=NULL WHERE (connection_id,customer_id) IN (SELECT connection_id,customer_id FROM buoy_billing_bindings WHERE account_id=?)",id),
+    sql("DELETE FROM buoy_billing_webhook_events WHERE (connection_id,customer_id) IN (SELECT connection_id,customer_id FROM buoy_billing_bindings WHERE account_id=?)",id),
+    sql("UPDATE buoy_billing_settings SET cursor=NULL,version=version+1,lease_until=0 WHERE connection_id IN (SELECT connection_id FROM buoy_billing_bindings WHERE account_id=?)",id),
+    sql("UPDATE buoy_role_assignments SET document=json_set(document,'$.sharedAccountIds',json((SELECT json_group_array(value) FROM json_each(document,'$.sharedAccountIds') WHERE value<>?))),revision=lower(hex(randomblob(16))) WHERE EXISTS(SELECT 1 FROM json_each(document,'$.sharedAccountIds') WHERE value=?)",id,id),
     sql('DELETE FROM buoy_accounts WHERE id=?', id),
   ], context(db, operator), checkpoint)
   return { id: result.receiptId, state: 'erased' as const, erasedRecords: result.recordsErased, recordedAt: result.recordedAt }

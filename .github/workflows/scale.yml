@@ -1,0 +1,56 @@
+name: Scale
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Full 40-character commit SHA to measure (outside push Verify)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scale-${{ inputs.sha }}
+  cancel-in-progress: false
+
+jobs:
+  scale:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      CI: 'true'
+      WRANGLER_SEND_METRICS: 'false'
+      SCALE_SHA: ${{ inputs.sha }}
+    steps:
+      - name: Require an exact commit
+        shell: bash
+        run: '[[ "$SCALE_SHA" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
+      - name: Check the requested checkout
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$SCALE_SHA"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.20.0'
+          package-manager-cache: false
+      - run: npm install --global pnpm@10.12.4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Full-volume public-door journey
+        shell: bash
+        run: |
+          set -o pipefail
+          node tests/scale-journey.mjs 2>&1 | tee "$RUNNER_TEMP/buoy-scale.log"
+      - name: Keep scale timing and failure output
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: scale-${{ inputs.sha }}
+          path: ${{ runner.temp }}/buoy-scale.log
+          if-no-files-found: ignore
+          retention-days: 14

@@ -3,10 +3,11 @@ import { fontHead } from '../../base/font-head';
 import branding from '../../branding.json';
 import { escape } from './html';
 import { browserScript } from './browser';
-import { canManage, type State } from './types';
+import { type State } from './types';
+import type {ProjectedState} from '../roles';
 
 export interface ShellPage {
-  title: string; body: string; state: State | null; current: string;
+  title: string; body: string; state: State | ProjectedState | null; current: string;
   /** The heading row's left side; defaults to the title as the page's h1. */
   head?: string;
   /** Generated placement rules (the runway's), hashed into the CSP like the script. */
@@ -29,7 +30,8 @@ export async function shell(page: ShellPage): Promise<Response> {
   }
   scriptHash ??= sha(browserScript);
   const styleHash = style ? ` 'sha256-${await sha(style)}'` : '';
-  const chips = [...views.filter(([href]) => href !== '/app/imports' || state?.operator.role === 'owner'), ...(state && canManage(state) ? [['/app/usage','Usage'] as const, ['/app/team', 'Team'] as const, ['/app/audit', 'Audit'] as const] : [])].map(([href, label]) => `<a href="${href}"${current === href ? ' aria-current="page"' : ''}>${label}</a>`).join('');
+  const scoped=state&&'roleAccess' in state;
+  const chips = [...views.filter(([href]) => scoped?['/app','/app/search'].includes(href):href !== '/app/imports' || state?.operator.role === 'owner'), ...(state && ['owner','admin'].includes(state.operator.role) ? [['/app/usage','Usage'] as const, ['/app/team', 'Team'] as const, ['/app/audit', 'Audit'] as const, ['/app/roles','Roles'] as const, ['/app/billing','Billing'] as const] : [])].map(([href, label]) => `<a href="${href}"${current === href ? ' aria-current="page"' : ''}>${label}</a>`).join('');
   const who = state ? `${state.operator.displayName} · ${state.operator.role}` : '';
   const initials = state ? state.operator.displayName.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0].toUpperCase()).join('') : '';
   const operator = state ? `<p class="operator" title="${escape(who)}"><span class="operator-initials" aria-hidden="true">${escape(initials)}</span><span class="sr-only">Signed in as ${escape(who)}</span></p>` : '';

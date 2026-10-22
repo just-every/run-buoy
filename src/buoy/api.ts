@@ -1,3 +1,6 @@
+import {refreshBillingConsumers} from './billing-consumers'
+import {billingApi,billingIngest} from './billing'
+import {roleAccess,projectState,scopedSearch,rolesState,saveRole,assignRole,clearAssignment} from './roles'
 import {retentionReport} from './revenue/retention'
 import {fxState,publishRates} from './revenue/fx'
 import {playIngest} from './play/intake'
@@ -47,6 +50,8 @@ import { beginRequest, checkRequest, finishRequest, refuseRequest } from './agen
 import { agentState, setAgentSettings } from './agent-policy/owner'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
+buoyApi.use('/api/buoy/billing/:id/webhook',async(c,next)=>{await next();if(c.res.ok)await refreshBillingConsumers(c.env)})
+buoyApi.route('/',billingIngest)
 buoyApi.route('/',playIngest)
 buoyApi.route('/',usageIngest)
 buoyApi.route('/',inappIngest)
@@ -70,6 +75,12 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
   } catch (error) { status = error instanceof Problem ? error.status : 500; throw error }
   finally { await finishRequest(c.env.DB, actor, status) }
   return
+ }
+ const profile=await roleAccess(c.env.DB,actor)
+ if(profile.restricted){
+  if(c.req.method==='GET'&&c.req.path==='/api/buoy/state')return c.json(await projectState(c.env.DB,actor,await state(c.env.DB,actor),profile))
+  if(c.req.method==='GET'&&c.req.path==='/api/buoy/search')return c.json(await scopedSearch(c.env.DB,actor,new URL(c.req.url).searchParams,profile))
+  throw new Problem(403,'This door is not available to assigned profiles yet. Scoped account reads and search remain available.')
  }
  await generateRenewals(c.env.DB)
  await refreshPeople(c.env.DB,actor)
@@ -100,6 +111,11 @@ buoyApi.route('/',playApi)
 buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
+buoyApi.route('/',billingApi)
+buoyApi.get('/api/buoy/roles',async c=>c.json(await rolesState(c.env.DB,c.get('actor'))))
+buoyApi.post('/api/buoy/roles/definitions',async c=>c.json(await saveRole(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+buoyApi.put('/api/buoy/roles/assignments',async c=>c.json(await assignRole(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
+buoyApi.delete('/api/buoy/roles/assignments/:id',async c=>c.json(await clearAssignment(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
 buoyApi.get('/api/buoy/surveys',async c=>c.json(await surveyState(c.env.DB,c.get('actor'))))
 buoyApi.post('/api/buoy/surveys/responses',async c=>c.json(await recordResponse(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.get('/api/buoy/revenue',async c=>c.json(await revenueState(c.env.DB,c.get('actor'),c.req.query('on'))))

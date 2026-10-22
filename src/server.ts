@@ -1,3 +1,4 @@
+import {reconcileBilling} from './buoy/billing'
 import {runPlaybooks} from './buoy/play/engine'
 import {generateRenewals} from './buoy/renewals'
 import {recalculateScorecards} from './buoy/scorecards'
@@ -59,6 +60,7 @@ export default withDemo({
   async scheduled(controller, env) {
     const at = new Date(controller.scheduledTime)
     await scheduledConnections(runtimeBindings(env))
+    await reconcileBilling(runtimeBindings(env))
     await generateRenewals(env.DB,at)
     await recalculateScorecards(env.DB,at)
     await scheduledSegments(env.DB, at)

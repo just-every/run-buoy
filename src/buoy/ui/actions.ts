@@ -1,3 +1,4 @@
+import type {BindingPreview} from '../billing';
 import type {PrivacyPreview,PrivacyReceipt} from './privacy';
 import type {WorkspaceListPreview,WorkspaceBulkPreview} from './workspace';
 import type {RenewalPreview} from './renewals';
@@ -35,7 +36,7 @@ export async function apiCall<T>(api: Api, original: Request, path: string, meth
   return data as T;
 }
 
-export interface MutationResult { privacyPreview?:PrivacyPreview; workspaceListPreview?:WorkspaceListPreview; workspaceBulkPreview?:WorkspaceBulkPreview; renewalFieldPreview?:RenewalPreview; privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
+export interface MutationResult { billingPreview?:BindingPreview; privacyPreview?:PrivacyPreview; workspaceListPreview?:WorkspaceListPreview; workspaceBulkPreview?:WorkspaceBulkPreview; renewalFieldPreview?:RenewalPreview; privacyExport?:unknown; scorecardPreview?:ScorecardPreview; inappCredential?:InappCredential; customerFieldPreview?:CustomerFieldPreview; usageMappingPreview?:MappingPreview; usageCredential?:UsageCredential; fieldPreview?:unknown; agentCredential?:AgentCredential; redirect?: string; message?: string; saved?: string; teamPreview?: TeamPreview }
 export async function mutate(api: Api, request: Request, path: string, fields: Fields, accountId?: string): Promise<MutationResult> {
   // Browser form posts must carry their real same-origin Origin. The API also
   // authenticates and authorizes every forwarded write independently.
@@ -43,6 +44,8 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(path==='/app/billing')return (await import('./billing-actions')).mutateBilling(api,request,fields);
+  if(path==='/app/roles')return (await import('./role-actions')).mutateRoles(api,request,fields);
   if(path==='/app/revenue'&&action==='rates'){let rates:unknown;try{rates=JSON.parse(fields.rates)}catch{throw new ApiError('Enter valid JSON for the rate periods.')}await send('/api/buoy/revenue/rates',{revision:fields.revision||null,table:{name:fields.name,mode:fields.mode,rates}});return {redirect:path+'#rate-table-panel',message:'Reporting rates published.',saved:'rate-table-editor'}}
   if(accountId&&action==='play-publish'){
     let config:unknown;try{config=JSON.parse(fields.config)}catch{throw new ApiError('Enter valid JSON for the playbook configuration.')}
