@@ -1,6 +1,7 @@
+import {d1} from './commands.mjs'
 import assert from 'node:assert/strict'
 import {fileRecords} from '@runeditrun/rer/modules/portability/files'
-import {cp,mkdir,readdir,stat,statfs,symlink} from 'node:fs/promises'
+import {cp,mkdir,statfs,symlink} from 'node:fs/promises'
 import {join,relative} from 'node:path'
 
 const excluded=new Set(['node_modules','.git','.wrangler','.rer','.seed','.cache','.tanstack','exports','test-results','logs'])
@@ -14,16 +15,13 @@ export async function copyInstallation(root,parent,name){
  return target
 }
 export async function databaseBytes(root){
- const walk=async directory=>{
-  let bytes=0
-  for(const entry of await readdir(directory,{withFileTypes:true})){
-   const path=join(directory,entry.name)
-   if(entry.isDirectory())bytes+=await walk(path)
-   else if(entry.name.endsWith('.sqlite')||entry.name.endsWith('.sqlite-wal'))bytes+=(await stat(path)).size
-  }
-  return bytes
- }
- return walk(join(root,'.wrangler/state'))
+ // D1's own metadata reports logical database size. Counting SQLite WAL files
+ // would project transient checkpoint traffic as retained service capacity.
+ const result=await d1(root,['--command','SELECT 1 AS capacity_probe','--json'],{json:true})
+ assert.ok(Array.isArray(result)&&result.length===1&&result[0].success,'D1 capacity probe completed')
+ const bytes=result[0].meta?.size_after
+ assert.ok(Number.isSafeInteger(bytes)&&bytes>0,'D1 reports a positive logical database size')
+ return bytes
 }
 export async function requireSpace(path,bytes){
  const fs=await statfs(path),available=fs.bavail*fs.bsize
