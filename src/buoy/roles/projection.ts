@@ -1,3 +1,4 @@
+import {mayEditScopedAccount} from './account-edit'
 import {guard,insist,stmt,type Actor} from '../core'
 import {minorUnitDigits} from '../currencies'
 import {revenueInputs} from '../revenue/snapshot'
@@ -10,7 +11,7 @@ function arrBand(amount:number|null,currency:string|null){
 }
 export interface ProjectedAccount {
  id:string;name:string;revision:string;renewalDate:string;ownerId:string|null;
- health:{status:string};commercialAccess:'full'|'band'|'none';
+ health:{status:string};canEdit:boolean;commercialAccess:'full'|'band'|'none';
  arrBand?:{currency:string|null;label:string};commercial?:{currency:string|null;arrMinor:number|null;mrrMinor:number|null}
 }
 export interface ProjectedState {
@@ -31,12 +32,12 @@ export async function projectState(db:D1Database,actor:Actor,raw:{accounts:unkno
   const source=image.value.accounts.find(account=>account.id===accountId)!
   insist(source.revision===row.revision,'Account evidence changed. Reload before reading.',409)
   const mode=commercialFor(access,actor,source.ownerId),health=row.health as {status?:unknown}|undefined
-  const result:ProjectedAccount={id:accountId,name:String(row.name),revision:String(row.revision),renewalDate:String(row.renewalDate),ownerId:source.ownerId,health:{status:['at-risk','unknown','watch','healthy'].includes(String(health?.status))?String(health!.status):'unknown'},commercialAccess:mode}
+  const result:ProjectedAccount={id:accountId,name:String(row.name),revision:String(row.revision),renewalDate:String(row.renewalDate),ownerId:source.ownerId,health:{status:['at-risk','unknown','watch','healthy'].includes(String(health?.status))?String(health!.status):'unknown'},commercialAccess:mode,canEdit:mayEditScopedAccount(image.value,actor,access,accountId)}
   const values=revenue.accounts.find(account=>account.accountId===accountId)?.revenue
   if(mode==='band')result.arrBand=arrBand(values?.arrMinor??null,values?.currency??null)
   if(mode==='full')result.commercial={currency:values?.currency??null,arrMinor:values?.arrMinor??null,mrrMinor:values?.mrrMinor??null}
   return [result]
  })
  await db.batch([roleFence(db,actor,access),scopeFence(db,image),guard(db,`(${revenue.sql})=?`,revenue.raw),stmt(db,'DELETE FROM buoy_assertions')])
- return {operator:{id:actor.id,displayName:actor.displayName,role:access.roleId},roleAccess:{restricted:true,roleId:access.roleId,name:access.name,revision:access.revision,scope:access.scope,roleScope:access.roleScope,commercial:access.commercial,roleCommercial:access.roleCommercial,permissions:access.permissions,grants:access.grants},accounts,people:[],notifications:[],proposals:[],tasks:[],decisions:[],interpretation:'Scoped current account reads only. Health exposes its band; underlying explanations, fields and linked records are not available to this profile yet. ARR is contracted recurring revenue in native currency; no invoice total or currency conversion is substituted.'}
+ return {operator:{id:actor.id,displayName:actor.displayName,role:access.roleId},roleAccess:{restricted:true,roleId:access.roleId,name:access.name,revision:access.revision,scope:access.scope,roleScope:access.roleScope,commercial:access.commercial,roleCommercial:access.roleCommercial,permissions:access.permissions,grants:access.grants},accounts,people:[],notifications:[],proposals:[],tasks:[],decisions:[],interpretation:'Scoped current account reads, permitted account-detail edits and home. Health exposes its band; underlying explanations, fields and linked records are not available to this profile yet. ARR is contracted recurring revenue in native currency; no invoice total or currency conversion is substituted.'}
 }

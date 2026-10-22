@@ -7,7 +7,7 @@ import {projectState,type ProjectedAccount} from './projection'
 
 export interface ScopedWorkspaceHome {
  person:{id:string;displayName:string};people:{id:string;displayName:string}[];
- on:string;readOnly:true;book:ProjectedAccount[];
+ on:string;readOnly:true;book:Omit<ProjectedAccount,'canEdit'>[];
  tasks:{id:string;accountId:string;accountName:string;dueDate:string;priority:string;type:string;title:string}[];
  alerts:{id:string;accountId:string;accountName:string;createdAt:string;title:string}[];
  renewals:{accountId:string;name:string;renewalDate:string;opportunities:{id:string}[]}[];
@@ -33,7 +33,7 @@ export async function scopedWorkspaceHome(db:D1Database,actor:Actor,target=actor
  // An empty all-scope book is a valid empty home. A scope that excludes the
  // target's entire nonempty book is refused without exposing its person/name.
  insist(targetId===actor.id||bookIds.length>0||(owned.length===0&&access.scope.kind==='all'&&access.roleScope.kind==='all'&&access.permissions.read==='all'),'This home is outside your current record scope.',403)
- const projected=await projectState(db,actor,await state(db,actor),access),selected=new Set(bookIds),book=projected.accounts.filter(account=>selected.has(account.id)).sort((a,b)=>a.id.localeCompare(b.id))
+ const projected=await projectState(db,actor,await state(db,actor),access),selected=new Set(bookIds),book=projected.accounts.filter(account=>selected.has(account.id)).map(({canEdit,...account})=>account).sort((a,b)=>a.id.localeCompare(b.id))
  const timingRow=await db.prepare("SELECT value FROM buoy_settings WHERE key='tasks'").first<{value:string}>(),timing=await taskTiming(db),on=localTime(timing.timeZone).date,end=new Date(Date.parse(on)+90*86400000).toISOString().slice(0,10),stamp=now(),ids=JSON.stringify(bookIds)
  const rows=await db.batch<Record<string,unknown>>([
   roleFence(db,actor,access),scopeFence(db,image),

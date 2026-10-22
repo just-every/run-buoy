@@ -1,3 +1,5 @@
+import {editScopedAccount} from './roles/account-edit'
+import {refreshAccountConsumers} from './account-consumers'
 import {scopedWorkspaceHome} from './roles/workspace'
 import {refreshBillingConsumers} from './billing-consumers'
 import {billingApi,billingIngest} from './billing'
@@ -79,6 +81,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  }
  const profile=await roleAccess(c.env.DB,actor)
  if(profile.restricted){
+  if(c.req.method==='PATCH'&&/^\/api\/buoy\/accounts\/[^/]+$/.test(c.req.path))return next()
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/state')return c.json(await projectState(c.env.DB,actor,await state(c.env.DB,actor),profile))
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/workspace/home')return c.json(await scopedWorkspaceHome(c.env.DB,actor,c.req.query('person'),profile))
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/search')return c.json(await scopedSearch(c.env.DB,actor,new URL(c.req.url).searchParams,profile))
@@ -91,8 +94,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  await reconcile(c.env.DB, actor)
  await observeOutcomes(c.env.DB,actor)
  await next()
- if(c.req.method!=='GET'&&c.res.status<400){await generateRenewals(c.env.DB);await refreshRenewalFields(c.env.DB,actor);await refreshPeople(c.env.DB,actor);await refreshFields(c.env.DB,actor);if(!c.req.path.endsWith('/scorecards/preview'))await recalculateScorecards(c.env.DB);await reconcile(c.env.DB,actor);await observeOutcomes(c.env.DB,actor)}
- if (c.req.method !== 'GET' && c.res.status < 400) {await runPlaybooks(c.env.DB);await alertFailures(c.env.DB);await recordAdoptionAlerts(c.env.DB);await flushNotifications(c.env)}
+ if(c.req.method!=='GET'&&c.res.status<400)await refreshAccountConsumers(c.env,actor)
 })
 buoyApi.onError((error, c) => {
  if (error instanceof Problem) return c.json({error: error.message}, error.status as 400)
@@ -114,6 +116,7 @@ buoyApi.route('/',usageAdmin)
 buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
 buoyApi.route('/',billingApi)
+buoyApi.patch('/api/buoy/accounts/:id',async c=>{const actor=c.get('actor'),saved=await editScopedAccount(c.env.DB,actor,c.req.param('id'),await jsonBody(c.req.raw));await refreshAccountConsumers(c.env,actor);return c.json({id:saved.id,revision:(await account(c.env.DB,saved.id)).revision})})
 buoyApi.get('/api/buoy/roles',async c=>c.json(await rolesState(c.env.DB,c.get('actor'))))
 buoyApi.post('/api/buoy/roles/definitions',async c=>c.json(await saveRole(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.put('/api/buoy/roles/assignments',async c=>c.json(await assignRole(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
