@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
 import {chromium} from '@playwright/test'
-import {scan,submit,failures} from './a11y-checks.mjs'
+import {scan,submit,focused,failures} from './a11y-checks.mjs'
 import {billingFixtureKey,billingWebhookSecret} from './billing-fixture.mjs'
 export async function billingBrowser(app,{connectionId,accountId,otherAccountId,unmappedAccountId,source}){
  const evidence=process.env.EVIDENCE_DIR??process.env.BUOY_PROOF_DIR;if(evidence)await mkdir(evidence,{recursive:true})
@@ -20,7 +20,7 @@ export async function billingBrowser(app,{connectionId,accountId,otherAccountId,
    assert.equal(await page.getByRole('heading',{name:'Stripe billing',exact:true,level:2}).count(),1)
    assert.ok((await page.locator('#billing-evidence').innerText()).includes('Monthly Stripe customer'))
    assert.ok((await page.locator('#billing-evidence').innerText()).includes('Annual Stripe customer'))
-   await proof('observations','#billing-evidence');await submit(page,page.locator('#billing-changes').getByRole('button',{name:'Details: Before and after subscription plans',exact:true}).first());const change=page.getByRole('dialog');assert.match(await change.innerText(),/before|after/);await proof('changes','dialog[open]');await submit(page,change.getByRole('button',{name:'Close details',exact:true}))
+   await proof('observations','#billing-evidence');const details=page.locator('#billing-changes [data-open]').first();await focused(page,details,'Subscription change details keyboard focus');await page.keyboard.press('Enter');const change=page.locator('dialog[open]');assert.equal(await change.count(),1);assert.match(await change.innerText(),/before|after/);await proof('changes','dialog[open]');await page.keyboard.press('Escape');assert.equal(await change.count(),0);assert.ok(await details.evaluate(e=>e===document.activeElement))
    const before=(await api('/billing')).bindings.length
    await show('billing-bind-panel-'+connectionId)
    let form=page.locator('#billing-bind-preview--'+connectionId)

@@ -109,7 +109,7 @@ try{
  personState=await call('/customer-people'); // Include the intended account revision from the new seat observation.
  // CONNECT-001: provider credential ciphertext is excluded; source metadata survives.
  const connection=await call('/connections','POST',{name:'Portable Stripe source',key:billingFixtureKey});
- const billingIds=await seedBillingPortability(call,running.request,running.cookie,stripe,connection.id,running.signIn);
+ const billingIds=await seedBillingPortability(call,running.request,running.cookie,stripe,connection.id,async email=>{const response=await running.request('/auth/one-click?'+new URLSearchParams({as:email,returnTo:'/app'}));assert.equal(response.status,303,'Local archive fixture accepts its invited native identity through the real local sign-in door')});
  const surveyBeforeRecord=await call('/surveys/responses','POST',{accountId,personId:usagePerson.id,surveyName:'Portable relationship review',kind:'nps',value:9,observedAt:new Date(Date.now()-1000).toISOString(),reference:'Received customer survey export',sourceResponseId:'synthetic-buoy-portable-survey',accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision});
  const contractBefore=await call('/accounts/'+accountId+'/contract','POST',{revision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,contract:{currency:'USD',contractStart:'2026-01-01',contractEnd:'2027-12-31',lines:[{product:'Portable recurring workspace',quantity:20,amountMinor:6000000,frequency:'annual',entitlements:'20 reporting workspace seats'}],source:{reference:'Confirmed portable customer contract',confirmedOn:new Date().toISOString().slice(0,10)}}});
  const recordIds=await seedRecordPortability(call,fixture.accounts[0],usagePerson.id);
