@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict'
+import {pathToFileURL} from 'node:url'
+export const ratesFixture=()=>({name:'Reviewed corporate fiscal rates',mode:'corporate',rates:['EUR','GBP','CAD'].flatMap((currency,i)=>[{currency,from:'2025-04-01',to:'2026-03-31',usdPerUnit:['1.10','1.30','0.75'][i],source:'Owner-approved FY2025 budget'},{currency,from:'2026-04-01',to:'2027-03-31',usdPerUnit:['1.20','1.40','0.80'][i],source:'Owner-approved FY2026 budget'}])})
+export async function seedReporting(api){
+ const ids=Array.from({length:6},(_,i)=>'synthetic-buoy-'+(1800+i)),currencies=['USD','EUR','GBP','CAD','USD','USD'],amounts=[10000,15000,8000,0,5000,1000],today=new Date().toISOString().slice(0,10)
+ const save=async(id,currency,amountMinor,confirmedOn,reference)=>api('/accounts/'+id+'/contract','POST',{revision:(await api('/state')).accounts.find(a=>a.id===id).revision,contract:{currency,contractStart:'2025-01-01',contractEnd:'2027-12-31',lines:amountMinor?[{id:'synthetic-buoy-line',product:'Reporting workspace',quantity:1,amountMinor,frequency:'annual',entitlements:'One workspace'}]:[],source:{reference,confirmedOn}}})
+ for(const [i,id] of ids.entries()){
+  await api('/accounts','POST',{id,name:'Reporting customer '+i,renewalDate:'2027-12-31',noticeDays:30,renewalEvidence:'Customer-confirmed notice clause',billing:null,support:null})
+  if(i===5)await save(id,'USD',10000,'2025-12-31','synthetic-buoy-prior-activity')
+  if(i!==4)await save(id,currencies[i],i===5?0:10000,'2026-03-31','synthetic-buoy-start-'+i)
+  await save(id,currencies[i],amounts[i],'2026-06-30','synthetic-buoy-end-'+i)
+ }
+ const segment=await api('/segments','POST',{name:'Synthetic reporting cohort',mode:'static',accountIds:ids,rules:{match:'all',conditions:[]},tier:null,stage:null,playbook:null})
+ const rates=await api('/revenue/rates');await api('/revenue/rates','POST',{revision:rates.table.revision,table:ratesFixture()})
+ return {ids,segmentId:segment.id,save,today}
+}
+export async function reportingJourney({api,request,member}){
+ const fixture=await seedReporting(api),{ids,segmentId,save}=fixture,query='?period=quarter&end=2026-06-30&segmentId='+segmentId,report=()=>api('/revenue/retention'+query),before=await report()
+ assert.equal(before.count,6);assert.equal(before.cohortCount,4);assert.equal(before.reconciliation,'unavailable-person-confirmed-sources-only')
+ const usd=before.usd;assert.equal(usd.startMinor,41500);assert.equal(usd.endCohortMinor,36900);assert.equal(usd.expansionMinor,5500);assert.equal(usd.contractionMinor,2600);assert.equal(usd.churnMinor,7500);assert.equal(usd.fxMinor,2300);assert.equal(usd.newMinor,5000);assert.equal(usd.reactivationMinor,1000);assert.deepEqual(usd.nrr,{numeratorMinor:36900,denominatorMinor:41500});assert.deepEqual(usd.grr,{numeratorMinor:31400,denominatorMinor:41500});assert.deepEqual(usd.logoRetention,{retained:3,starting:4})
+ assert.deepEqual(before.native.map(n=>[n.currency,n.startMinor,n.endCohortMinor]),[['CAD',10000,0],['EUR',10000,15000],['GBP',10000,8000],['USD',10000,10000]])
+ assert.deepEqual(before.rows.map(r=>r.movement),['unchanged','expansion','contraction','churn','new','reactivation'])
+ for(const r of before.rows){assert.ok(r.endSource.id);assert.match(r.endSource.contract.source.reference,/synthetic-buoy-end/);assert.equal((await request(r.href)).status,200)}
+ assert.equal((await api('/segments/'+segmentId+'/report')).count,before.count,'Current segment count and report drilldown agree')
+ const monthly=await api('/revenue/retention?period=month&end=2026-06-30&segmentId='+segmentId);assert.equal(monthly.window.start,'2026-06-01');assert.deepEqual(monthly.usd.nrr,{numeratorMinor:39200,denominatorMinor:44000});assert.equal(monthly.usd.fxMinor,0,'No FX change inside this fiscal rate period')
+ const ttm=await api('/revenue/retention?period=ttm&end=2026-06-30&segmentId='+segmentId);assert.equal(ttm.window.start,'2025-07-01');assert.equal(ttm.usd.nrr,null,'A missing positive starting cohort never becomes zero percent')
+ for(const extra of ['&plan=absent','&cohort=2024-01','&ownerId=absent','&tier=absent'])assert.equal((await api('/revenue/retention'+query+extra)).count,0)
+ if(member){assert.equal((await request('/api/buoy/revenue/rates',{cookie:member})).status,403);assert.equal((await request('/api/buoy/revenue/rates',{cookie:member,method:'POST',body:{}})).status,403);assert.equal((await request('/api/buoy/revenue/retention'+query,{cookie:member})).status,200)}
+ const usdSegment=await api('/segments','POST',{name:'USD-cent recurring predicate',mode:'dynamic',accountIds:[],rules:{match:'all',conditions:[{field:'name',op:'contains',value:'Reporting customer'},{field:'revenue.usdArrMinor',op:'gte',value:18500}]},tier:null,stage:null,playbook:null});assert.equal((await api('/segments/'+usdSegment.id+'/report')).count,0)
+ await api('/accounts/'+ids[0]+'/sentiment','POST',{rating:'red',reason:'Reviewed financial source change',days:30});const pending=await api('/proposals','POST',{accountId:ids[0],kind:'playbook',payload:{title:'Review changed financial source',dueDate:'2027-01-01'}})
+ const current=await api('/revenue/rates'),changed=ratesFixture();changed.rates.find(r=>r.currency==='EUR'&&r.from==='2026-04-01').usdPerUnit='1.25'
+ const nativeBefore=(await api('/revenue?on=2026-06-30')).versions
+ const edited=await api('/revenue/rates','POST',{revision:current.table.revision,table:changed}),after=await report();assert.equal(after.usd.endCohortMinor,36900);assert.equal(after.usd.fxMinor,3050);assert.equal(after.rows.find(r=>r.currency==='EUR').usdEndMinor,18750);assert.deepEqual((await api('/segments/'+usdSegment.id+'/report')).accounts.map(a=>a.accountId),[ids[1]],'USD-cent segment inputs recalculate after a rate publish');assert.equal((await request('/api/buoy/proposals/'+pending.id+'/approve',{method:'POST',body:{}})).status,409,'Rate edits invalidate previously prepared account approval');assert.deepEqual((await api('/revenue?on=2026-06-30')).versions,nativeBefore,'Rate edits preserve every native contract and history')
+ assert.ok((await api('/audit?action=revenue.rates-published')).entries.some(e=>e.subject==='rate-table:'+edited.revision));assert.equal((await api('/revenue/rates')).history.length,current.history.length+1)
+ assert.equal((await request('/api/buoy/revenue/rates',{method:'POST',body:{revision:current.table.revision,table:changed}})).status,409)
+ for(const invalid of [{...changed,rates:[{...changed.rates[0],usdPerUnit:'0'}]},{...changed,rates:[changed.rates[0],changed.rates[0]]},{...changed,rates:[{...changed.rates[0],usdPerUnit:1.1}]},{...changed,rates:[{...changed.rates[0],usdPerUnit:'1e2'}]},{...changed,rates:[{...changed.rates[0],currency:'ZZZ'}]},{...changed,rates:[{...changed.rates[0],currency:'USD'}]},{...changed,mode:'daily'}])assert.equal((await request('/api/buoy/revenue/rates',{method:'POST',body:{revision:edited.revision,table:invalid}})).status,400)
+ const unmatched='synthetic-buoy-1806';await api('/accounts','POST',{id:unmatched,name:'Unmatched invoice source',renewalDate:'2027-12-31',noticeDays:30,renewalEvidence:'Reviewed terms',billing:{observedAt:fixture.today,reference:'synthetic-buoy-unmatched-invoice',currency:'USD',totalMinor:12345,creditsMinor:0,allocatedMinor:0,dueDate:fixture.today},support:null})
+ const unmatchedReport=await api('/revenue/retention?period=quarter&end=2026-06-30');assert.ok(unmatchedReport.exceptions.some(e=>e.accountId===unmatched&&e.reason.includes('invoice snapshots cannot supply ARR')));assert.ok(!unmatchedReport.rows.some(r=>r.accountId===unmatched));await api('/accounts/'+unmatched,'DELETE',{confirmation:'Unmatched invoice source'})
+ await save(ids[1],'GBP',15000,'2026-06-30','synthetic-buoy-changed-currency');const changedCurrency=await report();assert.equal(changedCurrency.usd.available,false);assert.equal(changedCurrency.usd.nrr,null);assert.ok(changedCurrency.exceptions.some(e=>e.accountId===ids[1]&&e.reason.includes('Native currency changed')))
+ await save(ids[1],'EUR',15000,'2026-06-30','synthetic-buoy-corrected-currency')
+ // Daily exact-decimal conversion covers ISO exponents and half-up, not floating-point approximations.
+ const daily={name:'Recorded ECB daily reference',mode:'daily',rates:[['JPY','1.005'],['EUR','1.5'],['KWD','5']].map(([currency,usdPerUnit])=>({currency,usdPerUnit,from:'2026-06-30',to:'2026-06-30',source:'European Central Bank reference rates'}))}
+ await api('/revenue/rates','POST',{revision:edited.revision,table:daily})
+ for(const [currency,expected]of [['JPY',101],['EUR',2],['KWD',1]]){await save(ids[4],currency,1,'2026-06-30','synthetic-buoy-exact-'+currency);const revenue=(await api('/revenue?on=2026-06-30')).accounts.find(a=>a.accountId===ids[4]).revenue;assert.equal(revenue.arrMinor,1);assert.equal(revenue.reporting.arrMinor,expected);assert.equal(revenue.reporting.mrrMinor,currency==='JPY'?8:0,'USD MRR converts the exact native annual amount divided by twelve')}
+ const missing=await report();assert.equal(missing.usd.available,false);assert.equal(missing.usd.nrr,null);assert.ok(missing.exceptions.some(e=>e.reason.includes('Missing')))
+ for(const invalid of ['period=year','period=quarter&end=2026-05-31','end=2026-06-29','end=2099-12-31','end=2026-02-30','period=month&period=quarter','unknown=1'])assert.equal((await request('/api/buoy/revenue/retention?'+invalid)).status,400)
+ assert.equal((await request('/api/buoy/revenue/retention?segmentId=absent')).status,404)
+ for(const [i,id]of ids.entries())await api('/accounts/'+id,'DELETE',{confirmation:'Reporting customer '+i})
+ assert.equal((await report()).count,0,'Erased accounts leave neither report rows nor retained sources')
+ await api('/revenue/rates','POST',{revision:(await api('/revenue/rates')).table.revision,table:ratesFixture()})
+ console.log('BILLING-004 REPORT-001 public confirmed-term native/constant-USD retention, independent cents/ratios/FX, source drilldown, current segment parity, rate edit audit/history, authority, exact rounding/exponents, missing-rate refusal and erasure passed.')
+ return fixture
+}
+export async function reportingHttpJourney(){const {startWorker}=await import('./worker.mjs'),app=await startWorker();try{const request=(path,options={})=>app.request(path,{cookie:app.cookie,...options}),api=async(path,method='GET',body)=>{const r=await request('/api/buoy'+path,{method,body});assert.ok(r.ok,await r.clone().text());return r.json()};await reportingJourney({api,request})}finally{await app.close()}}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)await reportingHttpJourney()

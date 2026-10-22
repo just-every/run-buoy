@@ -1,3 +1,4 @@
+import {playConfig} from './play-fixture.mjs'
 import {privacyCommand} from './erase-journey.mjs'
 import assert from 'node:assert/strict'
 import {startWorker} from './worker.mjs'
@@ -46,6 +47,24 @@ export async function workspaceJourney(){
   let state=await api('/state');for(const id of ids.slice(0,3)){const a=state.accounts.find(a=>a.id===id);assert.equal(a.ownerId,people.b.id);assert.equal(a.handovers.filter(h=>h.note===assign.note).length,1)}assert.ok(state.tasks.every(t=>t.ownerId===people.b.id),'The outgoing CSM’s open tasks moved exactly once')
   const enroll={operationKey:'synthetic-buoy-611',kind:'account',recordIds:ids.slice(0,3),action:'enroll',title:'Bulk customer risk review',dueDate:on}
   reviewed=await api('/workspace/bulk/preview','POST',enroll,{cookie:people.a.cookie});await api('/workspace/bulk/apply','POST',{...enroll,fingerprint:reviewed.fingerprint},{cookie:people.a.cookie});await api('/workspace/bulk/apply','POST',{...enroll,fingerprint:reviewed.fingerprint},{cookie:people.a.cookie});state=await api('/state');assert.equal(state.tasks.filter(t=>t.title===enroll.title).length,3);assert.equal(state.proposals.filter(p=>p.payload.title===enroll.title&&p.status==='approved').length,3)
+  // Bulk enrollment uses the immutable current multi-step engine without approving its steps.
+  const config=playConfig(people.a.id,{name:'Reviewed workspace multi-step',steps:[{id:'review',kind:'task',title:'Versioned workspace review',dueDays:0},{id:'approve',kind:'approval',title:'Review the customer evidence'}]}),book=await api('/playbooks','POST',{config})
+  const multi={operationKey:'synthetic-buoy-615',kind:'account',recordIds:ids.slice(0,3),action:'enroll',playbookId:book.id},beforeRuns=(await api('/playbooks')).runs.length
+  reviewed=await api('/workspace/bulk/preview','POST',multi)
+  assert.equal((await api('/playbooks')).runs.length,beforeRuns,'Review creates no run or task')
+  const newBook=await api('/playbooks','POST',{id:book.id,revision:book.revision,config:{...config,name:'Republished workspace playbook'}})
+  assert.equal((await request('/workspace/bulk/apply','POST',{...multi,fingerprint:reviewed.fingerprint})).status,409,'A changed definition invalidates bulk approval')
+  assert.equal((await api('/playbooks')).runs.length,beforeRuns)
+  reviewed=await api('/workspace/bulk/preview','POST',multi);const multiReceipt=await api('/workspace/bulk/apply','POST',{...multi,fingerprint:reviewed.fingerprint})
+  assert.equal(multiReceipt.runIds.length,3);assert.equal((await api('/workspace/bulk/apply','POST',{...multi,fingerprint:reviewed.fingerprint})).replayed,true)
+  let runs=(await api('/playbooks')).runs.filter(r=>multiReceipt.runIds.includes(r.id));assert.equal(runs.length,3);assert.ok(runs.every(r=>r.version_id===newBook.revision&&r.status==='approval'))
+  state=await api('/state');assert.equal(state.tasks.filter(t=>t.title==='Versioned workspace review').length,0,'Enrollment never approves a task step')
+  for(const r of runs){assert.ok(r.proposalId);await api('/proposals/'+r.proposalId+'/approve','POST',{})}
+  runs=(await api('/playbooks')).runs.filter(r=>multiReceipt.runIds.includes(r.id));assert.ok(runs.every(r=>r.cursor===1&&r.status==='approval'),'The next human gate is still required')
+  assert.equal((await api('/state')).tasks.filter(t=>t.title==='Versioned workspace review').length,3)
+  const limited={...multi,recordIds:[ids[0],ids[3]],operationKey:'synthetic-buoy-616'};reviewed=await api('/workspace/bulk/preview','POST',limited)
+  assert.equal((await request('/workspace/bulk/apply','POST',{...limited,fingerprint:reviewed.fingerprint})).status,409,'Active/re-enrollment limits refuse the entire selection')
+  assert.ok(!(await api('/playbooks')).runs.some(r=>r.playbook_id===book.id&&r.account_id===ids[3]),'A refused batch leaves no run for the otherwise eligible account')
   const segment=await api('/segments','POST',{name:'Workspace reviewed customers',mode:'static',accountIds:[],rules:{match:'all',conditions:[]},tier:null,stage:null,playbook:null}),segmentInput={operationKey:'synthetic-buoy-612',kind:'account',recordIds:ids.slice(0,3),action:'segment',segmentId:segment.id};reviewed=await api('/workspace/bulk/preview','POST',segmentInput);await api('/workspace/bulk/apply','POST',{...segmentInput,fingerprint:reviewed.fingerprint});assert.deepEqual((await api('/segments/'+segment.id+'/report')).accounts.map(a=>a.accountId).sort(),ids.slice(0,3))
   await api('/customer-fields','POST',{key:'workspace_active',label:'Active customer user',type:'boolean'})
   const user=await api('/customer-people','POST',{kind:'user',name:'synthetic-buoy-613',accountIds:ids.slice(0,2),source:'Reviewed product customer directory'})

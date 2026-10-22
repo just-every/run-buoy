@@ -1,3 +1,4 @@
+import {reportingJourney} from './reporting-journey.mjs'
 import {playJourney,playTriggerJourney,playIntakeJourney,playFieldJourney,playChildJourney,playCalendarJourney} from './play-journey.mjs'
 import {hierarchyJourney} from './hierarchy-journey.mjs'
 import {workspaceJourney} from './workspace-journey.mjs'
@@ -516,6 +517,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.equal((await call('/scorecards/publish','POST',{revision:'stale',config:scorecard})).status,409)
   })
   await t.test('INAPP-001 authenticated targeting, caps and receipt custody',async()=>{await inappJourney({...worker,request,dispatch:async req=>{seen.push([req.method,new URL(req.url).pathname]);return worker.dispatch(req)}})})
+  await t.test('BILLING-004 REPORT-001 confirmed-term retention reconciles native and constant USD cents',async()=>reportingJourney({api:async(path,method='GET',body)=>json(await call(path,method,body),method==='POST'&&['/accounts','/segments','/revenue/rates'].includes(path)||method==='POST'&&path.endsWith('/contract')?201:200),request:(path,options={})=>request(path,{cookie,...options}),member}))
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    // Full usage-volume, team and multi-step playbook journeys use isolated installations.
    // Keep the central write-door inventory and denied ordinary-member boundary here.

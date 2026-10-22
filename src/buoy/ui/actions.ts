@@ -43,6 +43,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(path==='/app/revenue'&&action==='rates'){let rates:unknown;try{rates=JSON.parse(fields.rates)}catch{throw new ApiError('Enter valid JSON for the rate periods.')}await send('/api/buoy/revenue/rates',{revision:fields.revision||null,table:{name:fields.name,mode:fields.mode,rates}});return {redirect:path+'#rate-table-panel',message:'Reporting rates published.',saved:'rate-table-editor'}}
   if(accountId&&action==='play-publish'){
     let config:unknown;try{config=JSON.parse(fields.config)}catch{throw new ApiError('Enter valid JSON for the playbook configuration.')}
     await send('/api/buoy/playbooks',{...(fields.playbookId?{id:fields.playbookId,revision:fields.revision}:{}),config});return {redirect:path+'#playbooks',message:'Playbook version published.',saved:'playbook-edit-'+(fields.playbookId||'new')};
@@ -75,7 +76,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     }
     if(action==='workspace-view-delete'){await send('/api/buoy/workspace/views/'+encodeURIComponent(fields.viewId),{revision:fields.revision},'DELETE');return {redirect:path,message:'Saved view deleted.'}}
     if(action==='workspace-bulk-preview'){
-      const input={operationKey:fields.operationKey,kind:fields.kind,recordIds:Object.keys(fields).filter(k=>k.startsWith('record:')&&fields[k]==='on').map(k=>k.slice(7)),action:fields.bulkAction,...(fields.bulkAction==='assign'?{ownerId:fields.ownerId,note:fields.note}:fields.bulkAction==='enroll'?{title:fields.title,dueDate:fields.dueDate}:fields.bulkAction==='segment'?{segmentId:fields.segmentId}:{})};return {workspaceBulkPreview:await send<WorkspaceBulkPreview>('/api/buoy/workspace/bulk/preview',input)};
+      const input={operationKey:fields.operationKey,kind:fields.kind,recordIds:Object.keys(fields).filter(k=>k.startsWith('record:')&&fields[k]==='on').map(k=>k.slice(7)),action:fields.bulkAction,...(fields.bulkAction==='assign'?{ownerId:fields.ownerId,note:fields.note}:fields.bulkAction==='enroll'?(fields.playbookId?{playbookId:fields.playbookId}:{title:fields.title,dueDate:fields.dueDate}):fields.bulkAction==='segment'?{segmentId:fields.segmentId}:{})};return {workspaceBulkPreview:await send<WorkspaceBulkPreview>('/api/buoy/workspace/bulk/preview',input)};
     }
     if(action==='workspace-bulk-apply'){await send('/api/buoy/workspace/bulk/apply',{...parse(fields.input),fingerprint:fields.fingerprint});return {redirect:path,message:'Reviewed bulk change applied.',saved:'workspace-selection'}}
     throw new ApiError('This workspace action is unavailable.');

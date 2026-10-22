@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict'
+import {join} from 'node:path'
+import {startWorker} from './worker.mjs'
+import {scan,submit,failures} from './a11y-checks.mjs'
+import {seedReporting,ratesFixture} from './reporting-journey.mjs'
+export async function reportingBrowser(browser,evidence){
+ const app=await startWorker(),api=async(path,method='GET',body)=>{const r=await app.request('/api/buoy'+path,{cookie:app.cookie,method,body});assert.ok(r.ok,await r.clone().text());return r.json()}
+ try{
+  const {ids,segmentId}=await seedReporting(api),query='?period=quarter&end=2026-06-30&segmentId='+segmentId
+  await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'reporting-reader@example.test',displayName:'Reporting colleague',role:'member'}})
+  const member=await app.signIn('reporting-reader@example.test')
+  for(const width of [1440,390]){
+   const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
+   try{
+    await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}))
+    const page=await context.newPage(),proof=async label=>{await scan(page,'BILLING-004 REPORT-001 '+label+' '+width);await page.screenshot({path:join(evidence,'reporting-'+label+'-'+width+'.png'),fullPage:true})}
+    await page.goto(app.origin+'/app/revenue'+query,{waitUntil:'networkidle'});assert.equal(await page.locator('#retention-accounts li').count(),6);assert.equal(await page.locator('#retention-summary dl').first().locator('dd').nth(0).innerText(),'$415');assert.equal(await page.locator('#retention-summary dl').first().locator('dd').nth(1).innerText(),'$369');assert.match(await page.locator('#retention-accounts').innerText(),/1\.10|1\.1/);await proof('retention')
+    await submit(page,page.locator('#retention-accounts h3 a').first());assert.ok(page.url().includes('/app/accounts/'+ids[0]));assert.match(await page.locator('#revenue-result').innerText(),/Reporting ARR \(USD\)/);await proof('native-and-usd')
+    await page.goto(app.origin+'/app/revenue'+query,{waitUntil:'networkidle'});await page.locator('#rate-table-panel > summary').click();let form=page.locator('#rate-table-editor');await form.getByLabel('Rate table name',{exact:true}).fill('Reviewed native budget '+width);await form.getByLabel('Rate periods (JSON array)',{exact:true}).fill('not JSON');await submit(page,form.getByRole('button',{name:'Publish reporting rates',exact:true}));assert.equal(await page.getByRole('alert').count(),1);assert.equal(await form.getByLabel('Rate table name',{exact:true}).inputValue(),'Reviewed native budget '+width);await proof('rate-refusal')
+    const table=ratesFixture();await form.getByLabel('Rate periods (JSON array)',{exact:true}).fill(JSON.stringify(table.rates));await submit(page,form.getByRole('button',{name:'Publish reporting rates',exact:true}));assert.equal(await page.getByRole('alert').count(),0);assert.match(await page.locator('#work [role=status]').first().innerText(),/published/);await page.locator('#rate-history > summary').click();assert.match(await page.locator('#rate-history').innerText(),/Reviewed native budget/);await proof('rate-published')
+    await page.goto(app.origin+'/app/revenue'+query,{waitUntil:'networkidle'});form=page.locator('#rate-table-editor');const stale=await form.locator('[name=revision]').inputValue();await api('/revenue/rates','POST',{revision:stale,table:ratesFixture()});await page.locator('#rate-table-panel > summary').click();await submit(page,form.getByRole('button',{name:'Publish reporting rates',exact:true}));assert.equal(await page.getByRole('alert').count(),1);await proof('stale-rate-refusal')
+    await page.goto(app.origin+'/app/revenue'+query,{waitUntil:'networkidle'});await page.getByLabel('Period ends (UTC)',{exact:true}).fill('2026-06-29');await submit(page,page.getByRole('button',{name:'Open retention report',exact:true}));assert.equal(await page.getByRole('alert').count(),1);await proof('invalid-period');await page.getByLabel('Period ends (UTC)',{exact:true}).fill('2026-06-30');await page.getByLabel('Product / plan',{exact:true}).fill('Absent plan');await submit(page,page.getByRole('button',{name:'Open retention report',exact:true}));assert.match(await page.locator('#retention-accounts').innerText(),/No confirmed recurring movements/);assert.equal(await page.getByRole('alert').count(),0);await proof('empty-filter-recovery')
+    await api('/revenue/rates','POST',{revision:(await api('/revenue/rates')).table.revision,table:{...table,rates:[]}});await page.goto(app.origin+'/app/revenue'+query,{waitUntil:'networkidle'});assert.match(await page.locator('#retention-exceptions').innerText(),/Missing EUR USD rate/);assert.match(await page.locator('#retention-summary').innerText(),/Unavailable/);await proof('missing-rates');await api('/revenue/rates','POST',{revision:(await api('/revenue/rates')).table.revision,table:ratesFixture()})
+    const peer=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true});try{await peer.addCookies(member.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}));const p=await peer.newPage();await p.goto(app.origin+'/app/revenue'+query,{waitUntil:'networkidle'});assert.equal(await p.locator('#rate-table-editor').count(),0);assert.equal(await p.locator('#retention-accounts li').count(),6);await scan(p,'REPORT-001 current staff read authority '+width);await p.screenshot({path:join(evidence,'reporting-member-'+width+'.png'),fullPage:true})}finally{await peer.close()}
+   }finally{await context.close()}
+  }
+  assert.deepEqual(failures,[],'Reporting screens inherit keyboard, axe, contrast and 320 reflow at 1440/390')
+  console.log('BILLING-004 REPORT-001 native/converted sources, rates refusal/recovery/publish/history/stale review, period refusal, empty selection, missing rates and staff read-only editor boundary at 1440/390 passed.')
+ }finally{await app.close()}
+}

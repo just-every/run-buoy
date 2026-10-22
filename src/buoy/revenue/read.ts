@@ -17,5 +17,5 @@ export async function revenueState(db:D1Database,actor:Actor,on=new Date().toISO
  const raw=(image.results[0] as {snapshot:string}).snapshot
  const versions=history.results.map(row=>{const {document,...rest}=row;return {...rest,contract:JSON.parse(String(document))} as ContractVersion})
  return {on:day,accounts:parseRevenueImage(raw,day),versions,
-  interpretation:'Contracted recurring revenue in native minor units. No invoice revenue, currency conversion, or cross-currency total is inferred.'}
+  interpretation:'Contracted recurring revenue in native minor units. USD reporting uses the explicitly named rate table; missing rates remain unavailable. No provider invoice reconciliation is inferred.'}
 }

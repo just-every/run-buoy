@@ -51,11 +51,12 @@ export function calculateRevenue(contract:ConfirmedContract|null,on:string,sourc
   amountMeaning:'Line amountMinor is the total for its billing period, not a unit price'}
 }
 export function revenueValues(revenue:Revenue):RevenueValues {
- return {'revenue.arrMinor':revenue.arrMinor,'revenue.mrrMinor':revenue.mrrMinor,'revenue.currency':revenue.currency,
+ return {'revenue.usdArrMinor':revenue.reporting?.arrMinor??null,'revenue.usdMrrMinor':revenue.reporting?.mrrMinor??null,'revenue.reportingCurrency':'USD','revenue.rateTableRevision':revenue.reporting?.rate?.tableRevision??null,'revenue.usdPerUnit':revenue.reporting?.rate?.usdPerUnit??null,'revenue.arrMinor':revenue.arrMinor,'revenue.mrrMinor':revenue.mrrMinor,'revenue.currency':revenue.currency,
   'revenue.products':revenue.products?.join('\n')??null,'revenue.seats':revenue.seats,'revenue.contractStart':revenue.contractStart,'revenue.contractEnd':revenue.contractEnd,
   'revenue.sourceKind':revenue.sourceKind,'revenue.reference':revenue.reference,'revenue.confirmedOn':revenue.confirmedOn,'revenue.status':revenue.status}
 }
 export const REVENUE_FIELDS:Record<string,'text'|'number'>={
+ 'revenue.usdArrMinor':'number','revenue.usdMrrMinor':'number','revenue.reportingCurrency':'text','revenue.rateTableRevision':'text','revenue.usdPerUnit':'text',
  'revenue.arrMinor':'number','revenue.mrrMinor':'number','revenue.currency':'text','revenue.products':'text','revenue.seats':'number',
  'revenue.contractStart':'text','revenue.contractEnd':'text','revenue.sourceKind':'text','revenue.reference':'text','revenue.confirmedOn':'text','revenue.status':'text'
 }

@@ -1,3 +1,5 @@
+import {retentionReport} from './revenue/retention'
+import {fxState,publishRates} from './revenue/fx'
 import {playIngest} from './play/intake'
 import {playApi} from './play'
 import {runPlaybooks,alertFailures} from './play/engine'
@@ -100,7 +102,10 @@ buoyApi.route('/',inappAdmin)
 buoyApi.route('/',connectionsApi)
 buoyApi.get('/api/buoy/surveys',async c=>c.json(await surveyState(c.env.DB,c.get('actor'))))
 buoyApi.post('/api/buoy/surveys/responses',async c=>c.json(await recordResponse(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
-buoyApi.get('/api/buoy/revenue',async c=>c.json(await revenueState(c.env.DB,c.get('actor'))))
+buoyApi.get('/api/buoy/revenue',async c=>c.json(await revenueState(c.env.DB,c.get('actor'),c.req.query('on'))))
+buoyApi.get('/api/buoy/revenue/retention',async c=>c.json(await retentionReport(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams)))
+buoyApi.get('/api/buoy/revenue/rates',async c=>{requirePerson(c.get('actor'));return c.json(await fxState(c.env.DB))})
+buoyApi.post('/api/buoy/revenue/rates',async c=>c.json(await publishRates(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 buoyApi.post('/api/buoy/accounts/:id/contract',async c=>c.json(await saveContract(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
 buoyApi.put('/api/buoy/accounts/:id/scorecard',async c=>c.json(await setScorecardAssignment(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
 buoyApi.get('/api/buoy/scorecards',async c=>c.json(await scorecardState(c.env.DB,c.get('actor'))))

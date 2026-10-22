@@ -1,3 +1,4 @@
+import {playConfig} from './play-fixture.mjs'
 import assert from 'node:assert/strict'
 import {join} from 'node:path'
 import {startWorker} from './worker.mjs'
@@ -46,6 +47,8 @@ export async function workspaceBrowser(browser,evidence){
     let state=await api('/state');for(const id of accounts.slice(0,3)){const account=state.accounts.find(a=>a.id===id);assert.equal(account.ownerId,b.id);assert.equal(account.handovers.filter(h=>h.note==='Reviewed native bulk handover '+width).length,1)}await proof('assignment-recorded-once')
     await page.goto(savedUrl,{waitUntil:'networkidle'});form=await choose('enroll');await form.getByLabel('Playbook action title',{exact:true}).fill('Native bulk risk follow-up '+width);await form.getByLabel('Playbook due date',{exact:true}).fill(today);await save(form,'Preview bulk change');await save(page.locator('#workspace-bulk-apply'),'Approve reviewed bulk change');state=await api('/state');assert.equal(state.tasks.filter(t=>t.title==='Native bulk risk follow-up '+width).length,3);await proof('enrollment-recorded')
     await page.goto(savedUrl,{waitUntil:'networkidle'});form=await choose('segment');await form.getByLabel('Static segment',{exact:true}).selectOption(segment.id);await save(form,'Preview bulk change');await save(page.locator('#workspace-bulk-apply'),'Approve reviewed bulk change');assert.equal((await api('/segments/'+segment.id+'/report')).count,3);await proof('segment-membership-recorded')
+    const book=await api('/playbooks','POST',{config:playConfig(a.id,{name:'Native bulk multi-step '+width,steps:[{id:'review',kind:'task',title:'Native gated bulk review '+width,dueDays:0},{id:'approve',kind:'approval',title:'Review remaining customer evidence'}]})})
+    await page.goto(savedUrl,{waitUntil:'networkidle'});form=await choose('enroll');await form.getByLabel('Versioned playbook (optional)',{exact:true}).selectOption(book.id);await save(form,'Preview bulk change');assert.match(await page.locator('#workspace-bulk-review').innerText(),/immutable playbook version/);await proof('versioned-enrollment-review');await save(page.locator('#workspace-bulk-apply'),'Approve reviewed bulk change');const runs=(await api('/playbooks')).runs.filter(r=>r.playbook_id===book.id);assert.equal(runs.length,3);assert.ok(runs.every(r=>r.status==='approval'&&r.version_id===book.revision));assert.equal((await api('/state')).tasks.filter(t=>t.title==='Native gated bulk review '+width).length,0);await proof('versioned-enrollment-gated')
     await page.goto(app.origin+'/app',{waitUntil:'networkidle'});await proof('account-entry-links')
    }finally{await context.close()}
   }

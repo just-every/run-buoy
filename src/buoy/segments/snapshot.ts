@@ -5,7 +5,7 @@ import {surveyValues} from '../surveys/model'
 import type {SurveyImage} from '../surveys/types'
 import {revenueImageSql,parseRevenueImage} from '../revenue/snapshot'
 import {revenueValues} from '../revenue/model'
-import type {RevenueImageRow} from '../revenue/snapshot'
+import type {RevenueImage} from '../revenue/snapshot'
 import type {ScorecardHealth} from '../scorecard-health'
 import {CONSUMER_SNAPSHOT,CONSUMER_ADOPTION_SNAPSHOT} from '../adoption/consumers-image'
 import {evaluateConsumers,type ConsumerRule} from '../adoption/consumers-model'
@@ -44,7 +44,7 @@ export const SNAPSHOT = `SELECT json_object(
  ) AS snapshot`
 interface Row {id:string;document:string;revision:string;createdAt:string}
 interface Classification {accountId:string;tier:string|null;stage:string|null;tierManual:number;stageManual:number}
-export interface Image {hierarchyStaff:{accountId:string;accountExecutiveId:string|null;executiveSponsorId:string|null;supportOwnerId:string|null}[];stakeholders:{accountId:string;personId:string;role:string}[];renewals:FieldImage;surveys:SurveyImage;revenue:RevenueImageRow[];scorecards:ScorecardHealth[];consumers:ConsumerRule[];adoption:AdoptionImage;accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage;people:PeopleImage}
+export interface Image {hierarchyStaff:{accountId:string;accountExecutiveId:string|null;executiveSponsorId:string|null;supportOwnerId:string|null}[];stakeholders:{accountId:string;personId:string;role:string}[];renewals:FieldImage;surveys:SurveyImage;revenue:RevenueImage;scorecards:ScorecardHealth[];consumers:ConsumerRule[];adoption:AdoptionImage;accounts:Row[];segments:Row[];classifications:Classification[];owners:{accountId:string;ownerId:string}[];territories:{accountId:string;territory:string}[];sentiments:(Sentiment&{accountId:string})[];tasks:{accountId:string;completedAt:string|null}[];entries:{id:string;segmentId:string;accountId:string;enteredAt:string;exitedAt:string|null;proposalId:string|null}[];staleness:string|null;tiers:string|null;custom:FieldImage;people:PeopleImage}
 
 export const fence=(db:D1Database,image:{raw:string;sql:string})=>guard(db,`(${image.sql})=?`,image.raw)
 export const tierNames=(image:Image):string[]=>image.tiers?JSON.parse(image.tiers):TIERS

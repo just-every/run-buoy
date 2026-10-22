@@ -12,6 +12,7 @@ export interface ContractVersion {
  contract:ConfirmedContract;recordedBy:string;recordedAt:string
 }
 export interface Revenue {
+ reporting?:ReturnType<typeof import('./fx').reportingRevenue>;
  arrMinor:number|null;mrrMinor:number|null;currency:string|null;
  mrrExact:{numeratorMinor:number;denominator:12}|null;
  mrrRounding:'half-up to whole native minor unit';
