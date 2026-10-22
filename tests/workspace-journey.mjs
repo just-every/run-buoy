@@ -8,6 +8,8 @@ export async function workspaceJourney(){
   const people={}
   for(const [key,role]of [['a','admin'],['b','member'],['manager','member']]){const email='workspace-'+key+'@example.test';await app.request('/auth/invite',{method:'POST',cookie,body:{email,displayName:'Workspace '+key,role}});people[key]={cookie:await app.signIn(email)};people[key].id=(await api('/state','GET',undefined,{cookie:people[key].cookie})).operator.id}
   await api('/people/'+people.a.id+'/manager','PUT',{managerId:people.manager.id})
+  assert.equal((await request('/workspace/home?person='+people.a.id,'GET',undefined,{cookie:people.manager.cookie})).status,403,'A named manager outside the CSM’s teams cannot read the home')
+  await api('/team/settings','PUT',{teams:[{id:'workspace-team',name:'Customer success',personIds:[people.a.id,people.manager.id]}],capacities:[],rules:[],territories:[]})
   const on=new Date().toISOString().slice(0,10),end=new Date(Date.now()+60*86400000).toISOString().slice(0,10),ids=[]
   for(let i=0;i<4;i++){
    const id='synthetic-buoy-'+(600+i),account={id,name:'Workspace customer '+i,renewalDate:i===3?'2028-01-01':end,noticeDays:30,renewalEvidence:'Confirmed customer contract',billing:{observedAt:on,reference:'Confirmed billing register',currency:'USD',totalMinor:100,creditsMinor:0,allocatedMinor:100,dueDate:on},support:{observedAt:on,reference:'Support register',openTickets:i===3?0:1,urgentTickets:i===3?0:1}}

@@ -18,8 +18,8 @@ Open **CSM workspace** from Accounts. The home shows the selected person’s cur
 book, open tasks they handle due today in the installation timezone, unread active
 alerts and renewal dates through the next 90 days (both endpoints included).
 Customer meetings are explicitly unavailable until calendar capture ships.
-Owners/admins can inspect any book; a named manager sees their direct report’s
-same home. An ordinary peer cannot inspect another CSM’s home.
+Owners/admins can inspect any book; a named manager sees the same home for a
+direct report who belongs to one of the manager’s teams. An ordinary peer cannot inspect another CSM’s home.
 
 Use **Filter, sort and save a view** for account or product-user lists. The field
 catalog shows the current typed fields and metrics. Choose columns and sorting,
