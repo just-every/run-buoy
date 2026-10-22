@@ -163,6 +163,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     ({ head, body, style } = workPage(state, fields, open, today));
     if (url.searchParams.get('intro') === 'hidden') body = body.replace('<div data-introduction>', '<div data-introduction hidden>');
     body+=section('Your workspace','<p><a href="/app/workspace">Open today’s work, live account/user lists and saved views</a>.</p>');
+    body+=section('Revenue and retention','<p><a href="/app/revenue">Open revenue and retention reporting</a> from confirmed terms and explicit reporting rates.</p>');
     body+=section('Renewal pipeline','<p><a href="/app/renewals">Open the contract-driven renewal board, list and approved outcomes</a>.</p>');
     body+=scorecardsPage(await apiCall<ScorecardPage>(api,request,'/api/buoy/scorecards'),state,fields,scorecardPreview);
     if (url.searchParams.get('intro') === 'hidden') body = body.replace('<div class="below">', '<div class="below"><p class="show-intro"><a data-show-introduction href="/app?intro=show#first-use">Show first-use checklist</a></p>');
