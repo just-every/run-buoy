@@ -22,13 +22,14 @@ export function financials(document:Omit<BillingDocument,'revenue'|'risks'>,obse
  // An observed customer with no active recurring lines is known zero, retaining
  // invoice/subscription currencies instead of inventing a portfolio currency.
  if(!revenue.length){const currencies=new Set([...document.subscriptions.flatMap(s=>s.lines.map(l=>l.currency)),...document.invoices.map(i=>i.currency)]);for(const currency of [...currencies].sort())revenue.push({currency,arr:exact({n:0n,d:1n}),mrr:exact({n:0n,d:1n}),subscriptionIds:[],priceIds:[]})}
- const risks:BillingDocument['risks']=[]
+ const risks:BillingDocument['risks']=[],failedPayments=new Set(document.payments.filter(p=>p.failed).map(p=>p.id)),covered=new Set<string>()
  for(const invoice of document.invoices){
   if(invoice.status!=='open'||invoice.amountRemainingMinor===0)continue
-  if(invoice.attempted&&invoice.attemptCount>0)risks.push({kind:'failed-payment',reference:invoice.id,currency:invoice.currency,amountMinor:invoice.amountRemainingMinor,observedAt})
+  // An attempted open invoice can be processing or only partly paid. A
+  // linked current payment error, rather than an attempt counter, proves failure.
+  if(invoice.paymentIntentId&&failedPayments.has(invoice.paymentIntentId)){risks.push({kind:'failed-payment',reference:invoice.id,currency:invoice.currency,amountMinor:invoice.amountRemainingMinor,observedAt});covered.add(invoice.paymentIntentId)}
   if(invoice.dueAt&&Date.parse(invoice.dueAt)<Date.parse(observedAt))risks.push({kind:'overdue-invoice',reference:invoice.id,currency:invoice.currency,amountMinor:invoice.amountRemainingMinor,observedAt})
  }
- const covered=new Set(document.invoices.filter(i=>i.status==='open'&&i.attempted&&i.attemptCount>0).map(i=>i.paymentIntentId))
  for(const payment of document.payments)if(payment.failed&&!covered.has(payment.id))risks.push({kind:'failed-payment',reference:payment.id,currency:payment.currency,amountMinor:Math.max(0,payment.amountMinor-payment.amountReceivedMinor),observedAt})
  return {...document,revenue,risks}
 }

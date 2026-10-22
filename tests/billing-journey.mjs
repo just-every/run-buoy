@@ -7,7 +7,7 @@ export const billingFixtureKey='synthetic-buoy-1',billingWebhookSecret='syntheti
 const c1='synthetic-buoy-101',c2='synthetic-buoy-102',c3='synthetic-buoy-103'
 const baseTime=Math.floor(Date.now()/1000)-3600
 export function billingSource(){
- const source={calls:[],fail:false,invalid:null,amount:2500,status:'active',hold:null,onRead:null,pages:true}
+ const source={calls:[],fail:false,invalid:null,paymentFailed:true,amount:2500,status:'active',hold:null,onRead:null,pages:true}
  const price=(id,amount,interval='month')=>({id,object:'price',livemode:false,billing_scheme:'per_unit',transform_quantity:null,tiers_mode:null,product:'synthetic-buoy-201',currency:'usd',unit_amount_decimal:String(amount),recurring:{interval,interval_count:1,usage_type:'licensed'}})
  const sub=customer=>({id:customer===c1?'synthetic-buoy-301':'synthetic-buoy-302',object:'subscription',livemode:false,customer,status:customer===c1?source.status:'active',created:baseTime,current_period_start:baseTime,current_period_end:baseTime+31536000,cancel_at_period_end:false,canceled_at:customer===c1&&source.status==='canceled'?baseTime:null,discounts:[]})
  source.fetch=async request=>{
@@ -31,11 +31,11 @@ export function billingSource(){
   }
   if(url.pathname==='/v1/invoices'){
    if(customer!==c1)return list([])
-   const invoice={id:'synthetic-buoy-601',object:'invoice',livemode:false,customer,currency:'usd',status:'open',amount_due:8500,amount_paid:0,amount_remaining:8500,due_date:baseTime-86400,attempted:true,attempt_count:1,payment_intent:'synthetic-buoy-701',created:baseTime}
+   const invoice={id:'synthetic-buoy-601',object:'invoice',livemode:false,customer,currency:'usd',status:'open',amount_due:8500,amount_paid:source.paymentFailed?0:1000,amount_remaining:source.paymentFailed?8500:7500,due_date:baseTime-86400,attempted:true,attempt_count:1,payment_intent:'synthetic-buoy-701',created:baseTime}
    const paid={...invoice,id:'synthetic-buoy-602',status:'paid',amount_paid:1000,amount_remaining:0,amount_due:1000,attempted:true,payment_intent:'synthetic-buoy-702'}
    return source.pages?(url.searchParams.has('starting_after')?list([paid]):list([invoice],true)):list([invoice,paid])
   }
-  if(url.pathname==='/v1/payment_intents')return list(customer===c1?[{id:'synthetic-buoy-701',object:'payment_intent',livemode:false,customer,currency:'usd',amount:8500,amount_received:0,status:'requires_payment_method',last_payment_error:{code:'card_declined'},created:baseTime},{id:'synthetic-buoy-702',object:'payment_intent',livemode:false,customer,currency:'usd',amount:1000,amount_received:1000,status:'succeeded',last_payment_error:null,created:baseTime}]:[])
+  if(url.pathname==='/v1/payment_intents')return list(customer===c1?[{id:'synthetic-buoy-701',object:'payment_intent',livemode:false,customer,currency:'usd',amount:8500,amount_received:source.paymentFailed?0:1000,status:source.paymentFailed?'requires_payment_method':'processing',last_payment_error:source.paymentFailed?{code:'card_declined'}:null,created:baseTime},{id:'synthetic-buoy-702',object:'payment_intent',livemode:false,customer,currency:'usd',amount:1000,amount_received:1000,status:'succeeded',last_payment_error:null,created:baseTime}]:[])
   if(url.pathname==='/v1/charges')return list(customer===c1?[{id:'synthetic-buoy-801',object:'charge',livemode:false,customer}]:[])
   if(url.pathname.startsWith('/v1/charges/'))return Response.json({id:url.pathname.split('/').at(-1),object:'charge',livemode:false,customer:c1})
   if(url.pathname==='/v1/refunds')return list([{id:'synthetic-buoy-901',object:'refund',charge:'synthetic-buoy-801',currency:'usd',amount:200,status:'succeeded',created:baseTime}])
@@ -84,6 +84,15 @@ export async function billingJourney(app,source){
  assert.ok(first.document.risks.some(r=>r.kind==='failed-payment'&&r.reference==='synthetic-buoy-601'))
  assert.ok(first.document.risks.some(r=>r.kind==='overdue-invoice'&&r.amountMinor===8500));assert.deepEqual(annual.document.risks,[])
  assert.ok(!(await state()).observations.some(r=>r.accountId===a3.id),'Staged or unmatched customers never attribute source observations')
+ // The provider can leave an attempted invoice open while its payment is
+ // processing or partly paid. Only an explicit linked payment error is failure.
+ source.paymentFailed=false;await sync();await sync()
+ const processing=(await read(a1.id)).document
+ assert.equal(processing.invoices.find(i=>i.id==='synthetic-buoy-601').attempted,true)
+ assert.equal(processing.invoices.find(i=>i.id==='synthetic-buoy-601').amountPaidMinor,1000)
+ assert.ok(!processing.risks.some(r=>r.kind==='failed-payment'),'An attempted, partially paid processing invoice is not a failed-payment signal')
+ assert.ok(processing.risks.some(r=>r.kind==='overdue-invoice'&&r.amountMinor===7500),'Overdue balance remains independent of payment failure')
+ source.paymentFailed=true;await sync();await sync()
  const native=await api('/state'),monthlyHealth=native.accounts.find(a=>a.id===a1.id).health,annualHealth=native.accounts.find(a=>a.id===a2.id).health
  assert.equal(monthlyHealth.status,'at-risk');assert.match(monthlyHealth.reasons.join(' '),/Stripe failed payment.*synthetic-buoy-601/)
  assert.ok(monthlyHealth.evidence.some(e=>e.sourceSystem==='stripe-test'))
@@ -123,9 +132,18 @@ export async function billingJourney(app,source){
  const late={...event(),created:baseTime-1000};await webhook(late);assert.equal((await read(a1.id)).document.revenue[0].arr.roundedMinor,1500*3*12)
  const retained=(await state()).history.find(r=>r.id===afterUpgrade.observations.find(r=>r.accountId===a1.id).id);assert.equal(retained.document.revenue[0].arr.roundedMinor,5500*3*12)
  for(const invalid of ['money','currency','unsupported','date','live']){
-  const before=(await state()).history.length,revision=(await api('/state')).accounts.find(a=>a.id===a1.id).revision
+  const before=await state(),preserved=before.observations.find(o=>o.accountId===a1.id)
   source.invalid=invalid;const r=await api(base+'/sync','POST',{});assert.equal(r.status,'failed',invalid);source.invalid=null
-  assert.equal((await state()).history.length,before);assert.equal((await api('/state')).accounts.find(a=>a.id===a1.id).revision,revision,'Invalid provider record leaves account revision unchanged')
+  const after=await state(),current=after.observations.find(o=>o.accountId===a1.id)
+  assert.equal(current.id,preserved.id,'Malformed source data cannot publish a partial replacement snapshot')
+  assert.deepEqual(current.document,preserved.document,'The prior valid provider evidence remains unchanged')
+  assert.deepEqual(after.history.map(({freshness,confidence,...observation})=>observation),before.history.map(({freshness,confidence,...observation})=>observation),'Malformed source data cannot append or alter immutable billing observations')
+  assert.equal(after.connections.find(c=>c.id===connection.id).freshness,'Failed');assert.equal(current.freshness,'Failed');assert.match(current.confidence,/Reduced/)
+  const missing=(await api('/scorecards')).accounts.find(a=>a.accountId===a1.id)
+  assert.equal(missing.score,null,'Configured connected-source health becomes unknown after provider validation failure')
+  assert.ok(missing.breakdown.every(m=>m.value===null&&m.sources.some(source=>source.details?.sourceFreshness==='failed')),'Failed-source numeric and category inputs become missing without replacing their underlying observations')
+  const nativeHealth=(await api('/state')).accounts.find(a=>a.id===a1.id).health
+  assert.equal(nativeHealth.score,null);assert.match(nativeHealth.reasons.join(' '),/Stripe billing evidence is failed; dependent confidence is reduced/)
  }
  source.fail=true;const lastSuccess=(await state()).connections.find(c=>c.id===connection.id).last_success
  const failure=await api(base+'/sync','POST',{});assert.equal(failure.status,'failed');let failed=await state();assert.equal(failed.connections.find(c=>c.id===connection.id).last_success,lastSuccess)

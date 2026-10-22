@@ -13,8 +13,8 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
   status=403;body=section('Action unavailable','<p>This action is not available to your assigned profile.</p>')
  }else if(path==='/app/search'){
   title='Search'
-  try{body=searchPage(url.searchParams,url.searchParams.has('q')?await apiCall<SearchPage>(api,request,'/api/buoy/search?'+url.searchParams):undefined)}
-  catch(error){status=error instanceof ApiError?error.status:503;body=searchPage(url.searchParams,undefined,error instanceof Error?error.message:'Search is unavailable. Try again.')}
+  try{body=searchPage(url.searchParams,url.searchParams.has('q')?await apiCall<SearchPage>(api,request,'/api/buoy/search?'+url.searchParams):undefined,undefined,true)}
+  catch(error){status=error instanceof ApiError?error.status:503;body=searchPage(url.searchParams,undefined,error instanceof Error?error.message:'Search is unavailable. Try again.',true)}
  }else if(path==='/app')body=scopedAccountsPage(state)
  else if(/^\/app\/accounts\/[^/]+$/.test(path)){
   let accountId='';try{accountId=decodeURIComponent(path.slice('/app/accounts/'.length))}catch{}

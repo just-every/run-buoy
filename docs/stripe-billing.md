@@ -54,8 +54,9 @@ discounted subscription pricing is explicitly unsupported: the whole customer
 read fails and leaves the prior evidence visible with reduced confidence. It
 never substitutes a guessed amount.
 
-An open invoice with a positive remaining amount and an unsuccessful attempted
-collection produces a failed-payment risk. An open invoice whose due instant
+An open invoice with a positive remaining amount and an explicitly failed linked
+payment intent produces a failed-payment risk. An attempt counter alone does not
+prove failure: a processing or partially paid invoice is not labeled failed. An open invoice whose due instant
 has passed produces an overdue-invoice risk with its exact remaining amount.
 An unsuccessful payment intent with a payment error also produces a failed risk,
 without counting its linked open invoice twice. Closed/paid invoices and recovered
