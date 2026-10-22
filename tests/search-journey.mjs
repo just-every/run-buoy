@@ -33,20 +33,21 @@ export async function searchJourney({call,json,request,cookie,member,account,sig
  assert.deepEqual((await find('USER@voyage.example')).results.map(r=>r.id),[people[1].id])
  assert.ok((await find('VOYAGE.EXAMPLE')).results.some(r=>r.kind==='account'&&r.id===ids[0]),'Domain stored on an account is searchable')
  assert.deepEqual((await find('0015g00000crm42')).results.map(r=>r.id),[ids[0]],'Reviewed external-ID text finds the correct native account without claiming CRM sync')
- assert.deepEqual((await find('SEA-811')).results.map(r=>[r.kind,r.id]),[['task',task.id]],'Completed task evidence remains searchable')
+ assert.deepEqual((await find('SEA-811')).results.filter(r=>r.kind==='task').map(r=>r.id),[task.id],'Completed task evidence remains searchable');assert.equal((await find('SEA-811')).results.filter(r=>r.kind==='activity').length,1,'The native completion timeline entry is independently searchable')
  assert.deepEqual((await find('Customer launch confirmed')).results.map(r=>r.id),[task.id])
  const all=await find(marker),paged=[]
- assert.equal(all.results.length,6,'Three accounts, contact, user and approved task share one search')
+ assert.equal(all.results.length,9,'Accounts, contact, user, approved task and its three native timeline entries share one search')
  let cursor
  do{
   const page=await find(marker,{limit:'1',...(cursor?{cursor}:{})});paged.push(...page.results);cursor=page.nextCursor
  }while(cursor)
  assert.deepEqual(paged,all.results,'All kinds page without omission or repetition, including Unicode queries and shared people')
- assert.equal(new Set(paged.map(r=>r.kind+':'+r.id)).size,6)
+ assert.equal(new Set(paged.map(r=>r.kind+':'+r.id)).size,9)
  for(const result of all.results){
   assert.ok(result.excerpt.includes(marker));assert.ok(result.href.startsWith('/app/'))
   assert.ok((await find(result.id)).results.some(r=>r.kind===result.kind&&r.id===result.id),'Native record IDs are searchable')
   assert.equal((await request(result.href,{cookie})).status,200,'Each result opens its real signed-in native record')
+  if(result.kind==='activity'){const entry=await json(await call('/accounts/'+result.accountIds[0]+'/activity?'+new URLSearchParams({entry:result.id})));assert.equal(entry.records.length,1);assert.equal(entry.records[0].id,result.id,'Timeline deep links select the exact matching entry')}
  }
  assert.equal(all.nextCursor,null)
  assert.deepEqual((await json(await call('/search?'+new URLSearchParams({q:marker}),'GET',undefined,{cookie:member}))).results,all.results,'Member search follows existing account/customer read authority')
@@ -121,6 +122,7 @@ export async function searchBrowser(browser,evidence){
   const account=(await api('/state')).accounts.find(a=>a.id==='synthetic-buoy-950')
   await api('/accounts/'+account.id+'/contract','POST',{revision:account.revision,contract:{currency:'USD',contractStart:'2026-01-01',contractEnd:'2027-01-31',lines:[],source:{reference:'synthetic-buoy-renewal-browser',confirmedOn:new Date().toISOString().slice(0,10)}}})
   await app.scheduled('0 * * * *',Date.parse('2027-01-31T00:00:00Z'))
+  await api('/accounts/'+account.id+'/sentiment','POST',{rating:'red',reason:'Customer-confirmed risk for native search proof',days:30});const proposal=await api('/proposals','POST',{accountId:account.id,kind:'playbook',payload:{title:'Native search timeline proof',dueDate:'2027-01-01'}});await api('/proposals/'+proposal.id+'/approve','POST',{});const task=(await api('/state')).tasks.find(t=>t.proposalId===proposal.id);await api('/tasks/'+task.id+'/complete','POST',{outcome:'Customer evidence reviewed',evidence:'synthetic-buoy-timeline-reference'})
   for(const width of [1440,390]){
    const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
    try{
@@ -131,7 +133,8 @@ export async function searchBrowser(browser,evidence){
     await search('coast@example.test');assert.equal(await page.locator('#search-results li').count(),1);assert.match(await page.locator('#search-results').innerText(),/Customer contact/);await proof('contact-email')
     const hit=page.locator('#search-results h3 a');await focused(page,hit,'Open matching customer by keyboard');await Promise.all([page.waitForNavigation({waitUntil:'networkidle'}),page.keyboard.press('Enter')]);assert.ok(page.url().includes('person='+person.id));assert.match(await page.locator('#work').innerText(),/Coastal customer contact/)
     await page.goto(app.origin+'/app/search',{waitUntil:'networkidle'});await search('Search browser customer','10');assert.equal(await page.locator('#search-results li').count(),10);const first=await page.locator('#search-results h3 a').allTextContents();await proof('first-page');await submit(page,page.getByRole('link',{name:'Next search results',exact:true}));assert.equal(await page.locator('#search-results li').count(),3);assert.ok((await page.locator('#search-results h3 a').allTextContents()).every(v=>!first.includes(v)));await proof('next-page')
-    await search('synthetic-buoy-renewal-browser');assert.match(await page.locator('#search-results').innerText(),/Renewal opportunity/);await proof('renewal');await submit(page,page.locator('#search-results h3 a'));assert.ok(page.url().includes('/app/renewals?renewal='))
+    await search('synthetic-buoy-renewal-browser');assert.match(await page.locator('#search-results').innerText(),/Renewal opportunity/);await proof('renewal');await submit(page,page.getByRole('link',{name:'Search browser customer 0 renewal',exact:true}));assert.ok(page.url().includes('/app/renewals?renewal='))
+    await page.goto(app.origin+'/app/search',{waitUntil:'networkidle'});await search('synthetic-buoy-timeline-reference');const activity=page.locator('#search-results li').filter({has:page.getByText('Timeline entry',{exact:true})});assert.equal(await activity.count(),1);await proof('timeline-search');await submit(page,activity.getByRole('link',{name:'Native search timeline proof',exact:true}));assert.ok(page.url().includes('activityEntry='));assert.equal(await page.locator('#record-activity > ol > li').count(),1);assert.match(await page.locator('#record-activity').innerText(),/synthetic-buoy-timeline-reference/);await proof('timeline-entry')
     await page.goto(app.origin+'/app/search?q=coast&cursor=invalid',{waitUntil:'networkidle'});assert.equal(await page.getByRole('alert').count(),1);assert.equal(await page.getByLabel('Search customer records',{exact:true}).inputValue(),'coast');await proof('invalid-cursor');await search('not-a-customer-phrase');assert.match(await page.locator('#search-results').innerText(),/No matching current records/);assert.equal(await page.getByRole('alert').count(),0);await proof('recovered-empty')
     await search('<script>alert(1)</script>');assert.equal(await page.locator('#search-results script').count(),0);assert.match(await page.locator('#search-results').innerText(),/<script>alert/)
    }finally{await context.close()}

@@ -149,7 +149,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     title = account.name; ({ head, body, style } = accountPage(state, account, fields, open, today));
     if(canManage(state))body+=playbooksPanel(await apiCall<PlayPage>(api,request,'/api/buoy/playbooks?accountId='+encodeURIComponent(account.id)),state,account.id,fields);
     const organization=await apiCall<HierarchyPage>(api,request,'/api/buoy/accounts/'+encodeURIComponent(account.id)+'/hierarchy');
-    const activityQuery=new URLSearchParams();for(const [pageKey,apiKey]of [['activityCursor','cursor'],['activityKind','kind'],['activityPerson','personId'],['activitySource','source']])if(url.searchParams.get(pageKey))activityQuery.set(apiKey,url.searchParams.get(pageKey)!);
+    const activityQuery=new URLSearchParams();for(const [pageKey,apiKey]of [['activityEntry','entry'],['activityCursor','cursor'],['activityKind','kind'],['activityPerson','personId'],['activitySource','source']])if(url.searchParams.get(pageKey))activityQuery.set(apiKey,url.searchParams.get(pageKey)!);
     const activity=await apiCall<Awaited<ReturnType<typeof accountActivity>>>(api,request,'/api/buoy/accounts/'+encodeURIComponent(account.id)+'/activity?'+activityQuery);
     const nextActivity=new URLSearchParams(url.searchParams);if(activity.nextCursor)nextActivity.set('activityCursor',activity.nextCursor);
     const activitySelect=(key:string,label:string,choices:{id:string;name:string}[])=>'<label>'+escape(label)+'<select aria-label="'+escape(label)+'" name="'+escape(key)+'"><option value="">All</option>'+choices.map(c=>'<option value="'+escape(c.id)+'"'+(url.searchParams.get(key)===c.id?' selected':'')+'>'+escape(c.name)+'</option>').join('')+'</select></label>';
