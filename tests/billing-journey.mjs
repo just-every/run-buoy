@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import {createHmac} from 'node:crypto'
 import {pathToFileURL} from 'node:url'
 import {startWorker} from './worker.mjs'
-export const billingFixtureKey='synthetic-buoy-1',billingWebhookSecret='synthetic-buoy-2'
+import {billingFixtureKey,billingWebhookSecret} from './billing-fixture.mjs'
+export {billingFixtureKey,billingWebhookSecret} from './billing-fixture.mjs'
 const c1='synthetic-buoy-101',c2='synthetic-buoy-102',c3='synthetic-buoy-103'
 const baseTime=Math.floor(Date.now()/1000)-3600
 export function billingSource(){

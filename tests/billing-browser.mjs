@@ -3,7 +3,7 @@ import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
 import {chromium} from '@playwright/test'
 import {scan,submit,failures} from './a11y-checks.mjs'
-import {billingFixtureKey,billingWebhookSecret} from './billing-journey.mjs'
+import {billingFixtureKey,billingWebhookSecret} from './billing-fixture.mjs'
 export async function billingBrowser(app,{connectionId,accountId,otherAccountId,unmappedAccountId,source}){
  const evidence=process.env.EVIDENCE_DIR??process.env.BUOY_PROOF_DIR;if(evidence)await mkdir(evidence,{recursive:true})
  console.log('Stripe billing browser: launching Chromium')
