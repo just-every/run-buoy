@@ -1,3 +1,4 @@
+import {privacyCommand} from './erase-journey.mjs'
 import assert from 'node:assert/strict'
 import {startWorker} from './worker.mjs'
 export async function workspaceJourney(){
@@ -53,8 +54,8 @@ export async function workspaceJourney(){
   const users=await api('/workspace/lists/preview','POST',userView);assert.deepEqual(users.records.map(r=>r.id),[user.id]);assert.equal(users.records[0].values.accountCount,2)
   const expanded=await api('/workspace/bulk/preview','POST',{operationKey:'synthetic-buoy-614',kind:'user',recordIds:[user.id],action:'segment',segmentId:segment.id});assert.deepEqual(expanded.accounts.map(a=>a.id),ids.slice(0,2),'User selection expands every explicit membership and requires review')
   const identityView=await api('/workspace/views','POST',{view:{...userView,name:'One explicitly linked user',rules:{match:'all',conditions:[{field:'id',op:'eq',value:user.id}]}}})
-  person=(await api('/customer-people')).records.find(p=>p.id===user.id);const privacy=await api('/customer-people/'+user.id+'/privacy/export','POST',{revision:person.revision,confirmation:person.name});assert.equal(privacy.records.savedViews.length,1)
-  await api('/customer-people/'+user.id+'/privacy/erase','POST',{revision:person.revision,confirmation:person.name});assert.equal((await request('/workspace?view='+identityView.id)).status,404,'Explicitly person-dependent view definitions leave with privacy erasure')
+  person=(await api('/customer-people')).records.find(p=>p.id===user.id);const privacy=await privacyCommand(api,person,'export');assert.equal(privacy.records.savedViews.length,1)
+  await privacyCommand(api,person,'erase');assert.equal((await request('/workspace?view='+identityView.id)).status,404,'Explicitly person-dependent view definitions leave with privacy erasure')
   data=await api('/workspace?view='+saved.id,'GET',undefined,{cookie:people.a.cookie});assert.equal((await request('/workspace/views/'+saved.id,'DELETE',{revision:data.selected.revision},{cookie:people.b.cookie})).status,409);await api('/workspace/views/'+saved.id,'DELETE',{revision:data.selected.revision},{cookie:people.a.cookie});assert.equal((await request('/workspace?view='+saved.id,'GET',undefined,{cookie:people.a.cookie})).status,404)
   assert.equal((await request('/workspace','GET',undefined,{cookie:undefined})).status,401)
   assert.equal((await request('/workspace/views','POST',{view},{headers:{origin:'https://foreign.invalid'}})).status,403)

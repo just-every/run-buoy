@@ -1,6 +1,18 @@
 import assert from 'node:assert/strict'
 import {randomUUID} from 'node:crypto'
 
+// Related record journeys use the same public verified-request and review doors.
+export async function privacyCommand(api,person,action){
+ const path='/customer-people/'+person.id+'/privacy/'
+ const body={revision:person.revision,confirmation:person.name,request:{verificationMethod:'verified-offline',receivedDate:new Date().toISOString().slice(0,10),requesterReference:randomUUID()}}
+ if(action==='erase'){
+  const preview=await api(path+'preview','POST',{revision:person.revision,emails:[]})
+  assert.equal(preview.matches.length,0,'The related-record fixture has no unlinked usage text to redact')
+  Object.assign(body,{fingerprint:preview.fingerprint,emails:[],redactions:[]})
+ }
+ return api(path+action,'POST',body)
+}
+
 export async function eraseJourney({call,json,request,cookie,member,signIn,account,dispatch,origin}){
  const base='synthetic-buoy-260',ids=[base,base+'-other']
  for(const id of ids)await json(await call('/accounts','POST',{...account(id),name:id}),201)
