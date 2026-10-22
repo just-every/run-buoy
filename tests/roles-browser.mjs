@@ -42,7 +42,7 @@ try{
    await api('/roles/assignments','PUT',{revision:(await api('/roles')).revision,personId:person.id,roleId:'csm'})
    await read.goto(app.origin+'/app',{waitUntil:'networkidle'});assert.equal(await read.locator('#scoped-accounts li').count(),1);await proof(read,'own-book','#work')
    assert.equal((await read.goto(app.origin+'/app/accounts/'+ids[1],{waitUntil:'networkidle'})).status(),404)
-   await read.goto(app.origin+'/app/workspace',{waitUntil:'networkidle'});assert.equal(await read.locator('#workspace-list li').count(),1);assert.match(await read.locator('#csm-home').innerText(),/Harbour Marine/);await proof(read,'own-home','#work')
+   await read.goto(app.origin+'/app/workspace',{waitUntil:'networkidle'});assert.equal(await read.locator('#workspace-list li').count(),1);assert.match(await read.locator('#workspace-list').innerText(),/Harbour Marine/);await proof(read,'own-home','#work')
    await page.goto(app.origin+'/app/roles',{waitUntil:'networkidle'});await page.locator('#role-definition-panel > summary').click();form=page.locator('#role-definition');await form.getByLabel('Custom profile name',{exact:true}).fill('Own book observer '+width);await form.getByLabel('Default record scope',{exact:true}).selectOption('own');await form.getByLabel('Read accounts',{exact:true}).selectOption('scope');await submit(page,form.getByRole('button',{name:'Create custom profile',exact:true}));assert.equal(await page.getByRole('alert').count(),0);await page.locator('#role-definitions > summary').click();assert.match(await page.locator('#role-definitions').innerText(),new RegExp('Own book observer '+width));await proof(page,'custom-created','#role-definitions')
   }finally{await context.close();await reader.close()}
  }
