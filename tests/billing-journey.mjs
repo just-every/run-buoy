@@ -165,7 +165,8 @@ export async function billingJourney(app,source){
  const sourceState=await state();assert.ok(sourceState.changes.length>=4);assert.ok(sourceState.changes.some(c=>c.before?.some(s=>s.lines.some(l=>l.unitAmountDecimal==='5500'))&&c.after.some(s=>s.lines.some(l=>l.unitAmountDecimal==='1500'))))
  assert.ok(sourceState.history.length>sourceState.observations.length,'Account refreshes retain immutable prior observations')
  const revision=(await api('/state')).accounts.find(a=>a.id===a1.id).revision;await app.scheduled();assert.notEqual((await api('/state')).accounts.find(a=>a.id===a1.id).revision,revision,'Cron Trigger reconciles the next reviewed customer')
- let release;source.hold=new Promise(r=>release=r);const started=new Promise(r=>source.onRead=r),pending=api(base+'/sync','POST',{});await started
+ let release;source.hold=new Promise(r=>release=r);const started=new Promise(r=>source.onRead=r),pending=api(base+'/sync','POST',{});
+ let holdTimer;try{await Promise.race([started,new Promise((_,reject)=>{holdTimer=setTimeout(()=>reject(new Error('Held Stripe subscription read did not start')),30000)})])}catch(error){release();await pending;throw error}finally{clearTimeout(holdTimer)}
  await api('/connections/'+connection.id,'DELETE',{});release();source.hold=null;source.onRead=null;assert.equal((await pending).status,'failed')
  const count=source.calls.length;await app.scheduled();assert.equal(source.calls.length,count,'Disconnected provider receives no next scheduled request')
  await api('/connections/'+connection.id+'/credential','PUT',{key:billingFixtureKey});await sync();await sync()

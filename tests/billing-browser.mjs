@@ -6,6 +6,7 @@ import {scan,submit,failures} from './a11y-checks.mjs'
 import {billingFixtureKey,billingWebhookSecret} from './billing-journey.mjs'
 export async function billingBrowser(app,{connectionId,accountId,otherAccountId,unmappedAccountId,source}){
  const evidence=process.env.EVIDENCE_DIR??process.env.BUOY_PROOF_DIR;if(evidence)await mkdir(evidence,{recursive:true})
+ console.log('Stripe billing browser: launching Chromium')
  const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
  const api=async(path,method='GET',body)=>{const r=await app.request('/api/buoy'+path,{cookie:app.cookie,method,body});assert.equal(r.status,200,await r.clone().text());return r.json()}
  try{for(const width of [1440,390]){
@@ -14,6 +15,7 @@ export async function billingBrowser(app,{connectionId,accountId,otherAccountId,
    await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return {name,value:rest.join('='),url:app.origin}}))
    const page=await context.newPage(),show=async id=>{const e=page.locator('#'+id);if(!await e.evaluate(e=>e.open))await e.locator(':scope > summary').click()}
    const proof=async(name,selector)=>{await scan(page,`Stripe billing ${name} ${width}`);if(evidence)await page.locator(selector).screenshot({path:join(evidence,`billing-${name}-${width}.png`),mask:[page.locator('[data-secret]:visible')]})}
+   console.log('Stripe billing browser: opening native screen '+width)
    await page.goto(app.origin+'/app/billing',{waitUntil:'networkidle'})
    assert.equal(await page.getByRole('heading',{name:'Stripe billing',exact:true,level:2}).count(),1)
    assert.ok((await page.locator('#billing-evidence').innerText()).includes('Monthly Stripe customer'))
@@ -57,6 +59,7 @@ export async function billingBrowser(app,{connectionId,accountId,otherAccountId,
    assert.match(await page.locator('#billing-connection-'+connectionId).innerText(),/Current/)
    await proof('reconciled','#billing-evidence')
    await page.setViewportSize({width:320,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'Stripe billing source references and forms reflow at 320')
+   await page.setViewportSize({width,height:1000})
    for(const id of [accountId,otherAccountId]){await page.goto(app.origin+'/app/accounts/'+id,{waitUntil:'networkidle'});assert.match(await page.locator('body').innerText(),/Stripe|stripe-test/);await proof('account-'+(id===accountId?'monthly':'annual'),'main')}
   }finally{source.fail=false;await context.close()}
  }}finally{await browser.close()}
