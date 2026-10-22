@@ -26,7 +26,7 @@ try{
    await context.addCookies(cookies(app.cookie,app.origin));await reader.addCookies(cookies(member,app.origin))
    const page=await context.newPage(),read=await reader.newPage()
    const proof=async(p,name,selector)=>{await scan(p,'Role '+name+' '+width);await p.locator(selector).screenshot({path:join(evidence,'roles-'+name+'-'+width+'.png')})}
-   await page.goto(app.origin+'/app/roles',{waitUntil:'networkidle'});await page.locator('#role-assignment-panel > summary').click()
+   await page.goto(app.origin+'/app/team',{waitUntil:'networkidle'});await submit(page,page.getByRole('link',{name:'Manage staff profiles and account scopes',exact:true}));await page.locator('#role-assignment-panel > summary').click()
    let form=page.locator('#role-assignment')
    await form.getByLabel('Staff person',{exact:true}).selectOption(person.id);await form.getByLabel('Profile',{exact:true}).selectOption('support');await form.getByLabel('Commercial visibility',{exact:true}).selectOption('full')
    // A saved revision is part of the public form; an intervening profile change

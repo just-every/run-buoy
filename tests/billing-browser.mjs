@@ -16,11 +16,11 @@ export async function billingBrowser(app,{connectionId,accountId,otherAccountId,
    const page=await context.newPage(),show=async id=>{const e=page.locator('#'+id);if(!await e.evaluate(e=>e.open))await e.locator(':scope > summary').click()}
    const proof=async(name,selector)=>{await scan(page,`Stripe billing ${name} ${width}`);if(evidence)await page.locator(selector).screenshot({path:join(evidence,`billing-${name}-${width}.png`),mask:[page.locator('[data-secret]:visible')]})}
    console.log('Stripe billing browser: opening native screen '+width)
-   await page.goto(app.origin+'/app/billing',{waitUntil:'networkidle'})
+   await page.goto(app.origin+'/app/connections',{waitUntil:'networkidle'});await submit(page,page.getByRole('link',{name:'Review Stripe billing and account bindings',exact:true}))
    assert.equal(await page.getByRole('heading',{name:'Stripe billing',exact:true,level:2}).count(),1)
    assert.ok((await page.locator('#billing-evidence').innerText()).includes('Monthly Stripe customer'))
    assert.ok((await page.locator('#billing-evidence').innerText()).includes('Annual Stripe customer'))
-   await proof('observations','#billing-evidence');await proof('changes','#billing-changes')
+   await proof('observations','#billing-evidence');const change=page.locator('#billing-changes details').first();await change.locator('summary').click();assert.match(await change.innerText(),/before|after/);await proof('changes','#billing-changes');await change.locator('summary').click()
    const before=(await api('/billing')).bindings.length
    await show('billing-bind-panel-'+connectionId)
    let form=page.locator('#billing-bind-preview--'+connectionId)
@@ -60,7 +60,7 @@ export async function billingBrowser(app,{connectionId,accountId,otherAccountId,
    await proof('reconciled','#billing-evidence')
    await page.setViewportSize({width:320,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'Stripe billing source references and forms reflow at 320')
    await page.setViewportSize({width,height:1000})
-   for(const id of [accountId,otherAccountId]){await page.goto(app.origin+'/app/accounts/'+id,{waitUntil:'networkidle'});assert.match(await page.locator('body').innerText(),/Stripe|stripe-test/);await proof('account-'+(id===accountId?'monthly':'annual'),'main')}
+   for(const id of [accountId,otherAccountId]){await page.goto(app.origin+'/app/accounts/'+id,{waitUntil:'networkidle'});assert.match(await page.locator('body').innerText(),/Stripe|stripe-test/);await proof('account-'+(id===accountId?'monthly':'annual'),'#stripe-billing');await proof('header-'+(id===accountId?'monthly':'annual'),'.head-row')}
   }finally{source.fail=false;await context.close()}
  }}finally{await browser.close()}
  assert.deepEqual(failures,[],'Stripe billing native accessibility')
