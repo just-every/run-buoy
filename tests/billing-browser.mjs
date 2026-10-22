@@ -20,7 +20,7 @@ export async function billingBrowser(app,{connectionId,accountId,otherAccountId,
    assert.equal(await page.getByRole('heading',{name:'Stripe billing',exact:true,level:2}).count(),1)
    assert.ok((await page.locator('#billing-evidence').innerText()).includes('Monthly Stripe customer'))
    assert.ok((await page.locator('#billing-evidence').innerText()).includes('Annual Stripe customer'))
-   await proof('observations','#billing-evidence');const change=page.locator('#billing-changes details').first();await change.locator('summary').click();assert.match(await change.innerText(),/before|after/);await proof('changes','#billing-changes');await change.locator('summary').click()
+   await proof('observations','#billing-evidence');await submit(page,page.locator('#billing-changes').getByRole('button',{name:'Details: Before and after subscription plans',exact:true}).first());const change=page.getByRole('dialog');assert.match(await change.innerText(),/before|after/);await proof('changes','dialog[open]');await submit(page,change.getByRole('button',{name:'Close details',exact:true}))
    const before=(await api('/billing')).bindings.length
    await show('billing-bind-panel-'+connectionId)
    let form=page.locator('#billing-bind-preview--'+connectionId)
