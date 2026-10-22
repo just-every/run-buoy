@@ -32,6 +32,9 @@ async function command(cwd,args,expected=0){
 }
 let running
 const stripe=billingSource()
+// Server-to-server intake carries no browser Origin header. Dispatch the exact
+// public HTTP request to the emitted Worker without a self-signed TLS transport.
+const intake=(path,body,secret)=>running.dispatch(new Request(running.origin+path,{method:'POST',headers:{authorization:'Bearer '+secret,'content-type':'application/json'},body:JSON.stringify(body)}))
 try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
  running=await startWorker({root:source,secure:true,providerFetch:stripe.fetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
@@ -56,7 +59,7 @@ try{
  // USAGE-001: source/queued observations are portable; ingestion authority is not.
  const usageSource=await call('/usage/sources','POST',{name:'Portable product source',kind:'native',reference:'Buyer license meter'})
  const usageCredential=await call('/usage/sources/'+usageSource.id+'/credentials','POST',{label:'Portable source key',scope:['event']})
- const usageIntake=()=>running.request('/api/buoy/usage/intake/'+usageSource.id,{method:'POST',headers:{authorization:'Bearer '+usageCredential.secret,'content-type':'application/json'},body:{type:'event',messageId:'portable-usage',event:'License opened',userId:'product-user',groupId:'product-company'}})
+ const usageIntake=()=>intake('/api/buoy/usage/intake/'+usageSource.id,{type:'event',messageId:'portable-usage',event:'License opened',userId:'product-user',groupId:'product-company'},usageCredential.secret)
  assert.equal((await usageIntake()).status,202)
  const usagePerson=await call('/customer-people','POST',{kind:'user',name:'Portable customer user',accountIds:[accountId],source:'Reviewed license directory'});
  await call('/customer-fields','POST',{key:'portable_seats',label:'Portable seats',type:'number'});
@@ -68,7 +71,7 @@ try{
  // ERASE-002: export and erase a separate source-linked customer before the archive.
  const privacyPerson=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-370',accountIds:[accountId],source:'Reviewed customer privacy register'});
  const privacyIdentity={type:'event',event:'Privacy archive fixture',messageId:'synthetic-buoy-371',userId:'synthetic-buoy-372',groupId:'synthetic-buoy-373'};
- const privacyIntake=secret=>running.request('/api/buoy/usage/intake/'+usageSource.id,{method:'POST',headers:{authorization:'Bearer '+secret,'content-type':'application/json'},body:privacyIdentity});
+ const privacyIntake=secret=>intake('/api/buoy/usage/intake/'+usageSource.id,privacyIdentity,secret);
  assert.equal((await privacyIntake(usageCredential.secret)).status,202);
  const privacyMapping={sourceId:usageSource.id,userId:privacyIdentity.userId,groupId:privacyIdentity.groupId,accountId,personId:privacyPerson.id};
  const privacyPreview=await call('/usage/mappings/preview','POST',privacyMapping);await call('/usage/mappings','POST',{...privacyMapping,fingerprint:privacyPreview.fingerprint});
@@ -84,7 +87,7 @@ try{
  const inappSegment=await call('/segments','POST',{name:'Portable launch customers',mode:'static',accountIds:[accountId],rules:{match:'all',conditions:[]},tier:null,stage:null,playbook:null});
  const inappCampaign=await call('/inapp/campaigns','POST',{sourceId:usageSource.id,segmentId:inappSegment.id,kind:'banner',title:'Portable reporting announcement',body:'Your reporting workspace is ready.',steps:[],maxViews:1,windowHours:24,enabled:true});
  const inappCredential=await call('/inapp/credentials','POST',{sourceId:usageSource.id,label:'Portable in-app server'});
- const inappSend=(action,body,credential=inappCredential.secret)=>running.request('/api/buoy/inapp/'+action+'/'+usageSource.id,{method:'POST',headers:{authorization:'Bearer '+credential,'content-type':'application/json'},body});
+ const inappSend=(action,body,credential=inappCredential.secret)=>intake('/api/buoy/inapp/'+action+'/'+usageSource.id,body,credential);
  const inappIdentity={userId:'product-user',groupId:'product-company'};
  const inappDelivery=(await (await inappSend('deliver',inappIdentity)).json()).messages[0];assert.equal(inappDelivery.id,inappCampaign.id);
  for(const kind of ['view','completion'])assert.equal((await inappSend('receipts',{...inappIdentity,campaignId:inappCampaign.id,deliveryId:inappDelivery.deliveryId,kind,messageId:'portable-'+kind})).status,202);
@@ -115,7 +118,7 @@ try{
  const recordIds=await seedRecordPortability(call,fixture.accounts[0],usagePerson.id);
  const webhookBook=await call('/playbooks','POST',{config:{name:'Portable webhook authority boundary',ownerId:(await call('/state')).operator.id,enabled:true,reentryDays:30,failureThreshold:3,trigger:{kind:'webhook'},entry:null,exit:null,steps:[{id:'review',kind:'approval',title:'Review portable webhook enrollment'}]}});
  const webhookKey=await call('/playbooks/'+webhookBook.id+'/credentials','POST',{accountIds:[accountId]});
- const webhookIntake=()=>running.request('/api/buoy/playbooks/intake/'+webhookBook.id,{method:'POST',headers:{authorization:'Bearer '+webhookKey.secret,'content-type':'application/json'},body:{accountId,operationKey:'synthetic-buoy-1760'}});
+ const webhookIntake=()=>intake('/api/buoy/playbooks/intake/'+webhookBook.id,{accountId,operationKey:'synthetic-buoy-1760'},webhookKey.secret);
  assert.equal((await webhookIntake()).status,202);
  const portableCard=await call('/scorecards/publish','POST',{revision:recordIds.card.revision,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
  const scorecardBefore=await call('/scorecards');
