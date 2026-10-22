@@ -1,4 +1,3 @@
-import {d1} from './commands.mjs'
 import assert from 'node:assert/strict'
 import {fileRecords} from '@runeditrun/rer/modules/portability/files'
 import {cp,mkdir,statfs,symlink} from 'node:fs/promises'
@@ -14,15 +13,7 @@ export async function copyInstallation(root,parent,name){
  await symlink(join(root,'node_modules'),join(target,'node_modules'),'dir')
  return target
 }
-export async function databaseBytes(root){
- // D1's own metadata reports logical database size. Counting SQLite WAL files
- // would project transient checkpoint traffic as retained service capacity.
- const result=await d1(root,['--command','SELECT 1 AS capacity_probe','--json'],{json:true})
- assert.ok(Array.isArray(result)&&result.length===1&&result[0].success,'D1 capacity probe completed')
- const bytes=result[0].meta?.size_after
- assert.ok(Number.isSafeInteger(bytes)&&bytes>0,'D1 reports a positive logical database size')
- return bytes
-}
+export {databaseBytes} from './capacity.mjs'
 export async function requireSpace(path,bytes){
  const fs=await statfs(path),available=fs.bavail*fs.bsize
  assert.ok(available>bytes,`SCALE-001 needs ${Math.ceil(bytes/1e9)} GB free for source, archive and restore; ${Math.floor(available/1e9)} GB available. No reduced-volume pass is permitted.`)
