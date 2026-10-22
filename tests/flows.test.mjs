@@ -518,7 +518,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   await t.test('BOUNDARY-001 no route moves money: every write route ran and only the sign-in mail edge was called',async()=>{
    // Full usage-volume and team journeys run unchanged in isolated installations.
    // Keep the central write-door inventory and denied ordinary-member boundary here.
-   for(const [method,path]of [['POST','/usage/sources'],['PUT','/usage/sources/synthetic-buoy-1500'],['POST','/usage/sources/synthetic-buoy-1500/credentials'],['DELETE','/usage/credentials/synthetic-buoy-1501'],['POST','/usage/mappings/preview'],['POST','/usage/mappings'],['PUT','/team/settings'],['POST','/team/preview'],['POST','/team/apply']])assert.equal((await call(path,method,{}, {cookie:member})).status,403)
+   for(const [method,path]of [['POST','/usage/intake/synthetic-buoy-1502'],['POST','/usage/sources'],['PUT','/usage/sources/synthetic-buoy-1500'],['POST','/usage/sources/synthetic-buoy-1500/credentials'],['DELETE','/usage/credentials/synthetic-buoy-1501'],['POST','/usage/mappings/preview'],['POST','/usage/mappings'],['PUT','/team/settings'],['POST','/team/preview'],['POST','/team/apply']])assert.equal((await call(path,method,{}, {cookie:member})).status,403)
    const {routes}=await json(await call('/routes'))
    assert.ok(routes.some(r=>r.path==='/api/buoy/commands'))
    for(const route of routes){
