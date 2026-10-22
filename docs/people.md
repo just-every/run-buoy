@@ -92,8 +92,8 @@ user digests refuse erased usage replay; no raw identity is kept in that fence.
 
 Receipts list explicitly recorded external system names, including reviewed usage
 sources. The manual holder inventory is unverified: Buoy does not claim to discover
-Salesforce/Zendesk records or delete anything there. Previously downloaded exports
-and installation archives must be handled separately. Connected email/timeline
+Salesforce/Zendesk records or delete anything there. Unlinked personal text in other records is not discovered; review it separately.
+Previously downloaded exports and installation archives must be handled separately. Connected email/timeline
 custody and the full connected-holder privacy acceptance remain unfinished. The
 current owner-only confirmation, digest and receipt/holder retention defaults
 remain subject to contract-policy review.

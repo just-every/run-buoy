@@ -40,7 +40,7 @@ export async function privacyState(db:D1Database,actor:Actor,personId:string){
  requirePerson(actor,true)
  const results=await db.batch([owner(db,actor),stmt(db,'SELECT document FROM buoy_customer_holders WHERE person_id=?',personId),stmt(db,'DELETE FROM buoy_assertions')])
  const row=results[1].results[0] as {document:string}|undefined
- return {holders:row?JSON.parse(row.document):[],notice:'Owner-recorded external holders are not verified connections. Buoy does not erase or export from external systems. Existing archives and downloaded exports must be handled separately.'}
+ return {holders:row?JSON.parse(row.document):[],notice:'Owner-recorded external holders are not verified connections. Buoy does not erase or export from external systems. Unlinked personal text, existing archives and downloaded exports must be reviewed separately.'}
 }
 export async function saveHolders(db:D1Database,actor:Actor,personId:string,input:Record<string,unknown>){
  requirePerson(actor,true)
@@ -61,7 +61,7 @@ export async function privacyRequest(db:D1Database,actor:Actor,personId:string,i
  insist(input.confirmation===current.person.name,'Type the customer name to confirm this privacy request.')
  const stamp=now(),receipt={id:id(),subject:current.subject,action,actor:`person:${actor.id}`,recordedAt:stamp,
   externalHolders:[...new Set(current.holders.map(h=>h.system))],counts:Object.fromEntries(Object.entries(current.data).filter(([k])=>!['declaredHolders','usageSources','subject'].includes(k)).map(([k,v])=>[k,v.length])),
-  scope:'Current Buoy customer record, memberships, typed values/history, received surveys, reviewed source-user usage (all groups), in-app deliveries/receipts, license custody, linked stakeholder roles/history and explicit identity-linked view definitions. External systems and previously downloaded archives/exports are not changed.'}
+  scope:'Current Buoy customer record, memberships, typed values/history, received surveys, reviewed source-user usage (all groups), in-app deliveries/receipts, license custody, linked stakeholder roles/history and explicit identity-linked view definitions. Unlinked personal text is not discovered. External systems and previously downloaded archives/exports are not changed.'}
  const statements=[owner(db,actor),guard(db,`(${current.sql})=?`,...current.params,current.raw)]
  if(action==='erased'){
   const identities=[...new Map(current.data.usageMappings.filter(m=>m.user_id).map(m=>[JSON.stringify([m.source_id,m.user_id]),m])).values()]

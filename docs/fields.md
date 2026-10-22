@@ -64,6 +64,6 @@ children. `descendantsSum(path)`, `descendantsAvg(path)` and
 once. They require the explicit hierarchy, refuse circular field dependencies,
 and explain their selected records. Empty hierarchy sums/counts are zero; an
 empty average is missing. Missing numeric inputs leave sums/averages unavailable.
-Hierarchical monetary rollups refuse missing or mixed currency context. They do
+Hierarchical monetary sums and averages refuse missing or mixed currency context. They do
 not convert currencies. These explicit field formulas are separate from the
 terminal-source ARR/health totals shown on an organization page.
