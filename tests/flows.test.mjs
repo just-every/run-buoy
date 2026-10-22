@@ -456,7 +456,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   for(const tail of ['hierarchy','scorecard'])assert.ok((await call('/accounts/synthetic-buoy-700/'+tail,'PUT',{})).status>=400)
   // Privacy doors share the same outbound/authority boundary inventory. The full
   // journey below uses its own installation to isolate its published scorecard.
-  for(const [tail,method,body] of [['holders','PUT',{revision:'stale',holders:[]}],['export','POST',{}],['erase','POST',{}]])assert.equal((await call('/customer-people/synthetic-buoy-260/privacy/'+tail,method,body)).status,404)
+  for(const [tail,method,body] of [['holders','PUT',{revision:'stale',holders:[]}],['export','POST',{}],['erase','POST',{}],['preview','POST',{}],['hold','POST',{}]])assert.equal((await call('/customer-people/synthetic-buoy-260/privacy/'+tail,method,body)).status,404)
   await t.test('USAGE-001 ACCOUNT-004 SEGMENT-001 complete contact and user carrier',async()=>customerPeopleJourney({call,json,request,cookie,member,account}))
   await t.test('SEGMENT-001 rules, classification, intervals, proposals, reports and erasure',async()=>segmentJourney({call,json,request,cookie,member,account,scheduled}))
   await t.test('PLAY-004 frozen cohorts, 40 playbooks, outcomes, observed times and comparison',async()=>outcomeJourney({call,json,request,cookie,member,account,scheduled}))
