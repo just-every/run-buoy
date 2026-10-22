@@ -44,7 +44,7 @@ export function ordered(defs:Definition[],baseFields=BASE_FIELDS) {
  const visit=(d:Definition)=>{
   if(visited.has(d.key))return
   insist(!active.has(d.key),'Calculated fields cannot have circular dependencies.');active.add(d.key)
-  try{validateFormula(d.formula!,references(defs,baseFields),baseFields===BASE_FIELDS)}catch(error){insist(false,error instanceof Error?error.message:'Invalid formula.')} 
+  try{validateFormula(d.formula!,references(defs,baseFields),baseFields===BASE_FIELDS)}catch(error){insist(false,error instanceof Error?error.message:'Invalid formula.')}
   for(const ref of formulaReferences(d.formula!)){const dep=pending.find(x=>`custom.${x.key}`===ref);if(dep)visit(dep)}
   active.delete(d.key);visited.add(d.key);done.push(d)
  }
