@@ -1,3 +1,4 @@
+import {scopedWorkspaceHome} from './roles/workspace'
 import {refreshBillingConsumers} from './billing-consumers'
 import {billingApi,billingIngest} from './billing'
 import {roleAccess,projectState,scopedSearch,rolesState,saveRole,assignRole,clearAssignment} from './roles'
@@ -79,8 +80,9 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  const profile=await roleAccess(c.env.DB,actor)
  if(profile.restricted){
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/state')return c.json(await projectState(c.env.DB,actor,await state(c.env.DB,actor),profile))
+  if(c.req.method==='GET'&&c.req.path==='/api/buoy/workspace/home')return c.json(await scopedWorkspaceHome(c.env.DB,actor,c.req.query('person'),profile))
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/search')return c.json(await scopedSearch(c.env.DB,actor,new URL(c.req.url).searchParams,profile))
-  throw new Problem(403,'This door is not available to assigned profiles yet. Scoped account reads and search remain available.')
+  throw new Problem(403,'This door is not available to assigned profiles yet. Scoped account reads, home and search remain available.')
  }
  await generateRenewals(c.env.DB)
  await refreshPeople(c.env.DB,actor)

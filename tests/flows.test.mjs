@@ -1,3 +1,4 @@
+import {roleWorkspaceJourney} from './roles-workspace.mjs'
 import {roleConfigurationJourney,roleReadJourney,roleScopeJourney,roleIsolationJourney} from './roles-journey.mjs'
 import {reportingJourney} from './reporting-journey.mjs'
 import {playJourney,playTriggerJourney,playIntakeJourney,playFieldJourney,playChildJourney,playCalendarJourney} from './play-journey.mjs'
@@ -596,3 +597,5 @@ test('ROLE-001 configuration, native isolation and audited grants',roleConfigura
 test('ROLE-001 default and custom account reads',roleReadJourney)
 test('ROLE-001 live book, manager, segment and identity withdrawal',roleScopeJourney)
 test('ROLE-001 commercial, search and unported door isolation',roleIsolationJourney)
+
+test('ROLE-001 scoped homes use current books, handlers and safe commercial fields', roleWorkspaceJourney)
