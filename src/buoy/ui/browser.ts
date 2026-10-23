@@ -18,13 +18,13 @@ export const browserScript = `(() => {
   if (saved && storage) { const split = saved.indexOf('|'); if (split > 0 && saved.startsWith('/app')) storage.removeItem('buoy:draft:' + saved.slice(0, split) + ':' + saved.slice(split + 1)); }
   // A successful reviewed multi-form operation clears drafts of its whole group
   // before restoration, so a prior receipt cannot put its stale revision back.
-  if (saved && storage) { const split = saved.indexOf('|'); if (split > 0) { const path = saved.slice(0, split), group = saved.slice(split + 1); for (const form of document.querySelectorAll('form[data-draft-group]')) if (form.dataset.draftGroup === group) storage.removeItem('buoy:draft:' + path + ':' + form.id); } }
+  if (saved && storage) { const split = saved.indexOf('|'); if (split > 0) { const path = saved.slice(0, split), group = saved.slice(split + 1); for (const form of document.querySelectorAll('form[data-draft-group]')) if (form.dataset.draftGroup === group) storage.removeItem('buoy:draft:' + path + ':' + form.getAttribute('id')); } }
   if (saved && storage && saved.endsWith('|delete')) { for (const key of Object.keys(storage)) if (key.startsWith('buoy:draft:')) storage.removeItem(key); }
   if (saved) { url.searchParams.delete('saved'); history.replaceState(null, '', url); }
   const error = document.querySelector('[data-form-error]');
   if (error) { error.tabIndex = -1; error.focus(); }
   for (const form of document.querySelectorAll('form[data-draft]')) {
-    const key = 'buoy:draft:' + location.pathname + ':' + form.id;
+    const key = 'buoy:draft:' + location.pathname + ':' + form.getAttribute('id');
     const fields = [...form.elements].filter(el => el.name && !['hidden','submit'].includes(el.type));
     if (error) { form.setAttribute('aria-describedby', 'form-error'); for (const el of fields) el.setAttribute('aria-describedby', 'form-error'); }
     if (storage && !error) {
