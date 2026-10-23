@@ -64,6 +64,6 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  else if(/^\/app\/accounts\/[^/]+$/.test(path)){
   const account=state.accounts.find(a=>a.id===accountId);title=account?.name??'Account unavailable';status=account?200:404;body=scopedAccountsPage(state,accountId)
  }else{status=403;title='Access unavailable';body=section(title,'<p>This page is not available to your assigned profile.</p><p><a href="/app">Open accounts in your scope</a></p>')}
- const response=await shell({title,body,state,current:['/app/search','/app/workspace','/app/revenue','/app/approvals','/app/forecast'].includes(path)?path:'/app',status,error,success:path==='/app/approvals'&&url.searchParams.get('recorded')==='1'?'Renewal outcome recorded.':undefined,backToAccounts:path.startsWith('/app/accounts/')})
+ const response=await shell({title,body,state,current:['/app/reports','/app/search','/app/workspace','/app/revenue','/app/approvals','/app/forecast'].includes(path)?path:'/app',status,error,success:path==='/app/approvals'&&url.searchParams.get('recorded')==='1'?'Renewal outcome recorded.':undefined,backToAccounts:path.startsWith('/app/accounts/')})
  return request.method==='HEAD'?new Response(null,{status:response.status,headers:response.headers}):response
 }
