@@ -26,8 +26,9 @@ export function reportInput(value:unknown,catalog:Catalog,roleIds:string[]):Repo
 }
 export function requiredFields(spec:ReportSpec){return [...new Set([spec.groupBy,...spec.rules.conditions.map(c=>c.field),...(spec.operation==='count'?[]:spec.formula?formulaReferences(spec.formula):[spec.measure])])]}
 export function calculateReport(spec:ReportSpec,source:ReportRow[]){
+ const moneyFormula=spec.formula&&formulaReferences(spec.formula).some(k=>/Minor$/.test(k))
  const rows=source.filter(r=>matches(spec.rules,r.values)),portfolio=rows.map(r=>r.values)
- const inputs=rows.map(row=>{const result=spec.operation==='count'?{value:1,explanation:'One matching account',inputs:{id:row.id}}:spec.formula?evaluateFormula(spec.formula,row.values,portfolio):{value:row.values[spec.measure]??null,explanation:'Current '+spec.measure,inputs:{[spec.measure]:row.values[spec.measure]??null}};return {...row,value:typeof result.value==='number'&&Number.isFinite(result.value)?result.value:null,explanation:result.explanation,inputs:result.inputs}})
+ const inputs=rows.map(row=>{const result=spec.operation==='count'?{value:1,explanation:'One matching account',inputs:{id:row.id}}:spec.formula?evaluateFormula(spec.formula,row.values,moneyFormula?rows.filter(r=>r.currency===row.currency).map(r=>r.values):portfolio):{value:row.values[spec.measure]??null,explanation:'Current '+spec.measure,inputs:{[spec.measure]:row.values[spec.measure]??null}};return {...row,value:typeof result.value==='number'&&Number.isFinite(result.value)?result.value:null,explanation:result.explanation,inputs:result.inputs}})
  // A measure or calculation referencing native money always retains currency;
  // totals across currencies are never fabricated. Unknown currency has its own group.
  const monetary=spec.operation!=='count'&&requiredFields({...spec,rules:{match:'all',conditions:[]}}).some(k=>/Minor$/.test(k)),grouped=new Map<string,typeof inputs>()
