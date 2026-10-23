@@ -81,10 +81,10 @@ export async function forecastState(db:D1Database,actor:Actor,query=new URLSearc
  return {window:w,records:filtered,baseline,summary,previous,snapshot:selected??null,snapshots:snapshots.filter(s=>!w.closed||s.evaluationDay<=w.end),movements,groups:{csms:grouping('ownerId'),teams:grouping('teamIds'),segments:grouping('segmentIds')},filters:{people:scopedPeople,teams:scopedTeams,segments:scopedSegments},accuracy,gaps,canSnapshot:!a.role.restricted&&['owner','admin'].includes(actor.role),interpretation:'Judgments over current retained sources, not guaranteed predictions or proof of causation. UTC month/quarter; expected and best case use open expected ARR plus known closed actuals, worst case uses commit plus known closed actuals. No probability weighting. Closed native actuals are human-approved outcomes; Stripe actuals require a later provider observation. Deferred, unclosed, stale or missing inputs remain explicit. USD converts each native amount at its renewal-date rate with half-up cents; each weekly snapshot retains its original rate and inputs. Accuracy compares the retained forecast with all closed actuals only for the same complete cohort. Current filters and access apply to both; current data is not historical reconstruction.'}
 }
 export async function overrideForecast(db:D1Database,actor:Actor,renewalId:string,input:Record<string,unknown>){
- insist(Object.keys(input).every(k=>['revision','category','reason'].includes(k)),'Unsupported override property.')
- const reason=text(input.reason,'Override reason',1000);insist(['commit','likely','at-risk'].includes(String(input.category)),'Choose commit, likely or at-risk.')
  const a=await access(db,actor),current=await image(db),record=records(current.value,now().slice(0,10)).find(r=>r.id===renewalId)
  insist(record&&mayOverride(actor,a,record),'This renewal is outside your forecast override authority.',403)
+ insist(Object.keys(input).every(k=>['revision','category','reason'].includes(k)),'Unsupported override property.')
+ const reason=text(input.reason,'Override reason',1000);insist(['commit','likely','at-risk'].includes(String(input.category)),'Choose commit, likely or at-risk.')
  const source=current.value.renewals.find(r=>r.id===renewalId)!
  insist(source.revision===input.revision&&!source.document.outcome,'Renewal changed or closed. Reload before overriding.',409)
  const override={from:source.document.forecast,to:String(input.category),reason,actor:'person:'+actor.id,at:now()},next={...source.document,forecast:input.category,forecastOverride:override}
