@@ -11,7 +11,6 @@ import {importClient} from './import-door-client.mjs'
 import {scan,failures,manual} from './a11y-checks.mjs'
 const target=(source,id)=>'migration_'+createHash('sha256').update(JSON.stringify([source,id])).digest('hex').slice(0,40)
 const account=(id,extra={})=>({id,name:'Synthetic account '+id,renewalDate:'2027-03-31',noticeDays:'30',renewalEvidence:'synthetic-buoy-1',...extra})
-const envelope=(source,accounts,extra={})=>({format:'buoy-migration-v1',source,dateOrder:'iso',data:{accounts},...extra})
 const client=(app,source)=>importClient((path,options)=>app.request(path,{...options,headers:{...options.headers,'x-buoy-import-source':source}}),app.cookie)
 const state=async app=>(await (await app.request('/api/buoy/state',{cookie:app.cookie})).json()).accounts
 const bundle=csv=>({format:'buoy-migration-v1',source:'csv',dateOrder:'day-first',csv,originalSha256:createHash('sha256').update(csv).digest('hex'),columns:{id:'Customer',name:'Company',renewalDate:'Renewal',noticeDays:'Notice',renewalEvidence:'Evidence',invoiceTotal:'Amount',invoiceCurrency:'Currency',invoiceObservedAt:'Observed',invoiceDueDate:'Due'}})

@@ -3,7 +3,7 @@ export function csvRows(text: string): string[][] {
  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
  const rows: string[][] = []; let row: string[] = [], field = '', quoted = false, closed = false
  const endField = () => { row.push(field); field = ''; closed = false }
- const endRow = () => { endField(); rows.push(row); row = [] }
+ const endRow = () => { endField(); rows.push(row); if (rows.length > 2001) throw new Error('CSV exceeds 2000 data rows.'); row = [] }
  for (let i=0;i<text.length;i++) {
   const char = text[i]
   if (quoted) {
