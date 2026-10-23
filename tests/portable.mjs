@@ -79,8 +79,18 @@ try{
  const privacyExport=await call('/customer-people/'+privacyPerson.id+'/privacy/export','POST',privacyBody);
  const privacyDiscovery=await call('/customer-people/'+privacyPerson.id+'/privacy/preview','POST',{revision:privacyBody.revision,emails:[]});
  const privacyErased=await call('/customer-people/'+privacyPerson.id+'/privacy/erase','POST',{...privacyBody,fingerprint:privacyDiscovery.fingerprint,emails:[],redactions:[]});
- const privacyRequestsBefore=await call('/privacy/requests');
- const privacyReceiptsBefore=await call('/privacy/receipts');
+ await call('/accounts','POST',{...fixture.accounts[0],id:'synthetic-buoy-375',name:'Held customer workspace'})
+ const heldPerson=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-374',accountIds:['synthetic-buoy-375'],source:'Verified retention request'})
+ const heldCurrent=async()=>(await call('/customer-people')).records.find(p=>p.id===heldPerson.id)
+ await call('/customer-people/'+heldPerson.id+'/privacy/hold','POST',{revision:(await heldCurrent()).revision,confirmation:'synthetic-buoy-374',operation:'set',reason:'legal-obligation'})
+ for(const portable_seats of [4,8])await call('/customer-people/'+heldPerson.id+'/fields','PUT',{revision:(await heldCurrent()).revision,values:{portable_seats},source:'Held customer revision'})
+ const heldBody={revision:(await heldCurrent()).revision,confirmation:'synthetic-buoy-374',request:{verificationMethod:'verified-offline',receivedDate:new Date().toISOString().slice(0,10),requesterReference:randomUUID()}}
+ const heldExport=await call('/customer-people/'+heldPerson.id+'/privacy/export','POST',heldBody)
+ let heldVersionsBefore=heldExport.records.heldVersions
+ assert.ok(heldVersionsBefore.some(v=>v.record_kind==='buoy_customer_values'&&JSON.parse(JSON.parse(v.document).document).portable_seats===4),'The intermediate held version is exported before backup')
+
+ let privacyRequestsBefore=await call('/privacy/requests');
+ let privacyReceiptsBefore=await call('/privacy/receipts');
  assert.equal(privacyExport.receipt.subject,privacyErased.receipt.subject);
  personState=await call('/customer-people');
  // INAPP-001 real archive: messages and receipts survive; dedicated authority does not.
@@ -132,8 +142,14 @@ try{
  personState=await call('/customer-people');
  adoptionBefore=await call('/adoption');
  consumersBefore=await call('/adoption/consumers');
+
  const recordImage=await recordPortabilityImage(call,recordIds);
  const billingImage=await billingPortabilityImage(call,billingIds);
+ // Later fixture writes can legitimately add held account revisions. Compare
+ // restoration with the complete source image immediately before archiving.
+ const heldBeforeArchive=await call('/customer-people/'+heldPerson.id+'/privacy/export','POST',{...heldBody,revision:(await heldCurrent()).revision})
+ heldVersionsBefore=heldBeforeArchive.records.heldVersions
+ privacyRequestsBefore=await call('/privacy/requests');privacyReceiptsBefore=await call('/privacy/receipts')
  const before=await call('/state'), beforeAudit=await allAudit(),sourceCallsBeforeRestore=stripe.calls.length
  assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
@@ -219,6 +235,10 @@ try{
  assert.ok(restored.some(e=>e.action==='customer.exported'&&e.subject===privacyErased.receipt.subject));
  assert.ok(restored.some(e=>e.action==='customer.erased'&&e.subject===privacyErased.receipt.subject));
  assert.ok(!(await call('/customer-people')).records.some(p=>p.id===privacyPerson.id),'ERASE-002 erased customer stays absent after restore');
+ const restoredHeld=await call('/customer-people/'+heldPerson.id+'/privacy/export','POST',{...heldBody,revision:(await heldCurrent()).revision})
+ assert.deepEqual(restoredHeld.records.heldVersions,heldVersionsBefore,'Every retained hold version survives real archive restoration')
+ const restoredHoldPreview=await call('/customer-people/'+heldPerson.id+'/privacy/preview','POST',{revision:(await heldCurrent()).revision,emails:[]})
+ assert.equal(restoredHoldPreview.held,true,'A restored hold does not release automatically')
 
  assert.deepEqual(await call('/usage/events'),usageEvents,'USAGE-001 queued payload/provenance survives the real archive')
  const usageAfter=await call('/usage');assert.equal(usageAfter.sources[0].id,usageSource.id);assert.equal(usageAfter.sources[0].eventCount,3);assert.equal(usageAfter.credentials.length,0)

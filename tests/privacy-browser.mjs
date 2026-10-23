@@ -18,6 +18,7 @@ export async function privacyBrowser(browser,evidence){
    const person=await call('/customer-people','POST',{kind:width===1440?'contact':'user',name:'synthetic-buoy-'+width,accountIds:[account.id],source:'Reviewed customer directory'})
    const email='synthetic-buoy-'+width+'@example.test'
    const intake=await app.dispatch(new Request(app.origin+'/api/buoy/usage/intake/'+source.id,{method:'POST',headers:{authorization:'Bearer '+credential.secret,'content-type':'application/json'},body:JSON.stringify({type:'event',event:'Privacy browser event',messageId:'synthetic-buoy-'+width,userId:'synthetic-buoy-3902',properties:{customerName:'synthetic-buoy-'+width,email}})}));assert.equal(intake.status,202)
+   await call('/accounts/'+account.id+'/sentiment','POST',{rating:'amber',reason:'Conversation with synthetic-buoy-'+width,days:30})
    const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
    try{
     await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return {name,value:rest.join('='),url:app.origin}}))
@@ -56,7 +57,7 @@ export async function privacyBrowser(browser,evidence){
     const preview=async()=>{await show('privacy-preview-panel');const form=page.locator('#privacy-preview');await form.getByLabel('Customer emails (one per line)',{exact:true}).fill(email);await submit(page,form.getByRole('button',{name:'Preview customer redactions',exact:true}));assert.equal(await page.locator('[role=alert]').count(),0)}
     await preview();form=page.locator('#privacy-erase');await verified(form)
     await form.getByLabel('Type customer name to confirm erase',{exact:true}).fill('synthetic-buoy-'+width)
-    assert.equal(await form.locator('input[type=checkbox]:disabled').count(),2)
+    assert.equal(await form.locator('input[type=checkbox]:disabled').count(),3)
     await proof('held-preview')
     await submit(page,form.getByRole('button',{name:'Confirm customer erasure',exact:true}))
     assert.equal(await page.locator('[role=alert]').count(),0);assert.match(await page.locator('#privacy-receipts').innerText(),/Retained under hold/)
@@ -66,7 +67,8 @@ export async function privacyBrowser(browser,evidence){
     await form.getByLabel('Hold reason',{exact:true}).selectOption('review-completed')
     await submit(page,form.getByRole('button',{name:'Release customer hold',exact:true}));assert.equal(await page.locator('[role=alert]').count(),0)
     await preview();form=page.locator('#privacy-erase');await verified(form)
-    assert.equal(await form.locator('input[type=checkbox]').count(),2)
+    assert.equal(await form.locator('input[type=checkbox]').count(),3)
+    assert.match(await form.innerText(),/sentiment[\s\S]*reason/)
     for(const choice of await form.locator('input[type=checkbox]').all())await choice.check()
     await form.getByLabel('Type customer name to confirm erase',{exact:true}).fill('synthetic-buoy-'+width)
     await proof('erase-confirmation')
@@ -76,6 +78,7 @@ export async function privacyBrowser(browser,evidence){
     assert.match(await page.locator('#privacy-receipts').innerText(),/Salesforce, Zendesk/)
     assert.ok(!(await page.locator('#work').innerText()).includes('synthetic-buoy-'+width))
     const events=await call('/usage/events?sourceId='+source.id);assert.ok(!JSON.stringify(events).includes(email));assert.ok(!JSON.stringify(events).includes('customerName\":\"synthetic-buoy-'+width))
+    assert.ok(!JSON.stringify(await call('/accounts/'+account.id+'/activity')).includes('synthetic-buoy-'+width),'Selected native note disappears from the activity door')
     assert.ok((await call('/state')).accounts.some(a=>a.id===account.id));await proof('receipt')
    }finally{await context.close()}
   }

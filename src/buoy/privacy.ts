@@ -11,6 +11,7 @@ export const owner=(db:D1Database,actor:Actor)=>{requirePerson(actor,true);retur
 // schema-owned column names. No user text is interpolated into SQL.
 const stores=[
  ['hold','buoy_privacy_holds','person_id=?'],
+ ['heldVersions','buoy_privacy_hold_versions','person_id=?'],
  ['person','buoy_customer_people','id=?'],['subject','buoy_customer_subjects','person_id=?'],
  ['memberships','buoy_customer_memberships','person_id=?'],['manualFields','buoy_customer_values','person_id=?'],
  ['calculatedFields','buoy_customer_results','person_id=?'],['fieldHistory','buoy_customer_history','person_id=?'],
@@ -48,7 +49,7 @@ export async function privacyState(db:D1Database,actor:Actor,personId:string){
  const results=await db.batch([owner(db,actor),stmt(db,'SELECT document FROM buoy_customer_holders WHERE person_id=?',personId),stmt(db,'DELETE FROM buoy_assertions')])
  const row=results[1].results[0] as {document:string}|undefined
  const hold=await stmt(db,'SELECT subject,actor,recorded_at AS recordedAt,reason FROM buoy_privacy_holds WHERE person_id=?',personId).first()
- return {holders:row?JSON.parse(row.document):[],hold,notice:'Owner-recorded external holders are not verified connections. Buoy does not erase or export from external systems. Preview exact name and email matches in usage properties, traits and context before erasure. Other free text, existing archives and downloaded exports must be reviewed separately. Holds never release automatically.'}
+ return {holders:row?JSON.parse(row.document):[],hold,notice:'Owner-recorded external holders are not verified connections. Buoy does not erase or export from external systems. Preview exact name and email matches in usage properties, traits, context and native work notes before erasure. Retained source snapshots, other free text, existing archives and downloaded exports must be reviewed separately. Holds never release automatically.'}
 }
 export async function saveHolders(db:D1Database,actor:Actor,personId:string,input:Record<string,unknown>){
  requirePerson(actor,true)
@@ -80,7 +81,7 @@ export async function privacyPreview(db:D1Database,actor:Actor,personId:string,i
  await db.batch([owner(db,actor),guard(db,`(${current.sql})=?`,...current.params,current.raw),discovery.guard(),stmt(db,'DELETE FROM buoy_assertions')])
  return {fingerprint:await privacyFingerprint(replay.key,[current.raw,discovery.raw,discovery.terms]),matches:discovery.matches,
   held:current.data.hold.length>0||current.data.businessReviewHolds.length>0,counts:Object.fromEntries(Object.entries(current.data).filter(([k])=>!['hold','subject','usageSources','declaredHolders'].includes(k)).map(([k,v])=>[k,v.length])),
-  notice:'Exact, case-sensitive name/email phrases only; longer words and identifiers remain unchanged. Review each selected replacement. Coverage: usage properties, traits and context. Other free text and external systems need separate review. A linked business review with held customer facts retains the affected customer until that hold is explicitly released.'}
+  notice:'Exact, case-sensitive name and email phrases only; longer words and identifiers remain unchanged. Review each selected replacement. Coverage: usage properties, traits and context; proposal titles, reasons and evidence; task titles, outcomes and evidence; renewal decision reasons and evidence; sentiment reasons; handover notes; account renewal, billing and support evidence references and their retained proposal copies. Native notes on an account containing held customer records are retained. Other source snapshots, other free text and external systems need separate review. A linked business review with held customer facts retains the affected customer until that hold is explicitly released.'}
 }
 export async function privacyHold(db:D1Database,actor:Actor,personId:string,input:Record<string,unknown>){
  requirePerson(actor,true)
@@ -109,20 +110,22 @@ export async function privacyRequest(db:D1Database,actor:Actor,personId:string,i
  insist(current.person.revision===input.revision,'Customer person changed. Reload before continuing.',409)
  insist(input.confirmation===current.person.name,'Type the customer name to confirm this privacy request.')
  const verified=requestRecord(input.request),replay=await replayKey(db)
- const discovery=action==='erased'?await discover(db,replay.key,current.person,input.emails??[]):null
+ const reviewed=await discover(db,replay.key,current.person,input.emails??[]),discovery=action==='erased'?reviewed:null
  if(discovery)insist(input.fingerprint===await privacyFingerprint(replay.key,[current.raw,discovery.raw,discovery.terms]),'Privacy evidence changed. Preview and review again.',409)
  const held=!!(current.data.hold.length||current.data.businessReviewHolds.length)
  const selected=input.redactions??[]
  insist(Array.isArray(selected)&&selected.every(x=>typeof x==='string'),'Select reviewed redactions.')
+ insist(action==='erased'||selected.length===0,'Export does not apply text replacements.')
  insist(!held||selected.length===0,'A held customer is retained; no redactions are applied.',409)
  const stamp=now(),receipt={id:id(),subject:current.subject,action:action==='erased'&&held?'erasure-held':action,actor:`person:${actor.id}`,recordedAt:stamp,
   externalHolders:[...new Set(current.holders.map(h=>h.system))],counts:Object.fromEntries(Object.entries(current.data).filter(([k])=>!['hold','declaredHolders','usageSources','subject'].includes(k)).map(([k,v])=>[k,v.length])),
   retained:held?Object.fromEntries(Object.entries(current.data).filter(([k])=>!['hold','subject'].includes(k)).map(([k,v])=>[k,v.length])):{},
   redacted:held?0:selected.length,unreviewedMatches:discovery?discovery.matches.length-selected.length:0,
   outcome:action==='exported'?'exported':held?'held':'erased',
-  scope:'Current linked Buoy customer records; selected exact usage free-text matches only. A hold retains the whole customer and its saved hold snapshot. Unselected matches, other free text, external systems and previously downloaded archives/exports are not changed.'}
+  scope:'Current linked Buoy customer records; selected exact usage and native work-note matches only. A hold retains the whole customer, its baseline snapshot and captured later linked record versions until explicit release. Unselected or held matches, source snapshots, other free text, external systems and previously downloaded archives and exports are not changed.'}
  const statements=[owner(db,actor),guard(db,`(${current.sql})=?`,...current.params,current.raw),replay.guard()]
- if(discovery)statements.push(discovery.guard(),...discovery.statements(selected as string[]))
+ statements.push(reviewed.guard())
+ if(discovery)statements.push(...discovery.statements(selected as string[]))
  if(action==='erased'&&!held){
   const identities=[...new Map(current.data.usageMappings.filter(m=>m.user_id).map(m=>[JSON.stringify([m.source_id,m.user_id]),m])).values()]
   for(const m of identities)statements.push(stmt(db,'INSERT OR IGNORE INTO buoy_erased_usage_identities(source_id,identity_hash) VALUES(?,?)',m.source_id,await erasedIdentity(replay.key,String(m.source_id),String(m.user_id))))
@@ -132,7 +135,7 @@ export async function privacyRequest(db:D1Database,actor:Actor,personId:string,i
   stmt(db,'INSERT INTO buoy_privacy_requests(id,subject,verification_method,received_date,requester_reference) VALUES(?,?,?,?,?)',receipt.id,receipt.subject,verified.verificationMethod,verified.receivedDate,verified.requesterReference),
   auditRecord(db,actor,action==='erased'&&held?'customer.erasure-held':'customer.'+action,receipt.subject),stmt(db,'DELETE FROM buoy_assertions'))
  await db.batch(statements)
- return action==='exported'?{receipt,format:'buoy-customer-export/v1',records:current.data}: {receipt}
+ return action==='exported'?{receipt,format:'buoy-customer-export/v1',records:{...current.data,freeTextMatches:reviewed.matches}}: {receipt}
 }
 export const privacyApi=new Hono<{Bindings:Bindings;Variables:{actor:Actor}}>()
 privacyApi.get('/api/buoy/privacy/receipts',async c=>{const actor=c.get('actor');requirePerson(actor,true);const result=await c.env.DB.batch([owner(c.env.DB,actor),stmt(c.env.DB,'SELECT document FROM buoy_privacy_receipts ORDER BY recorded_at DESC,id'),stmt(c.env.DB,'DELETE FROM buoy_assertions')]);return c.json({receipts:result[1].results.map(r=>JSON.parse(String((r as {document:string}).document)))})})

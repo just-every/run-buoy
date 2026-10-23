@@ -1,8 +1,9 @@
 import {guard,insist,stmt} from '../core'
 import {privacyFingerprint} from './replay'
-export interface Match {id:string;recordId:string;path:string;before:string;after:string;held:boolean}
+import {nativeText,NATIVE_TEXT_SQL} from './native-text'
+export interface Match {id:string;recordId:string;recordKind:string;path:string;before:string;after:string;held:boolean}
 interface UsageRow {id:string;payload:string;held:number;linked:number}
-// These are free-text containers, not identity/routing fields. Structural IDs,
+// These are free-text containers, not identity or routing fields. Structural IDs,
 // event names and JSON property names are never rewritten as a side effect.
 const containers=['properties','traits','context']
 function redact(value:string,terms:string[]){
@@ -31,7 +32,7 @@ export async function discover(db:D1Database,key:CryptoKey,person:{id:string;nam
     const after=redact(value,terms)
     if(after!==value){
      const id=await privacyFingerprint(key,[row.id,path,value])
-     matches.push({id,recordId:row.id,path:JSON.stringify(path),before:value,after,held:!!row.held});changes.push({path,id,after})
+     matches.push({id,recordId:row.id,recordKind:'usage',path:JSON.stringify(path),before:value,after,held:!!row.held});changes.push({path,id,after})
     }
    }else if(Array.isArray(value)){for(let i=0;i<value.length;i++)await visit(value[i],[...path,i])}
    else if(value&&typeof value==='object'){for(const key of Object.keys(value).sort())await visit((value as Record<string,unknown>)[key],[...path,key])}
@@ -39,10 +40,12 @@ export async function discover(db:D1Database,key:CryptoKey,person:{id:string;nam
   for(const container of containers)await visit(document[container],[container])
   if(changes.length)patches.set(row.id,{payload:row.payload,changes})
  }
- return {raw,matches,terms,guard:()=>guard(db,`(${DISCOVERY_SQL.replace(' AS snapshot','')})=?`,person.id,raw),
+ const native=await nativeText(db,key,value=>redact(value,terms))
+ matches.push(...native.matches)
+ return {raw:JSON.stringify([raw,native.raw]),matches,terms,guard:()=>guard(db,`(${DISCOVERY_SQL.replace(' AS snapshot','')})=? AND (${NATIVE_TEXT_SQL})=?`,person.id,raw,native.raw),
   statements(selected:string[]){
    insist(new Set(selected).size===selected.length&&selected.every(id=>matches.some(m=>m.id===id&&!m.held)),'Select only current, unheld preview matches.')
-   const statements=[]
+   const statements=native.statements(selected)
    for(const [id,patch] of patches){
     const changes=patch.changes.filter(c=>selected.includes(c.id));if(!changes.length)continue
     const document=JSON.parse(patch.payload)

@@ -7,7 +7,7 @@ export async function privacyCommand(api,person,action){
  const body={revision:person.revision,confirmation:person.name,request:{verificationMethod:'verified-offline',receivedDate:new Date().toISOString().slice(0,10),requesterReference:randomUUID()}}
  if(action==='erase'){
   const preview=await api(path+'preview','POST',{revision:person.revision,emails:[]})
-  assert.equal(preview.matches.length,0,'The related-record fixture has no unlinked usage text to redact')
+  assert.equal(preview.matches.length,0,'The related-record fixture has no unlinked text to redact')
   Object.assign(body,{fingerprint:preview.fingerprint,emails:[],redactions:[]})
  }
  return api(path+action,'POST',body)
@@ -46,6 +46,20 @@ export async function eraseJourney({call,json,request,cookie,member,signIn,accou
   await json(await inappCall('receipts',{userId,groupId:'one',campaignId:campaign.id,deliveryId:delivered.messages[0].deliveryId,kind:'view',messageId:'synthetic-buoy-'+(310+index)}),202)
   for(const [respondent,value] of [[target.id,0],[other.id,10]])await json(await call('/surveys/responses','POST',{accountId:base,personId:respondent,surveyName:'Privacy survey',kind:'nps',value,observedAt:new Date(Date.now()-1000).toISOString(),reference:'Received privacy fixture survey',sourceResponseId:'synthetic-buoy-'+(320+index)+'-'+respondent,accountRevision:await accountRevision()}),201)
   await json(await call('/adoption/person-licenses','PUT',{accountId:base,personId:target.id,licensed:true,reference:'Confirmed customer license',observedAt:new Date().toISOString().slice(0,10)}))
+  const otherAccount=(await json(await call('/state'))).accounts.find(a=>a.id===ids[1])
+  await json(await call('/surveys/responses','POST',{accountId:ids[1],personId:other.id,surveyName:'Separate account health',kind:'nps',value:0,observedAt:new Date(Date.now()-1000).toISOString(),reference:'Received separate account survey',sourceResponseId:'synthetic-buoy-native-'+index,accountRevision:otherAccount.revision}),201)
+  const nativeSource={...account(ids[1]),name:ids[1],renewalEvidence:'Terms reviewed by '+name,billing:{...account(ids[1]).billing,reference:'Invoice reviewed by '+name},support:{...account(ids[1]).support,reference:'Case opened by '+name}}
+  await json(await call('/accounts/'+ids[1],'PUT',{...nativeSource,revision:(await json(await call('/state'))).accounts.find(a=>a.id===ids[1]).revision}))
+  // Create native narrative records through their ordinary public doors.
+  const taskProposal=await json(await call('/proposals','POST',{accountId:ids[1],kind:'playbook',payload:{title:'Follow up with '+name,dueDate:'2027-03-01'}}),201)
+  await json(await call('/proposals/'+taskProposal.id+'/approve','POST',{}))
+  const nativeTask=(await json(await call('/state'))).tasks.find(t=>t.proposalId===taskProposal.id)
+  await json(await call('/tasks/'+nativeTask.id+'/complete','POST',{outcome:'Resolved for '+name,evidence:'Confirmed by synthetic-buoy-'+index+'@example.test'}))
+  const renewal=await json(await call('/proposals','POST',{accountId:ids[1],kind:'renewal',payload:{outcome:'renewed',reason:'Confirmed with '+name,evidence:'Letter from '+name}}),201)
+  await json(await call('/proposals/'+renewal.id+'/approve','POST',{}))
+  await json(await call('/accounts/'+ids[1]+'/sentiment','POST',{rating:'amber',reason:'Spoke with '+name,days:30}),201)
+  const staff=(await json(await call('/state'))).people
+  await json(await call('/accounts/'+ids[1]+'/owner','PUT',{ownerId:staff.find(p=>p.role===(index===0?'owner':'admin')).id,note:'Handover discussed with '+name}))
   const card=await json(await call('/scorecards'))
   await json(await call('/scorecards/publish','POST',{revision:card.revision,config:{name:'Privacy survey health',measures:[{key:'nps',name:'Received NPS',field:'survey.nps',min:-100,max:100,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}}),201)
   const beforeCards=await json(await call('/scorecards')),oldHistory=[],unrelatedHistory=[]
@@ -75,7 +89,12 @@ export async function eraseJourney({call,json,request,cookie,member,signIn,accou
   const emails=['synthetic-buoy-'+index+'@example.test']
   const previewBody=()=>({revision:body.revision,emails})
   let discovery=await json(await call(url+'preview','POST',previewBody()))
-  assert.equal(discovery.matches.length,3,'Name, email and exact phrase in the surviving event are previewed; longer words are untouched')
+  assert.equal(discovery.matches.filter(m=>m.recordKind==='usage').length,3,'Name, email and exact phrase in the surviving event are previewed; longer words are untouched')
+  assert.equal(discovery.matches.length,22,'Ten native narrative fields and nine source references join the three surviving usage matches')
+  assert.equal(discovery.matches.filter(m=>m.recordKind==='account-source').length,3)
+  assert.equal(discovery.matches.filter(m=>m.recordKind==='proposal-source').length,6)
+  assert.deepEqual([...new Set(discovery.matches.map(m=>m.recordKind))].sort(),['account-source','decision','handover','proposal','proposal-source','sentiment','task','usage'])
+  assert.ok(exported.records.freeTextMatches.some(m=>m.recordKind==='task'&&m.before.includes(name)),'Customer export includes discovered native text without changing it')
   assert.ok(discovery.matches.some(m=>m.before===name&&m.after==='[redacted]'))
   assert.ok(discovery.matches.some(m=>m.before===emails[0]))
   assert.ok((await json(await call('/usage/events?sourceId='+source.id))).events.some(e=>JSON.stringify(e).includes(name)),'Preview changes nothing')
@@ -88,19 +107,65 @@ export async function eraseJourney({call,json,request,cookie,member,signIn,accou
    body.revision=(await person(target.id)).revision
    const heldDiscovery=await json(await call(url+'preview','POST',previewBody()))
    assert.equal(heldDiscovery.held,true)
+   assert.ok(heldDiscovery.matches.filter(m=>m.recordKind!=='usage').every(m=>m.held),'Native notes on held accounts cannot be selected')
+   const nativeMatch=heldDiscovery.matches.find(m=>m.recordKind==='task')
+   assert.equal((await call(url+'erase','POST',{...body,emails,fingerprint:heldDiscovery.fingerprint,redactions:[nativeMatch.id]})).status,409)
    const held=await json(await call(url+'erase','POST',{...body,emails,fingerprint:heldDiscovery.fingerprint,redactions:[]}))
    assert.equal(held.receipt.outcome,'held');assert.equal(held.receipt.retained.person,1)
    assert.equal(held.receipt.retained.usageEvents,3);assert.ok(await person(target.id))
    assert.equal((await call('/accounts/'+base,'DELETE',{confirmation:base})).status,409,'Other deletion doors cannot discard held records')
+   for(const units of [9,7]){
+    await json(await call('/customer-people/'+target.id+'/fields','PUT',{revision:(await person(target.id)).revision,values:{privacy_units:units},source:'Updated evidence during hold'}))
+   }
+   for(const reference of ['Held intermediate invoice note',nativeSource.billing.reference]){
+    await json(await call('/accounts/'+ids[1],'PUT',{...nativeSource,billing:{...nativeSource.billing,reference},revision:(await json(await call('/state'))).accounts.find(a=>a.id===ids[1]).revision}))
+   }
+   body.revision=(await person(target.id)).revision
    const heldExport=await json(await call(url+'export','POST',body));assert.equal(JSON.parse(heldExport.records.hold[0].snapshot).person[0].name,name)
+   const versions=heldExport.records.heldVersions
+   assert.ok(versions.some(v=>v.record_kind==='buoy_accounts'&&JSON.parse(JSON.parse(v.document).document).billing.reference==='Held intermediate invoice note'),'Hold custody retains intermediate account source evidence')
+   assert.ok(versions.some(v=>v.record_kind==='buoy_customer_values'&&JSON.parse(JSON.parse(v.document).document).privacy_units===9),'Hold export retains the intermediate value after the live value changes back')
+   assert.equal(heldExport.records.manualFields.map(v=>JSON.parse(v.document))[0].privacy_units,7)
+   assert.ok(versions.every(v=>v.person_id===target.id&&Date.parse(v.captured_at)),'Retained versions identify the held subject and capture time')
    assert.equal((await call(url+'hold','POST',{...hold,revision:body.revision,operation:'release'},{cookie:admin})).status,403)
    await json(await call(url+'hold','POST',{...hold,revision:body.revision,operation:'release',reason:'review-completed'}))
    body.revision=(await person(target.id)).revision
+   assert.equal((await json(await call(url+'export','POST',body))).records.heldVersions.length,0,'Explicit release clears the held versions before erasure')
    assert.equal((await call(url+'erase','POST',{...body,emails,fingerprint:heldDiscovery.fingerprint,redactions:[]})).status,409,'Hold release invalidates the old review')
    discovery=await json(await call(url+'preview','POST',previewBody()))
   }
+  if(index===1){
+   const otherHold={revision:(await person(other.id)).revision,confirmation:(await person(other.id)).name,operation:'set',reason:'legal-obligation'}
+   await json(await call('/customer-people/'+other.id+'/privacy/hold','POST',otherHold))
+   const otherHeldPreview=await json(await call(url+'preview','POST',previewBody()))
+   assert.equal(otherHeldPreview.held,false,'Another customer hold does not implicitly hold the requested customer')
+   const blocked=otherHeldPreview.matches.find(m=>m.recordKind==='task')
+   assert.equal(blocked.held,true,'A different held customer protects the shared account narrative')
+   assert.equal((await call(url+'erase','POST',{...body,emails,fingerprint:otherHeldPreview.fingerprint,redactions:[blocked.id]})).status,400,'A shared held narrative cannot be selected for redaction')
+   await json(await call('/customer-people/'+other.id+'/privacy/hold','POST',{...otherHold,revision:(await person(other.id)).revision,operation:'release',reason:'review-completed'}))
+   assert.equal((await call(url+'erase','POST',{...body,emails,fingerprint:otherHeldPreview.fingerprint,redactions:[]})).status,409,'Another customer hold release also invalidates the preview')
+   discovery=await json(await call(url+'preview','POST',previewBody()))
+  }
+  const stalePreview=discovery
+  await json(await call('/accounts/'+ids[1]+'/sentiment','POST',{rating:'amber',reason:'Later conversation with '+name,days:30}),201)
+  assert.equal((await call(url+'erase','POST',{...body,emails,fingerprint:stalePreview.fingerprint,redactions:[]})).status,409,'A new native note invalidates the entire reviewed preview')
+  discovery=await json(await call(url+'preview','POST',previewBody()))
+  const pending=await json(await call('/proposals','POST',{accountId:ids[1],kind:'renewal',payload:{outcome:'deferred',reason:'Unrelated pending work',evidence:'Unrelated review'}}),201)
+  discovery=await json(await call(url+'preview','POST',previewBody()))
   const erased=await json(await call(url+'erase','POST',{...body,emails,fingerprint:discovery.fingerprint,redactions:discovery.matches.filter(m=>!m.held).map(m=>m.id)}))
-  assert.equal(erased.receipt.redacted,3);assert.equal(erased.receipt.unreviewedMatches,0)
+  assert.equal(erased.receipt.redacted,26);
+  assert.equal((await call('/proposals/'+pending.id+'/approve','POST',{})).status,409,'Native redaction withdraws stale approval evidence')
+  const activity=await json(await call('/accounts/'+ids[1]+'/activity?limit=200'))
+  assert.ok(!JSON.stringify(activity).includes(name),'Native activity no longer exposes selected personal narratives')
+  const nativeState=await json(await call('/state'))
+  assert.equal(nativeState.tasks.find(t=>t.id===nativeTask.id).title,'Follow up with [redacted]')
+  const nativeAfter=nativeState.accounts.find(a=>a.id===ids[1])
+  assert.deepEqual(nativeAfter.billing,{...nativeSource.billing,reference:'Invoice reviewed by [redacted]'},'Money and observation dates survive narrative redaction unchanged')
+  assert.deepEqual(nativeAfter.support,{...nativeSource.support,reference:'Case opened by [redacted]'},'Support quantities survive narrative redaction unchanged')
+  assert.equal(nativeAfter.renewalEvidence,'Terms reviewed by [redacted]')
+  assert.equal(nativeAfter.renewalDate,nativeSource.renewalDate)
+  assert.ok(!JSON.stringify(nativeState.proposals.filter(p=>[taskProposal.id,renewal.id].includes(p.id))).includes(name))
+  assert.equal(erased.receipt.unreviewedMatches,0)
   const requests=(await json(await call('/privacy/requests'))).requests
   assert.deepEqual(requests.find(r=>r.id===erased.receipt.id),{id:erased.receipt.id,subject:erased.receipt.subject,...body.request})
   assert.equal((await call('/privacy/requests','GET',undefined,{cookie:admin})).status,403)
