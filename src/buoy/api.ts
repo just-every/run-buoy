@@ -1,6 +1,7 @@
 import {reviewsApi} from './reviews'
 import {reportsApi} from './reports'
 import {forecastApi,forecastState,overrideForecast} from './renewals/forecast'
+import {plansApi} from './plans'
 import {scopedRenewalApprovals,approveScopedRenewal} from './roles/renewal-approval'
 import {scopedRetentionReport,scopedRetentionExport} from './roles/reports'
 import {editScopedAccount} from './roles/account-edit'
@@ -121,6 +122,7 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.route('/',plansApi)
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',privacyApi)
 buoyApi.route('/',reviewsApi)

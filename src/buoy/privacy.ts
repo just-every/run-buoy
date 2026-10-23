@@ -18,6 +18,7 @@ const stores=[
  ['businessReviews','buoy_reviews','id IN(SELECT review_id FROM buoy_review_people WHERE person_id=?)'],
  ['reviewMeetings','buoy_review_meetings','review_id IN(SELECT review_id FROM buoy_review_people WHERE person_id=?)'],
  ['surveyResponses','buoy_survey_responses','person_id=?'],
+ ['successPlans','buoy_success_plans','customer_owner_id=?'],
  ['usageEvents','buoy_usage_events',`EXISTS(SELECT 1 FROM buoy_usage_mappings m WHERE m.person_id=? AND m.source_id=t.source_id AND m.user_id=t.user_id)`],
  ['usageMappings','buoy_usage_mappings','person_id=?'],['inappDeliveries','buoy_inapp_deliveries','person_id=?'],
  ['inappReceipts','buoy_inapp_receipts',`event_id IN(SELECT e.id FROM buoy_usage_events e JOIN buoy_usage_mappings m ON m.source_id=e.source_id AND m.user_id=e.user_id WHERE m.person_id=?)`],

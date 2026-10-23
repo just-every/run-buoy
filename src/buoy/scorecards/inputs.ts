@@ -1,3 +1,4 @@
+import {PLAN_SQL,goalMeasure,type PlanRow} from '../plans/model'
 import {STRIPE_FIELDS,stripeFreshness} from '../billing-evidence'
 import {descendantIds} from '../fields/model'
 import {usesPortfolio,usesHierarchy,usesHierarchyPeople} from './custody'
@@ -21,6 +22,7 @@ const SOURCES=`SELECT json_group_array(json_object('accountId',account_id,'key',
 interface CustomSource {accountId:string;key:string;source:string;sourceAccountId:string|null;recordedAt:string}
 export async function inputImage(db:D1Database,at:Date){
  const on=at.toISOString().slice(0,10)
+ const planRaw=(await db.prepare(PLAN_SQL).first<{snapshot:string}>())!.snapshot,planRows=JSON.parse(planRaw) as PlanRow[]
  const [segmentImage,numericImage,sourceRow]=await Promise.all([snapshot(db,on),consumerImage(db,on,true),db.prepare(SOURCES).first<{snapshot:string}>()])
  insist(sourceRow,'Scorecard source evidence unavailable.',503)
  const sourceImage={sql:SOURCES,raw:sourceRow.snapshot},customSources=JSON.parse(sourceRow.snapshot) as CustomSource[]
@@ -75,6 +77,9 @@ export async function inputImage(db:D1Database,at:Date){
    }
    values[field.key]=scalar(raw);sources[field.kind==='adoption'?'adoption':field.key]=evidence
   }
+  const goals=goalMeasure(planRows,account.account.id,values)
+  values['goals.attainmentPercent']=goals.value
+  sources['goals.attainmentPercent']=[{kind:'goal',label:'Current internal success plan objectives',freshness:goals.value===null?'missing':'current',observedAt:goals.plans.map(p=>p.updatedAt).sort().at(-1)??null,reference:null,details:{planRevisions:goals.plans.map(p=>({id:p.id,revision:p.revision})),objectiveCount:goals.plans.reduce((n,p)=>n+p.objectives.length,0)}}]
   const sourceAccountIds=new Set<string>([account.account.id,...customSources.filter(s=>s.accountId===account.account.id).flatMap(s=>s.sourceAccountId?[s.sourceAccountId]:[])])
   const hierarchyAccounts=new Set([account.account.id,...(hierarchySources||hierarchyPeople?descendantIds(image.custom,account.account.id):[])])
   if(hierarchySources||hierarchyPeople)hierarchyAccounts.forEach(id=>sourceAccountIds.add(id))
@@ -82,8 +87,10 @@ export async function inputImage(db:D1Database,at:Date){
   const relevantPeople=image.people.records.filter(p=>p.accountIds.includes(account.account.id))
   for(const p of relevantPeople)for(const ids of [...Object.values(p.valueAccounts??{}),...Object.values(p.previousAccounts??{})])ids.forEach(id=>sourceAccountIds.add(id))
   const sourcePersonIds=[...new Set([...relevantPeople.map(p=>p.id),...(hierarchyPeople?image.people.records.filter(p=>p.kind==='user'&&p.accountIds.some(id=>hierarchyAccounts.has(id))).map(p=>p.id):[]),...image.surveys.responses.filter(r=>r.accountId===account.account.id).map(r=>r.personId)])].sort()
+  for(const plan of planRows.filter(p=>p.accountId===account.account.id))if(plan.customerOwnerId)sourcePersonIds.push(plan.customerOwnerId)
   const inputs:RetainedInputs={values,relatedValues,sources,fields,sourceAccountIds:[...sourceAccountIds].sort(),sourcePersonIds,segments:segments.filter(s=>!layerOneDependency(s,segments)&&includes(s,account.account.id,account.values,account.people)).map(s=>({id:s.id,revision:s.revision,name:s.name})),measuredOn:on}
   return {accountId:account.account.id,accountRevision:account.account.revision,inputs}
  })
- return {accounts,fields,segments,consumers:image.consumers,fences:[segmentImage,numericImage,sourceImage,related.fence]}
+ fields.push({key:'goals.attainmentPercent',name:'Current success plan goal attainment',kind:'goal',valueType:'number',unit:'percent of current objectives'})
+ return {accounts,fields,segments,consumers:image.consumers,fences:[segmentImage,numericImage,sourceImage,related.fence,{sql:PLAN_SQL,raw:planRaw}]}
 }

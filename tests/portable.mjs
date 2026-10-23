@@ -121,6 +121,10 @@ try{
  const webhookIntake=()=>intake('/api/buoy/playbooks/intake/'+webhookBook.id,{accountId,operationKey:'synthetic-buoy-1760'},webhookKey.secret);
  assert.equal((await webhookIntake()).status,202);
  const portableCard=await call('/scorecards/publish','POST',{revision:recordIds.card.revision,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
+ const planChampion=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-1940',accountIds:[accountId],source:'synthetic-buoy-1941'});
+ const successPlan=await call('/accounts/'+accountId+'/plans','POST',{accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,name:'Portable internal success plan',staffOwnerId:(await call('/state')).operator.id,customerOwnerId:planChampion.id,objectives:[{id:'usage',title:'Observed product use',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'customer',title:'Actual customer confirmation required',kind:'customer-statement',dueOn:'2027-03-01'}]});
+ const successPlansBefore=await call('/accounts/'+accountId+'/plans');
+ assert.equal(successPlansBefore.plans.find(p=>p.id===successPlan.id).objectives[0].status,'achieved');
  const scorecardBefore=await call('/scorecards');
  const revenueBefore=await call('/revenue');
  const surveysBefore=await call('/surveys');
@@ -149,6 +153,8 @@ try{
  const archiveRows=(await readFile(archive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
  assert.ok(!archiveRows.some(item=>['buoy_report_shares','buoy_dashboard_shares','buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
  assertBillingArchiveRows(archiveRows,billingImage);
+ assert.ok(archiveRows.some(item=>item.table==='buoy_success_plans'&&item.row.id===successPlan.id),'The real archive contains the persisted success plan');
+ assert.ok(archiveRows.some(item=>item.table==='buoy_success_plan_history'&&item.row.plan_id===successPlan.id),'The real archive contains success plan version history');
  const replayKey=archiveRows.find(item=>item.table==='buoy_privacy_key')?.row.secret
  assert.ok(typeof replayKey==='string'&&/^[a-f0-9]{64}$/.test(replayKey),'Archive carries a 256-bit installation replay key')
  const fences=archiveRows.filter(item=>item.table==='buoy_erased_usage_identities').map(item=>item.row)
@@ -163,6 +169,7 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,secure:true,providerFetch:stripe.fetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
+ assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective source values and awaiting-confirmation state restore exactly');
  await assertBillingPortability(call,running.request,running.cookie,billingImage)
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'Restored native reads and rejected source/webhook attempts never call Stripe without fresh authority')
  await assertRecordPortability(call,(path,options)=>running.request(path,{...options,cookie:running.cookie}),recordIds,billingAwareRecordImage(recordImage,before.accounts,after.accounts,billingImage))
