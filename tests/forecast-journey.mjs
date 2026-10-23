@@ -40,6 +40,13 @@ export async function forecastJourney({browser,evidence}={}){
   assert.equal(base.groups.csms.length,2);assert.equal(base.groups.teams[0].expectedUsdMinor,230000);assert.equal(base.groups.segments[0].count,2)
   const unknown=await forecast(new URLSearchParams({period:'quarter',start:nextStart,on}));assert.equal(unknown.summary.expectedUsdMinor,null);assert.match(unknown.gaps.join(' '),/No CAD reporting rate/);assert.equal(unknown.records[0].nativeArrMinor,60000)
   assert.equal((await request('/renewals/forecast?period=week')).status,400);assert.equal((await request('/renewals/forecast?period=quarter&start='+year+'-02-01')).status,400)
+  assert.equal((await request(url,'GET',undefined,{cookie:undefined})).status,401)
+  const token=await api('/agent-tokens','POST',{label:'Forecast boundary proof'})
+  for(const [door,method,body]of [[url,'GET',undefined],['/renewals/forecast/snapshots','POST',{}],['/renewals/'+renewals[0].id+'/forecast-override','POST',{revision:(await current(0)).revision,category:'commit',reason:'Untrusted forecast change'}]]){
+   assert.equal((await request(door,method,body,{cookie:undefined,token:token.token})).status,403,'Agent scope never expands to forecasts or overrides')
+   if(method==='POST')assert.equal((await request(door,method,body,{headers:{origin:'https://foreign.invalid'}})).status,403,'Forecast writes keep native same-origin authority')
+  }
+  await api('/agent-tokens/'+token.id,'DELETE',{})
   const snapshot=await api('/renewals/forecast/snapshots','POST',{});assert.equal(snapshot.created,true);assert.deepEqual(await api('/renewals/forecast/snapshots','POST',{}),{id:snapshot.id,created:false})
   const updatedRates={...rates,rates:rates.rates.map(r=>r.currency==='EUR'?{...r,usdPerUnit:'1.2'}:r)};await api('/revenue/rates','POST',{revision:(await api('/revenue/rates')).table.revision,table:updatedRates});assert.equal((await forecast()).summary.expectedUsdMinor,352500);assert.equal((await forecast()).previous.expectedUsdMinor,342500,'Rate edits restate current figures while preserving snapshot rates');await api('/revenue/rates','POST',{revision:(await api('/revenue/rates')).table.revision,table:rates})
   const retained=(await forecast()).baseline;assert.equal(retained.length,3);assert.equal((await forecast()).previous.expectedUsdMinor,342500)
