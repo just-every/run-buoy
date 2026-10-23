@@ -50,7 +50,7 @@ export async function renewalBrowser(browser,evidence){
     await form.getByLabel('Renewal outcome',{exact:true}).selectOption(width===1440?'churned':'renewed-with-contraction');await form.getByLabel('Expected outcome ARR (native minor units)',{exact:true}).fill(width===1440?'0':'100000');await form.getByLabel('Outcome reason code',{exact:true}).fill('customer-confirmed');await form.getByLabel('Outcome evidence',{exact:true}).fill('Signed customer decision '+width);await save(form,'Prepare renewal outcome')
     assert.equal((await api('/renewals')).records.find(r=>r.id===target.id).outcome,null,'Preparation is no outcome')
     const approval=page.getByRole('button',{name:'Approve this renewal outcome',exact:true});await proof('prepared-outcome');await submit(page,approval)
-    assert.equal(await page.locator('[role=alert]').count(),0);assert.equal((await api('/renewals')).records.find(r=>r.id===target.id).outcome,width===1440?'churned':'renewed-with-contraction');assert.match(await page.locator('#renewal-record').innerText(),/Billing reconciliation pending/);await proof('approved-outcome')
+    assert.equal(await page.locator('[role=alert]').count(),0);assert.equal((await api('/renewals')).records.find(r=>r.id===target.id).outcome,width===1440?'churned':'renewed-with-contraction');assert.match(await page.locator('#renewal-record').innerText(),/Billing reconciliation: pending-provider-sync/);await proof('approved-outcome')
    }finally{await context.close()}
   }
   assert.deepEqual(failures,[],'Renewal inherited accessibility at both widths')

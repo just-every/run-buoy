@@ -77,7 +77,7 @@ export async function renewalJourney(){
   const page=await(await app.request('/app/renewals',{cookie})).text();assert.match(page,/Renewal board/);assert.match(page,/Renewal list/);assert.match(page,/2026-Q4/);assert.match(page,/2027-Q1/)
   await api('/accounts/'+accounts[0],'DELETE',{confirmation:'Renewal customer 0'})
   assert.ok(!(await api('/renewals')).records.some(r=>r.accountId===accounts[0]),'Account erasure owns renewal and field history custody')
-  console.log('RENEW-001 twelve confirmed periods, lead-time Cron, quarter board/list, all five approved outcomes, linked work and complete inherited field/segment carrier passed; provider billing reconciliation remains pending.')
+  console.log('RENEW-001 twelve confirmed periods, lead-time Cron, quarter board/list, all five approved outcomes, linked work and complete inherited field/segment carrier passed; native terms retain a pending provider reconciliation label.')
  }finally{await app.close()}
  await providerRenewalJourney()
 }
