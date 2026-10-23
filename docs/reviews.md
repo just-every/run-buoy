@@ -20,11 +20,12 @@ preserves Unicode. No customer message or provider upload occurs.
 
 Log a held meeting with evidence and explicit follow-up task titles/due dates.
 This owner/admin action approves those internal tasks, assigns the current account
-owner, and records the meeting and tasks on the account timeline. Repeating the
-same operation keeps one meeting and one set of tasks. A changed replay refuses.
+owner, and records the meeting and tasks on the account timeline. The submitted account revision must still match before any follow-up is approved.
+Repeating the same operation keeps one meeting and one set of tasks. A changed replay refuses.
 Source-linked decks and meetings restore with the installation. Account erasure,
 or erasure of a linked customer person whose facts may be captured, removes the
-captured deck and meeting record. Previously downloaded files remain outside Buoy.
+captured deck and meeting record. A hold on any linked customer protects a shared
+deck and keeps an affected erasure request held until explicit release. Previously downloaded files remain outside Buoy.
 
 REVIEW-001 remains partial. Direct Google Slides export needs an authorized Google
 connection and is unavailable; a PowerPoint download is not labeled Google Slides

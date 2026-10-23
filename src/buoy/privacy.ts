@@ -14,6 +14,7 @@ const stores=[
  ['person','buoy_customer_people','id=?'],['subject','buoy_customer_subjects','person_id=?'],
  ['memberships','buoy_customer_memberships','person_id=?'],['manualFields','buoy_customer_values','person_id=?'],
  ['calculatedFields','buoy_customer_results','person_id=?'],['fieldHistory','buoy_customer_history','person_id=?'],
+ ['businessReviewHolds','buoy_review_hold_dependencies','person_id=?'],
  ['businessReviews','buoy_reviews','id IN(SELECT review_id FROM buoy_review_people WHERE person_id=?)'],
  ['reviewMeetings','buoy_review_meetings','review_id IN(SELECT review_id FROM buoy_review_people WHERE person_id=?)'],
  ['surveyResponses','buoy_survey_responses','person_id=?'],
@@ -77,8 +78,8 @@ export async function privacyPreview(db:D1Database,actor:Actor,personId:string,i
  const replay=await replayKey(db),discovery=await discover(db,replay.key,current.person,input.emails??[])
  await db.batch([owner(db,actor),guard(db,`(${current.sql})=?`,...current.params,current.raw),discovery.guard(),stmt(db,'DELETE FROM buoy_assertions')])
  return {fingerprint:await privacyFingerprint(replay.key,[current.raw,discovery.raw,discovery.terms]),matches:discovery.matches,
-  held:current.data.hold.length>0,counts:Object.fromEntries(Object.entries(current.data).filter(([k])=>!['hold','subject','usageSources','declaredHolders'].includes(k)).map(([k,v])=>[k,v.length])),
-  notice:'Exact, case-sensitive name/email phrases only; longer words and identifiers remain unchanged. Review each selected replacement. Coverage: usage properties, traits and context. Other free text and external systems need separate review.'}
+  held:current.data.hold.length>0||current.data.businessReviewHolds.length>0,counts:Object.fromEntries(Object.entries(current.data).filter(([k])=>!['hold','subject','usageSources','declaredHolders'].includes(k)).map(([k,v])=>[k,v.length])),
+  notice:'Exact, case-sensitive name/email phrases only; longer words and identifiers remain unchanged. Review each selected replacement. Coverage: usage properties, traits and context. Other free text and external systems need separate review. A linked business review with held customer facts retains the affected customer until that hold is explicitly released.'}
 }
 export async function privacyHold(db:D1Database,actor:Actor,personId:string,input:Record<string,unknown>){
  requirePerson(actor,true)
@@ -109,7 +110,7 @@ export async function privacyRequest(db:D1Database,actor:Actor,personId:string,i
  const verified=requestRecord(input.request),replay=await replayKey(db)
  const discovery=action==='erased'?await discover(db,replay.key,current.person,input.emails??[]):null
  if(discovery)insist(input.fingerprint===await privacyFingerprint(replay.key,[current.raw,discovery.raw,discovery.terms]),'Privacy evidence changed. Preview and review again.',409)
- const held=!!current.data.hold.length
+ const held=!!(current.data.hold.length||current.data.businessReviewHolds.length)
  const selected=input.redactions??[]
  insist(Array.isArray(selected)&&selected.every(x=>typeof x==='string'),'Select reviewed redactions.')
  insist(!held||selected.length===0,'A held customer is retained; no redactions are applied.',409)
