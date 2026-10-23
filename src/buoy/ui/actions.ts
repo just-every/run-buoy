@@ -52,14 +52,14 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     else if(action==='review-approve'){await send('/api/buoy/reviews/'+encodeURIComponent(fields.id)+'/review',{revision:fields.revision,confirmation:fields.confirmation});result={id:fields.id};}
     else if(action==='review-meeting'){await send('/api/buoy/reviews/'+encodeURIComponent(fields.id)+'/meetings',{revision:fields.revision,operationKey:fields.operationKey,heldOn:fields.heldOn,evidence:fields.evidence,followups:parse(fields.followups)});result={id:fields.id};}
     else throw new ApiError('This review action is unavailable.');
-    return {redirect:path+'?review='+encodeURIComponent(result!.id),message:'Business review saved.'};
+    return {redirect:path+'?review='+encodeURIComponent(result!.id),message:'Business review saved.',saved:action};
   }
   if(path==='/app/reports') {
     const parse=(value:string)=>{try{return JSON.parse(value)}catch{throw new ApiError('Enter valid report JSON.')}};
     const split=(value:string)=>(value??'').split(',').map(s=>s.trim()).filter(Boolean);
-    if(action==='report-create') {const saved=await send<{id:string}>('/api/buoy/reports',{spec:{name:fields.name,object:'account',rules:parse(fields.rules),segmentId:fields.segmentId||null,groupBy:fields.groupBy,measure:fields.measure,operation:fields.operation,formula:fields.formula||null,chart:fields.chart,sharedRoles:split(fields.sharedRoles)}});return {redirect:path+'?report='+encodeURIComponent(saved.id),message:'Report saved.'};}
-    if(action==='report-edit'){const saved=await send<{id:string}>('/api/buoy/reports',{id:fields.id,revision:fields.revision,spec:parse(fields.spec)});return {redirect:path+'?report='+encodeURIComponent(saved.id),message:'Report saved.'};}
-    if(action==='dashboard-create'){const saved=await send<{id:string}>('/api/buoy/dashboards',{name:fields.name,reportIds:split(fields.reportIds),sharedRoles:split(fields.sharedRoles)});return {redirect:path+'?dashboard='+encodeURIComponent(saved.id),message:'Dashboard saved.'};}
+    if(action==='report-create') {const saved=await send<{id:string}>('/api/buoy/reports',{spec:{name:fields.name,object:'account',rules:parse(fields.rules),segmentId:fields.segmentId||null,groupBy:fields.groupBy,measure:fields.measure,operation:fields.operation,formula:fields.formula||null,chart:fields.chart,sharedRoles:split(fields.sharedRoles)}});return {redirect:path+'?report='+encodeURIComponent(saved.id),message:'Report saved.',saved:'report-create'};}
+    if(action==='report-edit'){const saved=await send<{id:string}>('/api/buoy/reports',{id:fields.id,revision:fields.revision,spec:parse(fields.spec)});return {redirect:path+'?report='+encodeURIComponent(saved.id),message:'Report saved.',saved:'report-edit-'+fields.id};}
+    if(action==='dashboard-create'){const saved=await send<{id:string}>('/api/buoy/dashboards',{name:fields.name,reportIds:split(fields.reportIds),sharedRoles:split(fields.sharedRoles)});return {redirect:path+'?dashboard='+encodeURIComponent(saved.id),message:'Dashboard saved.',saved:'dashboard-create'};}
     throw new ApiError('This report action is unavailable.');
   }
   if(path==='/app/forecast'){
