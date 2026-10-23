@@ -13,3 +13,6 @@
 [id^="report-result-"] th, [id^="report-result-"] td, [id^="review-slide-"] th, [id^="review-slide-"] td {
  text-align: left; padding: 6px 8px; vertical-align: top;
 }
+/* Extra report/review destinations must not compress the account heading. */
+.head-row { flex-wrap: wrap; }
+.page-head { flex: 1 1 320px; }

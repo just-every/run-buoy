@@ -10,3 +10,9 @@ html.rer-themed .buoy-app .rw-open { position: relative; }
 }
 .rw-open:hover::after { visibility: visible; opacity: 1; transition-delay: 300ms; }
 .rw-open:focus::after { visibility: visible; opacity: 1; transition-delay: 0s; }
+/* Match the qualified base selector so focused/hovered controls actually paint. */
+html.rer-themed .buoy-app .rw-open:focus,
+html.rer-themed .buoy-app .rw-open:hover,
+html.rer-themed .buoy-app .rw-lane:hover .rw-open,
+html.rer-themed .buoy-app .rw-lane.is-open .rw-open { opacity: 1; }
+.rw-open::after { top: auto; bottom: calc(100% + 4px); }
