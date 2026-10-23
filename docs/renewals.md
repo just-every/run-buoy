@@ -56,6 +56,16 @@ the current account and opportunity revisions. Churn requires zero ARR; expansio
 must exceed the prior expected ARR and contraction must be lower. Replays do not
 create another outcome. Approved outcomes retain their source snapshot.
 
-These are person-confirmed contracts and human decisions. They do not update
-billing. Provider subscription intake and matching ARR to the next provider sync
-remain unfinished and are labelled as pending reconciliation.
+Confirmed native terms and reviewed Stripe subscription bindings both generate opportunities.
+Stripe opportunities retain their exact subscription period and source observation.
+A successful connected source inside its freshness threshold can refresh an open
+opportunity; failed, stale or disconnected sources cannot generate or reconcile.
+A subscription absent from a later response is unknown, not a verified cancellation.
+
+Approval never updates billing. For a Stripe opportunity, the next successful
+provider sync separately compares subscription ARR with the approved expectation.
+The record shows matched or mismatched, provider actual ARR, the signed difference,
+time and source reference. Its history keeps earlier differences, and its original
+approved source is unchanged. Native confirmed terms without a provider link keep
+a pending reconciliation label. Archives retain these facts and source history,
+while fresh provider credentials are required to read the source after restore.
