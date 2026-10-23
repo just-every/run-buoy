@@ -96,7 +96,7 @@ sides. An evaluation date selects period closure; it never reconstructs past
 sources.
 
 Owners/admins can override a category, and an assigned CS manager can override
-only readable, fully visible commercial records owned by an active direct report.
+only readable, fully visible commercial records on accounts currently owned by an active direct report. Assigning the renewal itself to a team member never extends authority over an outside-team account.
 **Override reason** is required. The actor, UTC time, prior/new category and reason
 stay in history. Changed source revisions, closed renewals and withdrawn team or
 profile authority refuse the override. Overrides invalidate prepared outcomes.
