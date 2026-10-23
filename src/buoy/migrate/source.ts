@@ -47,6 +47,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
   let rows: Record<string,unknown>[], columns: Record<string,unknown>, pointers: string[]
   let exportData: Record<string,unknown> | undefined
   if (source === 'csv') {
+   if (bundle.data !== undefined || bundle.exportText !== undefined) throw new Error('CSV bundles cannot contain a second export representation.')
    if (typeof bundle.csv !== 'string' || sha256(bundle.csv) !== bundle.originalSha256) throw new Error('Original CSV digest does not match its embedded UTF-8 text.')
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
    for (const [key,column] of Object.entries(columns)) if (!fields.includes(key as typeof fields[number]) || typeof column !== 'string' || !header.includes(column)) throw new Error('Column mapping names an unsupported field or missing header.')
@@ -55,6 +56,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
    rows = data.map(row => row.length === header.length ? Object.fromEntries(header.map((key,i)=>[key,row[i]])) : {__invalidRow:true})
    pointers = data.map((_,i)=>['','csv','rows',i+2].join('/'))
   } else {
+   if (bundle.csv !== undefined) throw new Error('Incumbent bundles cannot contain CSV data.')
    if (bundle.exportText !== undefined && (typeof bundle.exportText !== 'string' || sha256(bundle.exportText) !== bundle.originalSha256 || bundle.data !== undefined)) throw new Error('Original export digest is invalid or the bundle has two export representations.')
    const data = object(bundle.exportText === undefined ? bundle.data : JSON.parse(String(bundle.exportText).replace(/^\uFEFF/,'')))
    exportData = data
@@ -69,8 +71,9 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
   const records = rows.map((raw,i): ParsedRecord => {
    const id = ids[i], pointer = pointers[i]
    try {
-    const row = object(raw)
+    const row = object(raw), rawId = row[String(columns.id)]
     if (row.__invalidRow) throw new Error('CSV row has a different number of columns from its header.')
+    if (typeof rawId !== 'string' && !(typeof rawId === 'number' && Number.isSafeInteger(rawId))) throw new Error('Source ID must be text or an exact integer.')
     if (!id || id.length > 200 || /[\u0000-\u001f]/.test(id)) throw new Error('Source ID must be nonempty text of at most 200 characters.')
     if (counts.get(id)!==1) throw new Error('Duplicate source ID; every occurrence is rejected.')
     const get = (field: string) => row[String(columns[field])] ?? ''
