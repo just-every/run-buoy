@@ -19,19 +19,27 @@ const header='Customer,Company,Renewal,Notice,Evidence,Amount,Currency,Observed,
 const csvRow=(id,date='31/03/2027',currency='USD',amount='12.34')=>`${id},"Synthetic, ${id}",${date},30,synthetic-buoy-1,${amount},${currency},01/01/2026,31/01/2026,unmapped\r\n`
 
 test('MIGRATE-005 versioned export account custody uses the existing reviewed door',async()=>{
- const app=await startWorker()
+ const app=await startWorker(),scratch=await mkdtemp(join(tmpdir(),'buoy-migrate-export-'))
  try {
   const before=await state(app)
   for(const source of ['vitally','velaris']) {
-   const door=client(app,source), input=envelope(source,[account('synthetic-buoy-1',{customField:'retained source value'})],{data:{accounts:[account('synthetic-buoy-1',{customField:'retained source value'})],users:[{id:'synthetic-buoy-2'}],projects:[{id:'synthetic-buoy-3'}]}})
+   const door=client(app,source), accounts=Array.from({length:20},(_,i)=>account('synthetic-buoy-'+(i+1),i===0?{customField:'retained source value'}:{}))
+   const raw='\uFEFF'+JSON.stringify({accounts,users:[{id:'synthetic-buoy-21'}],projects:[{id:'synthetic-buoy-22'}]},null,2)+'\r\n'
+   const original=join(scratch,source+'.json'),prepared=join(scratch,source+'-bundle.json')
+   await writeFile(original,raw)
+   execFileSync(process.execPath,['src/buoy/migrate/cli.mjs','--source',source,'--input',original,'--output',prepared])
+   const input=JSON.parse(await readFile(prepared,'utf8'))
+   assert.equal(input.exportText,raw);assert.equal(input.originalSha256,createHash('sha256').update(await readFile(original)).digest('hex'))
    const plan=await door.plan(input)
-   assert.equal(plan.counts.mapped,1);assert.equal(plan.counts.unmapped,3)
+   assert.equal(plan.counts.mapped,20);assert.equal(plan.counts.unmapped,3)
    assert.ok(plan.diagnostics.some(d=>d.field==='customField'))
    assert.deepEqual(await state(app),before,'No native write while planning')
    assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:'0'.repeat(64)})).status,403)
    const job=await door.apply(plan);assert.equal((await door.apply(plan)).id,job.id)
    const imported=(await state(app)).find(a=>a.id===target(source,'synthetic-buoy-1'))
    assert.equal(imported.name,'Synthetic account synthetic-buoy-1');assert.equal(imported.billing,null)
+   const native=await state(app);assert.equal(native.length,before.length+20)
+   for(const expected of accounts) {const actual=native.find(row=>row.id===target(source,expected.id));for(const field of ['name','renewalDate','renewalEvidence'])assert.equal(actual[field],expected[field]);assert.equal(actual.noticeDays,Number(expected.noticeDays))}
    assert.equal((await door.json('reconcile',{planId:plan.planId})).ok,true)
    const history=(await (await app.request('/api/operator/import-history',{cookie:app.cookie})).json()).history
    assert.equal(history.find(h=>h.planId===plan.planId).namespace,`buoy-migrate-${source}-v1`)
@@ -41,7 +49,7 @@ test('MIGRATE-005 versioned export account custody uses the existing reviewed do
    assert.equal((await door.send('uploads',{}, {headers:{'x-buoy-import-source':source,origin:'https://foreign.invalid'}})).status,403)
    await door.undo(plan);assert.deepEqual(await state(app),before)
   }
- } finally {await app.close()}
+ } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
 test('MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and source identities',async()=>{
@@ -113,6 +121,8 @@ test('MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 
     assert.deepEqual(await state(app),before);await proof('undone')
    } finally {await context.close()}
   }
-  assert.deepEqual(failures,[]);assert.deepEqual(manual,[])
+  assert.deepEqual(failures,[])
+  // scan independently measures every text foreground against the painted gradient.
+  for(const entry of manual)for(const rule of entry.rules)assert.equal(rule.id,'color-contrast','Every other incomplete accessibility check remains a failure')
  } finally {await browser.close();await app.close()}
 })

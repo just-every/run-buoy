@@ -1,3 +1,4 @@
+import { csvRows } from './csv'
 import { sha256 } from '../../modules/import-kit/src/d1/index.ts'
 import type { Json, ParsedRecord, ImportMapping } from '../../modules/import-kit/src/d1/index.ts'
 import { parseAccount } from '../imports/validation'
@@ -34,40 +35,17 @@ function money(value: unknown, currency: string): number {
  if (amount > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Invoice amount exceeds exact integer minor units.')
  return Number(amount)
 }
-/** RFC 4180 field quoting, including embedded newlines; malformed structure refuses the bundle. */
-export function csvRows(text: string): string[][] {
- if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
- const rows: string[][] = []; let row: string[] = [], field = '', quoted = false, closed = false
- const endField = () => { row.push(field); field = ''; closed = false }
- const endRow = () => { endField(); rows.push(row); row = [] }
- for (let i=0;i<text.length;i++) {
-  const char = text[i]
-  if (quoted) {
-   if (char === '"') { if (text[i+1] === '"') { field += '"'; i++ } else { quoted = false; closed = true } }
-   else field += char
-  } else if (char === ',') endField()
-  else if (char === '\n' || char === '\r') { if (char === '\r' && text[i+1] === '\n') i++; endRow() }
-  else if (closed) throw new Error('Unexpected text after a quoted CSV field.')
-  else if (char === '"') { if (field) throw new Error('Quote inside an unquoted CSV field.'); quoted = true }
-  else field += char
- }
- if (quoted) throw new Error('Unclosed quoted CSV field.')
- if (field || row.length || closed) endRow()
- if (rows.length < 2 || rows.length > 2001) throw new Error('CSV must contain a header and 1 to 2000 data rows.')
- const header = rows[0]
- if (header.some(name => !name.trim()) || new Set(header).size !== header.length) throw new Error('CSV headers must be nonempty and unique.')
- return rows
-}
 function rejection(id: string, reason: string, pointer: string): ParsedRecord {
  return {kind:'migration-rejected',sourceId:id,payload:{reason},pointer}
 }
 export function parseMigration(value: Json, source: MigrationSource): ParsedRecord[] {
  try {
   const bundle = object(value)
-  if (Object.keys(bundle).some(key=>!['format','source','dateOrder','columns','csv','originalSha256','data'].includes(key))) throw new Error('Unsupported migration bundle field.')
+  if (Object.keys(bundle).some(key=>!['format','source','dateOrder','columns','csv','originalSha256','data','exportText'].includes(key))) throw new Error('Unsupported migration bundle field.')
   if (bundle.format !== 'buoy-migration-v1' || bundle.source !== source) throw new Error('Choose a matching versioned migration bundle.')
   if (!['iso','day-first','month-first'].includes(String(bundle.dateOrder))) throw new Error('Choose iso, day-first or month-first date order.')
   let rows: Record<string,unknown>[], columns: Record<string,unknown>, pointers: string[]
+  let exportData: Record<string,unknown> | undefined
   if (source === 'csv') {
    if (typeof bundle.csv !== 'string' || sha256(bundle.csv) !== bundle.originalSha256) throw new Error('Original CSV digest does not match its embedded UTF-8 text.')
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
@@ -75,13 +53,15 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
    const selected = Object.values(columns)
    if (new Set(selected).size !== selected.length) throw new Error('Each selected column maps to only one destination field.')
    rows = data.map(row => row.length === header.length ? Object.fromEntries(header.map((key,i)=>[key,row[i]])) : {__invalidRow:true})
-   pointers = data.map((_,i)=>`/csv/rows/${i+2}`)
+   pointers = data.map((_,i)=>['','csv','rows',i+2].join('/'))
   } else {
-   const data = object(bundle.data)
+   if (bundle.exportText !== undefined && (typeof bundle.exportText !== 'string' || sha256(bundle.exportText) !== bundle.originalSha256 || bundle.data !== undefined)) throw new Error('Original export digest is invalid or the bundle has two export representations.')
+   const data = object(bundle.exportText === undefined ? bundle.data : JSON.parse(String(bundle.exportText).replace(/^\uFEFF/,'')))
+   exportData = data
    if (!Array.isArray(data.accounts) || !data.accounts.length || data.accounts.length > 2000) throw new Error('Export must contain 1 to 2000 accounts.')
    columns = bundle.columns === undefined ? Object.fromEntries(fields.map(field=>[field,field])) : object(bundle.columns)
    for (const [key,column] of Object.entries(columns)) if (!fields.includes(key as typeof fields[number]) || typeof column !== 'string' || !column.trim()) throw new Error('Invalid export column mapping.')
-   rows = data.accounts as Record<string,unknown>[]; pointers = rows.map((_,i)=>`/data/accounts/${i}`)
+   rows = data.accounts as Record<string,unknown>[]; pointers = rows.map((_,i)=>['','data','accounts',i].join('/'))
   }
   for (const field of ['id','name','renewalDate','noticeDays','renewalEvidence']) if (!columns[field]) throw new Error(`Map the required ${field} column.`)
   const ids = rows.map(row => { try { return String(object(row)[String(columns.id)] ?? '').trim() } catch { return '' } })
@@ -106,9 +86,9 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
    } catch (error) { return rejection(`row-${i+1}`,error instanceof Error ? error.message : 'Invalid migration row.',pointer) }
   })
   if (source !== 'csv') {
-   for (const [kind,items] of Object.entries(object(bundle.data))) if (kind !== 'accounts') {
+   for (const [kind,items] of Object.entries(exportData!)) if (kind !== 'accounts') {
     const count = Array.isArray(items) ? items.length : 1
-    records.push({kind:'migration-unmapped',sourceId:`collection-${kind}`,payload:{collection:kind,count,reason:'This record kind is not mapped. No native records or automation are created.'},pointer:`/data/${kind.replaceAll('~','~0').replaceAll('/','~1')}`})
+    records.push({kind:'migration-unmapped',sourceId:`collection-${kind}`,payload:{collection:kind,count,reason:'This record kind is not mapped. No native records or automation are created.'},pointer:['','data',kind.replaceAll('~','~0').replaceAll('/','~1')].join('/')})
    }
   }
   return records
