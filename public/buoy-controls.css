@@ -16,3 +16,6 @@ html.rer-themed .buoy-app .rw-open:hover,
 html.rer-themed .buoy-app .rw-lane:hover .rw-open,
 html.rer-themed .buoy-app .rw-lane.is-open .rw-open { opacity: 1; }
 .rw-open::after { top: auto; bottom: calc(100% + 4px); }
+@media (max-width: 760px) {
+ .rw-open::after { top: calc(100% + 4px); bottom: auto; }
+}
