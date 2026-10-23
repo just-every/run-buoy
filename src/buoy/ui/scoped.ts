@@ -1,3 +1,4 @@
+import {reportsPage,type ReportsPage,type ReportResult} from './reports'
 import {forecastPage,type ForecastPage} from './forecast'
 import {mutate} from './actions'
 import {scopedRenewalApprovalPage} from './scoped-renewal-approval'
@@ -41,7 +42,7 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
    return new Response(null,{status:303,headers:{location:path+'?saved='+encodeURIComponent(path+'|scoped-account-edit')+'#scoped-account','cache-control':'no-store'}})
   }catch(caught){status=caught instanceof ApiError?caught.status:503;error=caught instanceof Error?caught.message:'The account could not be changed.'}
  }
- if(path==='/app/forecast'){title='Renewal forecast';const query=fields?.returnQuery?new URLSearchParams(fields.returnQuery):url.searchParams;try{body=forecastPage(query,await apiCall<ForecastPage>(api,request,'/api/buoy/renewals/forecast?'+query),fields)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Forecast unavailable','<p>Your current profile cannot read this selection.</p>')}}else if(path==='/app/approvals'&&(['GET','HEAD'].includes(request.method)||fields?.action==='scoped-renewal-approve')){
+ if(path==='/app/reports'&&['GET','HEAD'].includes(request.method)){title='Reports and dashboards';try{const data=await apiCall<ReportsPage>(api,request,'/api/buoy/reports'),selected=data.dashboards.find(d=>d.id===url.searchParams.get('dashboard')),ids=selected?selected.reportIds:url.searchParams.get('report')?[url.searchParams.get('report')!]:[];const results:ReportResult[]=[];for(const id of ids)results.push(await apiCall<ReportResult>(api,request,'/api/buoy/reports/'+encodeURIComponent(id)));body=reportsPage(data,results)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Reports unavailable','<p>Your current profile cannot read this report selection.</p>')}}else if(path==='/app/forecast'){title='Renewal forecast';const query=fields?.returnQuery?new URLSearchParams(fields.returnQuery):url.searchParams;try{body=forecastPage(query,await apiCall<ForecastPage>(api,request,'/api/buoy/renewals/forecast?'+query),fields)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Forecast unavailable','<p>Your current profile cannot read this selection.</p>')}}else if(path==='/app/approvals'&&(['GET','HEAD'].includes(request.method)||fields?.action==='scoped-renewal-approve')){
   title='Renewal reviews'
   try{body=scopedRenewalApprovalPage(await apiCall<ScopedRenewalApprovals>(api,request,'/api/buoy/renewals/approvals'),fields)}
   catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Review unavailable','<p>Your current profile cannot review renewal decisions.</p>')}

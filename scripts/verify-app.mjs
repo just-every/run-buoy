@@ -7,7 +7,7 @@ const suites={
  http:['test:site','test:flows:core','test:governance','test:connections','test:email-link'],
  records:['test:records'],
  volume:['test:volume'],
- 'records-browser':['test:customer-people-browser','test:privacy-renewal-browser'],
+ 'records-browser':['test:dashboards-browser','test:customer-people-browser','test:privacy-renewal-browser'],
  'workspace-browser':['test:workspace-browser'],
  'hierarchy-browser':['test:hierarchy-browser'],
  adoption:['test:adoption'],
