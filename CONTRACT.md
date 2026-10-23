@@ -132,7 +132,7 @@ Buoy is the customer success platform a US head of customer success buys instead
 
 - **PORTAL-001 — Customer collaboration portal.** Invited customer contacts sign in by email link (or their company SSO) to a portal scoped to their own account, where they see and update their onboarding tasks and success plan, comment, upload files and confirm outcomes. Portal users never see internal notes, health scores or other customers. **Acceptance evidence:** Invite a champion, complete a customer task and comment from the portal, then attempt to reach another account's portal URL and an internal note; the task and comment appear on the internal timeline and both cross-boundary reads are refused.
 
-- **REVIEW-001 — Business review preparation and decks.** For a QBR or EBR Buoy assembles the account's outcomes, adoption, support, survey and renewal facts into an editable deck from a template, exportable to PDF, PowerPoint and Google Slides, with every chart linked to its data. A person reviews and edits before anything reaches the customer, and the review and its follow-ups are logged. **Acceptance evidence:** Generate a QBR deck for an account with 90 days of data, edit a slide, export to PPTX, PDF and Google Slides and log the meeting; figures match the account's reports and the follow-up tasks appear on the timeline.
+- **REVIEW-001 — Business review preparation and decks.** For a QBR or EBR Buoy assembles the account's outcomes, adoption, support, survey and renewal facts into an editable deck from a template, exportable to PDF, PowerPoint and Google Slides, with every chart linked to its data. A person reviews and edits before anything reaches the customer, and the review and its follow-ups are logged. The current partial native QBR/EBR door captures source-linked current facts and windowed approved outcomes/received surveys, preserves the original facts while titles/commentary are edited, and requires explicit review of the current revision before local PDF/PowerPoint exports or held-meeting logging. Internal follow-up tasks are explicitly approved in that owner/admin action. No customer message or provider upload occurs. Default ADOPTED pending ct approval: owner/admin-only local preparation/review/export, with captured linked-person decks following customer erasure. Direct Google Slides export, complete connected/historical source coverage and Unicode PDF text remain required. **Acceptance evidence:** Generate a QBR deck for an account with 90 days of data, edit a slide, export to PPTX, PDF and Google Slides and log the meeting; figures match the account's reports and the follow-up tasks appear on the timeline.
 
 ### Communication
 
@@ -281,8 +281,8 @@ Judged from the code and tests at commit `8a0538bafdb961686a6bbe5598137d30996f49
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 7 | 1 | 0 | 8 |
-| Target and push further | 22 | 22 | 51 | 95 |
-| All | 29 | 23 | 51 | 103 |
+| Target and push further | 22 | 23 | 50 | 95 |
+| All | 29 | 24 | 50 | 103 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -335,7 +335,7 @@ Judged from the code and tests at commit `8a0538bafdb961686a6bbe5598137d30996f49
 | `ONBOARD-001` | Onboarding projects | target | missing |  | No onboarding projects or expansion-triggered starts. |
 | `PLAN-001` | Shared success plans and goals | target | missing |  | No success plans. |
 | `PORTAL-001` | Customer collaboration portal | target | missing |  | No customer portal. |
-| `REVIEW-001` | Business review preparation and decks | target | missing |  | No business review decks or exports. |
+| `REVIEW-001` | Business review preparation and decks | target | partial | `src/buoy/reviews/`; `src/buoy/ui/reviews.ts`; `src/buoy/activity.ts`; `migrations/core/0062_buoy_reviews.sql`; `docs/reviews.md`; `tests/review-journey.mjs` (reviewJourney through tests/flows.test.mjs, REVIEW-001 native source-linked decks, local exports and meeting follow-ups): a real 90-day public usage fixture, independently matched revenue/adoption/support/survey/outcome/renewal facts, editable titles/commentary with retained source links, current-revision review gate, real PPTX/PDF contents and links, replay-safe meeting and approved follow-up task on the timeline, native authority/origin, account/customer erasure. The same journey through `tests/record-browser.mjs` reviews proves native editing, explicit review, keyboard downloads, meeting refusal/recovery and recorded timeline at 1440/390 with axe/320 reflow and icon tooltips. `tests/record-portability.mjs` through `tests/portable.mjs` covers real archive restoration | Direct Google Slides export needs an authorized Google product connection. Connected-source completeness, historical adoption/support review windows and a Unicode PDF font remain. Default ADOPTED pending ct approval: owner/admin-only local generation/review/export and explicitly approved internal follow-ups; no customer send; captured linked-person decks follow customer erasure. |
 | `EMAIL-001` | Two-way email through Gmail and Microsoft 365 | target | missing |  | No mailbox connection, sending, threading or one-to-one tracking. |
 | `EMAIL-002` | Sending controls and consent | target | missing |  | No send windows, caps, unsubscribe or suppression. |
 | `EMAIL-003` | Journey sending provider and domain authentication | target | missing |  | No sending provider, domain verification, one-click unsubscribe or complaint handling. |

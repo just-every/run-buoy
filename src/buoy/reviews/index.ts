@@ -1,0 +1,83 @@
+import {adoptionState} from '../adoption'
+import {exportPdf,exportPowerPoint} from './export'
+import {Hono} from 'hono'
+import type {Bindings} from '../../auth.server'
+import {jsonBody} from '../access'
+import {accountAudit,auditRecord} from '../audit-records'
+import {date,guard,id,insist,now,object,requirePerson,stmt,text,type Actor} from '../core'
+import {account} from '../accounts'
+import {roleAccess,roleFence} from '../roles'
+import {snapshot,evaluated} from '../segments/snapshot'
+export interface ReviewFact {label:string;value:string;href:string;source:string}
+export interface ReviewSlide {title:string;commentary:string;facts:ReviewFact[]}
+export interface ReviewDocument {name:string;kind:'QBR'|'EBR';accountName:string;start:string;end:string;capturedAt:string;slides:ReviewSlide[];interpretation:string}
+export interface Review {id:string;accountId:string;revision:string;reviewedRevision:string|null;reviewedBy:string|null;reviewedAt:string|null;document:ReviewDocument;createdAt:string}
+const interpretation='Recorded account evidence, not a guaranteed prediction or proof of causation. Dated outcomes and surveys use the inclusive UTC review window. Account, adoption and renewal figures are a frozen current capture, not reconstructed historical values. Missing, stale and unavailable sources remain named; support snapshots are not a complete connected-ticket history. Figures and their source links remain attached when slide titles or commentary are edited. No customer delivery occurs. Exports require a person to review the current deck revision.'
+const keys=(input:Record<string,unknown>,allowed:string[])=>insist(Object.keys(input).every(k=>allowed.includes(k)),'Unsupported business-review property.')
+async function access(db:D1Database,actor:Actor){requirePerson(actor);return roleAccess(db,actor)}
+export async function reviewState(db:D1Database,actor:Actor,key?:string){
+ const role=await access(db,actor),rows=(await db.prepare('SELECT id,account_id AS accountId,revision,reviewed_revision AS reviewedRevision,reviewed_by AS reviewedBy,reviewed_at AS reviewedAt,document,created_at AS createdAt FROM buoy_reviews ORDER BY created_at DESC,id').all<Omit<Review,'document'>&{document:string}>()).results.map(({document,...r})=>({...r,document:JSON.parse(document) as ReviewDocument}))
+ const selected=key?rows.find(r=>r.id===key):null;insist(!key||selected,'Business review unavailable.',404)
+ const meetings=selected?(await stmt(db,'SELECT id,receipt,recorded_at AS recordedAt FROM buoy_review_meetings WHERE review_id=? ORDER BY recorded_at,id',selected.id).all<{id:string;receipt:string;recordedAt:string}>()).results.map(({receipt,...r})=>({...r,...JSON.parse(receipt)})):[]
+ await db.batch([roleFence(db,actor,role),stmt(db,'DELETE FROM buoy_assertions')]);return {reviews:rows,selected:selected??null,meetings,interpretation}
+}
+export async function generateReview(db:D1Database,actor:Actor,input:Record<string,unknown>){
+ const role=await access(db,actor);keys(input,['accountId','name','kind','start','end']);const accountId=text(input.accountId,'Account',100),a=await account(db,accountId),end=date(input.end??now().slice(0,10),'Review end'),start=date(input.start??new Date(Date.parse(end)-89*86400000).toISOString().slice(0,10),'Review start')
+ insist(end<=now().slice(0,10)&&start<=end&&(Date.parse(end)-Date.parse(start))/86400000<=365,'Choose an inclusive review window of at most 366 days ending today or earlier.');insist(input.kind==='QBR'||input.kind==='EBR','Choose QBR or EBR.')
+ const src=await snapshot(db),current=evaluated(src.value,now().slice(0,10)).find(r=>r.account.id===accountId);insist(current,'Account unavailable.',404)
+ const path='/app/accounts/'+encodeURIComponent(accountId),fact=(label:string,value:unknown,href:string,source:string):ReviewFact=>({label,value:value===null||value===undefined?'Unavailable':typeof value==='object'?JSON.stringify(value):String(value),href,source})
+ const [decisions,surveys,renewals,adoption]=await Promise.all([
+  stmt(db,'SELECT COALESCE(o.outcome,d.outcome) AS outcome,d.reason,d.evidence,d.recorded_at AS recordedAt FROM buoy_decisions d LEFT JOIN buoy_decision_outcomes o ON o.decision_id=d.id WHERE d.account_id=? AND substr(d.recorded_at,1,10)>=? AND substr(d.recorded_at,1,10)<=? ORDER BY d.recorded_at,d.id',accountId,start,end).all<{outcome:string;reason:string;evidence:string;recordedAt:string}>(),
+  stmt(db,'SELECT id,kind,value,reference,observed_at AS observedAt FROM buoy_survey_responses WHERE account_id=? AND substr(observed_at,1,10)>=? AND substr(observed_at,1,10)<=? ORDER BY observed_at,id',accountId,start,end).all<{id:string;kind:string;value:number;reference:string;observedAt:string}>(),
+  stmt(db,'SELECT id,document FROM buoy_renewals WHERE account_id=? ORDER BY id',accountId).all<{id:string;document:string}>(),
+  adoptionState(db,actor,new URLSearchParams({accountId})),
+ ])
+ const values=current.values,selectedValues=(prefix:string)=>Object.entries(values).filter(([k])=>k.startsWith(prefix))
+ const slides:ReviewSlide[]=[
+  {title:a.name+' '+input.kind,commentary:'Review the captured evidence and add your customer context before exporting.',facts:[fact('Review window',start+' through '+end,path,'Inclusive UTC dates'),fact('Captured health band',current.assessment.status,path+'#health',current.assessment.reasons.join(' | ')||'Current health inputs'),fact('Health gaps',current.assessment.evidence.filter(e=>e.missing||e.stale).map(e=>e.kind+': '+(e.missing?'missing':'stale')).join(' | ')||'No current source gap',path+'#health','Current source availability'),...selectedValues('revenue.').map(([k,v])=>fact(k,v,path+'#revenue',String(values['revenue.reference']??'No confirmed recurring source')))]},
+  {title:'Outcomes in the review window',commentary:'Only separately approved outcomes are recorded here.',facts:decisions.results.length?decisions.results.map(d=>fact(d.outcome,d.reason,path+'#decisions',d.evidence+' · '+d.recordedAt)):[fact('Approved outcomes',0,path+'#decisions','No outcome recorded in this window; absence does not prove customer success')]},
+  {title:'Product adoption',commentary:'Current reviewed mappings and observation windows apply. Missing completeness is not zero adoption.',facts:Object.entries(adoption.summary.metrics.current).map(([k,v])=>fact(k,v,'/app/adoption?accountId='+encodeURIComponent(accountId),'Current observed adoption report · month '+adoption.windows.current.month.start+' through '+adoption.windows.current.month.end))},
+  {title:'Support evidence',commentary:'A current manual support snapshot is not a complete support history for the review window.',facts:[fact('Open tickets',a.support?.openTickets,path+'#health',a.support?.reference??'Support source missing'),fact('Urgent tickets',a.support?.urgentTickets,path+'#health',a.support?.reference??'Support source missing'),fact('Support observed',a.support?.observedAt,path+'#health','Current manual support snapshot')]},
+  {title:'Received customer surveys',commentary:'Actual received survey observations in this window; no provider delivery is inferred.',facts:surveys.results.length?surveys.results.map(s=>fact(s.kind,s.value,path+'#surveys',s.reference+' · '+s.observedAt)):[fact('Received responses',0,path+'#surveys','No received response in the selected window')]},
+  {title:'Renewals and next steps',commentary:'Expected ARR is not a billing change. Agree follow-up work with the customer.',facts:renewals.results.length?renewals.results.flatMap(row=>{const r=JSON.parse(row.document);return [fact(r.name+' expected ARR',r.expectedArrMinor,'/app/renewals?renewal='+encodeURIComponent(row.id),r.currency+' native minor units · '+r.sourceReference),fact('Stage / forecast / outcome',r.stage+' / '+r.forecast+' / '+(r.outcome??'Open'),'/app/renewals?renewal='+encodeURIComponent(row.id),r.sourceReference)]}):[fact('Renewal opportunity','Unavailable','/app/renewals','No generated current renewal source')]},
+ ]
+ // Keep documents bounded and retain an explicit missing-state slide when a
+ // source has no supplied measurements.
+ for(const slide of slides)if(!slide.facts.length)slide.facts.push(fact('Source coverage','Unavailable',path,'No configured source measurements'))
+ const doc:ReviewDocument={name:text(input.name,'Review name',100),kind:input.kind,accountName:a.name,start,end,capturedAt:now(),slides,interpretation};insist(JSON.stringify(doc).length<=200000,'Review exceeds the bounded export size. Narrow its date window.')
+ const key=id();await db.batch([roleFence(db,actor,role),guard(db,'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)',accountId,a.revision),guard(db,`(${src.sql})=?`,src.raw),stmt(db,'INSERT INTO buoy_reviews VALUES(?,?,?,?,NULL,NULL,NULL,?,?)',key,accountId,JSON.stringify(doc),id(),actor.id,now()),stmt(db,'INSERT INTO buoy_review_people(review_id,person_id) SELECT ?,person_id FROM buoy_customer_memberships WHERE account_id=?',key,accountId),...accountAudit(db,actor,accountId,'business-review.generated'),stmt(db,'DELETE FROM buoy_assertions')]);return {id:key}
+}
+export async function editReview(db:D1Database,actor:Actor,key:string,input:Record<string,unknown>){
+ const role=await access(db,actor);keys(input,['revision','slides']);const current=(await reviewState(db,actor,key)).selected!;insist(current.revision===input.revision,'Deck changed. Reload before editing.',409);insist(Array.isArray(input.slides)&&input.slides.length===current.document.slides.length,'Edit every existing slide title and commentary; source facts remain attached.')
+ const slides=current.document.slides.map((slide,index)=>{const row=object((input.slides as unknown[])[index]);keys(row,['title','commentary']);insist(typeof row.commentary==='string'&&row.commentary.length<=3000,'Slide commentary is bounded text.');return {...slide,title:text(row.title,'Slide title',200),commentary:row.commentary}})
+ await db.batch([roleFence(db,actor,role),guard(db,'EXISTS(SELECT 1 FROM buoy_reviews WHERE id=? AND revision=?)',key,current.revision),stmt(db,'UPDATE buoy_reviews SET document=?,revision=?,reviewed_revision=NULL,reviewed_by=NULL,reviewed_at=NULL WHERE id=?',JSON.stringify({...current.document,slides}),id(),key),...accountAudit(db,actor,current.accountId,'business-review.edited'),stmt(db,'DELETE FROM buoy_assertions')]);return {id:key}
+}
+export async function approveReview(db:D1Database,actor:Actor,key:string,input:Record<string,unknown>){
+ const role=await access(db,actor);keys(input,['revision','confirmation']);insist(input.confirmation==='reviewed','Explicit review of this deck revision is required.');const current=(await reviewState(db,actor,key)).selected!;insist(current.revision===input.revision,'Deck changed. Review the current slides.',409)
+ await db.batch([roleFence(db,actor,role),guard(db,'EXISTS(SELECT 1 FROM buoy_reviews WHERE id=? AND revision=?)',key,current.revision),stmt(db,'UPDATE buoy_reviews SET reviewed_revision=revision,reviewed_by=?,reviewed_at=? WHERE id=?','person:'+actor.id,now(),key),...accountAudit(db,actor,current.accountId,'business-review.reviewed'),stmt(db,'DELETE FROM buoy_assertions')]);return {id:key}
+}
+export async function logReviewMeeting(db:D1Database,actor:Actor,key:string,input:Record<string,unknown>){
+ const role=await access(db,actor);keys(input,['revision','operationKey','heldOn','evidence','followups']);const current=(await reviewState(db,actor,key)).selected!,operationKey=text(input.operationKey,'Operation key',100),prior=await stmt(db,'SELECT input,receipt FROM buoy_review_meetings WHERE operation_key=?',operationKey).first<{input:string;receipt:string}>()
+ const heldOn=date(input.heldOn,'Meeting date'),evidence=text(input.evidence,'Meeting evidence',2000);insist(heldOn<=now().slice(0,10),'A recorded meeting cannot be in the future.');insist(Array.isArray(input.followups)&&input.followups.length<=20,'List at most 20 follow-up tasks.')
+ const followups=input.followups.map(v=>{const f=object(v);keys(f,['title','dueDate']);return {title:text(f.title,'Follow-up title',500),dueDate:date(f.dueDate,'Task due date')}}),body=JSON.stringify({reviewId:key,actorId:actor.id,revision:input.revision,heldOn,evidence,followups})
+ if(prior){insist(prior.input===body,'Operation key already records a different meeting.',409);return {...JSON.parse(prior.receipt),replayed:true}}
+ insist(current.revision===input.revision&&current.reviewedRevision===current.revision,'Review this deck revision before logging its meeting.',409)
+ const a=await account(db,current.accountId),owner=(await stmt(db,'SELECT owner_id FROM buoy_account_owners WHERE account_id=?',current.accountId).first<{owner_id:string}>())?.owner_id??actor.id,stamp=now(),meetingId=id(),taskIds:string[]=[],statements:D1PreparedStatement[]=[]
+ for(const task of followups){const proposalId=id(),taskId=id();taskIds.push(taskId);statements.push(stmt(db,"INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at,approved_by,approved_at) VALUES(?,?,'playbook',?,?,?,'approved',?,?,?,?)",proposalId,a.id,a.revision,JSON.stringify(a),JSON.stringify({...task,priority:'medium',type:'general'}),'person:'+actor.id,stamp,'person:'+actor.id,stamp),stmt(db,'INSERT INTO buoy_tasks(id,account_id,proposal_id,title,due_date,owner_id,priority,type) VALUES(?,?,?,?,?,?,?,?)',taskId,a.id,proposalId,task.title,task.dueDate,owner,'medium','general'))}
+ const receipt={id:meetingId,reviewId:key,heldOn,evidence,taskIds,recordedBy:'person:'+actor.id,replayed:false}
+ await db.batch([roleFence(db,actor,role),guard(db,'EXISTS(SELECT 1 FROM buoy_reviews WHERE id=? AND revision=? AND reviewed_revision=revision)',key,current.revision),guard(db,'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)',a.id,a.revision),...statements,stmt(db,'INSERT INTO buoy_review_meetings VALUES(?,?,?,?,?,?,?)',meetingId,key,a.id,operationKey,body,JSON.stringify(receipt),stamp),stmt(db,'UPDATE buoy_accounts SET revision=? WHERE id=?',id(),a.id),...accountAudit(db,actor,a.id,'business-review.meeting-logged'),stmt(db,'DELETE FROM buoy_assertions')]);return receipt
+}
+export const reviewsApi=new Hono<{Bindings:Bindings;Variables:{actor:Actor}}>()
+reviewsApi.get('/api/buoy/reviews',async c=>c.json(await reviewState(c.env.DB,c.get('actor'),c.req.query('id'))))
+reviewsApi.post('/api/buoy/reviews',async c=>c.json(await generateReview(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+reviewsApi.put('/api/buoy/reviews/:id',async c=>c.json(await editReview(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
+reviewsApi.post('/api/buoy/reviews/:id/review',async c=>c.json(await approveReview(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
+reviewsApi.post('/api/buoy/reviews/:id/meetings',async c=>c.json(await logReviewMeeting(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
+
+reviewsApi.get('/api/buoy/reviews/:id/export/:format',async c=>{
+ const actor=c.get('actor'),role=await access(c.env.DB,actor),current=(await reviewState(c.env.DB,actor,c.req.param('id'))).selected!;insist(current.reviewedRevision===current.revision,'Review the current deck revision before exporting.',409)
+ const format=c.req.param('format');insist(format==='pdf'||format==='pptx','Choose PDF or PowerPoint.')
+ const bytes=await(format==='pdf'?exportPdf(current.document,c.env.AUTH_ORIGIN):exportPowerPoint(current.document,c.env.AUTH_ORIGIN))
+ await c.env.DB.batch([roleFence(c.env.DB,actor,role),guard(c.env.DB,'EXISTS(SELECT 1 FROM buoy_reviews WHERE id=? AND revision=? AND reviewed_revision=revision)',current.id,current.revision),...accountAudit(c.env.DB,actor,current.accountId,'business-review.exported'),stmt(c.env.DB,'DELETE FROM buoy_assertions')])
+ return new Response(bytes as BodyInit,{headers:{'content-type':format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.presentationml.presentation','content-disposition':'attachment; filename=buoy-review.'+format,'cache-control':'no-store','x-content-type-options':'nosniff'}})
+})

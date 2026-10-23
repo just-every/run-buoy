@@ -147,7 +147,7 @@ try{
  // calculation proves a keyed fence, not merely a replay refusal that plain SHA
  // would also satisfy. No generated installation key is logged on failure.
  const archiveRows=(await readFile(archive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
- assert.ok(!archiveRows.some(item=>['buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
+ assert.ok(!archiveRows.some(item=>['buoy_report_shares','buoy_dashboard_shares','buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
  assertBillingArchiveRows(archiveRows,billingImage);
  const replayKey=archiveRows.find(item=>item.table==='buoy_privacy_key')?.row.secret
  assert.ok(typeof replayKey==='string'&&/^[a-f0-9]{64}$/.test(replayKey),'Archive carries a 256-bit installation replay key')

@@ -35,7 +35,11 @@ export async function seedRecordPortability(call,fixture,personId){
  const childBook=await call('/playbooks','POST',{config:playConfig(operator,{name:'Portable pinned child',steps:[{id:'review',kind:'approval',title:'Review portable child'}]})}),parentBook=await call('/playbooks','POST',{config:playConfig(operator,{name:'Portable approved parent',steps:[{id:'start',kind:'playbook',title:'Start portable child',playbookId:childBook.id}]})}),parentRun=await call('/playbooks/'+parentBook.id+'/enroll','POST',{accountId:child,operationKey:'synthetic-buoy-1405'});
  await call('/playbook-runs/'+parentRun.id+'/action','POST',{revision:(await call('/playbooks?accountId='+child)).runs.find(r=>r.id===parentRun.id).revision,action:'approve',reference:'synthetic-buoy-1406'});
  const forecastSnapshot=await call('/renewals/forecast/snapshots','POST',{})
- return {playbook,playRun,parent,child,viewId:view.id,bulk,card,personId,forecastSnapshotId:forecastSnapshot.id}
+ const report=await call('/reports','POST',{spec:{name:'Portable current account count',object:'account',rules:{match:'all',conditions:[]},segmentId:null,groupBy:'name',measure:'count',operation:'count',formula:null,chart:'table',sharedRoles:['finance']}})
+ const dashboard=await call('/dashboards','POST',{name:'Portable reviewed dashboard',sharedRoles:['finance'],reportIds:[report.id]})
+ const deck=await call('/reviews','POST',{accountId:child,name:'Portable retained QBR',kind:'QBR'})
+ const prepared=(await call('/reviews?id='+deck.id)).selected;await call('/reviews/'+deck.id+'/review','POST',{revision:prepared.revision,confirmation:'reviewed'})
+ return {reportId:report.id,dashboardId:dashboard.id,reviewId:deck.id,playbook,playRun,parent,child,viewId:view.id,bulk,card,personId,forecastSnapshotId:forecastSnapshot.id}
 }
 export async function recordPortabilityImage(call,ids){
  const hierarchy=await call('/accounts/'+ids.parent+'/hierarchy'),relationship=await call('/accounts/'+ids.child+'/hierarchy'),workspace=await call('/workspace?view='+ids.viewId),cards=await call('/scorecards')
@@ -43,10 +47,11 @@ export async function recordPortabilityImage(call,ids){
  assert.equal(relationship.link.kind,'relationship');assert.ok(relationship.stakeholders.find(p=>p.id===ids.personId).roles.includes('champion'))
  const renewals=await call('/renewals');assert.equal(renewals.records.find(r=>r.accountId===ids.child).outcome,'renewed-with-expansion')
  const forecast=await call('/renewals/forecast?period=quarter&start=2027-01-01&snapshotId='+ids.forecastSnapshotId);assert.ok(forecast.baseline.some(r=>r.accountId===ids.child&&r.nativeArrMinor===120000&&r.actualNativeMinor===180000))
- return {forecast:{snapshot:forecast.snapshot,baseline:forecast.baseline,previous:forecast.previous},rates:await call('/revenue/rates'),retention:await call('/revenue/retention?period=quarter&end=2026-06-30'),plays:await call('/playbooks?accountId='+ids.child),hierarchy,relationship,view:workspace.selected,records:workspace.records,renewals,fields:await call('/fields'),assignments:cards.assignments}
+ return {report:{...(await call('/reports/'+ids.reportId)),spec:{...(await call('/reports/'+ids.reportId)).spec,sharedRoles:[]}},review:(await call('/reviews?id='+ids.reviewId)).selected,forecast:{snapshot:forecast.snapshot,baseline:forecast.baseline,previous:forecast.previous},rates:await call('/revenue/rates'),retention:await call('/revenue/retention?period=quarter&end=2026-06-30'),plays:await call('/playbooks?accountId='+ids.child),hierarchy,relationship,view:workspace.selected,records:workspace.records,renewals,fields:await call('/fields'),assignments:cards.assignments}
 }
 export async function assertRecordPortability(call,request,ids,before){
  assert.deepEqual(await recordPortabilityImage(call,ids),before,'ACCOUNT-001 RENEW-001 ACCOUNT-003 full native records, sources, fields/formulas/history, independent card, shared view and expanded outcome restore exactly')
+ const restoredReports=await call('/reports');assert.deepEqual(restoredReports.reports.find(r=>r.id===ids.reportId).spec.sharedRoles,[],'Restored report definitions do not restore role shares');assert.deepEqual(restoredReports.dashboards.find(d=>d.id===ids.dashboardId).sharedRoles,[],'Restored dashboards need fresh role sharing');
  const replay=await request('/api/buoy/workspace/bulk/apply',{method:'POST',body:ids.bulk})
  assert.equal(replay.status,409,'Restored bulk receipts do not grant the fresh owner the former actor’s replay authority')
  const shared=await call('/workspace?view='+ids.viewId)

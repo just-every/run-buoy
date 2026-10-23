@@ -14,6 +14,8 @@ const stores=[
  ['person','buoy_customer_people','id=?'],['subject','buoy_customer_subjects','person_id=?'],
  ['memberships','buoy_customer_memberships','person_id=?'],['manualFields','buoy_customer_values','person_id=?'],
  ['calculatedFields','buoy_customer_results','person_id=?'],['fieldHistory','buoy_customer_history','person_id=?'],
+ ['businessReviews','buoy_reviews','id IN(SELECT review_id FROM buoy_review_people WHERE person_id=?)'],
+ ['reviewMeetings','buoy_review_meetings','review_id IN(SELECT review_id FROM buoy_review_people WHERE person_id=?)'],
  ['surveyResponses','buoy_survey_responses','person_id=?'],
  ['usageEvents','buoy_usage_events',`EXISTS(SELECT 1 FROM buoy_usage_mappings m WHERE m.person_id=? AND m.source_id=t.source_id AND m.user_id=t.user_id)`],
  ['usageMappings','buoy_usage_mappings','person_id=?'],['inappDeliveries','buoy_inapp_deliveries','person_id=?'],

@@ -54,7 +54,7 @@
     "test:adoption-aggregates": "node tests/adoption-consumers.mjs segment",
     "test:health": "node tests/adoption-consumers.mjs health",
     "test:flows:core": "node --test --test-concurrency=1 --test-name-pattern=\"^(Buoy public|HTTP-001 IMPORT-001)\" tests/flows.test.mjs",
-    "test:records": "node --test --test-concurrency=1 --test-name-pattern=\"^(REPORT-002|ACCOUNT-005|ERASE-002|RENEW-001|ACCOUNT-003|ACCOUNT-001|PLAY-001|RENEW-004)\" tests/flows.test.mjs",
+    "test:records": "node --test --test-concurrency=1 --test-name-pattern=\"^(REVIEW-001|REPORT-002|ACCOUNT-005|ERASE-002|RENEW-001|ACCOUNT-003|ACCOUNT-001|PLAY-001|RENEW-004)\" tests/flows.test.mjs",
     "test:volume": "node --test --test-concurrency=1 --test-name-pattern=\"^(USAGE-001 receiver|TEAM-001 300-account)\" tests/flows.test.mjs",
     "test:records-browser": "node tests/record-browser.mjs",
     "test:privacy-renewal-browser": "node tests/record-browser.mjs privacy-renewals",
@@ -63,13 +63,16 @@
     "test:roles": "node --test --test-concurrency=1 --test-name-pattern=\"^ROLE-001\" tests/flows.test.mjs",
     "test:roles-browser": "node tests/roles-browser.mjs",
     "test:billing": "node tests/billing-journey.mjs --browser",
-    "test:dashboards-browser": "node tests/record-browser.mjs dashboards"
+    "test:dashboards-browser": "node tests/record-browser.mjs dashboards",
+    "test:reviews-browser": "node tests/record-browser.mjs reviews"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.41",
     "@tanstack/react-start": "1.168.60",
     "hono": "4.13.7",
     "marked": "18.1.1",
+    "pdf-lib": "1.17.1",
+    "pptxgenjs": "4.0.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

@@ -1,3 +1,4 @@
+import {reviewsApi} from './reviews'
 import {reportsApi} from './reports'
 import {forecastApi,forecastState,overrideForecast} from './renewals/forecast'
 import {scopedRenewalApprovals,approveScopedRenewal} from './roles/renewal-approval'
@@ -122,6 +123,7 @@ buoyApi.onError((error, c) => {
 })
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',privacyApi)
+buoyApi.route('/',reviewsApi)
 buoyApi.route('/',reportsApi)
 buoyApi.route('/',forecastApi)
 buoyApi.route('/',renewalsApi)

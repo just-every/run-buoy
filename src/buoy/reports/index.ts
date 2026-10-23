@@ -78,3 +78,5 @@ reportsApi.get('/api/buoy/reports/:id',async c=>c.json(await runReport(c.env.DB,
 reportsApi.get('/api/buoy/reports/:id/export.csv',async c=>{const r=await runReport(c.env.DB,c.get('actor'),c.req.param('id'));return c.body(reportCsv(r.spec,r.result),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=buoy-report.csv'})})
 reportsApi.post('/api/buoy/reports',async c=>c.json(await saveReport(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
 reportsApi.post('/api/buoy/dashboards',async c=>c.json(await saveDashboard(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+
+reportsApi.get('/api/buoy/reports/:id/delivery-preview.txt',async c=>{const r=await runReport(c.env.DB,c.get('actor'),c.req.param('id'));return c.body(r.spec.name+'\n'+reportCsv(r.spec,r.result)+'\n'+r.interpretation,200,{'content-type':'text/plain; charset=utf-8','content-disposition':'attachment; filename=buoy-report-preview.txt'})})
