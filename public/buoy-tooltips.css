@@ -1,0 +1,2 @@
+.buoy-control-tooltip { position: fixed; z-index: 10000; max-width: calc(100vw - 16px); padding: 6px 9px; border-radius: 6px; background: #111827; color: #fff; font-size: 13px; line-height: 1.4; pointer-events: none; }
+.buoy-control-tooltip[hidden] { display: none; }

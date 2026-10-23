@@ -47,6 +47,11 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   if(path==='/app/billing')return (await import('./billing-actions')).mutateBilling(api,request,fields);
   if(path==='/app/roles')return (await import('./role-actions')).mutateRoles(api,request,fields);
   if(path==='/app/revenue'&&action==='rates'){let rates:unknown;try{rates=JSON.parse(fields.rates)}catch{throw new ApiError('Enter valid JSON for the rate periods.')}await send('/api/buoy/revenue/rates',{revision:fields.revision||null,table:{name:fields.name,mode:fields.mode,rates}});return {redirect:path+'#rate-table-panel',message:'Reporting rates published.',saved:'rate-table-editor'}}
+  if(accountId&&action==='plan-save'){
+    let objectives:unknown;try{objectives=JSON.parse(fields.objectives)}catch{throw new ApiError('Enter valid JSON for the objectives.')}
+    await send(accountPath+'/plans',{...(fields.planId?{id:fields.planId,revision:fields.revision}:{}),accountRevision:fields.accountRevision,name:fields.name,staffOwnerId:fields.staffOwnerId,customerOwnerId:fields.customerOwnerId,objectives});
+    return {redirect:path+'#success-plans',message:'Internal success plan saved.',saved:'plan-edit-'+(fields.planId||'new')};
+  }
   if(accountId&&action==='play-publish'){
     let config:unknown;try{config=JSON.parse(fields.config)}catch{throw new ApiError('Enter valid JSON for the playbook configuration.')}
     await send('/api/buoy/playbooks',{...(fields.playbookId?{id:fields.playbookId,revision:fields.revision}:{}),config});return {redirect:path+'#playbooks',message:'Playbook version published.',saved:'playbook-edit-'+(fields.playbookId||'new')};

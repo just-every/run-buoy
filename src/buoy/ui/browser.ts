@@ -41,6 +41,41 @@ export const browserScript = `(() => {
     }
   }
   window.addEventListener('beforeunload', event => { if (document.querySelector('[data-dirty="true"]')) { event.preventDefault(); event.returnValue = ''; } });
+  // Symbolic controls retain their full accessible name and a brief visual hint.
+  const tooltip = document.createElement('span');
+  tooltip.id = 'buoy-control-tooltip'; tooltip.className = 'buoy-control-tooltip';
+  tooltip.setAttribute('role', 'tooltip'); tooltip.hidden = true; document.body.append(tooltip);
+  let tooltipTimer, tooltipOwner;
+  const hideTooltip = () => {
+    clearTimeout(tooltipTimer); tooltip.hidden = true;
+    if (tooltipOwner) {
+      const ids = (tooltipOwner.getAttribute('aria-describedby') || '').split(/\\s+/).filter(id => id && id !== tooltip.id);
+      if (ids.length) tooltipOwner.setAttribute('aria-describedby', ids.join(' ')); else tooltipOwner.removeAttribute('aria-describedby');
+      tooltipOwner = null;
+    }
+  };
+  const positionTooltip = control => {
+    const bounds = control.getBoundingClientRect(), hint = tooltip.getBoundingClientRect();
+    tooltip.style.left = Math.max(8, Math.min(innerWidth - hint.width - 8, bounds.left)) + 'px';
+    tooltip.style.top = (bounds.bottom + hint.height + 8 < innerHeight ? bounds.bottom + 6 : Math.max(8, bounds.top - hint.height - 6)) + 'px';
+  };
+  const showTooltip = control => {
+    hideTooltip(); tooltipOwner = control;
+    tooltip.textContent = control.dataset.tooltip || (control.getAttribute('aria-expanded') === 'true' ? 'Close account' : 'Open account');
+    const ids = (control.getAttribute('aria-describedby') || '').split(/\\s+/).filter(Boolean);
+    control.setAttribute('aria-describedby', [...new Set([...ids, tooltip.id])].join(' '));
+    tooltip.hidden = false;
+    positionTooltip(control);
+  };
+  for (const control of document.querySelectorAll('.rw-open,[data-tooltip]')) {
+    control.addEventListener('mouseenter', () => { clearTimeout(tooltipTimer); tooltipTimer = setTimeout(() => showTooltip(control), 300); });
+    control.addEventListener('mouseleave', () => { clearTimeout(tooltipTimer); if (document.activeElement !== control) hideTooltip(); });
+    control.addEventListener('focus', () => showTooltip(control));
+    control.addEventListener('blur', hideTooltip);
+    control.addEventListener('keydown', event => { if (event.key === 'Escape') hideTooltip(); });
+  }
+  const moveTooltip = () => { if (tooltipOwner && !tooltip.hidden) positionTooltip(tooltipOwner); };
+  window.addEventListener('scroll', moveTooltip, true); window.addEventListener('resize', moveTooltip);
   const reveal = () => { let target = null; try { target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch {} const card = target && target.closest('details'); if (card && !card.open) { card.open = true; target.scrollIntoView(); } };
   reveal(); window.addEventListener('hashchange', reveal);
   for (const opener of document.querySelectorAll('[data-open]')) {
