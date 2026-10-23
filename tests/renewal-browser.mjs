@@ -1,3 +1,4 @@
+import {providerRenewalJourney} from './renewal-journey.mjs'
 import assert from 'node:assert/strict'
 import {join} from 'node:path'
 import {startWorker} from './worker.mjs'
@@ -55,4 +56,5 @@ export async function renewalBrowser(browser,evidence){
   assert.deepEqual(failures,[],'Renewal inherited accessibility at both widths')
   console.log('RENEW-001 native quarter board/list, pipeline, every inherited field type, ten-account no-write preview, explanations/history, formula refusal and approval passed at 1440/390.')
  }finally{await app.close()}
+ await providerRenewalJourney({browser,evidence})
 }

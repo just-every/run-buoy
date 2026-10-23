@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict'
+import {createHmac} from 'node:crypto'
+import {join} from 'node:path'
+import {billingFixtureKey,billingWebhookSecret} from './billing-fixture.mjs'
+import {scan} from './a11y-checks.mjs'
 import {startWorker} from './worker.mjs'
 
 export async function renewalJourney(){
@@ -74,5 +78,73 @@ export async function renewalJourney(){
   await api('/accounts/'+accounts[0],'DELETE',{confirmation:'Renewal customer 0'})
   assert.ok(!(await api('/renewals')).records.some(r=>r.accountId===accounts[0]),'Account erasure owns renewal and field history custody')
   console.log('RENEW-001 twelve confirmed periods, lead-time Cron, quarter board/list, all five approved outcomes, linked work and complete inherited field/segment carrier passed; provider billing reconciliation remains pending.')
+ }finally{await app.close()}
+ await providerRenewalJourney()
+}
+
+// Twelve subscriptions at Stripe's network edge, real migrated Worker everywhere
+// else. The same public journey supplies the native reconciliation screen proof.
+export async function providerRenewalJourney({browser,evidence}={}){
+ const source={calls:[],fail:false,rows:Array.from({length:12},(_,i)=>({customer:'synthetic-buoy-'+(7000+i),subscription:'synthetic-buoy-'+(7100+i),price:'synthetic-buoy-'+(7200+i),item:'synthetic-buoy-'+(7300+i),amount:10000+i*100,status:'active',start:'2026-01-01',end:i<6?'2026-12-31':'2027-03-31'}))}
+ const seconds=s=>Date.parse(s+'T00:00:00Z')/1000
+ const fetch=async request=>{
+  const url=new URL(request.url);source.calls.push({method:request.method,path:url.pathname});assert.equal(request.method,'GET')
+  if(source.fail)return Response.json({error:'Unavailable'},{status:503})
+  const list=data=>Response.json({object:'list',data,has_more:false}),customer=url.searchParams.get('customer'),row=source.rows.find(r=>r.customer===customer)
+  if(url.pathname.startsWith('/v1/customers/'))return Response.json({id:url.pathname.split('/').at(-1),object:'customer',livemode:false,created:seconds('2025-01-01')})
+  if(url.pathname==='/v1/subscriptions')return list(row?[{id:row.subscription,object:'subscription',livemode:false,customer,status:row.status,created:seconds(row.start),current_period_start:seconds(row.start),current_period_end:seconds(row.end),cancel_at_period_end:false,canceled_at:row.status==='canceled'?seconds('2026-10-01'):null,discounts:[]}]:[])
+  if(url.pathname==='/v1/subscription_items'){
+   const r=source.rows.find(r=>r.subscription===url.searchParams.get('subscription'));assert.ok(r)
+   return list([{id:r.item,object:'subscription_item',subscription:r.subscription,quantity:1,price:{id:r.price,object:'price',livemode:false,billing_scheme:'per_unit',transform_quantity:null,tiers_mode:null,product:'synthetic-buoy-7400',currency:'usd',unit_amount_decimal:String(r.amount),recurring:{interval:'month',interval_count:1,usage_type:'licensed'}}}])
+  }
+  assert.ok(['/v1/customers','/v1/invoices','/v1/payment_intents','/v1/charges','/v1/credit_notes'].includes(url.pathname),url.pathname);return list([])
+ }
+ const app=await startWorker({providerFetch:fetch}),api=async(path,method='GET',body)=>{const r=await app.request('/api/buoy'+path,{cookie:app.cookie,method,body});assert.ok(r.ok,await r.clone().text());return r.json()}
+ try{
+  const owner=(await api('/state')).operator.id,settings=(await api('/renewals')).settings
+  await api('/renewals/settings','PUT',{revision:settings.revision,leadDays:30,stages:settings.stages})
+  const connection=await api('/connections','POST',{name:'Reviewed subscription source',key:billingFixtureKey}),base='/billing/'+connection.id
+  await api(base+'/settings','PUT',{staleDays:365});await api(base+'/webhook-secret','PUT',{secret:billingWebhookSecret})
+  for(const [i,row]of source.rows.entries()){
+   const a=await api('/accounts','POST',{id:'synthetic-buoy-'+(7500+i),name:'Provider renewal '+i,renewalDate:row.end,noticeDays:45,renewalEvidence:'Confirmed subscription notice terms',billing:null,support:null})
+   await api('/accounts/'+a.id+'/owner','PUT',{ownerId:owner});row.accountId=a.id
+   const preview=await api(base+'/bindings/preview','POST',{customerId:row.customer,accountId:a.id});await api(base+'/bindings','POST',{token:preview.token})
+  }
+  for(const row of source.rows){const run=await api(base+'/sync','POST',{});assert.equal(run.status,'succeeded',run.error)}
+  assert.equal((await api('/renewals')).records.length,0)
+  await app.scheduled('0 * * * *',Date.parse('2026-11-30T23:00:00Z'));assert.equal((await api('/renewals')).records.length,0)
+  await app.scheduled('0 * * * *',Date.parse('2026-12-01T00:00:00Z'));await app.scheduled('0 * * * *',Date.parse('2026-12-01T01:00:00Z'));assert.equal((await api('/renewals')).records.length,6)
+  await app.scheduled('0 * * * *',Date.parse('2027-03-01T00:00:00Z'));await app.scheduled('0 * * * *',Date.parse('2027-03-01T01:00:00Z'))
+  const pipeline=await api('/renewals');assert.equal(pipeline.records.length,12);assert.equal(new Set(pipeline.records.map(r=>r.id)).size,12);assert.deepEqual(pipeline.quarters,['2026-Q4','2027-Q1'])
+  for(const [i,row]of source.rows.entries()){
+   const r=pipeline.records.find(r=>r.accountId===row.accountId);row.renewalId=r.id
+   assert.equal(r.expectedArrMinor,row.amount*12);assert.equal(r.sourceSubscriptionId,row.subscription);assert.equal(r.ownerId,owner);assert.equal(r.noticeDeadline,i<6?'2026-11-16':'2027-02-14');assert.equal(r.sourceKind,'stripe-test')
+  }
+  let eventNumber=0
+  const sync=async row=>{const event={id:'synthetic-buoy-'+(7600+eventNumber++),object:'event',livemode:false,type:'customer.subscription.updated',created:Math.floor(Date.now()/1000),data:{object:{id:row.subscription,object:'subscription',customer:row.customer}}},t=Math.floor(Date.now()/1000),signature=`t=${t},v1=${createHmac('sha256',billingWebhookSecret).update(t+'.'+JSON.stringify(event)).digest('hex')}`;const response=await app.request('/api/buoy'+base+'/webhook',{method:'POST',body:event,headers:{'stripe-signature':signature}});assert.equal(response.status,200,await response.clone().text())}
+  const current=async row=>(await api('/renewals')).records.find(r=>r.id===row.renewalId)
+  for(const [i,row]of source.rows.slice(0,2).entries()){
+   const r=await current(row),outcome=i===0?'churned':'renewed-with-contraction',result=i===0?0:r.expectedArrMinor/2
+   await api('/renewals/'+r.id,'PUT',{revision:r.revision,stage:'Decision',forecast:'at-risk',riskReasons:['Customer confirmed change'],ownerId:owner})
+   const p=await api('/proposals','POST',{accountId:row.accountId,kind:'renewal',payload:{renewalId:r.id,outcome,resultArrMinor:result,reason:'customer-confirmed',evidence:'Signed subscription change'}})
+   assert.equal((await current(row)).outcome,null,'Preparation is not approval')
+   await api('/proposals/'+p.id+'/approve','POST',{});await api('/proposals/'+p.id+'/approve','POST',{})
+   assert.equal((await current(row)).billingReconciliation,'pending-provider-sync')
+   await sync(row);const mismatch=await current(row);assert.equal(mismatch.billingReconciliation,'mismatch');assert.equal(mismatch.billingActual.arrMinor,r.expectedArrMinor);assert.equal(mismatch.billingActual.differenceMinor,r.expectedArrMinor-result)
+   if(i===0)row.status='canceled';else row.amount/=2
+   await sync(row);const matched=await current(row)
+   assert.equal(matched.billingReconciliation,'matched');assert.equal(matched.billingActual.arrMinor,result);assert.equal(matched.billingActual.differenceMinor,0);assert.equal(matched.expectedArrMinor,r.expectedArrMinor);assert.equal(matched.sourceVersionId,r.sourceVersionId,'Approved source image remains frozen')
+   const billing=(await api('/billing')).observations.find(o=>o.accountId===row.accountId)
+   assert.equal(matched.billingActual.snapshotId,billing.id);assert.equal(matched.billingActual.arrMinor,billing.document.revenue[0].arr.roundedMinor)
+   assert.ok((await api('/renewals')).fields.history.some(h=>h.recordId===r.id&&h.key==='billing-reconciliation'&&h.newValue.billingReconciliation==='mismatch'),'Earlier mismatches remain in source history')
+  }
+  const first=source.rows[0]
+  if(browser)for(const width of [1440,390]){
+   const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
+   try{await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}));const page=await context.newPage();await page.goto(app.origin+'/app/renewals?renewal='+first.renewalId,{waitUntil:'networkidle'});assert.match(await page.locator('#renewal-record').innerText(),/Billing reconciliation: matched/);assert.match(await page.locator('#renewal-record').innerText(),/Provider actual ARR/);assert.match(await page.locator('#renewal-history').innerText(),/mismatch/);await scan(page,'RENEW-001 provider reconciliation '+width);await page.screenshot({path:join(evidence,'renewal-provider-'+width+'.png'),fullPage:true});await page.locator('#renewal-record').screenshot({path:join(evidence,'renewal-provider-record-'+width+'.png')});await page.setViewportSize({width:320,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Provider renewal screen reflows to 320');assert.equal(await page.locator('button,a').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length&&/^[+−×↗]$/.test(n.textContent.trim())).length),0,'All actions on this screen have visible text; no icon-only control needs a tooltip')}finally{await context.close()}
+  }
+  assert.ok(source.calls.every(c=>c.method==='GET'),'Renewal outcomes never mutate provider billing')
+  await api('/accounts/'+first.accountId,'DELETE',{confirmation:'Provider renewal 0'});assert.ok(!(await api('/renewals')).records.some(r=>r.accountId===first.accountId));assert.ok(!JSON.stringify((await api('/renewals')).fields.history).includes(first.customer),'Erasure withdraws provider-renewal source history')
+  console.log('RENEW-001 provider subscriptions: 12/two quarters, exact lead and notice dates, unique generation, stages, separate approved churn/contraction, mismatched then matched next-sync ARR, immutable prior sources, erasure and GET-only provider calls passed.')
  }finally{await app.close()}
 }
