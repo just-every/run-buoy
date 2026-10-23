@@ -9,7 +9,7 @@ import type {Renewal} from './index'
 const IMAGE=`SELECT json_group_array(json_object('accountId',a.id,'account',a.document,'ownerId',o.owner_id,'snapshotId',s.id,'reference',s.source_reference,'observedAt',s.observed_at,'document',s.document)) FROM buoy_billing_current p JOIN buoy_billing_snapshots s ON s.id=p.snapshot_id JOIN buoy_accounts a ON a.id=p.account_id JOIN buoy_connections c ON c.id=s.connection_id JOIN buoy_connection_credentials k ON k.connection_id=c.id JOIN buoy_billing_settings b ON b.connection_id=c.id LEFT JOIN buoy_account_owners o ON o.account_id=a.id WHERE c.disconnected_at IS NULL AND b.last_error IS NULL AND julianday(?) - julianday(substr(s.observed_at,1,10)) BETWEEN 0 AND b.stale_days`
 type Source={accountId:string;account:string;ownerId:string|null;snapshotId:string;reference:string;observedAt:string;document:string}
 export async function generateBillingRenewals(db:D1Database,on:string,settings:{revision:string;leadDays:number;stages:string[]}){
- const image=(await stmt(db,IMAGE+' AS snapshot',on).first<{snapshot:string}>())!.snapshot
+ const image=(await stmt(db,'SELECT ('+IMAGE+') AS snapshot',on).first<{snapshot:string}>())!.snapshot
  const sources=JSON.parse(image) as Source[],writes:D1PreparedStatement[]=[]
  const existing=(await db.prepare('SELECT id,account_id AS accountId,period_key AS periodKey,document,revision FROM buoy_renewals').all<{id:string;accountId:string;periodKey:string;document:string;revision:string}>()).results
  const write=(prior:typeof existing[number]|undefined,accountId:string,key:string,next:Record<string,unknown>,source:Source,field:string)=>{

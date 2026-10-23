@@ -24,6 +24,22 @@ export async function seedBillingPortability(call,request,cookie,source,connecti
  assert.equal(observation.freshness,'Current')
  assert.equal(billing.connections.find(c=>c.id===connectionId).credential_present,1)
  assert.equal(billing.connections.find(c=>c.id===connectionId).webhook_present,1)
+ // RENEW-001: persist a provider opportunity, its separate human outcome,
+ // and both a mismatching and matching later source image in the real archive.
+ const config=(await call('/renewals')).settings
+ await call('/renewals/settings','PUT',{revision:config.revision,leadDays:730,stages:config.stages})
+ let renewal=(await call('/renewals')).records.find(r=>r.accountId===accountId&&r.sourceKind==='stripe-test')
+ assert.ok(renewal);assert.equal(renewal.expectedArrMinor,198000)
+ const proposal=await call('/proposals','POST',{accountId,kind:'renewal',payload:{renewalId:renewal.id,outcome:'renewed-with-contraction',resultArrMinor:99000,reason:'customer-confirmed',evidence:'Portable signed subscription change'}})
+ await call('/proposals/'+proposal.id+'/approve','POST',{})
+ for(const [index,amount]of [5500,2750].entries()){
+  source.amount=amount
+  const next={...event,id:'synthetic-buoy-'+(2204+index)},stamp=Math.floor(Date.now()/1000),sig=`t=${stamp},v1=${createHmac('sha256',billingWebhookSecret).update(stamp+'.'+JSON.stringify(next)).digest('hex')}`
+  const response=await request('/api/buoy'+base+'/webhook',{method:'POST',body:next,headers:{'stripe-signature':sig}});assert.equal(response.status,200)
+  renewal=(await call('/renewals')).records.find(r=>r.id===renewal.id)
+  assert.equal(renewal.billingReconciliation,index===0?'mismatch':'matched')
+ }
+ assert.equal(renewal.billingActual.arrMinor,99000);assert.equal(renewal.expectedArrMinor,198000)
  const role=await call('/roles/definitions','POST',{revision:(await call('/roles')).revision,name:'Portable reviewed account reader',permissions:{read:'scope',commercialRead:'band'},scope:{kind:'own'},commercial:'band'})
  const email='synthetic-buoy-2202@example.test',invite=await request('/auth/invite',{method:'POST',cookie,body:{email,displayName:'Portable reviewed colleague',role:'member'}})
  assert.equal(invite.status,202);await signIn(email)
@@ -31,7 +47,7 @@ export async function seedBillingPortability(call,request,cookie,source,connecti
  await call('/roles/assignments','PUT',{revision:(await call('/roles')).revision,personId:person.id,roleId:role.id,sharedAccountIds:[accountId],grants:{concessionLimitMinor:25000,renewalOutcome:true}})
  const roles=await call('/roles'),assignment=roles.assignments.find(a=>a.personId===person.id)
  assert.equal(assignment.roleId,role.id);assert.equal(assignment.grants.concessionLimitMinor,25000);assert.equal(assignment.grants.renewalOutcome,true)
- return {accountId,connectionId,roleId:role.id,personId:person.id,on}
+ return {accountId,connectionId,renewalId:renewal.id,roleId:role.id,personId:person.id,on}
 }
 const retainedObservation=({freshness,confidence,...observation})=>observation
 export async function billingPortabilityImage(call,ids){
@@ -46,11 +62,14 @@ export function assertBillingArchiveRows(rows,image){
  assert.ok(rows.some(row=>row.table==='buoy_billing_current'&&row.row.account_id===image.accountId&&row.row.snapshot_id===image.billing.observations.find(o=>o.accountId===image.accountId).id),'Real archive retains the current source pointer')
  assert.ok(rows.some(row=>row.table==='buoy_billing_bindings'&&row.row.account_id===image.accountId),'Real archive retains the explicit reviewed binding')
  assert.ok(rows.some(row=>row.table==='buoy_billing_changes'&&row.row.account_id===image.accountId),'Real archive retains the before/after plan history')
+ assert.ok(rows.some(row=>row.table==='buoy_renewals'&&row.row.id===image.renewalId&&JSON.parse(row.row.document).billingReconciliation==='matched'),'Real archive retains matched provider renewal separately from its original source')
+ assert.ok(rows.some(row=>row.table==='buoy_renewal_history'&&row.row.record_id===image.renewalId&&row.row.field_key==='billing-reconciliation'&&JSON.parse(row.row.new_value).billingReconciliation==='mismatch'),'Real archive retains an earlier mismatch')
  const text=JSON.stringify(rows)
  for(const secret of [billingFixtureKey,billingWebhookSecret])assert.ok(!new RegExp('\\b'+secret+'\\b').test(text),'Neither provider API nor webhook signing credential appears in archive rows')
 }
 export async function assertBillingPortability(call,request,cookie,image){
  const billing=await call('/billing'),roles=await call('/roles'),before=image.billing
+ const renewal=(await call('/renewals')).records.find(r=>r.id===image.renewalId);assert.equal(renewal.billingReconciliation,'matched');assert.equal(renewal.billingActual.arrMinor,99000);assert.equal(renewal.expectedArrMinor,198000)
  assert.deepEqual(billing.bindings,before.bindings,'Reviewed Stripe customer/account bindings restore exactly')
  assert.deepEqual(billing.observations.map(retainedObservation),before.observations.map(retainedObservation),'Current Stripe snapshot IDs, source records and native minor amounts restore exactly')
  assert.deepEqual(billing.history.map(retainedObservation),before.history.map(retainedObservation),'Every immutable Stripe observation and source reference restores exactly')
