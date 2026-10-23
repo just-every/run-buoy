@@ -7,6 +7,7 @@ import {reportingJourney} from './reporting-journey.mjs'
 import {playJourney,playTriggerJourney,playIntakeJourney,playFieldJourney,playChildJourney,playCalendarJourney} from './play-journey.mjs'
 import {hierarchyJourney} from './hierarchy-journey.mjs'
 import {workspaceJourney} from './workspace-journey.mjs'
+import {forecastJourney} from './forecast-journey.mjs'
 import {renewalJourney} from './renewal-journey.mjs'
 import {eraseJourney} from './erase-journey.mjs'
 import {searchHttpJourney} from './search-journey.mjs'
@@ -563,6 +564,8 @@ test('ERASE-002 owner customer export and erasure, source replay, aggregates and
 })
 
 test('RENEW-001 native renewal pipeline and inherited field carrier',renewalJourney)
+
+test('RENEW-004 retained forecast movement and closed-period accuracy',()=>forecastJourney())
 
 test('ACCOUNT-003 current workspace, live views and reviewed bulk operations',workspaceJourney)
 

@@ -1,3 +1,5 @@
+import {forecastPage,type ForecastPage} from './forecast'
+import {mutate} from './actions'
 import {scopedRenewalApprovalPage} from './scoped-renewal-approval'
 import type {ScopedRenewalApprovals} from '../roles/renewal-approval'
 import {scopedReportsPage} from './scoped-reports'
@@ -18,6 +20,9 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  let title='Accounts',status=200,body:string,error:string|undefined,fields:Fields|undefined
  let accountId='';try{if(/^\/app\/accounts\/[^/]+$/.test(path))accountId=decodeURIComponent(path.slice('/app/accounts/'.length))}catch{}
  const selected=state.accounts.find(a=>a.id===accountId)
+ if(request.method==='POST'&&path==='/app/forecast'){
+  try{fields=Object.fromEntries([...await request.formData()].map(([key,value])=>[key,typeof value==='string'?value:'']));const result=await mutate(api,request,path,fields);if(result.redirect)return new Response(null,{status:303,headers:{location:result.redirect,'cache-control':'no-store'}})}catch(caught){status=caught instanceof ApiError?caught.status:503;error=caught instanceof Error?caught.message:'Forecast override could not be recorded.'}
+ }
  if(request.method==='POST'&&path==='/app/approvals'){
   try{
    if(request.headers.get('origin')!==url.origin)throw new ApiError('Submit this form from this installation.',403)
@@ -36,7 +41,7 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
    return new Response(null,{status:303,headers:{location:path+'?saved='+encodeURIComponent(path+'|scoped-account-edit')+'#scoped-account','cache-control':'no-store'}})
   }catch(caught){status=caught instanceof ApiError?caught.status:503;error=caught instanceof Error?caught.message:'The account could not be changed.'}
  }
- if(path==='/app/approvals'&&(['GET','HEAD'].includes(request.method)||fields?.action==='scoped-renewal-approve')){
+ if(path==='/app/forecast'){title='Renewal forecast';const query=fields?.returnQuery?new URLSearchParams(fields.returnQuery):url.searchParams;try{body=forecastPage(query,await apiCall<ForecastPage>(api,request,'/api/buoy/renewals/forecast?'+query),fields)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Forecast unavailable','<p>Your current profile cannot read this selection.</p>')}}else if(path==='/app/approvals'&&(['GET','HEAD'].includes(request.method)||fields?.action==='scoped-renewal-approve')){
   title='Renewal reviews'
   try{body=scopedRenewalApprovalPage(await apiCall<ScopedRenewalApprovals>(api,request,'/api/buoy/renewals/approvals'),fields)}
   catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Review unavailable','<p>Your current profile cannot review renewal decisions.</p>')}
@@ -58,6 +63,6 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  else if(/^\/app\/accounts\/[^/]+$/.test(path)){
   const account=state.accounts.find(a=>a.id===accountId);title=account?.name??'Account unavailable';status=account?200:404;body=scopedAccountsPage(state,accountId)
  }else{status=403;title='Access unavailable';body=section(title,'<p>This page is not available to your assigned profile.</p><p><a href="/app">Open accounts in your scope</a></p>')}
- const response=await shell({title,body,state,current:['/app/search','/app/workspace','/app/revenue','/app/approvals'].includes(path)?path:'/app',status,error,success:path==='/app/approvals'&&url.searchParams.get('recorded')==='1'?'Renewal outcome recorded.':undefined,backToAccounts:path.startsWith('/app/accounts/')})
+ const response=await shell({title,body,state,current:['/app/search','/app/workspace','/app/revenue','/app/approvals','/app/forecast'].includes(path)?path:'/app',status,error,success:path==='/app/approvals'&&url.searchParams.get('recorded')==='1'?'Renewal outcome recorded.':undefined,backToAccounts:path.startsWith('/app/accounts/')})
  return request.method==='HEAD'?new Response(null,{status:response.status,headers:response.headers}):response
 }

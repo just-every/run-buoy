@@ -54,7 +54,7 @@
     "test:adoption-aggregates": "node tests/adoption-consumers.mjs segment",
     "test:health": "node tests/adoption-consumers.mjs health",
     "test:flows:core": "node --test --test-concurrency=1 --test-name-pattern=\"^(Buoy public|HTTP-001 IMPORT-001)\" tests/flows.test.mjs",
-    "test:records": "node --test --test-concurrency=1 --test-name-pattern=\"^(ACCOUNT-005|ERASE-002|RENEW-001|ACCOUNT-003|ACCOUNT-001|PLAY-001)\" tests/flows.test.mjs",
+    "test:records": "node --test --test-concurrency=1 --test-name-pattern=\"^(ACCOUNT-005|ERASE-002|RENEW-001|ACCOUNT-003|ACCOUNT-001|PLAY-001|RENEW-004)\" tests/flows.test.mjs",
     "test:volume": "node --test --test-concurrency=1 --test-name-pattern=\"^(USAGE-001 receiver|TEAM-001 300-account)\" tests/flows.test.mjs",
     "test:records-browser": "node tests/record-browser.mjs",
     "test:privacy-renewal-browser": "node tests/record-browser.mjs privacy-renewals",

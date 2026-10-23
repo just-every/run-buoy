@@ -1,3 +1,4 @@
+import {forecastApi,forecastState,overrideForecast} from './renewals/forecast'
 import {scopedRenewalApprovals,approveScopedRenewal} from './roles/renewal-approval'
 import {scopedRetentionReport,scopedRetentionExport} from './roles/reports'
 import {editScopedAccount} from './roles/account-edit'
@@ -83,6 +84,8 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  }
  const profile=await roleAccess(c.env.DB,actor)
  if(profile.restricted){
+  if(c.req.method==='GET'&&c.req.path==='/api/buoy/renewals/forecast')return c.json(await forecastState(c.env.DB,actor,new URL(c.req.url).searchParams))
+  if(c.req.method==='POST'&&/^\/api\/buoy\/renewals\/[^/]+\/forecast-override$/.test(c.req.path)){const result=await overrideForecast(c.env.DB,actor,decodeURIComponent(c.req.path.split('/').at(-2)!),await jsonBody(c.req.raw));await refreshAccountConsumers(c.env,actor);return c.json(result)}
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/renewals/approvals')return c.json(await scopedRenewalApprovals(c.env.DB,actor,profile))
   if(c.req.method==='POST'&&/^\/api\/buoy\/proposals\/[^/]+\/approve$/.test(c.req.path)){
    let proposalId:string;try{proposalId=decodeURIComponent(c.req.path.split('/').at(-2)!)}catch{throw new Problem(400,'Invalid proposal reference.')}
@@ -117,6 +120,7 @@ buoyApi.onError((error, c) => {
 })
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',privacyApi)
+buoyApi.route('/',forecastApi)
 buoyApi.route('/',renewalsApi)
 buoyApi.route('/',workspaceApi)
 buoyApi.route('/',hierarchyApi)

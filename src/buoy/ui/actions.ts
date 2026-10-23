@@ -44,6 +44,13 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
+  if(path==='/app/forecast'){
+    if(action==='forecast-override')await send('/api/buoy/renewals/'+encodeURIComponent(fields.renewalId)+'/forecast-override',{revision:fields.revision,category:fields.category,reason:fields.reason});
+    else if(action==='forecast-snapshot')await send('/api/buoy/renewals/forecast/snapshots',{});
+    else throw new ApiError('Choose a forecast action.');
+    const query=new URLSearchParams(fields.returnQuery??'');for(const key of [...query.keys()])if(!['period','start','on','ownerId','teamId','segmentId','snapshotId'].includes(key))query.delete(key);
+    return {redirect:'/app/forecast?'+query,message:action==='forecast-override'?'Reasoned forecast override recorded.':'Weekly forecast snapshot retained.'};
+  }
   if(path==='/app/billing')return (await import('./billing-actions')).mutateBilling(api,request,fields);
   if(path==='/app/roles')return (await import('./role-actions')).mutateRoles(api,request,fields);
   if(path==='/app/revenue'&&action==='rates'){let rates:unknown;try{rates=JSON.parse(fields.rates)}catch{throw new ApiError('Enter valid JSON for the rate periods.')}await send('/api/buoy/revenue/rates',{revision:fields.revision||null,table:{name:fields.name,mode:fields.mode,rates}});return {redirect:path+'#rate-table-panel',message:'Reporting rates published.',saved:'rate-table-editor'}}

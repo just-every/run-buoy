@@ -1,3 +1,4 @@
+import {snapshotForecast} from './buoy/renewals/forecast'
 import {reconcileBilling} from './buoy/billing'
 import {runPlaybooks} from './buoy/play/engine'
 import {generateRenewals} from './buoy/renewals'
@@ -62,6 +63,7 @@ export default withDemo({
     await scheduledConnections(runtimeBindings(env))
     await reconcileBilling(runtimeBindings(env))
     await generateRenewals(env.DB,at)
+    await snapshotForecast(env.DB,at)
     await recalculateScorecards(env.DB,at)
     await scheduledSegments(env.DB, at)
     await runPlaybooks(env.DB,at)

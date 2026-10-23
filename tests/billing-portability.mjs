@@ -52,7 +52,9 @@ export async function seedBillingPortability(call,request,cookie,source,connecti
 const retainedObservation=({freshness,confidence,...observation})=>observation
 export async function billingPortabilityImage(call,ids){
  const billing=await call('/billing'),roles=await call('/roles')
- return {...ids,billing,roles:{definitions:roles.roles,assignment:roles.assignments.find(a=>a.personId===ids.personId)}}
+ const renewal=(await call('/renewals')).records.find(r=>r.id===ids.renewalId),start=renewal.renewalDate.slice(0,4)+'-'+String(Math.floor((Number(renewal.renewalDate.slice(5,7))-1)/3)*3+1).padStart(2,'0')+'-01',forecast=await call('/renewals/forecast?period=quarter&start='+start)
+ assert.ok(forecast.baseline.some(r=>r.id===ids.renewalId&&r.actualNativeMinor===99000))
+ return {...ids,forecast:{start,snapshot:forecast.snapshot,baseline:forecast.baseline,previous:forecast.previous},billing,roles:{definitions:roles.roles,assignment:roles.assignments.find(a=>a.personId===ids.personId)}}
 }
 export function assertBillingArchiveRows(rows,image){
  for(const table of ['buoy_connection_credentials','buoy_billing_webhook_credentials','buoy_role_assignments'])assert.ok(!rows.some(row=>row.table===table),'Real archive excludes '+table+' authority')
@@ -64,11 +66,13 @@ export function assertBillingArchiveRows(rows,image){
  assert.ok(rows.some(row=>row.table==='buoy_billing_changes'&&row.row.account_id===image.accountId),'Real archive retains the before/after plan history')
  assert.ok(rows.some(row=>row.table==='buoy_renewals'&&row.row.id===image.renewalId&&JSON.parse(row.row.document).billingReconciliation==='matched'),'Real archive retains matched provider renewal separately from its original source')
  assert.ok(rows.some(row=>row.table==='buoy_renewal_history'&&row.row.record_id===image.renewalId&&row.row.field_key==='billing-reconciliation'&&JSON.parse(row.row.new_value).billingReconciliation==='mismatch'),'Real archive retains an earlier mismatch')
+ assert.ok(rows.some(row=>row.table==='buoy_forecast_snapshot_items'&&row.row.renewal_id===image.renewalId),'Real archive includes provider forecast inputs')
  const text=JSON.stringify(rows)
  for(const secret of [billingFixtureKey,billingWebhookSecret])assert.ok(!new RegExp('\\b'+secret+'\\b').test(text),'Neither provider API nor webhook signing credential appears in archive rows')
 }
 export async function assertBillingPortability(call,request,cookie,image){
  const billing=await call('/billing'),roles=await call('/roles'),before=image.billing
+ const forecast=await call('/renewals/forecast?period=quarter&start='+image.forecast.start+'&snapshotId='+image.forecast.snapshot.id);assert.deepEqual({start:image.forecast.start,snapshot:forecast.snapshot,baseline:forecast.baseline,previous:forecast.previous},image.forecast,'Retained provider forecast source, rates and actuals survive fresh-owner restore exactly')
  const renewal=(await call('/renewals')).records.find(r=>r.id===image.renewalId);assert.equal(renewal.billingReconciliation,'matched');assert.equal(renewal.billingActual.arrMinor,99000);assert.equal(renewal.expectedArrMinor,198000)
  assert.deepEqual(billing.bindings,before.bindings,'Reviewed Stripe customer/account bindings restore exactly')
  assert.deepEqual(billing.observations.map(retainedObservation),before.observations.map(retainedObservation),'Current Stripe snapshot IDs, source records and native minor amounts restore exactly')
