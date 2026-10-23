@@ -24,7 +24,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
  const secret = () => randomBytes(32).toString('base64url'), mails = [], outbound = []
  const vars = { AUTH_LOCAL: secure ? 'false' : 'true', AUTH_ORIGIN: origin, OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
  Object.assign(vars, bindings(origin))
- let mailStatus = 200
+ let mailStatus = 200, hold
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
   host:'127.0.0.1', port, https:secure,
   modulesRoot: join(root, 'dist/server'),
@@ -36,7 +36,9 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
    outbound.push(request.url)
    if(providerFetch&&new URL(request.url).hostname==='api.stripe.com')return providerFetch(request)
    assert.equal(request.url, 'https://api.resend.com/emails')
-   mails.push(await request.json())
+   const mail=await request.json();mails.push(mail)
+   // A held answer keeps one send in flight while the journey acts.
+   if(hold?.match(mail)){const current=hold;hold=undefined;current.arrive(mail);await current.released}
    return Response.json(mailStatus === 200 ? {id:`provider-receipt-${mails.length}`} : {error:'test provider failure'}, {status:mailStatus})
   },
  }), resourcePersistencePath:join(directory,persistenceDirectory?'v3':'state') })
@@ -64,6 +66,6 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   }
   // The Cron Trigger door, as Cloudflare calls it.
   const scheduled=async(cron='0 * * * *',scheduledTime=Date.now())=>(await mf.getWorker()).scheduled({cron,scheduledTime})
-  return {origin,directory,request,dispatch:async request=>mf.dispatchFetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()})}),cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true})}}
+  return {origin,directory,request,dispatch:async request=>mf.dispatchFetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()})}),cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},holdMail(match){let arrive,release;const arrived=new Promise(resolve=>{arrive=resolve}),released=new Promise(resolve=>{release=resolve});hold={match,arrive,released};return {arrived,release}},async close(){await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true})}}
  }catch(error){await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true});throw error}
 }

@@ -121,3 +121,20 @@ export async function roleIsolationJourney(){
   for(const [path,method,body]of [['/tasks','GET'],['/fields','GET'],['/segments','GET'],['/revenue','GET'],['/revenue/retention','GET'],['/outcomes','GET'],['/workspace','GET'],['/customer-people','GET'],['/accounts/'+id+'/health','GET'],['/accounts/'+id+'/activity','GET'],['/accounts/'+id+'/hierarchy','GET'],['/audit','GET'],['/agents','GET'],['/connections','GET'],['/accounts','POST',{}],['/proposals','POST',{}]])assert.equal((await request(path,method,body,{cookie:support.cookie})).status,403,'Unported assigned-profile door is refused: '+path)
  }finally{await app.close()}
 }
+
+export async function roleDigestJourney(){
+ const f=await fixture(),{app,api,invite,assign}=f
+ try{
+  const people=[await invite('digest-first'),await invite('digest-second')],id='synthetic-buoy-2140',note='synthetic-buoy-private-digest-note'
+  await f.account(id,'Digest scope customer')
+  for(const person of people)await api('/notifications/preferences','PUT',{frequency:'daily',modes:{mention:'digest',assignment:'digest',signal:'digest',approval:'digest'}},{cookie:person.cookie})
+  // The provider answers the run's first digest only after the other person's profile changes.
+  const held=app.holdMail(mail=>mail.subject==='Buoy daily digest'),run=app.scheduled('0 * * * *',Date.parse(f.on+'T12:00:00Z'))
+  const first=await Promise.race([held.arrived,run.then(()=>assert.fail('Each person without a profile receives a daily digest'))]),later=people.find(person=>!first.to.includes(person.email))
+  await assign(later,'csm')
+  await api('/accounts/'+id+'/mentions','POST',{personId:later.id,note})
+  held.release();await run
+  assert.deepEqual(app.mails.filter(mail=>mail.subject==='Buoy daily digest').map(mail=>mail.to),[first.to],'Aggregate digests reach only people without an assigned profile')
+  assert.doesNotMatch(JSON.stringify(app.mails),new RegExp(note),'No mail carries a notice outside its recipient’s current scope')
+ }finally{await app.close()}
+}
