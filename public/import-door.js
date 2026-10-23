@@ -3,7 +3,8 @@
 const element = id => document.getElementById('import-' + id)
 const storageKey = 'buoy:import:plan'
 let plan, busy = false, settingsLoaded = false
-let migrationSource = sessionStorage.getItem(storageKey + ':source') || ''
+let migrationSource = ''
+try { migrationSource = sessionStorage.getItem(storageKey + ':source') || '' } catch {}
 const sourceForNamespace = namespace => /^buoy-migrate-(vitally|velaris|csv)-v1$/.exec(namespace)?.[1] || ''
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('')
 function remember(id) { try { if (id) {sessionStorage.setItem(storageKey, id); sessionStorage.setItem(storageKey + ':source',migrationSource)} else sessionStorage.removeItem(storageKey) } catch {} }

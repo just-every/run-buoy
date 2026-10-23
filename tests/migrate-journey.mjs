@@ -36,9 +36,9 @@ test('MIGRATE-005 versioned export account custody uses the existing reviewed do
    const history=(await (await app.request('/api/operator/import-history',{cookie:app.cookie})).json()).history
    assert.equal(history.find(h=>h.planId===plan.planId).namespace,`buoy-migrate-${source}-v1`)
    const other=client(app,source==='vitally'?'velaris':'vitally')
-   assert.equal((await other.send('status',{planId:plan.planId})).status,403,'Source namespace cannot inspect another source plan')
+   assert.equal((await other.send('status',{planId:plan.planId})).status,404,'Source namespace cannot inspect another source plan')
    assert.equal((await door.send('uploads',{}, {cookie:undefined})).status,401)
-   assert.equal((await door.send('uploads',{}, {headers:{'x-buoy-import-source':source,origin:'https://foreign.invalid'}})).status,401)
+   assert.equal((await door.send('uploads',{}, {headers:{'x-buoy-import-source':source,origin:'https://foreign.invalid'}})).status,403)
    await door.undo(plan);assert.deepEqual(await state(app),before)
   }
  } finally {await app.close()}
@@ -67,8 +67,10 @@ test('MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and sou
   await door.undo(plan);assert.deepEqual(await state(app),before)
   const bad=await door.plan({...prepared,originalSha256:'0'.repeat(64)})
   assert.equal(bad.counts.mapped,0);assert.match(bad.rejected[0].reason,/digest/)
+  assert.equal((await door.json('undo',{planId:bad.planId})).state,'cancelled')
   const malformed=await door.plan(bundle(header+'"unterminated'))
   assert.equal(malformed.counts.mapped,0);assert.match(malformed.rejected[0].reason,/Unclosed/)
+  assert.equal((await door.json('undo',{planId:malformed.planId})).state,'cancelled')
   const large=await door.plan(bundle(header+Array.from({length:2000},(_,i)=>csvRow('synthetic-buoy-'+i,i<3?'31/03/2027':'31/02/2027')).join('')))
   assert.equal(large.counts.input,2000);assert.equal(large.counts.mapped,3);assert.equal(large.counts.rejected,1997)
   assert.deepEqual(await state(app),before,'A 2000-row preview changes no native records')

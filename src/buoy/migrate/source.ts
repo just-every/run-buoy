@@ -64,6 +64,7 @@ function rejection(id: string, reason: string, pointer: string): ParsedRecord {
 export function parseMigration(value: Json, source: MigrationSource): ParsedRecord[] {
  try {
   const bundle = object(value)
+  if (Object.keys(bundle).some(key=>!['format','source','dateOrder','columns','csv','originalSha256','data'].includes(key))) throw new Error('Unsupported migration bundle field.')
   if (bundle.format !== 'buoy-migration-v1' || bundle.source !== source) throw new Error('Choose a matching versioned migration bundle.')
   if (!['iso','day-first','month-first'].includes(String(bundle.dateOrder))) throw new Error('Choose iso, day-first or month-first date order.')
   let rows: Record<string,unknown>[], columns: Record<string,unknown>, pointers: string[]
