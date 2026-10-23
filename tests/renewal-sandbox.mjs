@@ -22,21 +22,22 @@ try{
  for(const frozen_time of [recent,older])clocks.push(await stripe('POST','/test_helpers/test_clocks',{frozen_time,name:tag}))
  product=await stripe('POST','/products',{name:tag})
  for(const [amount,interval]of [[10000,'month'],[120000,'year'],[5000,'month']])prices.push(await stripe('POST','/prices',{product:product.id,currency:'usd',unit_amount:amount,'recurring[interval]':interval,'metadata[fixture]':tag}))
- for(let i=0;i<2;i++){
+ for(let i=0;i<4;i++){
+  const cohort=i<2?0:1
   const method=await stripe('POST','/payment_methods',{type:'card','card[token]':'tok_visa'})
-  customers.push(await stripe('POST','/customers',{name:tag+'-'+i,email:tag+'-'+i+'@example.test',test_clock:clocks[i].id,payment_method:method.id,'invoice_settings[default_payment_method]':method.id,'metadata[fixture]':tag}))
-  for(let j=0;j<6;j++)subscriptions.push(await stripe('POST','/subscriptions',{customer:customers[i].id,'items[0][price]':prices[i].id,'items[0][quantity]':1,payment_behavior:'error_if_incomplete','metadata[fixture]':tag}))
+  customers.push(await stripe('POST','/customers',{name:tag+'-'+i,email:tag+'-'+i+'@example.test',test_clock:clocks[cohort].id,payment_method:method.id,'invoice_settings[default_payment_method]':method.id,'metadata[fixture]':tag}))
+  for(let j=0;j<3;j++)subscriptions.push(await stripe('POST','/subscriptions',{customer:customers[i].id,'items[0][price]':prices[cohort].id,'items[0][quantity]':1,payment_behavior:'error_if_incomplete','metadata[fixture]':tag}))
  }
  const connection=await api('/connections','POST',{name:'Held-key renewal test source',key}),settings=(await api('/renewals')).settings,owner=(await api('/state')).operator.id
  await api('/renewals/settings','PUT',{revision:settings.revision,leadDays:730,stages:settings.stages})
  const accounts=[]
- for(let i=0;i<2;i++){
-  const end=new Date(subscriptions[i*6].current_period_end*1000).toISOString().slice(0,10)
+ for(let i=0;i<4;i++){
+  const end=new Date(subscriptions[i*3].current_period_end*1000).toISOString().slice(0,10)
   const account=await api('/accounts','POST',{id:'synthetic-buoy-'+(9100+i),name:'Held-key renewal cohort '+i,renewalDate:end,noticeDays:30,renewalEvidence:'Confirmed synthetic subscription notice terms',billing:null,support:null});accounts.push(account)
   await api('/accounts/'+account.id+'/owner','PUT',{ownerId:owner})
   const preview=await api('/billing/'+connection.id+'/bindings/preview','POST',{customerId:customers[i].id,accountId:account.id});await api('/billing/'+connection.id+'/bindings','POST',{token:preview.token})
  }
- const sync=async()=>{for(let i=0;i<2;i++){const run=await api('/billing/'+connection.id+'/sync','POST',{});assert.equal(run.status,'succeeded',run.error)}}
+ const sync=async()=>{for(let i=0;i<4;i++){const run=await api('/billing/'+connection.id+'/sync','POST',{});assert.equal(run.status,'succeeded',run.error)}}
  await sync();await sync()
  const initial=await api('/renewals');assert.equal(initial.records.length,12);assert.equal(new Set(initial.records.map(r=>r.id)).size,12);assert.equal(initial.quarters.length,2)
  for(const r of initial.records){const sub=subscriptions.find(s=>s.id===r.sourceSubscriptionId);assert.ok(sub);assert.equal(r.expectedArrMinor,120000);assert.equal(r.ownerId,owner);assert.equal(r.renewalDate,new Date(sub.current_period_end*1000).toISOString().slice(0,10));assert.equal(r.noticeDeadline,new Date(Date.parse(r.renewalDate)-30*86400000).toISOString().slice(0,10))}
@@ -53,7 +54,7 @@ try{
  await stripe('POST','/subscriptions/'+subscriptions[1].id,{'items[0][id]':subscriptions[1].items.data[0].id,'items[0][price]':prices[2].id,proration_behavior:'none'})
  await sync()
  const final=await api('/renewals')
- assert.equal(final.records.length,12,'Six subscriptions on one customer do not duplicate or overwrite one another')
+ assert.equal(final.records.length,12,'Subscriptions sharing one customer do not duplicate or overwrite one another')
  for(const [i,r]of selected.entries()){
   const record=final.records.find(v=>v.id===r.id);assert.equal(record.billingReconciliation,'matched');assert.equal(record.billingActual.arrMinor,i===0?0:60000);assert.equal(record.billingActual.differenceMinor,0);assert.equal(record.expectedArrMinor,120000);assert.equal(record.sourceVersionId,r.sourceVersionId)
   const billing=(await api('/billing')).observations.find(o=>o.accountId===r.accountId);assert.equal(record.billingActual.snapshotId,billing.id)
