@@ -48,6 +48,16 @@ test('MIGRATE-005 versioned export account custody uses the existing reviewed do
    assert.equal((await door.send('uploads',{}, {headers:{'x-buoy-import-source':source,origin:'https://foreign.invalid'}})).status,403)
    await door.undo(plan);assert.deepEqual(await state(app),before)
   }
+  const door=client(app,'vitally'),input={format:'buoy-migration-v1',source:'vitally',dateOrder:'iso',data:{accounts:[account('synthetic-buoy-999')]}}
+  const plan=await door.plan(input);await door.apply(plan)
+  const current=(await state(app)).find(row=>row.id===target('vitally','synthetic-buoy-999'))
+  const edited={id:current.id,name:'Synthetic owner edit',renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,billing:current.billing,support:current.support,revision:current.revision}
+  assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:app.cookie,body:edited})).status,200)
+  assert.equal((await door.send('undo',{planId:plan.planId})).status,409,'Migration undo protects subsequent owner edits')
+  assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'DELETE',cookie:app.cookie,body:{confirmation:edited.name}})).status,200)
+  assert.equal((await door.send('reconcile',{planId:plan.planId})).status,410,'Native erasure withdraws migration snapshot custody')
+  await assert.rejects(door.plan(input),/source_erased/,'Erased migration source cannot recreate a native account')
+  assert.deepEqual(await state(app),before)
  } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
