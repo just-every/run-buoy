@@ -13,10 +13,11 @@ const suites={
  'workspace-browser':['test:workspace-browser'],
  'hierarchy-browser':['test:hierarchy-browser'],
  adoption:['test:adoption'],
+ 'adoption-browser':['test:adoption-browser'],
  health:['test:health'],
  'adoption-consumers':['test:adoption-consumers'],
  'adoption-aggregates':['test:adoption-aggregates'],
- browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes','test:runway-keyboard','test:governance-browser','test:a11y','test:fields-browser','test:connections-browser','test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
+ browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes','test:runway-keyboard','test:governance-browser','test:a11y','test:fields-browser','test:connections-browser','test:usage-browser','test:inapp-browser','test:boundary'],
  archive:['test:portable'],
 }
 const selected=process.env.BUOY_VERIFY_SUITE??'all'
