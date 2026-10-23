@@ -6,6 +6,7 @@ import type { D1Sql, Json, ParsedRecord } from '../../modules/import-kit/src/d1/
 import { mapping, DESTINATION, KIND, NAMESPACE } from './source'
 import { parseAccount, parseAccounts } from './validation'
 import { accountTargets, sql } from './targets'
+import { migrationSource, migrationNamespace, migrationMapping, parseMigration } from '../migrate/source'
 
 // Stable across deployment, claim modes and archive recovery.
 export const DOOR_KEY = 'buoy:accounts'
@@ -41,13 +42,16 @@ export async function importDoorResponse(request: Request, original: Bindings): 
  const path = new URL(request.url).pathname
  if (!path.startsWith('/api/operator/import') && !path.startsWith('/api/rer/import/')) return null
  const env = runtimeBindings(original)
- const runtime = {database:env.DB, targets:accountTargets, destination:DESTINATION, ownerPrincipalId:'role:owner', format:'json' as const, parse, mapping:doorMapping, limits:{maxBytes:256000,maxRecords:50}}
+ const selected = migrationSource(request.headers.get('x-buoy-import-source'))
+ if (request.headers.has('x-buoy-import-source') && !selected) return json({error:'unknown_import_source'},400)
+ const source = selected ? {namespace:migrationNamespace(selected),parse:(value:Json)=>parseMigration(value,selected),mapping:migrationMapping,limits:{maxBytes:2_000_000,maxRecords:2100,maxRecordBytes:2_000_000}} : {namespace:NAMESPACE,parse,mapping:doorMapping,limits:{maxBytes:256000,maxRecords:50}}
+ const runtime = {database:env.DB, targets:accountTargets, destination:DESTINATION, ownerPrincipalId:'role:owner', format:'json' as const, ...source}
  try {
   if (path.startsWith('/api/rer/import/')) {
    if (!env.RER_OWNER_CLAIM_PUBLIC_KEYS || !env.RER_OWNER_CLAIM_ISSUER || !env.RER_OWNER_CLAIM_INSTALLATION_ID) return json({error:'not_found'},404)
-   return createImportDoorHandler({...runtime, installationId:DOOR_KEY, claim:{issuer:env.RER_OWNER_CLAIM_ISSUER,installationId:env.RER_OWNER_CLAIM_INSTALLATION_ID, appOrigin:env.RER_OWNER_CLAIM_APP_ORIGIN ?? env.AUTH_ORIGIN, expectedEmail:env.OWNER_EMAIL,publicKeys:JSON.parse(env.RER_OWNER_CLAIM_PUBLIC_KEYS)}})(request)
+   return createImportDoorHandler({...runtime,parse,mapping:doorMapping,limits:{maxBytes:256000,maxRecords:50}, installationId:DOOR_KEY, claim:{issuer:env.RER_OWNER_CLAIM_ISSUER,installationId:env.RER_OWNER_CLAIM_INSTALLATION_ID, appOrigin:env.RER_OWNER_CLAIM_APP_ORIGIN ?? env.AUTH_ORIGIN, expectedEmail:env.OWNER_EMAIL,publicKeys:JSON.parse(env.RER_OWNER_CLAIM_PUBLIC_KEYS)}})(request)
   }
-  if (path.startsWith('/api/operator/import/')) return createImportOperatorHandler({...runtime, installationId:DOOR_KEY, namespace:NAMESPACE,appOrigin:env.AUTH_ORIGIN,ownerEmail:env.OWNER_EMAIL,authorize:req => importOwner(req,env)})(request)
+  if (path.startsWith('/api/operator/import/')) return createImportOperatorHandler({...runtime, installationId:DOOR_KEY, namespace:source.namespace,appOrigin:env.AUTH_ORIGIN,ownerEmail:env.OWNER_EMAIL,authorize:req => importOwner(req,env)})(request)
   if (!['/api/operator/import-settings','/api/operator/import-history'].includes(path)) return null
   if ((path.endsWith('history') && request.method !== 'GET') || !['GET','POST'].includes(request.method)) return json({error:'method_not_allowed'},405)
   const owner = await importOwner(request,env)

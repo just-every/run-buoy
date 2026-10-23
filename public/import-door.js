@@ -3,13 +3,15 @@
 const element = id => document.getElementById('import-' + id)
 const storageKey = 'buoy:import:plan'
 let plan, busy = false, settingsLoaded = false
+let migrationSource = sessionStorage.getItem(storageKey + ':source') || ''
+const sourceForNamespace = namespace => /^buoy-migrate-(vitally|velaris|csv)-v1$/.exec(namespace)?.[1] || ''
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('')
-function remember(id) { try { if (id) sessionStorage.setItem(storageKey, id); else sessionStorage.removeItem(storageKey) } catch {} }
+function remember(id) { try { if (id) {sessionStorage.setItem(storageKey, id); sessionStorage.setItem(storageKey + ':source',migrationSource)} else sessionStorage.removeItem(storageKey) } catch {} }
 function remembered() { try { return sessionStorage.getItem(storageKey) } catch { return null } }
 async function request(path, body) {
   const response = await fetch('/api/operator/' + path, {
     credentials: 'same-origin', cache: 'no-store',
-    ...(body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
+    ...(body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json', ...(path.startsWith('import/') && migrationSource ? {'x-buoy-import-source':migrationSource} : {}) }, body: JSON.stringify(body) }),
   })
   const data = await response.json().catch(() => null)
   if (!response.ok || !data) {
@@ -72,6 +74,7 @@ async function history() {
     caption.textContent = `${entry.reviewer === entry.approvalRecordId ? 'Approved via Business by' : 'Approved by'} ${entry.owner} · ${new Date(entry.approvedAt).toLocaleString()}${entry.failureCode ? ' · ' + failureMessage(entry.failureCode) : ''}`
     open.type = 'button'; open.className = 'secondary'; open.textContent = 'Open import'
     open.addEventListener('click', () => { void run(async () => {
+      migrationSource = sourceForNamespace(entry.namespace)
       plan = { planId: entry.planId, fingerprint: entry.fingerprint }
       remember(entry.planId)
       element('review').hidden = true; element('result').hidden = true
@@ -158,6 +161,9 @@ element('upload').addEventListener('submit', event => {
     plan = undefined; remember(null)
     element('review').hidden = true; element('result').hidden = true
     const bytes = new Uint8Array(await file.arrayBuffer())
+    const envelope = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))
+    migrationSource = envelope?.format === 'buoy-migration-v1' ? envelope.source : ''
+    if (migrationSource && !['csv','vitally','velaris'].includes(migrationSource)) throw new Error('Unknown migration source.')
     const bundleSha256 = await hash(bytes), totalChunks = Math.ceil(bytes.length / 65536)
     if (!totalChunks) throw new Error('Choose a nonempty account snapshot JSON file.')
     let uploadId
