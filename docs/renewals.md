@@ -69,3 +69,41 @@ time and source reference. Its history keeps earlier differences, and its origin
 approved source is unchanged. Native confirmed terms without a provider link keep
 a pending reconciliation label. Archives retain these facts and source history,
 while fresh provider credentials are required to read the source after restore.
+
+## Forecast and weekly snapshots
+
+Open **Renewal forecast** from the renewal pipeline, or visit `/app/forecast`.
+Choose a UTC month or quarter and filter by CSM, team or current segment. Each
+renewal shows native expected ARR beside USD, its exact reporting-rate table and
+source, the retained source reference, and any missing input. Reports use the
+explicit rates configured under **Revenue and retention**; missing rates do not
+become zero. Source amounts stay unchanged when reporting rates change.
+
+Expected and best-case ARR sum open opportunities plus known closed actuals.
+Commit and worst case include commit opportunities plus those closed actuals;
+at-risk ARR includes open at-risk opportunities. These are unweighted judgments,
+not guaranteed predictions. A native closed actual is a separately approved human
+outcome; a Stripe actual requires a later provider observation. Deferred, open or
+missing actuals remain unavailable, including for a closed period.
+
+An owner/admin can **Capture this week’s forecast**. The hourly job also captures
+once per UTC week (Monday through Sunday). Repeating capture keeps that week’s
+original amounts, categories, sources and rates. Select a retained snapshot to
+see stage/category/outcome movement and the USD difference. Snapshot and current
+figures each name their rates; their difference can include a rate-table change,
+not just a commercial change. Current access and membership filters apply to both
+sides. An evaluation date selects period closure; it never reconstructs past
+sources.
+
+Owners/admins can override a category, and an assigned CS manager can override
+only readable, fully visible commercial records owned by an active direct report.
+**Override reason** is required. The actor, UTC time, prior/new category and reason
+stay in history. Changed source revisions, closed renewals and withdrawn team or
+profile authority refuse the override. Overrides invalidate prepared outcomes.
+
+For a closed month or quarter, **Closed-period accuracy** compares a pre-close
+weekly snapshot with actual ARR only when both sides contain the same complete
+cohort and every actual/rate is available. It shows signed and absolute USD error;
+missing coverage remains explicit. Archives retain snapshot inputs, rate versions,
+overrides and source-linked actuals. Account erasure withdraws that account’s
+current and retained forecast items.

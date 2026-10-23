@@ -17,8 +17,8 @@ const IMAGE=`SELECT json_object(
  'teams',(SELECT document FROM buoy_team_settings WHERE singleton=1),
  'people',json((SELECT json_group_array(json_object('id',id,'name',display_name)) FROM(SELECT * FROM oa_operators WHERE status='active' ORDER BY id))),
  'segments',json((SELECT json_group_array(json_object('id',s.id,'name',json_extract(s.document,'$.name'),'accountId',e.account_id)) FROM buoy_segments s LEFT JOIN buoy_segment_entries e ON e.segment_id=s.id AND e.exited_at IS NULL)),
- 'providers',json((SELECT json_group_array(json_object('accountId',p.account_id,'observedAt',s.observed_at,'disconnected',c.disconnected_at,'credential',k.connection_id,'error',b.last_error,'staleDays',b.stale_days)) FROM buoy_billing_current p JOIN buoy_billing_snapshots s ON s.id=p.snapshot_id JOIN buoy_connections c ON c.id=s.connection_id JOIN buoy_billing_settings b ON b.connection_id=c.id LEFT JOIN buoy_connection_credentials k ON k.connection_id=c.id)))`
-interface Image {renewals:{id:string;revision:string;document:Renewal&{forecastOverride?:Override}}[];rateDocument:string|null;rateVersionId:string|null;teams:string;people:{id:string;name:string}[];segments:{id:string;name:string;accountId:string|null}[];providers:{accountId:string;observedAt:string;disconnected:string|null;credential:string|null;error:string|null;staleDays:number}[]}
+ 'providers',json((SELECT json_group_array(json_object('accountId',p.account_id,'customerId',s.customer_id,'observedAt',s.observed_at,'disconnected',c.disconnected_at,'credential',k.connection_id,'error',b.last_error,'staleDays',b.stale_days)) FROM buoy_billing_current p JOIN buoy_billing_snapshots s ON s.id=p.snapshot_id JOIN buoy_connections c ON c.id=s.connection_id JOIN buoy_billing_settings b ON b.connection_id=c.id LEFT JOIN buoy_connection_credentials k ON k.connection_id=c.id)))`
+interface Image {renewals:{id:string;revision:string;document:Renewal&{forecastOverride?:Override}}[];rateDocument:string|null;rateVersionId:string|null;teams:string;people:{id:string;name:string}[];segments:{id:string;name:string;accountId:string|null}[];providers:{accountId:string;customerId:string;observedAt:string;disconnected:string|null;credential:string|null;error:string|null;staleDays:number}[]}
 interface Override {from:string;to:string;reason:string;actor:string;at:string}
 export interface ForecastRecord {id:string;revision:string;accountId:string;name:string;ownerId:string|null;teamIds:string[];segmentIds:string[];renewalDate:string;stage:string;category:string;currency:string;nativeArrMinor:number;usdArrMinor:number|null;forecastUsdMinor:number|null;actualUsdMinor:number|null;actualNativeMinor:number|null;actualSource:string|null;rate:ReturnType<typeof selectedRate>;sourceReference:string;sourceVersionId:string;outcome:string|null;override:Override|null;gaps:string[];canOverride?:boolean}
 async function image(db:D1Database){const raw=(await db.prepare(IMAGE+' AS snapshot').first<{snapshot:string}>())!.snapshot;return {raw,value:JSON.parse(raw) as Image}}
@@ -30,6 +30,7 @@ function records(value:Image,on:string):ForecastRecord[]{
   if(!rate)gaps.push('No '+r.currency+' reporting rate for '+r.renewalDate)
   if(r.sourceKind==='stripe-test'){
    if(!provider||provider.disconnected||!provider.credential)gaps.push('Stripe source reconnect required')
+   else if(provider.customerId!==r.sourceCustomerId)gaps.push('Stripe source binding no longer matches this retained subscription')
    else if(provider.error)gaps.push('Stripe source failed; expected ARR is retained evidence')
    else if(Date.parse(on)-Date.parse(provider.observedAt.slice(0,10))>provider.staleDays*86400000)gaps.push('Stripe source stale; expected ARR is retained evidence')
   }
