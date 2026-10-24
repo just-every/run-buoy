@@ -4,16 +4,15 @@ Run Buoy on your computer, finish the owner setup, then add your first account. 
 
 ## Get Buoy and start it
 
-You need Git on macOS, Linux or Windows with WSL2. Two lines, the same as [Run Buoy](/run):
+You need macOS, Linux or Windows with WSL2. One line, the same as [Run Buoy](/run):
 
 ```sh
-curl -fsSL https://runeditrun.com/install.sh | sh
-rer dev just-every/run-buoy
+curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-buoy
 ```
 
-The first line installs rer for you alone, with its own Node if you have no Node 22 or later. If it ends with a line to run, run it before the second: it puts rer on your PATH. The second line gets Buoy, installs its locked dependencies, prepares local data, makes you the owner and prints a private link that opens Buoy signed in. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` does both steps in one line.
+Git is required; rer brings Node and pnpm. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` does the same. The line installs rer for you alone, with its own Node if you have no Node 22 or later, then gets Buoy into `run-buoy`, installs its locked dependencies, prepares local data, makes you the owner and prints a private link that opens Buoy signed in. If the installer prints a line that puts rer on your PATH, run that line too.
 
-To start Buoy again later, run `cd run-buoy && rer dev`. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
+To start Buoy again later, run the same line from the same folder, or `cd run-buoy && rer dev`. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
 
 Open the private link printed in your terminal on this computer. It opens Buoy signed in as the owner. Keep the link private: it grants access to the local installation.
 
