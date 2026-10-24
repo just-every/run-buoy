@@ -1,6 +1,6 @@
 # Providers and data flows
 
-Buoy is self-hosted on your own Cloudflare account. No Buoy service sits between your installation and the providers below: your installation talks to each one directly with credentials you hold. This guide lists every provider an installation can talk to today, what each one receives and returns, and the terms that govern it.
+Buoy can run on your own Cloudflare account or through Run Edit Run Managed hosting. A self-hosted installation talks directly to the providers you configure with credentials you hold. Managed installations can send team mail through the Run Edit Run relay described below. This guide lists every provider an installation can talk to today, what each one receives and returns, and the terms that govern it.
 
 ## Certifications are your deployment's
 
@@ -24,6 +24,13 @@ A deployed installation sends sign-in links, task reminders and escalations, and
 For native unassigned staff, notification mail contains the title, account name, note or risk reason and a signed-in account link. Digests include queued notices and counts of recorded changes in the recipient’s current book; reminders name the task, account and due date. Assigned ROLE-001 profiles instead receive only an account name they can currently read, a generic account update and its signed-in account link. Original task titles, notes, risk explanations, source text and exact commercial values are omitted from their subjects and bodies. Outside-scope or invalidated assignments receive no account notice or reminder email. Aggregate digests are excluded for assigned profiles until their permissions are ported. Sign-in messages still carry the ordinary one-time sign-in link.
 
 Each person's saved mail preferences apply to the notice types that are available to them. Erasing an account in Buoy does not delete mail the provider or recipient already holds.
+
+### rer
+
+- **When:** `MAIL_PROVIDER=rer` in a Managed installation, with the platform-provided `MAIL_RELAY_URL` and private `MAIL_API_KEY`.
+- **Sends:** an authenticated HTTPS request to the configured Run Edit Run relay containing one recipient address, the subject and plain-text message, and optional HTML. Sign-in messages contain a one-time link; team notices, reminders and eligible digests follow the recipient-specific content rules above. The relay owns the sender and installation identity. Buoy does not submit attachments or additional recipients through this provider.
+- **Receives:** relay acceptance with a message ID, or a rejected, rate-limited or uncertain result. Acceptance does not prove delivery to the recipient. The relay and recipient can retain external copies; erasure in Buoy does not delete them.
+- **Terms:** the [Run Edit Run service terms](https://runeditrun.com/terms) govern Managed relay use. Review the terms and data-processing arrangements for your deployment; this guide makes no provider certification or legal-acceptance claim.
 
 ### Resend
 
