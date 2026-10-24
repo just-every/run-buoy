@@ -4,6 +4,15 @@ Customer success and renewals for a small B2B software company. Keep confirmed r
 
 The public website and owner guides are at [run-buoy.com](https://run-buoy.com).
 
+## Listing metadata
+
+| Field | Value |
+| --- | --- |
+| Listing id | `buoy` ([seed.json](seed.json)) |
+| Run URL | [Run Buoy](https://run-buoy.com/run) |
+| Stores files | Yes. The import door retains original upload bytes in D1 (`ik_originals` and `ik_d1_original_chunks`); no R2 binding is configured. See [original storage](src/modules/import-kit/src/d1/originals.ts) and [bindings](wrangler.jsonc). |
+| App capture | [Renewal runway at 1440 pixels](.github/assets/release/buoy-runway-1440.png), captured with `rer dev --demo` using the shipped Tidewell account data. |
+
 ## Run from a clone
 
 You need Git on macOS, Linux or Windows with WSL2. Two lines, the same as [run-buoy.com/run](https://run-buoy.com/run):
