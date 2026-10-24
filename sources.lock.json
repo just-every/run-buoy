@@ -51,6 +51,10 @@
     }
   ],
   "files": {
+    ".github/assets/release/buoy-runway-1440.png": {
+      "sha256": "9d7f5e0e87a0370ad85fb33847d478941239f8718836069ceea691486ee05e9e",
+      "executable": false
+    },
     ".github/workflows/rer-managed.yml": {
       "sha256": "aa2861c9983f2ab90dadcc6f455b0b5c3e1bbeae0b9d9fec9bd27e9de591cb9a",
       "executable": false
@@ -536,7 +540,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "0e0acea27932d3f23479f1bbfa153af49b0c874d825c122b8819c48be8b86bf4",
+      "sha256": "b707d328652c65d655ff6203288125127f30d9d7e8cf9e18a96aa6ef006fd8de",
       "executable": false
     },
     "packaging.json": {
@@ -660,11 +664,15 @@
       "executable": false
     },
     "README.md": {
-      "sha256": "146cf1b9fae86a46718ef0aa20b69c43ca86d8b4b5150129dfa6fd67b06406a5",
+      "sha256": "8e920ffead3e66e4150ffed22b1cc54cb314e25a68b8983fcbf0d53871766a5f",
+      "executable": false
+    },
+    "release-history/0.1.0.json": {
+      "sha256": "d0cc6ec5aa2c0d3fa61be5472700a65f05f42c5543de80091cb8f0b02196cdc3",
       "executable": false
     },
     "RELEASE.json": {
-      "sha256": "d0cc6ec5aa2c0d3fa61be5472700a65f05f42c5543de80091cb8f0b02196cdc3",
+      "sha256": "7e4378bdeb571e6b6ea5b995adae34160b82b686ac4e1d6995e004831505189a",
       "executable": false
     },
     "rer-project.json": {
@@ -888,7 +896,7 @@
       "executable": false
     },
     "seed.json": {
-      "sha256": "80da8d72c68c7dfe6d9bcbae112d089fc1eba8c2329c60737c08762973968dbd",
+      "sha256": "f9426513d6115b25e691ee86153a2e2ca18cecbfda19d95374ded61be36f69fd",
       "executable": false
     },
     "SOURCES.md": {
