@@ -3,5 +3,20 @@
   "projectId": "just-every/run-buoy",
   "name": "Buoy",
   "sourceRepository": "https://github.com/just-every/run-buoy",
-  "license": "MIT"
+  "license": "MIT",
+  "deployment": {
+    "target": "cloudflare-workers",
+    "artifactFile": "rer-worker-artifact.json"
+  },
+  "operations": {
+    "setup": "pnpm install --frozen-lockfile && pnpm exec rer install",
+    "build": "pnpm run build",
+    "verify": "pnpm run verify && pnpm check:deployment-spec && node scripts/edition-authoring/cli.mjs check && node scripts/edition-authoring/cli.mjs verify-base --offline",
+    "artifact": "node scripts/delivery/base/cli.mjs artifact --config packaging.json",
+    "recovery": "Follow OPERATIONS.md and README.md: pause writes and hourly scheduled work, retain the exact source and private configuration, export the installation, restore into fresh empty resources with a new owner, re-export and compare domain data before routing traffic. Preserve all applied migration names and bytes."
+  },
+  "setup": {
+    "path": "rer-setup.json",
+    "sha256": "6a889c1d7e5ecb153bd8cea4d65e0364fd87a6d5ce244c3a410facdf90019485"
+  }
 }

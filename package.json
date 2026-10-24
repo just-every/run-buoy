@@ -67,7 +67,9 @@
     "test:reviews-browser": "node tests/record-browser.mjs reviews",
     "test:plans": "node --test --test-concurrency=1 --test-name-pattern=\"^PLAN-001\" tests/flows.test.mjs",
     "test:plans-browser": "node tests/record-browser.mjs plans",
-    "test:migrate": "node --test --test-concurrency=1 tests/migrate-journey.mjs"
+    "test:migrate": "node --test --test-concurrency=1 tests/migrate-journey.mjs",
+    "delivery:spec": "node scripts/build-deployment-spec.mjs",
+    "check:deployment-spec": "node scripts/build-deployment-spec.mjs --check"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.41",
@@ -83,7 +85,7 @@
     "@cloudflare/vite-plugin": "1.54.5",
     "@cloudflare/workers-types": "5.20260908.1",
     "@playwright/test": "1.63.0",
-    "@runeditrun/rer": "0.2.70",
+    "@runeditrun/rer": "0.2.79",
     "@types/node": "22.20.5",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
