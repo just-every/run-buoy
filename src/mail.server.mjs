@@ -16,7 +16,7 @@ export function operatorMail(env) {
         provider: env.MAIL_PROVIDER,
         mode: 'production',
         apiKey: env.MAIL_API_KEY,
-        relayUrl: env.MAIL_RELAY_URL,
+        ...(env.MAIL_PROVIDER === 'rer' && env.MAIL_RELAY_URL?.trim() ? { relayUrl: env.MAIL_RELAY_URL } : {}),
         ...(env.MAIL_PROVIDER === 'cloudflare' ? { accountId: env.MAIL_ACCOUNT_ID } : {}),
       }).send(message)
     },
