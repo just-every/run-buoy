@@ -420,6 +420,12 @@
       "name": "0068_buoy_ai_schedules.sql",
       "sha256": "cb2634ba4047c852a8821032c2cc3bf10a13de5c9360496d236ff79c147d8c57",
       "sql": "CREATE TABLE buoy_ai_schedules(\n id TEXT PRIMARY KEY,\n name TEXT NOT NULL,\n account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,\n question TEXT NOT NULL,\n hour_utc INTEGER NOT NULL CHECK(hour_utc BETWEEN 0 AND 23),\n owner_id TEXT NOT NULL,\n owner_version INTEGER NOT NULL,\n policy_revision TEXT NOT NULL,\n policy_document TEXT NOT NULL,\n revision TEXT NOT NULL,\n revoked_at TEXT,\n last_slot TEXT\n);\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0069_buoy_communications.sql",
+      "sha256": "5c67b90ed6215d0108e4e394a6d5d2fad86ae1ce0414286f44469c3a67fa464a",
+      "sql": "CREATE TABLE buoy_communications(id TEXT PRIMARY KEY,account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,person_id TEXT REFERENCES buoy_customer_people(id) ON DELETE CASCADE,data_class TEXT NOT NULL CHECK(data_class IN ('emails','tickets')),observed_on TEXT NOT NULL,body TEXT NOT NULL);\nCREATE TABLE buoy_communication_scores(account_id TEXT PRIMARY KEY REFERENCES buoy_accounts(id) ON DELETE CASCADE,document TEXT NOT NULL);\nCREATE TRIGGER buoy_communication_erasure AFTER DELETE ON buoy_communications BEGIN\n DELETE FROM buoy_communication_scores WHERE account_id=OLD.account_id;\n DELETE FROM buoy_scorecard_history WHERE account_id=OLD.account_id AND json_type(document,'$.inputs.values.\"communications.score\"') IS NOT NULL;\n DELETE FROM buoy_scorecard_results WHERE account_id=OLD.account_id AND json_type(document,'$.inputs.values.\"communications.score\"') IS NOT NULL;\nEND;\n"
     }
   ],
   "compatibilityDate": "2026-09-08",

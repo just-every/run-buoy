@@ -1,0 +1,17 @@
+# Communication sentiment
+
+The owner enables AI and communication sentiment under Team → AI model and data settings, records provider terms (shown as unverified), selects permitted email and ticket data classes, and sets a USD budget and request cap. Both AI and this measure start off.
+
+Owners and administrators record customer messages in AI assistance, with their source class and observed date. Link the customer person when applicable: person erasure removes linked messages and derived scores. Account erasure removes all its messages and scores. These are person-recorded sources; Buoy does not claim a connected inbox.
+
+Choose an account and calendar month, then explicitly consent to send its permitted messages. Model calls reserve the bounded token cost before contacting the provider. Budget exhaustion, rate limits, installation pause, changed authority and changed source evidence refuse the request. Unknown provider failures keep their reservation and are never automatically retried. This door grants no agent model scope and sends no customer message.
+
+The model returns a sentiment score from 0 to 100, exact supporting quotations and supported risk themes: frustration, competitor, budget and champion change. Buoy validates every quotation against the selected source message. Scores below 40 are at risk; scores from 40 to below 70 are watch; scores from 70 are healthy. These are model interpretations for human review, never guaranteed predictions. Native health takes the more cautious band; weighted scorecards can use the communications.score field.
+
+Follow Source message to inspect the original text. New messages invalidate the account's score. Changing AI policy removes existing scores: process permitted messages again. Excluding a data class prevents its text from being sent or opened through citations. Disabling the measure removes it from native health, excludes its weight from numeric scorecards, and leaves a visible explanation.
+
+## Reproducing model accuracy
+
+The synthetic month in `tests/fixtures/communication-month.json` contains ten accounts and sixty messages. Its expected labels never enter model requests. `tests/communication-model.mjs` runs the real public routes in a disposable installation and records each score, band, citations, model, corpus digest and measured cost. It computes Spearman correlation with average ranks for ties and counts matching bands.
+
+Run this journey only with a credential confirmed to belong to a provider test or sandbox account and `BUOY_MODEL_SANDBOX=confirmed`. Inject ANTHROPIC_API_KEY through the approved held-key injector; never put a credential in source or command arguments. The journey selects [Haiku 5.5](https://platform.claude.com/docs/en/models/haiku-5-5/overview) at the [published small-context tariff](https://platform.claude.com/docs/en/about-claude/pricing) with a total reservation cap of USD 0.20 and a per-request cap of USD 0.02. Provider no-training practices remain unverified. A network-edge fake proves product behavior only; it does not establish the ranking or band acceptance. This benchmark has not yet run because sandbox credential scope is unconfirmed.

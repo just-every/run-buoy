@@ -1,4 +1,5 @@
 import {aiApi} from './ai'
+import {communicationApi} from './ai/communications'
 import {scheduleApi} from './ai/schedules'
 import {experimentsApi,proposeExperiment,experimentReport} from './experiments'
 import {reviewsApi} from './reviews'
@@ -127,6 +128,7 @@ buoyApi.onError((error, c) => {
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
 buoyApi.route('/',aiApi)
+buoyApi.route('/',communicationApi)
 buoyApi.route('/',scheduleApi)
 buoyApi.route('/',experimentsApi)
 buoyApi.route('/',plansApi)

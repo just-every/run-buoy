@@ -8,24 +8,24 @@ import {auditRecord} from '../audit-records'
 import {answer,evidence} from './answers'
 
 export const CLASSES=['emails','transcripts','tickets','usage','revenue'] as const
-interface Settings {enabled:boolean;provider:'anthropic'|'openai'|'compatible';model:string;classes:string[];budgetMinor:number;requestMinor:number;inputUsdPerMillion:number;outputUsdPerMillion:number;requestsPerMinute:number;termsReference:string}
+interface Settings {enabled:boolean;communicationsEnabled?:boolean;provider:'anthropic'|'openai'|'compatible';model:string;classes:string[];budgetMinor:number;requestMinor:number;inputUsdPerMillion:number;outputUsdPerMillion:number;requestsPerMinute:number;termsReference:string}
 export async function settings(db:D1Database){const row=await db.prepare('SELECT * FROM buoy_ai_settings WHERE singleton=1').first<{revision:string;document:string}>();insist(row,'AI settings unavailable.',503);return {revision:row.revision,...JSON.parse(row.document) as Settings}}
 export async function aiState(db:D1Database,actor:Actor){
  const config=await settings(db),access=await roleAccess(db,actor)
  const costs=(await db.prepare("SELECT feature,status,count(*) requests,sum(charged_minor) chargedMinor,sum(CASE WHEN status='reserved' OR status='unknown' THEN reserved_minor ELSE 0 END) heldMinor FROM buoy_ai_requests GROUP BY feature,status").all()).results
- return {trainingAttestation:{status:'unverified',basis:'Owner-recorded provider terms; Buoy has not verified provider training practices.'},enabled:config.enabled,canConfigure:actor.role==='owner',canPropose:!access.restricted&&['owner','admin'].includes(actor.role),...(actor.role==='owner'?{settings:config,costs}:{}),interpretation:'Cited assistance, not a prediction. Generated interpretations require human review. Missing and excluded sources cannot support an answer.'}
+ return {trainingAttestation:{status:'unverified',basis:'Owner-recorded provider terms; Buoy has not verified provider training practices.'},enabled:config.enabled,communicationsEnabled:config.communicationsEnabled===true,canConfigure:actor.role==='owner',canPropose:!access.restricted&&['owner','admin'].includes(actor.role),...(actor.role==='owner'?{settings:config,costs}:{}),interpretation:'Cited assistance, not a prediction. Generated interpretations require human review. Missing and excluded sources cannot support an answer.'}
 }
 async function saveSettings(db:D1Database,actor:Actor,input:Record<string,unknown>){
  requirePerson(actor,true);const old=await settings(db)
  insist(input.revision===old.revision,'AI settings changed. Reload.',409)
  insist(typeof input.enabled==='boolean'&&['anthropic','openai','compatible'].includes(String(input.provider)),'Choose an AI provider and enabled state.')
  insist(Array.isArray(input.classes)&&input.classes.every(c=>CLASSES.includes(c as typeof CLASSES[number])),'Choose declared data classes.')
- const config:Settings={enabled:input.enabled,provider:input.provider as Settings['provider'],model:text(input.model,'Model',100),classes:[...new Set(input.classes as string[])],budgetMinor:Number(input.budgetMinor),requestMinor:Number(input.requestMinor),inputUsdPerMillion:Number(input.inputUsdPerMillion),outputUsdPerMillion:Number(input.outputUsdPerMillion),requestsPerMinute:Number(input.requestsPerMinute),termsReference:typeof input.termsReference==='string'?input.termsReference.trim():''}
+ const config:Settings={enabled:input.enabled,communicationsEnabled:input.communicationsEnabled===undefined?old.communicationsEnabled===true:input.communicationsEnabled===true,provider:input.provider as Settings['provider'],model:text(input.model,'Model',100),classes:[...new Set(input.classes as string[])],budgetMinor:Number(input.budgetMinor),requestMinor:Number(input.requestMinor),inputUsdPerMillion:Number(input.inputUsdPerMillion),outputUsdPerMillion:Number(input.outputUsdPerMillion),requestsPerMinute:Number(input.requestsPerMinute),termsReference:typeof input.termsReference==='string'?input.termsReference.trim():''}
  for(const k of ['budgetMinor','requestMinor','requestsPerMinute'] as const)insist(Number.isSafeInteger(config[k])&&config[k]>=0&&config[k]<=1000000,'Use bounded whole USD cents and request counts.')
  for(const rate of [config.inputUsdPerMillion,config.outputUsdPerMillion])insist(Number.isFinite(rate)&&rate>0&&rate<=1000,'Record positive bounded model prices in USD per million tokens.')
  insist(config.requestMinor>=1&&config.requestsPerMinute>=1,'A request price and minute cap are required.')
  insist(!config.enabled||(input.noTraining===true&&config.termsReference.length>0&&config.termsReference.length<=1000),'Explicitly confirm no-training terms and record their reference before enabling.')
- await db.batch([authority(db,actor,true),guard(db,"EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active' AND role='owner')",actor.id),guard(db,'(SELECT revision FROM buoy_ai_settings WHERE singleton=1)=?',old.revision),stmt(db,'UPDATE buoy_ai_settings SET revision=?,document=? WHERE singleton=1',id(),JSON.stringify(config)),auditRecord(db,actor,'ai.settings-changed','ai:settings'),stmt(db,'DELETE FROM buoy_assertions')]);return aiState(db,actor)
+ await db.batch([authority(db,actor,true),guard(db,"EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active' AND role='owner')",actor.id),guard(db,'(SELECT revision FROM buoy_ai_settings WHERE singleton=1)=?',old.revision),stmt(db,'UPDATE buoy_ai_settings SET revision=?,document=? WHERE singleton=1',id(),JSON.stringify(config)),stmt(db,'DELETE FROM buoy_communication_scores'),auditRecord(db,actor,'ai.settings-changed','ai:settings'),stmt(db,'DELETE FROM buoy_assertions')]);return aiState(db,actor)
 }
 // No endpoint supplied in a request or stored document can redirect credentials.
 function endpoint(env:Bindings,config:Settings){
@@ -113,7 +113,7 @@ async function decide(db:D1Database,actor:Actor,key:string,input:Record<string,u
 export const aiApi=new Hono<{Bindings:Bindings;Variables:{actor:Actor}}>()
 aiApi.use('/api/buoy/ai/*',async(c,next)=>{
  await next()
- if(c.req.method==='POST'&&['/api/buoy/ai/questions','/api/buoy/ai/answers','/api/buoy/ai/conversations'].includes(c.req.path)&&c.res.status>=400){const actor=c.get('actor');await auditRecord(c.env.DB,actor,'ai.refused','ai:request','Request refused; no source text retained in this audit.').run()}
+ if(c.req.method==='POST'&&['/api/buoy/ai/questions','/api/buoy/ai/answers','/api/buoy/ai/conversations','/api/buoy/ai/communications/score'].includes(c.req.path)&&c.res.status>=400){const actor=c.get('actor');await auditRecord(c.env.DB,actor,'ai.refused','ai:request','Request refused; no source text retained in this audit.').run()}
 })
 aiApi.post('/api/buoy/ai/answers',async c=>c.json(await answer(c.env,c.get('actor'),await jsonBody(c.req.raw))))
 aiApi.get('/api/buoy/ai/evidence/:accountId/:field',async c=>c.json(await evidence(c.env,c.get('actor'),c.req.param('accountId'),c.req.param('field'),c.req.query('revision'))))
