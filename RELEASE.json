@@ -1,8 +1,8 @@
 {
-  "version": "0.1.2",
-  "publicReleaseNotes": "Fix Assisted mail delivery by passing the managed relay URL only to the RER provider. Retain the exact rer 0.2.80 pin and refresh the native delivery metadata for this release.",
+  "version": "0.1.3",
+  "publicReleaseNotes": "Refresh the Base delivery producer and native release metadata at rer 0.2.80. Preserve Assisted mail delivery and publish the current Buoy source as a native release bundle.",
   "migrations": [],
   "breaking": false,
-  "agentUpdateInstructions": "Upgrade from 0.1.1 without new migrations. Existing customer data and settings remain in place; Assisted mail providers no longer receive the managed relay URL.",
-  "previousVersion": "0.1.1"
+  "agentUpdateInstructions": "Upgrade from 0.1.2 without new migrations. Retain existing customer data and settings and use the exact rer 0.2.80 toolchain.",
+  "previousVersion": "0.1.2"
 }
