@@ -32,12 +32,20 @@ async function command(cwd,args,expected=0){
 }
 let running
 const stripe=billingSource()
+const aiSelection=[{kind:'task',line:2},{kind:'risk',line:4},{kind:'expansion',line:6}]
+const providerFetch=async request=>{
+ if(new URL(request.url).hostname==='api.stripe.com')return stripe.fetch(request)
+ assert.equal(request.url,'https://api.anthropic.com/v1/messages')
+ const body=await request.json(),payload=JSON.parse(body.messages[0].content.slice(body.messages[0].content.indexOf('{')))
+ assert.ok(payload.instructions.startsWith('Identify'))
+ return Response.json({content:[{text:JSON.stringify({proposals:aiSelection})}],usage:{input_tokens:100,output_tokens:100}})
+}
 // Server-to-server intake carries no browser Origin header. Dispatch the exact
 // public HTTP request to the emitted Worker without a self-signed TLS transport.
 const intake=(path,body,secret)=>running.dispatch(new Request(running.origin+path,{method:'POST',headers:{authorization:'Bearer '+secret,'content-type':'application/json'},body:JSON.stringify(body)}))
 try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
- running=await startWorker({root:source,secure:true,providerFetch:stripe.fetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
+ running=await startWorker({root:source,secure:true,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
  const allAudit=async()=>{const entries=[];let offset=0;do{const page=await call('/audit?offset='+offset);entries.push(...page.entries);offset=page.nextOffset}while(offset!==null);return entries}
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
@@ -145,6 +153,27 @@ try{
 
  const aiConfiguration=(await call('/ai')).settings;await call('/ai/settings','PUT',{...aiConfiguration,enabled:true,classes:['transcripts'],budgetMinor:100,requestMinor:100,noTraining:true,termsReference:'synthetic-buoy-8050'});
  await call('/ai/schedules','POST',{name:'synthetic-buoy-8150',feature:'questions',accountId,question:'Prepare a meeting brief',hourUtc:12,authorize:true,policyRevision:(await call('/ai')).settings.revision});assert.equal((await call('/ai/schedules')).schedules.length,1);
+ const prepareTranscript=async(target,base)=>{
+  const lines=Array.from({length:7},(_,index)=>'synthetic-buoy-'+(base+index)),transcript=lines.join('\n')
+  const prepared=await call('/ai/conversations','POST',{accountId:target,transcript,consent:true})
+  const selected=aiSelection.map(p=>({kind:p.kind,line:lines[p.line-1],lineNumber:p.line}))
+  assert.deepEqual(prepared.proposals.map(({kind,line,lineNumber})=>({kind,line,lineNumber})),selected,'AI-002 preparation cites the exact selected source lines')
+  return {lines,transcript,selected,proposals:prepared.proposals}
+ }
+ const retainedTranscript=await prepareTranscript(accountId,8350)
+ const discardedTranscript=await prepareTranscript(accountId,8360)
+ for(const proposal of discardedTranscript.proposals)await call('/ai/proposals/'+proposal.id+'/decision','POST',{action:'discard'})
+ const erasedTranscriptAccount={...fixture.accounts[0],id:'synthetic-buoy-8380',name:'synthetic-buoy-8381'}
+ await call('/accounts','POST',erasedTranscriptAccount)
+ const erasedTranscript=await prepareTranscript(erasedTranscriptAccount.id,8370)
+ const erasedTask=await call('/ai/proposals/'+erasedTranscript.proposals[0].id+'/decision','POST',{action:'accept',dueDate:'2027-01-01'})
+ const acceptedState=await call('/state'),acceptedTask=acceptedState.tasks.find(task=>task.id===erasedTask.taskId)
+ assert.equal(acceptedTask?.title,erasedTranscript.lines[1],'AI-002 erasure fixture first creates the accepted native task')
+ const acceptedProposal=acceptedState.proposals.find(proposal=>proposal.id===acceptedTask.proposalId)
+ assert.equal(acceptedProposal?.payload.aiProposalId,erasedTranscript.proposals[0].id)
+ await call('/accounts/'+erasedTranscriptAccount.id,'DELETE',{confirmation:erasedTranscriptAccount.name})
+ const aiProposalsBefore=(await call('/ai/proposals')).proposals
+ assert.deepEqual(aiProposalsBefore.map(({kind,line,lineNumber})=>({kind,line,lineNumber})),retainedTranscript.selected)
  const recordImage=await recordPortabilityImage(call,recordIds);
  const billingImage=await billingPortabilityImage(call,billingIds);
  // Later fixture writes can legitimately add held account revisions. Compare
@@ -168,7 +197,25 @@ try{
  // Inspect the public archive format, never the live database. This independent
  // calculation proves a keyed fence, not merely a replay refusal that plain SHA
  // would also satisfy. No generated installation key is logged on failure.
- const archiveRows=(await readFile(archive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ const archiveText=await readFile(archive,'utf8')
+ const archiveRows=archiveText.trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ const aiArchiveRows=archiveRows.filter(item=>item.table==='buoy_ai_proposals').map(item=>item.row)
+ assert.deepEqual(aiArchiveRows.map(({kind,line,line_number})=>({kind,line,lineNumber:line_number})).sort((a,b)=>a.lineNumber-b.lineNumber),retainedTranscript.selected,'AI-002 persisted proposals contain exactly the selected kind, source text and original line number')
+ assert.deepEqual(aiArchiveRows.map(row=>row.id).sort(),retainedTranscript.proposals.map(row=>row.id).sort())
+ for(const transcript of [retainedTranscript,discardedTranscript,erasedTranscript]){
+  assert.ok(!archiveText.includes(JSON.stringify(transcript.transcript).slice(1,-1)),'AI-002 the full submitted transcript is absent from persisted export text')
+  for(const [index,line]of transcript.lines.entries())if(transcript!==retainedTranscript||!aiSelection.some(p=>p.line===index+1))assert.ok(!archiveText.includes(line),'AI-002 unselected, discarded and account-erased source text is absent throughout the persisted export')
+ }
+ const archivedAudit=archiveRows.filter(item=>item.table==='buoy_audit').map(item=>item.row)
+ for(const proposal of discardedTranscript.proposals){
+  const receipts=archivedAudit.filter(row=>row.subject==='ai:'+proposal.id)
+  assert.equal(receipts.length,1,'AI-002 discard leaves one opaque receipt')
+  assert.equal(receipts[0].action,'ai.proposal-discarded');assert.equal(receipts[0].detail,'')
+  assert.ok(!archiveRows.some(item=>item.table!=='buoy_audit'&&JSON.stringify(item.row).includes(proposal.id)),'AI-002 no discarded proposal survives outside its audit receipt')
+ }
+ assert.ok(!archiveRows.some(item=>item.table==='buoy_tasks'&&(item.row.id===acceptedTask.id||item.row.account_id===erasedTranscriptAccount.id)),'AI-002 account erasure removes accepted native tasks from the persisted export')
+ assert.ok(!archiveRows.some(item=>item.table==='buoy_proposals'&&(item.row.id===acceptedProposal.id||item.row.account_id===erasedTranscriptAccount.id)),'AI-002 account erasure removes accepted native proposals from the persisted export')
+ for(const transcript of [retainedTranscript,discardedTranscript,erasedTranscript])for(const line of transcript.lines)assert.ok(!JSON.stringify(archivedAudit).includes(line),'AI-002 audit custody contains no transcript source text')
  assert.ok(!archiveRows.some(item=>['buoy_report_shares','buoy_dashboard_shares','buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
  assertBillingArchiveRows(archiveRows,billingImage);
  assert.ok(archiveRows.some(item=>item.table==='buoy_success_plans'&&item.row.id===successPlan.id),'The real archive contains the persisted success plan');
@@ -187,6 +234,7 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,secure:true,providerFetch:stripe.fetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
+ assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
  assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective source values and awaiting-confirmation state restore exactly');
  await assertBillingPortability(call,running.request,running.cookie,billingImage)
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'Restored native reads and rejected source/webhook attempts never call Stripe without fresh authority')
