@@ -25,7 +25,9 @@ function aggregate(values:number[],mode:MeasureAggregate):number {
 }
 export function calculate(config:ScorecardConfig,inputs:RetainedInputs,identity:Pick<ScorecardResult,'accountId'|'accountRevision'|'configRevision'|'versionId'|'calculatedAt'>):ScorecardResult {
  const override=config.segments.find(s=>inputs.segments.some(member=>member.id===s.segmentId)),selectedSegment=override?inputs.segments.find(s=>s.id===override.segmentId)!:null
- const breakdown=config.measures.map(measure=>{
+ const breakdown=config.measures.map(configured=>{
+  const disabled=configured.field==='communications.score'&&inputs.sources[configured.field]?.some(s=>(s.details as {disabled?:boolean})?.disabled)
+  const measure=disabled?{...configured,missing:'exclude' as const}:configured
   const related=measure.aggregate?inputs.relatedValues?.[measure.field]??[]:undefined
   const mixedCurrencies=related!==undefined&&new Set(related.flatMap(row=>row.currency?[row.currency]:[])).size>1
   const mapped=related?.map(row=>mixedCurrencies?null:numericValue(row.value,measure.categoryValues)),present=mapped?.filter((value):value is number=>value!==null)
