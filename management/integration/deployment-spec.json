@@ -437,8 +437,10 @@
   "optionalSecretNames": [
     "MAIL_API_KEY",
     "INSTALLATION_KEY_PREVIOUS",
-    "AI_API_KEY",
-    "AI_COMPATIBLE_URL"
+    "AI_COMPATIBLE_URL",
+    "AI_ANTHROPIC_API_KEY",
+    "AI_OPENAI_API_KEY",
+    "AI_COMPATIBLE_API_KEY"
   ],
   "schedules": [
     "0 * * * *"
