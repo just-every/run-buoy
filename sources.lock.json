@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "715bb7faf35c44927db1d5b303ad2a9bf27decca36ec84f06b89f80579d05392",
+      "sha256": "d167202539bf519ddb8ea4aedc79dffb8ec8aeab65dee3cf498b1b1bc7bad61f",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "6e7c80acb5422a7a6a65b50c6756ea5d79b19c3c5de37ebd95138c0b6a88b8d4",
+      "sha256": "97b6cca6999995ab39c2c0a739f9f66878774fd3bb544782a446910a941ccad5",
       "executable": false
     },
     "DEMO.md": {
@@ -176,7 +176,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "ac182fb8c462b94fb772074d3b10c5b23058d97932bd5dd294f6b7a69acab2ca",
+      "sha256": "290eaaea72574c7cee8cd5608b3bb836ad9b46fd33e3e45db05c02597aa4b245",
       "executable": false
     },
     "docs/move-in.md": {
@@ -196,7 +196,7 @@
       "executable": false
     },
     "docs/providers.md": {
-      "sha256": "6b363524b423d1de492809ae15657660187decbd1086d66936ed84212977770e",
+      "sha256": "3c5d1ab26e625056443d8ab86caa55add0bc01b83eb09143b1cca2a8781d4284",
       "executable": false
     },
     "docs/renewals.md": {
@@ -1136,11 +1136,11 @@
       "executable": false
     },
     "src/buoy/ai/answers.ts": {
-      "sha256": "a598652597ac0614b29d139873fdf7c5050cdf89af584615f306263f9398b5f8",
+      "sha256": "20d6222ec17f2800ee29b2bb6a8e343a8067bf43195ec5f0cf1b87e039603e88",
       "executable": false
     },
     "src/buoy/ai/index.ts": {
-      "sha256": "ccdabe782c440f8f5fdf587b1b3dbb2eb399e69d657833273dc6e4931fa3ebac",
+      "sha256": "576e95de5e1abaaf61679a700828332d7af41cbe0b490b5a47992779c2432e0d",
       "executable": false
     },
     "src/buoy/ai/schedules.ts": {
@@ -1304,7 +1304,7 @@
       "executable": false
     },
     "src/buoy/migrate/cli.mjs": {
-      "sha256": "77d4ade7727548f02aee6dbb2e5b66d7f8b4b8ff81d7b0a12b122761ee8a768f",
+      "sha256": "2b0d03e39f197aacb28ab186071d99bf8984897488bf8ab7f98a095e8a11ab78",
       "executable": false
     },
     "src/buoy/migrate/csv.ts": {
@@ -1312,7 +1312,11 @@
       "executable": false
     },
     "src/buoy/migrate/source.ts": {
-      "sha256": "d3161c8356417e1b6a73a39c0bb30685c21172f201bd61a4be707a11cac74e1d",
+      "sha256": "1071c68a89108681ab50ecc4fe290675909ad516a6152838c97858357fa4fb73",
+      "executable": false
+    },
+    "src/buoy/migrate/totango-api.ts": {
+      "sha256": "39fd951bdba5571a207db8507086c02078e102cf2fd41d9d070d1d3938035f92",
       "executable": false
     },
     "src/buoy/notify-mail.ts": {
@@ -3836,11 +3840,19 @@
       "executable": false
     },
     "tests/ai-browser.mjs": {
-      "sha256": "888438f3da29e38bf8d021ab4352b7b7bf67c6a6af65e4846b240f96f10e4130",
+      "sha256": "8de1f48962ab47b39f98eba1d7922383e155e3c5c6f154da13eacf3dadda0731",
       "executable": false
     },
     "tests/ai-journey.mjs": {
-      "sha256": "bf026cd1bbe7ab92b438340e9fe0497998036e64a2469b1eee64533cbb88a965",
+      "sha256": "7280906a6560dfee25bbe5c084b2e44a2529cecd345a0893957cb3f312ca6057",
+      "executable": false
+    },
+    "tests/ai-question-browser.mjs": {
+      "sha256": "1c9d1d369461a3e30b56f3f57479941f465a8b5acba6b3acdffe17483a5bac2f",
+      "executable": false
+    },
+    "tests/ai-question-edge.mjs": {
+      "sha256": "cb1c6dd14e070f04554f55b344df181c8440ba25590238fcc1ed0b98625130ef",
       "executable": false
     },
     "tests/billing-browser.mjs": {
@@ -3980,7 +3992,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "a6ed8c7a347acb0c3d14873e66bf1833acd36a487d27beeb2ba9a40c86660d75",
+      "sha256": "4e75ac99b0c078f8d42eb43c3386312af0007bb725384db2a1cbb35fa2a8e4cc",
       "executable": false
     },
     "tests/notifications.mjs": {
@@ -4124,7 +4136,7 @@
       "executable": false
     },
     "tests/site.mjs": {
-      "sha256": "864612d7a7d7a79c7e33ea9928cbc3ae8be0b036b6020f3178ae1ace2f58bc11",
+      "sha256": "85a5d3fae2f912bc8b657f0406ab0448d582665c87bb299d29f48dc799d0aba9",
       "executable": false
     },
     "tests/style.mjs": {
@@ -4149,6 +4161,14 @@
     },
     "tests/teams.mjs": {
       "sha256": "d553f5b8d447388c8ef4498d119c806a2bd79bf599eb118f3ab5f0000048291a",
+      "executable": false
+    },
+    "tests/totango-api-edge.mjs": {
+      "sha256": "172873c7c9adefc7714e2010dd7dd543d00d541e4082aec33463a30eb2a963c7",
+      "executable": false
+    },
+    "tests/totango-api-journey.mjs": {
+      "sha256": "996f382f98f55331472c00c1aa69a249b014f5cab24a0974bd2eee981e6ce56e",
       "executable": false
     },
     "tests/usage-browser.mjs": {
