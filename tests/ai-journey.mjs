@@ -139,7 +139,7 @@ export async function aiScheduleJourney(){
   const admin=await app.signIn('synthetic-buoy-8101@example.test')
   assert.equal((await call('/ai/schedules','POST',grant,admin)).status,403);assert.equal((await call('/ai/schedules','GET',undefined,admin)).status,403)
   const row=(await api('/ai/schedules','POST',grant)).schedules[0]
-  assert.equal(row.feature,'questions');assert.deepEqual(row.policy.classes,['tickets','revenue','transcripts']);assert.equal(row.policy.provider,'anthropic');assert.equal(row.policy.budgetMinor,100)
+  assert.equal(row.feature,grant.feature);assert.equal(row.name,grant.name);assert.equal(row.account_id,grant.accountId);assert.equal(row.question,grant.question);assert.equal(row.hour_utc,grant.hourUtc);assert.deepEqual(row.policy,(await api('/ai')).settings,'Standing consent records the entire reviewed model, classes, tariffs and limits');assert.deepEqual((await api('/ai/schedules')).schedules,[row])
   await app.scheduled('0 * * * *',Date.parse('2026-10-25T11:00:00Z'));assert.equal(sent.length,0)
   await Promise.all([app.scheduled('0 * * * *',Date.parse('2026-10-25T12:00:00Z')),app.scheduled('0 * * * *',Date.parse('2026-10-25T12:00:00Z'))]);assert.equal(sent.length,1,'Concurrent replay reserves only one provider call');assert.doesNotMatch(JSON.stringify(sent),/Outside Coastal|8003/)
   assert.equal((await call('/ai/schedules/'+row.id,'DELETE',{revision:row.revision},admin)).status,403)
