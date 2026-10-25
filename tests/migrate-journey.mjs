@@ -61,6 +61,42 @@ test('MIGRATE-005 versioned export account custody uses the existing reviewed do
  } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
+test('MIGRATE-003 Totango segment CSV reconciles twenty accounts through reviewed owner imports',async()=>{
+ const app=await startWorker({clock:Date.parse('2026-10-25T12:00:00Z')}),scratch=await mkdtemp(join(tmpdir(),'buoy-totango-'))
+ try {
+  const before=await state(app),original='fixtures/move-in/totango/accounts.csv',prepared=join(scratch,'bundle.json')
+  const columns={id:'Account ID',name:'Account Name',renewalDate:'Contract Renewal Date',noticeDays:'Notice Days',renewalEvidence:'Contract Reference',invoiceTotal:'Invoice Total',invoiceCurrency:'Invoice Currency',invoiceObservedAt:'Invoice Observed',invoiceDueDate:'Invoice Due',supportObservedAt:'Support Observed',supportReference:'Support Reference',openTickets:'Open Tickets',urgentTickets:'Urgent Tickets'}
+  execFileSync(process.execPath,['src/buoy/migrate/cli.mjs','--source','totango','--input',original,'--output',prepared,'--columns',JSON.stringify(columns)])
+  const input=JSON.parse(await readFile(prepared,'utf8')),bytes=await readFile(original)
+  assert.equal(input.csv,bytes.toString('utf8'));assert.equal(input.originalSha256,createHash('sha256').update(bytes).digest('hex'))
+  const door=client(app,'totango'),plan=await door.plan(input)
+  assert.equal(plan.counts.mapped,20);assert.equal(plan.counts.rejected,0)
+  assert.equal(plan.diagnostics.filter(d=>d.field==='Health Profile').length,20)
+  assert.deepEqual(await state(app),before)
+  assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:'0'.repeat(64)})).status,403)
+  assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:plan.fingerprint},{cookie:undefined})).status,401)
+  const job=await door.apply(plan);assert.equal((await door.apply(plan)).id,job.id)
+  const accounts=await state(app);assert.equal(accounts.length,before.length+20)
+  for(let n=1;n<=20;n++){
+   const row=accounts.find(a=>a.id===target('totango','synthetic-buoy-'+n));assert.ok(row)
+   assert.equal(row.name,'Synthetic Totango '+n);assert.equal(row.renewalDate,'2027-03-31');assert.equal(row.noticeDays,n);assert.equal(row.renewalEvidence,'synthetic-buoy-'+n)
+   assert.deepEqual(row.billing,{observedAt:'2026-01-01',reference:'totango account synthetic-buoy-'+n,currency:'USD',totalMinor:n*100+25,creditsMinor:0,allocatedMinor:0,dueDate:'2026-01-31'})
+   assert.deepEqual(row.support,{observedAt:'2026-01-01',reference:'synthetic-buoy-support-'+n,openTickets:n,urgentTickets:n%3})
+  }
+  assert.equal((await door.json('reconcile',{planId:plan.planId})).ok,true)
+  const history=(await (await app.request('/api/operator/import-history',{cookie:app.cookie})).json()).history
+  assert.equal(history.find(h=>h.planId===plan.planId).namespace,'buoy-migrate-totango-v1')
+  assert.equal((await client(app,'csv').send('status',{planId:plan.planId})).status,404)
+  await door.undo(plan);assert.deepEqual(await state(app),before)
+  const malformed=await door.plan({...input,originalSha256:'0'.repeat(64)});assert.equal(malformed.counts.mapped,0);assert.match(malformed.rejected[0].reason,/digest/);await door.json('undo',{planId:malformed.planId})
+  const mixed=await door.plan({...input,data:{accounts:[]}});assert.equal(mixed.counts.mapped,0);assert.match(mixed.rejected[0].reason,/second export representation/);await door.json('undo',{planId:mixed.planId})
+  const invalidSupport={...input,csv:input.csv.replace('synthetic-buoy-support-1,1,1','synthetic-buoy-support-1,1,2')}
+  invalidSupport.originalSha256=createHash('sha256').update(invalidSupport.csv).digest('hex')
+  const rejected=await door.plan(invalidSupport);assert.equal(rejected.counts.mapped,19);assert.equal(rejected.counts.rejected,1);assert.match(rejected.rejected[0].reason,/urgentTickets cannot exceed openTickets/)
+  await door.json('undo',{planId:rejected.planId})
+ }finally{await app.close();await rm(scratch,{recursive:true,force:true})}
+})
+
 test('MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and source identities',async()=>{
  const app=await startWorker(),scratch=await mkdtemp(join(tmpdir(),'buoy-migrate-'))
  try {
@@ -94,25 +130,25 @@ test('MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and sou
  } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
-test('MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390',async()=>{
+test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390',async()=>{
  const app=await startWorker(),browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
  const evidence=process.env.EVIDENCE_DIR??'../evidence/migrate';await mkdir(evidence,{recursive:true})
  try {
-  for(const width of [1440,390]) {
+  for(const width of [1440,390]) for(const source of ['csv','totango']) {
    const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
    try {
     await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...value]=pair.split('=');return{name,value:value.join('='),url:app.origin}}))
     const page=await context.newPage(),before=await state(app)
     await page.goto(app.origin+'/app/imports',{waitUntil:'networkidle'})
     await page.waitForFunction(()=>!document.getElementById('import-settings-fields').disabled)
-    const input=bundle(header+csvRow('synthetic-buoy-'+width)+csvRow('synthetic-buoy-invalid','31/02/2027'))
+    const input={...bundle(header+csvRow('synthetic-buoy-'+width)+csvRow('synthetic-buoy-invalid','31/02/2027')),source}
     await page.setInputFiles('#import-bundle',{name:'synthetic-buoy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))})
     await page.getByRole('button',{name:'Upload and review',exact:true}).click()
     await page.locator('#import-review').waitFor({state:'visible'})
     await page.waitForFunction(()=>!document.getElementById('import-confirmed').disabled)
     assert.match(await page.locator('#import-rejections').innerText(),/real calendar date/)
     assert.deepEqual(await state(app),before)
-    const proof=async stage=>{await scan(page,`Migration ${stage} ${width}`);await page.screenshot({path:join(evidence,`migration-${stage}-${width}.png`),fullPage:true})}
+    const proof=async stage=>{await scan(page,`Migration ${source} ${stage} ${width}`);await page.screenshot({path:join(evidence,`migration-${source}-${stage}-${width}.png`),fullPage:true})}
     // This screen uses text-labelled controls throughout; any future symbolic control must supply a tooltip.
     assert.deepEqual(await page.locator('#work button, #work a').evaluateAll(nodes=>nodes.filter(n=>!n.textContent.trim()&&!n.querySelector('img[alt]')).map(n=>n.outerHTML)),[])
     await proof('review')

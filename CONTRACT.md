@@ -214,7 +214,7 @@ The ROLE-001 role matrix ("own book" is the accounts a person owns; "team" is th
 
 - **MIGRATE-002 — ChurnZero migration.** Target capability; not currently available. Accounts, contacts, ChurnScores and their factors, tasks, plays, success plans, journeys, events and NPS are planned inputs from ChurnZero exports and API under the same reviewed plan and reconciliation as MIGRATE-001. **Acceptance evidence:** Import a ChurnZero sample export, reconcile 20 accounts and their health factors field by field, and confirm journeys arrive as paused Buoy journeys for review.
 
-- **MIGRATE-003 — Totango migration.** Target capability; not currently available. Accounts, users, health profiles, SuccessFlows, tasks, touchpoints, segments and success plays are planned inputs from Totango exports and API under the same guarantees. **Acceptance evidence:** Import a Totango sample export, reconcile 20 accounts, and confirm SuccessFlows arrive as paused playbooks with their steps mapped or listed as unmapped.
+- **MIGRATE-003 — Totango migration.** Partial account mapping ships through the reviewed owner import door; a full migration is not currently available. Accounts, users, health profiles, SuccessFlows, tasks, touchpoints, segments and success plays are planned inputs from Totango exports and API under the same guarantees. **Acceptance evidence:** Import a Totango sample export, reconcile 20 accounts, and confirm SuccessFlows arrive as paused playbooks with their steps mapped or listed as unmapped.
 
 - **MIGRATE-004 — Planhat migration.** Target capability; not currently available. Companies, end users, health profiles, workflows and tasks, conversations, licenses and revenue, NPS, custom fields, and Planhat's assets, projects and other custom objects (into ACCOUNT-006 objects with their records) are planned inputs from Planhat's API and exports under the same guarantees. **Acceptance evidence:** Import a Planhat sample export, reconcile 20 accounts including license ARR, and confirm custom fields arrive with their types and its assets arrive as a custom object with matching record counts.
 
@@ -285,8 +285,8 @@ Judged from the code and tests at commit `8a0538bafdb961686a6bbe5598137d30996f49
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 7 | 1 | 0 | 8 |
-| Target and push further | 28 | 25 | 44 | 97 |
-| All | 35 | 26 | 44 | 105 |
+| Target and push further | 28 | 26 | 43 | 97 |
+| All | 35 | 27 | 43 | 105 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -367,7 +367,7 @@ Judged from the code and tests at commit `8a0538bafdb961686a6bbe5598137d30996f49
 | `API-001` | Public API and webhooks | target | partial | `src/buoy/api.ts`; `tests/flows.test.mjs`: session-authenticated JSON routes and the agent command endpoint exist; `src/buoy/usage/intake.ts`; `src/buoy/inapp/`; `sdk/usage.mjs`; `sdk/relay.mjs`; `tests/usage-journey.mjs`; `tests/inapp-journey.mjs`: separate scoped server-only intake/relay credentials and source-message deduplication exist for usage and in-app observations | A documented OpenAPI/versioned general integration API, scoped account/record write tokens, general idempotency keys and rate limits, and outbound signed webhooks with retries/delivery logs remain absent. Source-specific intake and agent commands do not satisfy that acceptance. |
 | `MIGRATE-001` | Gainsight CS migration | target | missing |  | IMPORT-001 accepts Buoy's own account JSON only; no Gainsight mapping, including custom objects. |
 | `MIGRATE-002` | ChurnZero migration | target | missing |  | No ChurnZero mapping. |
-| `MIGRATE-003` | Totango migration | target | missing |  | No Totango mapping. |
+| `MIGRATE-003` | Totango migration | target | partial | `tests/migrate-journey.mjs`: “MIGRATE-003 Totango segment CSV reconciles twenty accounts through reviewed owner imports” proves exact source custody, fingerprint approval, twenty-account field reconciliation and undo; “MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390” proves native review, apply, reload, reconciliation and undo at both widths. | Account segment CSV mapping only. Native users, health profiles, SuccessFlows arriving as paused playbooks with every step mapped or explicitly unmapped, tasks, touchpoints, segments, success plays and API intake remain. The original full sample-export acceptance is not met. |
 | `MIGRATE-004` | Planhat migration | target | missing |  | No Planhat mapping, including assets and custom objects. |
 | `MIGRATE-005` | Vitally, Velaris and spreadsheet migration | target | partial | `src/buoy/migrate/source.ts`; `src/buoy/migrate/cli.mjs`; `docs/migrations.md`; `tests/migrate-journey.mjs` — versioned export account custody uses the existing reviewed door; CSV mapping rejects bad rows and preserves exact money and source identities; existing Imports screen reviews migration bundles at 1440 and 390 | Fixture-oriented Vitally and Velaris account bundles and a guided terminal CSV column mapper ship through the owner door. Native users, health, projects, tasks, notes and NPS mapping, incumbent APIs, direct Google Sheets access and the full original sample-export acceptance remain. The 2000-row preview includes 1997 rejected dates and three valid rows; it does not prove reconciliation of a full valid 2000-account book. The installation remains capped at 500 accounts. |
 | `MIGRATE-006` | Parallel run and delta re-import | target | missing |  | No delta re-import, conflict preview or cutover record. |

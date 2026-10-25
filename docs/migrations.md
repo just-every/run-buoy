@@ -32,3 +32,17 @@ The original UTF-8 CSV or incumbent export text, including its byte-order mark a
 Upload `reviewed.json` in Imports. Inspect counts, every rejected row, every unmapped field and collection, and the exact fingerprint. Explicit approval applies valid account rows only. Source IDs are trimmed text or exact integers rendered as decimal text, stable and namespaced by source; the native ID is a deterministic digest of source and original ID. Imports are inert. Reconciliation reads actual native accounts; strict undo refuses later native edits and dependent work. History and reload retain the selected source namespace. Business grants retain their existing Buoy JSON source and quota; these migration mappings are owner-session only.
 
 The parser accepts up to 2,000 CSV data rows, 2,100 total source records and a 2 MB bundle. The existing installation limit is still 500 accounts. A full 2,000-valid-account migration is unproved and unsupported at that bound; split files alone does not increase installation capacity. Conflicts in a later catch-up remain protected by the existing door. Reviewer-selected replacement, deletion proposals, cutover ownership and full delta undo acceptance remain MIGRATE-006 work.
+
+## Totango account segment CSV
+
+Use Totango's **Download CSV** on an account segment. The download contains the segment's selected column headers; there is no fixed account CSV schema. Include the required account identity and contract columns, then map their exact names explicitly. Custom attributes can supply contract evidence; Buoy never invents missing renewal terms. See [Totango's export documentation](https://support.totango.com/hc/en-us/articles/10233417253652-Export-segment-data).
+
+```sh
+node src/buoy/migrate/cli.mjs --source totango --input accounts.csv --output reviewed.json --columns '{"id":"Account ID","name":"Account Name","renewalDate":"Contract Renewal Date","noticeDays":"Notice Days","renewalEvidence":"Contract Reference","invoiceTotal":"Invoice Total","invoiceCurrency":"Invoice Currency","invoiceObservedAt":"Invoice Observed","invoiceDueDate":"Invoice Due","supportObservedAt":"Support Observed","supportReference":"Support Reference","openTickets":"Open Tickets","urgentTickets":"Urgent Tickets"}'
+```
+
+Without `--columns`, the same terminal guide asks for exact headers. Totango imports have a separate source namespace from generic CSV, even for identical account IDs. Exact source bytes, unmapped columns, review, fingerprint approval, native reconciliation and guarded undo use the existing owner import door. Reloading Imports preserves Totango history and its source namespace. A Health Profile column is retained and explicitly unmapped; it never configures native health.
+
+The synthetic twenty-account fixture is documented in `./fixtures/move-in/totango/README.md`. This is partial MIGRATE-003 work: native users, health profiles, SuccessFlows as paused playbooks with mapped or explicitly unmapped steps, tasks, touchpoints, segments, success plays and API intake remain unimplemented. It does not claim a full Totango migration.
+
+Optional support columns are `supportObservedAt`, `supportReference`, `openTickets` and `urgentTickets`. Supply all four or leave all empty. Counts must be exact nonnegative whole numbers; urgent tickets cannot exceed open tickets. The observation uses the same real-date and not-in-the-future checks as native entry. These are manually attributed source snapshots, not connected tickets or support history. Health profiles are not inferred from them.

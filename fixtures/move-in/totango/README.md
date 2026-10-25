@@ -1,0 +1,5 @@
+# Synthetic Totango account segment export
+
+This is a synthetic fixture, with no customer data and no provider account. Its shape follows [Totango: Export segment data](https://support.totango.com/hc/en-us/articles/10233417253652-Export-segment-data), read on 25 October 2026: downloaded CSV files include the headers selected in the segment. The headers here represent a customer-selected account segment, including custom contract and invoice attributes; they are not a fixed Totango schema. The byte-order mark exercises exact source custody. The migration CSV journey separately proves CRLF line endings.
+
+Twenty distinct account IDs have explicit renewal evidence, notice days and exact USD invoice amounts, and attributed open and urgent ticket snapshots. Health Profile is deliberately unmapped and must appear in review for every account. This fixture proves account mapping only. It does not represent users, health configuration, tasks, touchpoints, segments, success plays or SuccessFlow definitions, and does not establish a complete MIGRATE-003 acceptance.

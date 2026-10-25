@@ -4,12 +4,12 @@ import type { Json, ParsedRecord, ImportMapping } from '../../modules/import-kit
 import { parseAccount } from '../imports/validation'
 import { KIND } from '../imports/source'
 import { minorUnitDigits } from '../currencies'
-export const migrationSources = ['vitally', 'velaris', 'csv'] as const
+export const migrationSources = ['vitally', 'velaris', 'csv', 'totango'] as const
 export type MigrationSource = typeof migrationSources[number]
 export const migrationNamespace = (source: MigrationSource) => `buoy-migrate-${source}-v1`
 export const migrationSource = (value: string | null): MigrationSource | undefined => migrationSources.find(source => source === value)
 export const migrationTarget = (source: MigrationSource, id: string) => 'migration_' + sha256(JSON.stringify([source, id])).slice(0, 40)
-const fields = ['id','name','renewalDate','noticeDays','renewalEvidence','invoiceTotal','invoiceCurrency','invoiceObservedAt','invoiceDueDate'] as const
+const fields = ['id','name','renewalDate','noticeDays','renewalEvidence','invoiceTotal','invoiceCurrency','invoiceObservedAt','invoiceDueDate','supportObservedAt','supportReference','openTickets','urgentTickets'] as const
 function object(value: unknown): Record<string, unknown> {
  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected an object.')
  return value as Record<string, unknown>
@@ -46,7 +46,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
   if (!['iso','day-first','month-first'].includes(String(bundle.dateOrder))) throw new Error('Choose iso, day-first or month-first date order.')
   let rows: Record<string,unknown>[], columns: Record<string,unknown>, pointers: string[]
   let exportData: Record<string,unknown> | undefined
-  if (source === 'csv') {
+  if (source === 'csv' || source === 'totango') {
    if (bundle.data !== undefined || bundle.exportText !== undefined) throw new Error('CSV bundles cannot contain a second export representation.')
    if (typeof bundle.csv !== 'string' || sha256(bundle.csv) !== bundle.originalSha256) throw new Error('Original CSV digest does not match its embedded UTF-8 text.')
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
@@ -82,13 +82,17 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
     const invoiceFields = ['invoiceTotal','invoiceCurrency','invoiceObservedAt','invoiceDueDate']
     const hasInvoice = invoiceFields.some(field => String(get(field)).trim() !== '')
     const currency = String(get('invoiceCurrency')).trim().toUpperCase()
-    const account = parseAccount({id:migrationTarget(source,id),name:get('name'),renewalDate:realDate(get('renewalDate'),bundle.dateOrder),noticeDays:Number(notice),renewalEvidence:get('renewalEvidence'),support:null,
+    const supportFields = ['supportObservedAt','supportReference','openTickets','urgentTickets']
+    const hasSupport = supportFields.some(field => String(get(field)).trim() !== '')
+    const ticketCount = (field: string) => {const value=String(get(field)).trim();if(!/^\d+$/.test(value)||!Number.isSafeInteger(Number(value)))throw new Error('Ticket counts must be exact nonnegative whole numbers.');return Number(value)}
+    const support = hasSupport ? {observedAt:realDate(get('supportObservedAt'),bundle.dateOrder),reference:get('supportReference'),openTickets:ticketCount('openTickets'),urgentTickets:ticketCount('urgentTickets')} : null
+    const account = parseAccount({id:migrationTarget(source,id),name:get('name'),renewalDate:realDate(get('renewalDate'),bundle.dateOrder),noticeDays:Number(notice),renewalEvidence:get('renewalEvidence'),support,
      billing:hasInvoice ? {observedAt:realDate(get('invoiceObservedAt'),bundle.dateOrder),reference:`${source} account ${id}`,currency,totalMinor:money(get('invoiceTotal'),currency),creditsMinor:0,allocatedMinor:0,dueDate:realDate(get('invoiceDueDate'),bundle.dateOrder)} : null})
     const used = new Set(Object.values(columns).map(String)), unmapped = Object.keys(row).filter(key=>!used.has(key))
     return {kind:KIND,sourceId:id,payload:{account:account as unknown as Json,unmapped},pointer}
    } catch (error) { return rejection(`row-${i+1}`,error instanceof Error ? error.message : 'Invalid migration row.',pointer) }
   })
-  if (source !== 'csv') {
+  if (source !== 'csv' && source !== 'totango') {
    for (const [kind,items] of Object.entries(exportData!)) if (kind !== 'accounts') {
     const count = Array.isArray(items) ? items.length : 1
     records.push({kind:'migration-unmapped',sourceId:`collection-${kind}`,payload:{collection:kind,count,reason:'This record kind is not mapped. No native records or automation are created.'},pointer:['','data',kind.replaceAll('~','~0').replaceAll('/','~1')].join('/')})
