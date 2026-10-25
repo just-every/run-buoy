@@ -1,0 +1,8 @@
+{
+  "version": "0.1.1",
+  "publicReleaseNotes": "Add a real Buoy renewal runway capture for the installable listing. Keep the existing hosted installation setup and customer evidence workflows.",
+  "migrations": [],
+  "breaking": false,
+  "agentUpdateInstructions": "Upgrade from 0.1.0 without new migrations. The listing capture uses the shipped demo account data; existing installation data and settings remain in place.",
+  "previousVersion": "0.1.0"
+}

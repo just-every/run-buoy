@@ -1,8 +1,8 @@
 {
-  "version": "0.1.1",
-  "publicReleaseNotes": "Add a real Buoy renewal runway capture for the installable listing. Keep the existing hosted installation setup and customer evidence workflows.",
+  "version": "0.1.2",
+  "publicReleaseNotes": "Fix Assisted mail delivery by passing the managed relay URL only to the RER provider. Retain the exact rer 0.2.80 pin and refresh the native delivery metadata for this release.",
   "migrations": [],
   "breaking": false,
-  "agentUpdateInstructions": "Upgrade from 0.1.0 without new migrations. The listing capture uses the shipped demo account data; existing installation data and settings remain in place.",
-  "previousVersion": "0.1.0"
+  "agentUpdateInstructions": "Upgrade from 0.1.1 without new migrations. Existing customer data and settings remain in place; Assisted mail providers no longer receive the managed relay URL.",
+  "previousVersion": "0.1.1"
 }
