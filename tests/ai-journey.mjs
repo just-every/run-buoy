@@ -214,7 +214,7 @@ export async function aiGeneratedJourney(){
   const source=(await api('/ai/answers','POST',{question:'Meeting brief',consent:true},cookie)).claims[0].citations[0]
   const unchangedAuthority=(await api('/state','GET',undefined,cookie)).accounts.map(a=>a.id)
   const changed=(await api('/state')).accounts.find(a=>a.id==='synthetic-buoy-8002')
-  await api('/accounts/'+changed.id,'PUT',{...changed,name:'Updated Harbour',revision:changed.revision})
+  await api('/accounts/'+changed.id,'PUT',{id:changed.id,name:'Updated Harbour',revision:changed.revision,renewalDate:changed.renewalDate,noticeDays:changed.noticeDays,renewalEvidence:changed.renewalEvidence,billing:changed.billing,support:changed.support})
   assert.deepEqual((await api('/state','GET',undefined,cookie)).accounts.map(a=>a.id),unchangedAuthority,'The reader retains the same account authority')
   assert.equal((await app.request(source.citation,{cookie})).status,409,'An old citation refuses changed evidence while the reader remains authorized')
   const refreshed=(await api('/ai/answers','POST',{question:'Meeting brief',consent:true},cookie)).claims[0].citations[0]
