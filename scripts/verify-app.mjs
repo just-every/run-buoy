@@ -8,7 +8,8 @@ const suites={
  http:['test:ai','test:migrate','test:site','test:flows:core','test:governance','test:connections','test:email-link'],
  records:['test:records'],
  volume:['test:volume'],
- 'reporting-browser':['test:ai-browser','test:reviews-browser','test:dashboards-browser'],
+ 'ai-browser':['test:ai-browser'],
+ 'reporting-browser':['test:reviews-browser','test:dashboards-browser'],
  'records-browser':['test:customer-people-browser','test:privacy-renewal-browser'],
  'workspace-browser':['test:workspace-browser'],
  'hierarchy-browser':['test:hierarchy-browser'],
@@ -16,7 +17,10 @@ const suites={
  health:['test:health'],
  'adoption-consumers':['test:adoption-consumers'],
  'adoption-aggregates':['test:adoption-aggregates'],
- browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes','test:runway-keyboard','test:governance-browser','test:a11y','test:fields-browser','test:connections-browser','test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
+ browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes'],
+ 'accessibility-browser':['test:runway-keyboard','test:a11y'],
+ 'settings-browser':['test:governance-browser','test:fields-browser','test:connections-browser'],
+ 'intake-browser':['test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
  archive:['test:portable'],
 }
 const selected=process.env.BUOY_VERIFY_SUITE??'all'

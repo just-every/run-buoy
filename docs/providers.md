@@ -137,7 +137,7 @@ Sends: The selected model, question and permission-filtered account facts; trans
 
 Receives: Structured record selections or line-cited proposals. Buoy renders source facts and requires a person to accept task creation.
 
-Terms: Review [Anthropic commercial terms](https://www.anthropic.com/legal/commercial-terms) and the provider data-processing agreement. The recorded no-training confirmation is the owner's attestation, not provider verification.
+Terms: Review [Anthropic commercial terms](https://www.anthropic.com/legal/commercial-terms) and the provider data-processing agreement. The recorded no-training confirmation is the owner's attestation. Settings always labels it unverified; Buoy does not verify provider training practices.
 
 ### OpenAI
 

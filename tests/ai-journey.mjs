@@ -42,8 +42,18 @@ export async function aiQuestionJourney(){
 export async function aiConversationJourney(){
  const f=await aiFixture(),{app,api,call,configure}=f
  try{
-  await configure();const prepared=await api('/ai/conversations','POST',{accountId:'synthetic-buoy-8002',transcript:'I commit to send the implementation checklist.\nA competitor was mentioned.\nWe request an expansion.',consent:true})
-  assert.equal(prepared.proposals.length,3);assert.deepEqual(prepared.proposals.map(p=>p.lineNumber),[1,2,3]);assert.deepEqual((await api('/state')).tasks,[])
+  await configure()
+  await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'synthetic-buoy-8008@example.test',displayName:'Transcript administrator',role:'member'}})
+  const colleague=await app.signIn('synthetic-buoy-8008@example.test'),operator=(await api('/state','GET',undefined,colleague)).operator
+  const input={accountId:'synthetic-buoy-8002',transcript:'I commit to send the implementation checklist.\nA competitor was mentioned.\nWe request an expansion.\nsynthetic-buoy-unselected-line',consent:true}
+  const calls=f.sent.length
+  for(const path of ['/ai/conversations','/ai/proposals/synthetic-buoy-absent/decision'])assert.equal((await call(path,'POST',input,colleague)).status,403)
+  assert.equal((await call('/ai/proposals','GET',undefined,colleague)).status,403);assert.equal(f.sent.length,calls)
+  await app.request('/auth/operator/role',{method:'POST',cookie:app.cookie,body:{operatorId:operator.id,role:'admin'}})
+  const admin=await app.signIn('synthetic-buoy-8008@example.test')
+  assert.equal((await call('/ai/settings','PUT',{},admin)).status,403)
+  const prepared=await api('/ai/conversations','POST',input,admin)
+  assert.equal(prepared.proposals.length,3);assert.doesNotMatch(JSON.stringify(await api('/ai/proposals')),/unselected-line/);assert.ok((await api('/ai')).costs.some(c=>c.feature==='conversations'&&c.chargedMinor===1));assert.deepEqual(prepared.proposals.map(p=>p.lineNumber),[1,2,3]);assert.deepEqual((await api('/state')).tasks,[])
   const [task,risk,expansion]=prepared.proposals
   assert.equal((await call('/ai/proposals/'+risk.id+'/decision','POST',{action:'accept',dueDate:'2027-01-01'})).status,409)
   const accepted=await api('/ai/proposals/'+task.id+'/decision','POST',{action:'accept',dueDate:'2027-01-01'})
@@ -52,17 +62,19 @@ export async function aiConversationJourney(){
   await api('/ai/proposals/'+expansion.id+'/decision','POST',{action:'discard'})
   assert.ok(!(await api('/ai/proposals')).proposals.some(p=>p.id===expansion.id));assert.equal((await api('/state')).tasks.length,1)
   const audit=(await api('/audit?action=ai.')).entries;assert.ok(audit.some(e=>e.action==='ai.proposal-discarded'));assert.doesNotMatch(JSON.stringify(audit),/implementation checklist|competitor was/)
-  await api('/accounts/synthetic-buoy-8002','DELETE',{confirmation:'Visible Harbour'});assert.deepEqual((await api('/ai/proposals')).proposals,[])
+  await api('/accounts/synthetic-buoy-8002','DELETE',{confirmation:'Visible Harbour'});assert.deepEqual((await api('/ai/proposals')).proposals,[]);const remaining=await api('/state');assert.deepEqual(remaining.tasks,[]);assert.ok(!remaining.proposals.some(p=>p.accountId==='synthetic-buoy-8002'));assert.doesNotMatch(JSON.stringify(await api('/audit?action=ai.')),/implementation checklist|competitor was|unselected-line/)
  }finally{await app.close()}
 }
 export async function aiControlJourney(){
  const f=await aiFixture(),{app,api,call,sent,configure}=f
  try{
+  assert.equal((await api('/ai')).enabled,false);assert.equal((await api('/ai')).trainingAttestation.status,'unverified');assert.equal((await call('/ai/questions','POST',{question:'Default off',consent:true})).status,403);assert.equal(sent.length,0)
   await configure({classes:['tickets'],model:'synthetic-buoy-anthropic'})
   let count=sent.length
   assert.equal((await call('/ai/conversations','POST',{accountId:'synthetic-buoy-8002',transcript:'synthetic-buoy-private-transcript',consent:true})).status,403);assert.equal(sent.length,count)
   await api('/ai/questions','POST',{question:'Prepare a meeting brief',consent:true});assert.equal(sent.at(-1).body.model,'synthetic-buoy-anthropic');assert.equal(sent.at(-1).url,'https://api.anthropic.com/v1/messages');assert.doesNotMatch(JSON.stringify(sent),/private-transcript/)
   assert.ok((await api('/ai')).costs.some(c=>c.feature==='questions'&&c.chargedMinor===1))
+  await configure();await api('/ai/conversations','POST',{accountId:'synthetic-buoy-8002',transcript:'One commitment.\nA competitor.\nExpansion.',consent:true});assert.ok((await api('/ai')).costs.some(c=>c.feature==='conversations'&&c.chargedMinor===1))
   await configure({provider:'openai',model:'synthetic-buoy-openai'});await api('/ai/questions','POST',{question:'Current accounts',consent:true});assert.equal(sent.at(-1).url,'https://api.openai.com/v1/chat/completions')
   await configure({provider:'compatible'});count=sent.length;assert.equal((await call('/ai/questions','POST',{question:'Missing selected-provider credential',consent:true})).status,409);assert.equal(sent.length,count)
   await configure({provider:'openai',model:'synthetic-buoy-openai',budgetMinor:2});count=sent.length;assert.equal((await call('/ai/questions','POST',{question:'Over budget',consent:true})).status,403);assert.equal(sent.length,count)

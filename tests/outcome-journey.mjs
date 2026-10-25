@@ -69,12 +69,12 @@ export async function outcomeJourney({call,json,request,cookie,member,account,sc
 // used to choose the effect: each block has a 50 percentage point arm contrast.
 const seededHistory=(cohort,index)=>({healthy:(cohort==='enrolled'?[true,true,true,false]:[true,false,false,false])[index%4],renewed:(cohort==='enrolled'?[true,true,false,true]:[false,false,true,false])[index%4]})
 export async function experimentJourney(){
- const {startWorker}=await import('./worker.mjs'),app=await startWorker()
+ const {startWorker}=await import('./worker.mjs'),app=await startWorker({clock:Date.parse('2026-10-25T12:00:00Z')})
  const json=async(r,status=200)=>{assert.equal(r.status,status,await r.clone().text());return r.json()}
  const call=(path,method='GET',body,extra={})=>app.request('/api/buoy'+path,{method,body,cookie:app.cookie,...extra})
  const command=(token,command,input)=>app.request('/api/buoy/commands',{method:'POST',token,body:{command,input}})
  try{
-  const today=new Date().toISOString().slice(0,10),accounts=[]
+  const today='2026-10-25',accounts=[]
   await json(await call('/fields','POST',{key:'customer_since',label:'Customer since',type:'date'}),201)
   for(let i=0;i<32;i++){
    const stratum=Math.floor(i/8),a={id:`synthetic-buoy-${8000+i}`,name:`Experiment customer ${i}`,renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Signed order',billing:{observedAt:today,reference:`synthetic-buoy-${8100+i}`,currency:'USD',totalMinor:10000,creditsMinor:0,allocatedMinor:0,dueDate:today},support:{observedAt:today,reference:`synthetic-buoy-${8200+i}`,openTickets:4,urgentTickets:1}}
@@ -106,6 +106,15 @@ export async function experimentJourney(){
   for(let pair=0;pair<16;pair++){
    const [a,b]=draft.assignments.filter(a=>a.pairIndex===pair);assert.notEqual(a.cohort,b.cohort)
    for(const factor of ['segmentId','health','healthScore','arrMinor','currency','tenureDays','customerSince'])assert.deepEqual(a.baseline[factor],b.baseline[factor],factor)
+   for(const subject of [a,b]){
+    const index=accounts.findIndex(record=>record.id===subject.accountId),stratum=Math.floor(index/8)
+    assert.ok(index>=0);assert.equal(subject.baseline.segmentId,segment.id)
+    assert.equal(subject.baseline.health,'at-risk');assert.equal(subject.baseline.healthScore,null)
+    assert.equal(subject.baseline.arrMinor,120000+stratum*10000);assert.equal(subject.baseline.currency,stratum%2?'EUR':'USD')
+    assert.equal(subject.baseline.customerSince,`202${3+stratum%2}-01-01`)
+    assert.equal(subject.baseline.tenureDays,(Date.parse(today)-Date.parse(subject.baseline.customerSince))/86400000)
+    assert.equal(subject.baseline.asOf,today)
+   }
    assert.ok(a.baseline.arrReference);assert.ok(a.baseline.revision);assert.equal(a.baseline.tenureField,'custom.customer_since')
   }
   const changedAccount=accounts[0],changedCurrent=(await json(await call('/state'))).accounts.find(a=>a.id===changedAccount.id)
@@ -142,7 +151,7 @@ export async function experimentJourney(){
   for(const metric of ['health','renewal']){
    const measured=result[metric];assert.equal(measured.difference,.5);assert.ok(measured.difference>=.45&&measured.difference<=.55)
    assert.equal(measured.interventionN,16);assert.equal(measured.holdoutN,16)
-   assert.ok(measured.interval[0]<.5&&measured.interval[1]>.5);assert.ok(measured.interval[0]>=-1&&measured.interval[1]<=1)
+   assert.ok(Math.abs(measured.interval[0]-0.1535414850017443)<0.000001);assert.ok(Math.abs(measured.interval[1]-0.7095572112025569)<0.000001);assert.ok(measured.interval[0]>=-1&&measured.interval[1]<=1)
    assert.equal(measured.confidence,.95);assert.match(measured.method,/Wilson/)
    assert.equal(measured.report.enrolled.filter(a=>a.reachedAt&&a.evidence).length,12)
    assert.equal(measured.report.comparison.filter(a=>a.reachedAt&&a.evidence).length,4)
