@@ -3,6 +3,7 @@ import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
 import {chromium} from '@playwright/test'
 import {aiFixture,seedQuestionEvidence} from './ai-journey.mjs'
+import {scriptedQuestionBrowser} from './ai-question-browser.mjs'
 import {scan,submit,failures} from './a11y-checks.mjs'
 const evidence=process.env.EVIDENCE_DIR??'../evidence/ai';await mkdir(evidence,{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
@@ -37,6 +38,7 @@ try{
    if(role!=='sales'){await page.getByRole('link',{name:'Visible Harbour',exact:true}).click();assert.equal(new URL(page.url()).pathname,'/app/accounts/synthetic-buoy-8002');assert.equal(await page.getByRole('heading',{name:'Visible Harbour',exact:true,level:1}).count(),1);await proof(role+'-citation-destination');await page.goto(app.origin+'/app/ai',{waitUntil:'networkidle'})}
    q=page.locator('#ai-question');await q.getByLabel('Question',{exact:true}).fill('Prepare a generated meeting brief');await q.getByLabel('Generate an answer with supporting records',{exact:true}).check();await q.getByLabel('Send the selected permitted evidence for this request',{exact:true}).check();await submit(page,q.getByRole('button',{name:'Ask with citations',exact:true}));assert.equal(await page.getByRole('alert').count(),role==='sales'?1:0);assert.equal(await page.getByRole('link',{name:'Visible Harbour: identity',exact:true}).count(),role==='sales'?0:1);assert.doesNotMatch(await page.locator('main').innerText(),/Outside Coastal/);assert.doesNotMatch(JSON.stringify(sent.at(-1)),/Outside Coastal|8003/);await proof(role+'-generated-answer')
   }
+  await configure({requestsPerMinute:100,budgetMinor:10000});await scriptedQuestionBrowser({fixture,page,person,api,proof})
   assert.equal(await page.locator('button').filter({hasText:/^[+−×]$/}).count(),0,'AI screens introduce no icon-only controls');console.log('AI browser proof passed',width)
  }finally{await context.close();await app.close()}
  }
