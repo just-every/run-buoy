@@ -1,3 +1,4 @@
+import {experimentsApi,proposeExperiment,experimentReport} from './experiments'
 import {reviewsApi} from './reviews'
 import {reportsApi} from './reports'
 import {forecastApi,forecastState,overrideForecast} from './renewals/forecast'
@@ -122,6 +123,7 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.route('/',experimentsApi)
 buoyApi.route('/',plansApi)
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',privacyApi)
@@ -229,6 +231,8 @@ buoyApi.post('/api/buoy/commands', async c => {
   actor.agentRequest!.command = body.command as AgentCommand
   requireCommand(actor.agentPolicy!, body.command as AgentCommand)
  }
+ if(body.command==='experiment.prepare')return c.json(await proposeExperiment(db,actor,object(body.input)),201)
+ if(body.command==='experiment.report'){if(actor.kind==='person')requirePerson(actor);return c.json(await experimentReport(db,text(object(body.input).id,'Experiment',100)))}
  if (body.command === 'renewals.list') {
   const accounts = (await state(db, actor)).accounts
   return c.json({accounts: actor.agentPolicy ? projectAccounts(accounts, actor.agentPolicy) : accounts})

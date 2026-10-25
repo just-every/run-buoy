@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "dca1b5219b74bc48acbcb810a13863b1967047dd2198c475cacc98f423547f0e",
+      "sha256": "cb4926da1f28609191ae3519750390fad9db89d51ed1a90b309126156503fdf8",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "10965bf146de3cb86be35ee62fc0a524da7af69d15e033dd6399692f108b873f",
+      "sha256": "3424e729e1f815dab20c81596aaf5c3d9ffe3c165494ee0c91f3149c874fb51c",
       "executable": false
     },
     "DEMO.md": {
@@ -136,7 +136,7 @@
       "executable": false
     },
     "docs/agents.md": {
-      "sha256": "5c81cc0c8f2641164eb9553e6fe570b205c68c70fc0bd5ab296474587a16f0c7",
+      "sha256": "dc38cf44c0d58407d467a293d70b6619a86c2c3a8b7419db474cb68911de65c2",
       "executable": false
     },
     "docs/backups.md": {
@@ -145,6 +145,10 @@
     },
     "docs/books.md": {
       "sha256": "955fb7894c6db7a6378a9e4e6a7eee23027300ee20303af94e03fd743e4166aa",
+      "executable": false
+    },
+    "docs/experiments.md": {
+      "sha256": "c643cb67b05d5c70f918bc3f1a9c5641e44a55404ea1ed981e478c3077e32f01",
       "executable": false
     },
     "docs/fields.md": {
@@ -260,7 +264,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "7d8bd90c2396151dcf82ebe1c6d3df84962b5455a6a41e9b45b2de439f5ad4d0",
+      "sha256": "5c2f3c8884fee92da2eaa4578e0b9fbf02b22b4f00d22f3ebf953aaab3059dde",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -527,6 +531,10 @@
       "sha256": "9c8fa5f94c48a230f326cd4d666cbc2bd1e7d5a18327b89e65b339ac6a533d9a",
       "executable": false
     },
+    "migrations/core/0066_buoy_experiments.sql": {
+      "sha256": "82e21e8b7a3bd5302111401986c5451c2843cdbe325e6da182639a6e3b74bcce",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
@@ -540,7 +548,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "b8020529c07942b51ba2d7c365ddce64043d9e6aa3b729fd35095a9d4fccdfed",
+      "sha256": "386a4fed6ddeb7f860df8fe1c82baff9741ad278711a2db2b145cdf89da0a57b",
       "executable": false
     },
     "packaging.json": {
@@ -1100,7 +1108,7 @@
       "executable": false
     },
     "src/buoy/agent-policy/policy.ts": {
-      "sha256": "9bc7f8bdb1f3822dd6a9582fa64304c85509a2444be10318e172dd4b9f52d10c",
+      "sha256": "1de5f25e57258633ded6027f611dce3dce0abc855f6ffef2ee55c10eda3444ef",
       "executable": false
     },
     "src/buoy/agent-policy/requests.ts": {
@@ -1108,7 +1116,7 @@
       "executable": false
     },
     "src/buoy/api.ts": {
-      "sha256": "e23e1f20fc8739c65fc0cc1332916ce218d54041213d17b4139db8f7aa209ed3",
+      "sha256": "c8855c2b3a9ea285ed968d9181c0e6aa773d172b8df672b578fb5096c73cc929",
       "executable": false
     },
     "src/buoy/audit-records.ts": {
@@ -1179,6 +1187,10 @@
       "sha256": "98fed13c713126a311eaf251610881bb7b5b604eabd0d02b500eb0d0f0a76e41",
       "executable": false
     },
+    "src/buoy/experiments/index.ts": {
+      "sha256": "a050fdc1c6467767c85dbfcd7df6d664831c2979754662af18e3f469b6ca29e9",
+      "executable": false
+    },
     "src/buoy/fields/formula.ts": {
       "sha256": "4fc606b1b9401a2d2a424ab4d6a53e189c01fa3e787efc7448b520184bb651c9",
       "executable": false
@@ -1232,7 +1244,7 @@
       "executable": false
     },
     "src/buoy/imports/targets.ts": {
-      "sha256": "93e32ecdaac7d3460b8de85815a2d0f3ae0b3b5367847fce22113ba35a4c23a6",
+      "sha256": "706c8dda3798ec17df1be0de5703322eed2db466a11e4359578eec5e5fdd81ae",
       "executable": false
     },
     "src/buoy/imports/validation.ts": {
@@ -1332,7 +1344,7 @@
       "executable": false
     },
     "src/buoy/play/engine.ts": {
-      "sha256": "c6e8109db733b1725cc3d41d3e8f92444349c0775d720ff176eabc0bc30dc0ce",
+      "sha256": "1c487b3bac4888b5f7c88b49800b95f0a87b81cd2b3a8f1a1bd60209751b3c59",
       "executable": false
     },
     "src/buoy/play/fields.ts": {
@@ -3860,7 +3872,7 @@
       "executable": false
     },
     "tests/flows.test.mjs": {
-      "sha256": "653f74b3ce7ccbfd1506ac5975da458b37c60ca1429820aa12b334b869cf904f",
+      "sha256": "29c8cc79179e38a38028245d2f2a6b8c17d9a855052dcc86918bb2ecfefdee17",
       "executable": false
     },
     "tests/forecast-journey.mjs": {
@@ -3932,7 +3944,7 @@
       "executable": false
     },
     "tests/outcome-journey.mjs": {
-      "sha256": "dfe5f1e63fd8b575ec2633fc22364cf022ec08c6cb6e00dde2ca45436987a75c",
+      "sha256": "a4513ebc74604783d744be8046e3da9f89f72697ecc60b6c16d674206e193963",
       "executable": false
     },
     "tests/outcomes.mjs": {

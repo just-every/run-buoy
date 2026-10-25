@@ -18,7 +18,7 @@ Save the returned `id`, `token` and `expiresAt` privately. Buoy stores only the 
 
 Send agent requests to the installed app’s origin, with `Authorization: Bearer <credential>`. Send JSON with `Content-Type: application/json`. Never put a credential in a URL or a log.
 
-`GET /api/buoy/commands` lists only the grant’s commands. The available names are `renewals.list`, `playbook.prepare` and `renewal.prepare`. Data classes are `account`, `billing`, `support` and `sentiment`. Send the following bodies with `POST /api/buoy/commands`.
+`GET /api/buoy/commands` lists only the grant’s commands. The default names are `renewals.list`, `playbook.prepare` and `renewal.prepare`. Explicit API grants can also select `experiment.prepare` and `experiment.report`; see [matched retention experiments](experiments.md). These new commands require all four current data classes and never grant approval. Existing credentials and default grants retain their original commands. Data classes are `account`, `billing`, `support` and `sentiment`. Send the following bodies with `POST /api/buoy/commands`.
 
 ### List renewal accounts
 
@@ -96,7 +96,7 @@ The Audit screen shows current grants and the latest 100 durable attempt/outcome
 
 ## Metered USD budget
 
-No metered agent charge; internal notification mail may use your provider. Today's three local commands record USD0 in metered agent operations, including with a zero budget. Automatic NOTIFY-001/PLAY-002 internal team notices retain the owner's provider and recipient preferences; provider fees are not measured or included in this budget. This budget does not authorize a customer send, model call or field/commercial change. Every future paid, send or update scope inherits GOVERN-001 reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before shipping (EMAIL-001/002/003, JOURNEY-001 and AI-001/002/003).
+No metered agent charge; internal notification mail may use your provider. Today's local commands record USD0 in metered agent operations, including with a zero budget. Automatic NOTIFY-001/PLAY-002 internal team notices retain the owner's provider and recipient preferences; provider fees are not measured or included in this budget. This budget does not authorize a customer send, model call or field/commercial change. Every future paid, send or update scope inherits GOVERN-001 reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before shipping (EMAIL-001/002/003, JOURNEY-001 and AI-001/002/003).
 
 Existing internal mail also enforces the human recipient's current ROLE-001
 profile. An assigned recipient gets only an in-scope account name, generic update

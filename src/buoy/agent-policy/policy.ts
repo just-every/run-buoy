@@ -1,5 +1,5 @@
 import { insist } from '../core'
-export const COMMANDS = ['renewals.list', 'playbook.prepare', 'renewal.prepare'] as const
+export const COMMANDS = ['renewals.list', 'playbook.prepare', 'renewal.prepare', 'experiment.prepare', 'experiment.report'] as const
 export const DATA_CLASSES = ['account', 'billing', 'support', 'sentiment'] as const
 export const COST_LABEL = 'No metered agent charge; internal notification mail may use your provider. Provider fees are outside this budget.'
 export type AgentCommand = typeof COMMANDS[number]
@@ -22,7 +22,7 @@ function integer(value: unknown, fallback: number, min: number, max: number, lab
 }
 export function mintPolicy(input: Record<string, unknown>) {
  insist(Object.keys(input).every(key => ['label','scopes','dataClasses','expiresDays','requestsPerMinute','budgetMinor'].includes(key)), 'Unknown agent policy field.')
- return {scopes: selection(input.scopes, COMMANDS, 'commands'), dataClasses: selection(input.dataClasses, DATA_CLASSES, 'data classes'),
+ return {scopes: selection(input.scopes??['renewals.list','playbook.prepare','renewal.prepare'], COMMANDS, 'commands'), dataClasses: selection(input.dataClasses, DATA_CLASSES, 'data classes'),
   expiresDays: integer(input.expiresDays, 7, 1, 365, 'Expiry days'), requestsPerMinute: integer(input.requestsPerMinute, 60, 1, 10000, 'Requests per minute'), budgetMinor: integer(input.budgetMinor, 0, 0, Number.MAX_SAFE_INTEGER, 'USD budget in cents')}
 }
 export function requireCommand(policy: AgentPolicy, command: AgentCommand) {
