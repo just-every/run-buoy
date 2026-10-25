@@ -3868,7 +3868,7 @@
       "executable": false
     },
     "tests/ai-question-browser.mjs": {
-      "sha256": "1c9d1d369461a3e30b56f3f57479941f465a8b5acba6b3acdffe17483a5bac2f",
+      "sha256": "b97b8cce13853c6b6e63df2db54077a6345cb9517f688399568f25bc76d6e218",
       "executable": false
     },
     "tests/ai-question-edge.mjs": {

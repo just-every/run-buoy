@@ -35,7 +35,7 @@ export async function scriptedQuestionBrowser({fixture,page,person,api,proof}){
     await proof(role+'-'+(generated?'generated':'extractive')+'-question-'+index)
     const links=await result.locator('a').evaluateAll(nodes=>nodes.map(n=>({href:n.getAttribute('href'),label:n.textContent})))
     for(const link of links){
-     const [destination]=await Promise.all([page.context().waitForEvent('page'),page.getByRole('link',{name:link.label,exact:true}).click({modifiers:['ControlOrMeta']})])
+     const [destination]=await Promise.all([page.context().waitForEvent('page'),page.getByRole('link',{name:link.label,exact:true}).click({button:'middle'})])
      try{
       await destination.waitForLoadState('networkidle')
       assert.equal(new URL(destination.url()).pathname,new URL(link.href,fixture.app.origin).pathname)
