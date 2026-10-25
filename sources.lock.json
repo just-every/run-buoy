@@ -1732,7 +1732,7 @@
       "executable": false
     },
     "src/buoy/ui/communications.ts": {
-      "sha256": "9d877ee9b87eb1567c8ed26bf01774863b077fd41e740526b2bfde24a7858cd9",
+      "sha256": "49de7055b230e9ce0237292c5ccf543f679a67ad089c11b31fc627c602db1e95",
       "executable": false
     },
     "src/buoy/ui/connected-billing.ts": {
