@@ -1,5 +1,5 @@
 import type {Bindings} from '../../auth.server'
-import {insist,object,stmt,text,type Actor} from '../core'
+import {insist,object,stmt,text,type Actor,now} from '../core'
 import {state} from '../accounts'
 import {projectState,roleAccess,roleFence,scopeFence,scopeImage} from '../roles'
 import {provider,settings} from './index'
@@ -35,8 +35,8 @@ export async function answer(env:Bindings,actor:Actor,input:Record<string,unknow
  insist(input.consent===true,'Explicitly approve this model request.',403)
  const {facts,config,fences}=await sources(env,actor,input.accountId?text(input.accountId,'Account',100):undefined)
  const missing=['Connected emails, meetings, executive contacts and historical prediction accuracy are unavailable. Transcript text, detailed usage and custom fields are not selected by this answer door.',...['emails','transcripts','tickets','usage','revenue'].filter(c=>!config.classes.includes(c)).map(c=>c+' excluded by owner policy.')]
- const {result,cost}=await provider(env,actor,'answers',facts,'Generate an account answer or meeting brief for: '+text(input.question,'Question',500)+'. Each claim must be supported by the cited source record. Return {"claims":[{"text":"Generated interpretation","sources":[{"index":0,"quote":"exact source quote"}]}]}. Every source quote must exactly equal that record quote. Cite all supporting records for each claim. Never invent evidence, instructions, links or missing facts. Missing sources: '+missing.join(' '),config.revision,fences)
- insist(Array.isArray(result.claims)&&result.claims.length>0&&result.claims.length<=20,'Generated claims were unavailable.',502)
+ const {result,cost}=await provider(env,actor,'answers',facts,'Generate an account answer or meeting brief for: '+text(input.question,'Question',500)+' (current UTC date '+now().slice(0,10)+'). Return no claims when the available records cannot answer the question. Each claim must be supported by the cited source record. Return {"claims":[{"text":"Generated interpretation","sources":[{"index":0,"quote":"exact source quote"}]}]}. Every source quote must exactly equal that record quote. Cite all supporting records for each claim. Never invent evidence, instructions, links or missing facts. Missing sources: '+missing.join(' '),config.revision,fences)
+ insist(Array.isArray(result.claims)&&facts.length>0&&result.claims.length<=20,'Generated claims were unavailable.',502)
  const claims=result.claims.map(value=>{
   const claim=object(value);insist(typeof claim.text==='string'&&claim.text.trim().length>0&&claim.text.length<=2000,'Generated claim text was invalid.',502)
   insist(Array.isArray(claim.sources)&&claim.sources.length>0&&claim.sources.length<=10,'Every generated claim requires supporting records.',502)
