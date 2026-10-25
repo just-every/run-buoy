@@ -109,6 +109,7 @@ export async function aiScheduleJourney(){
   await configure({classes:[]});await app.scheduled('0 * * * *',Date.parse('2026-10-26T12:00:00Z'));assert.equal(sent.length,count,'Changed policy requires fresh consent')
   assert.ok(fresh)
   const audit=(await api('/audit?action=ai.schedule')).entries;for(const action of ['ai.schedule-authorized','ai.schedule-completed','ai.schedule-revoked'])assert.ok(audit.some(e=>e.action===action),action)
+  const receipt=audit.find(e=>e.action==='ai.schedule-completed');assert.match(receipt.detail,/Request receipt [a-f0-9-]+\. Output not retained\./);const requestAudit=(await api('/audit?action=ai.requested')).entries;assert.ok(requestAudit.some(e=>receipt.detail.includes(e.subject.slice(3))))
   assert.doesNotMatch(JSON.stringify(audit),/Prepare a meeting brief|daily review/)
   await api('/accounts/synthetic-buoy-8002','DELETE',{confirmation:'Visible Harbour'});assert.equal((await api('/ai/schedules')).schedules.length,0,'Account erasure removes its scheduled question')
  }finally{await app.close()}

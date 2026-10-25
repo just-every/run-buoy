@@ -38,8 +38,8 @@ export async function runScheduledAi(env:Bindings,at:Date){
  const actor:Actor={id:row.owner_id,role:'owner',kind:'person',displayName:owner.display_name}
  try{
   const config=await settings(env.DB);if(!config.enabled||config.revision!==row.policy_revision)continue
-  await question(env,actor,{accountId:row.account_id,question:row.question},[active(env.DB,row),guard(env.DB,'EXISTS(SELECT 1 FROM buoy_ai_schedules WHERE id=? AND (last_slot IS NULL OR last_slot<>?))',row.id,slot),stmt(env.DB,'UPDATE buoy_ai_schedules SET last_slot=? WHERE id=?',slot,row.id)])
-  await auditRecord(env.DB,actor,'ai.schedule-completed','ai:'+row.id).run()
+  const result=await question(env,actor,{accountId:row.account_id,question:row.question},[active(env.DB,row),guard(env.DB,'EXISTS(SELECT 1 FROM buoy_ai_schedules WHERE id=? AND (last_slot IS NULL OR last_slot<>?))',row.id,slot),stmt(env.DB,'UPDATE buoy_ai_schedules SET last_slot=? WHERE id=?',slot,row.id)])
+  await auditRecord(env.DB,actor,'ai.schedule-completed','ai:'+row.id,'Request receipt '+result.requestId+'. Output not retained.').run()
  }catch{await auditRecord(env.DB,actor,'ai.schedule-refused','ai:'+row.id,'No automatic retry; inspect the request ledger before authorizing further work.').run()}
  }
 }
