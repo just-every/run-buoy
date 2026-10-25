@@ -118,7 +118,7 @@ export async function aiGeneratedJourney(){
  try{
   await configure()
   const current=(await api('/state')).accounts.find(a=>a.id==='synthetic-buoy-8002')
-  await api('/accounts/synthetic-buoy-8002','PUT',{...current,support:{observedAt:'2026-10-25',reference:'synthetic-buoy-8201',openTickets:12,urgentTickets:3}})
+  await api('/accounts/synthetic-buoy-8002','PUT',{id:current.id,name:current.name,revision:current.revision,renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,billing:current.billing,support:{observedAt:'2026-10-25',reference:'synthetic-buoy-8201',openTickets:12,urgentTickets:3}})
   await api('/accounts/synthetic-buoy-8002/contract','POST',{revision:(await api('/state')).accounts.find(a=>a.id==='synthetic-buoy-8002').revision,contract:{currency:'USD',contractStart:'2026-01-01',contractEnd:'2027-12-31',source:{reference:'synthetic-buoy-8202',confirmedOn:'2026-10-25'},lines:[{id:'synthetic-buoy-8203',product:'Recorded subscription',quantity:1,amountMinor:65432100,frequency:'annual',entitlements:'synthetic-buoy-8204'}]}})
   await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'synthetic-buoy-8200@example.test',displayName:'Generated answer reader',role:'member'}})
   const cookie=await app.signIn('synthetic-buoy-8200@example.test'),person=(await api('/state','GET',undefined,cookie)).operator
