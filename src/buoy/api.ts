@@ -1,4 +1,5 @@
 import {aiApi} from './ai'
+import {scheduleApi} from './ai/schedules'
 import {experimentsApi,proposeExperiment,experimentReport} from './experiments'
 import {reviewsApi} from './reviews'
 import {reportsApi} from './reports'
@@ -89,7 +90,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  }
  const profile=await roleAccess(c.env.DB,actor)
  if(profile.restricted){
-  if(c.req.path==='/api/buoy/ai'||(c.req.path==='/api/buoy/ai/questions'&&c.req.method==='POST'))return next()
+  if(c.req.path==='/api/buoy/ai'||(['/api/buoy/ai/questions','/api/buoy/ai/answers'].includes(c.req.path)&&c.req.method==='POST')||(c.req.method==='GET'&&/^\/api\/buoy\/ai\/evidence\/[^/]+\/[^/]+$/.test(c.req.path)))return next()
   if(c.req.method==='GET'&&/^\/api\/buoy\/reports(?:\/|$)/.test(c.req.path))return next()
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/renewals/forecast')return c.json(await forecastState(c.env.DB,actor,new URL(c.req.url).searchParams))
   if(c.req.method==='POST'&&/^\/api\/buoy\/renewals\/[^/]+\/forecast-override$/.test(c.req.path)){const result=await overrideForecast(c.env.DB,actor,decodeURIComponent(c.req.path.split('/').at(-2)!),await jsonBody(c.req.raw));await refreshAccountConsumers(c.env,actor);return c.json(result)}
@@ -126,6 +127,7 @@ buoyApi.onError((error, c) => {
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
 buoyApi.route('/',aiApi)
+buoyApi.route('/',scheduleApi)
 buoyApi.route('/',experimentsApi)
 buoyApi.route('/',plansApi)
 buoyApi.route('/',peopleApi)

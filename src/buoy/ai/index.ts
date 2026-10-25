@@ -5,6 +5,7 @@ import {authority,date,guard,id,insist,now,object,requirePerson,stmt,text,type A
 import {roleAccess,projectState,roleFence,scopeImage,scopeFence,readableIds} from '../roles'
 import {state,account} from '../accounts'
 import {auditRecord} from '../audit-records'
+import {answer,evidence} from './answers'
 
 export const CLASSES=['emails','transcripts','tickets','usage','revenue'] as const
 interface Settings {enabled:boolean;provider:'anthropic'|'openai'|'compatible';model:string;classes:string[];budgetMinor:number;requestMinor:number;inputUsdPerMillion:number;outputUsdPerMillion:number;requestsPerMinute:number;termsReference:string}
@@ -32,7 +33,7 @@ function endpoint(env:Bindings,config:Settings){
  if(config.provider==='openai')return 'https://api.openai.com/v1/chat/completions'
  const url=new URL(env.AI_COMPATIBLE_URL??'https://invalid.invalid');insist(url.protocol==='https:'&&!url.username&&!url.password&&!url.hash&&!url.search&&env.AI_COMPATIBLE_URL,'The deployment must configure an approved HTTPS compatible endpoint.',403);return url.href
 }
-async function provider(env:Bindings,actor:Actor,feature:string,context:unknown,instructions:string,expectedRevision:string,fences:D1PreparedStatement[]=[]){
+export async function provider(env:Bindings,actor:Actor,feature:string,context:unknown,instructions:string,expectedRevision:string,fences:D1PreparedStatement[]=[]){
  const db=env.DB,config=await settings(db);insist(config.enabled,'AI is off.',403);const credential={anthropic:env.AI_ANTHROPIC_API_KEY,openai:env.AI_OPENAI_API_KEY,compatible:env.AI_COMPATIBLE_API_KEY}[config.provider];insist(credential,'Configure the deployment credential for the selected provider first.',409)
  insist(config.revision===expectedRevision,'Model policy changed. Reload.',409)
  const target=endpoint(env,config),requestId=id(),minute=Math.floor(Date.now()/60000)
@@ -67,8 +68,8 @@ async function provider(env:Bindings,actor:Actor,feature:string,context:unknown,
  const current=await settings(db);insist(current.enabled&&current.revision===config.revision&&!await db.prepare('SELECT 1 FROM buoy_agent_settings WHERE singleton=1 AND disabled=1').first(),'AI authority changed while the request was running.',409)
  return {result:object(result),requestId,config,cost:{currency:'USD',chargedMinor:charged,reservedMinor:reserved,usage,basis:'Measured provider tokens at owner-recorded tariffs, rounded up to USD cents; not a provider invoice.'}}
 }
-async function question(env:Bindings,actor:Actor,input:Record<string,unknown>){
- insist(input.consent===true,'Explicitly approve this model request.',403)
+export async function question(env:Bindings,actor:Actor,input:Record<string,unknown>,standing?:D1PreparedStatement[]){
+ insist(input.consent===true||standing?.length,'Explicitly approve this model request.',403)
  const db=env.DB,config=await settings(db),access=await roleAccess(db,actor),image=await scopeImage(db),raw=await state(db,actor)
  const projection=access.restricted?await projectState(db,actor,raw,access):raw
  const selected=input.accountId?projection.accounts.filter(a=>a.id===input.accountId):projection.accounts
@@ -76,7 +77,7 @@ async function question(env:Bindings,actor:Actor,input:Record<string,unknown>){
  const records=selected.map(a=>{const row=a as unknown as Record<string,unknown>;return {id:a.id,name:a.name,renewalDate:a.renewalDate,health:(row.health as {status:string}).status,...(config.classes.includes('revenue')?{commercial:row.commercial??row.arrBand??row.billing}:{}),...(config.classes.includes('tickets')&&!access.restricted?{support:row.support}:{}),citation:'/app/accounts/'+encodeURIComponent(a.id)}})
  // Only these deterministic source facts may be rendered as claims; the model
  // selects indexes. Arbitrary generated prose and invented links never render.
- const {result,cost}=await provider(env,actor,'questions',records,'For the question '+text(input.question,'Question',500)+' select relevant record indexes. Return {"indexes":[0]}. Do not invent records.',config.revision,[roleFence(db,actor,access),scopeFence(db,image)])
+ const {result,cost}=await provider(env,actor,'questions',records,'For the question '+text(input.question,'Question',500)+' select relevant record indexes. Return {"indexes":[0]}. Do not invent records.',config.revision,[roleFence(db,actor,access),scopeFence(db,image),...(standing??[])])
  insist(Array.isArray(result.indexes)&&result.indexes.length<=records.length&&result.indexes.every(n=>Number.isInteger(n)&&Number(n)>=0&&Number(n)<records.length),'Model citations were invalid.',502)
  await db.batch([roleFence(db,actor,access),scopeFence(db,image),stmt(db,'DELETE FROM buoy_assertions')])
  return {claims:[...new Set(result.indexes as number[])].map(n=>records[n]),missing:['Connected emails, meetings, executive contacts and historical prediction accuracy are unavailable. Usage events, custom fields and detailed history are not included in this extractive preview.',...CLASSES.filter(c=>!config.classes.includes(c)).map(c=>c+' excluded by owner policy.')],cost,interpretation:'Source facts selected by the model. No guarantee or prediction; account health reflects current evidence only.'}
@@ -114,6 +115,8 @@ aiApi.use('/api/buoy/ai/*',async(c,next)=>{
  await next()
  if(c.req.method==='POST'&&['/api/buoy/ai/questions','/api/buoy/ai/conversations'].includes(c.req.path)&&c.res.status>=400){const actor=c.get('actor');await auditRecord(c.env.DB,actor,'ai.refused','ai:request','Request refused; no source text retained in this audit.').run()}
 })
+aiApi.post('/api/buoy/ai/answers',async c=>c.json(await answer(c.env,c.get('actor'),await jsonBody(c.req.raw))))
+aiApi.get('/api/buoy/ai/evidence/:accountId/:field',async c=>c.json(await evidence(c.env,c.get('actor'),c.req.param('accountId'),c.req.param('field'),c.req.query('revision'))))
 aiApi.get('/api/buoy/ai',async c=>c.json(await aiState(c.env.DB,c.get('actor'))))
 aiApi.put('/api/buoy/ai/settings',async c=>c.json(await saveSettings(c.env.DB,c.get('actor'),await jsonBody(c.req.raw))))
 aiApi.post('/api/buoy/ai/questions',async c=>c.json(await question(c.env,c.get('actor'),await jsonBody(c.req.raw))))

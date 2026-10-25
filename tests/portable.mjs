@@ -144,6 +144,7 @@ try{
  consumersBefore=await call('/adoption/consumers');
 
  const aiConfiguration=(await call('/ai')).settings;await call('/ai/settings','PUT',{...aiConfiguration,enabled:true,classes:['transcripts'],budgetMinor:100,requestMinor:100,noTraining:true,termsReference:'synthetic-buoy-8050'});
+ await call('/ai/schedules','POST',{name:'synthetic-buoy-8150',feature:'questions',accountId,question:'Prepare a meeting brief',hourUtc:12,authorize:true,policyRevision:(await call('/ai')).settings.revision});assert.equal((await call('/ai/schedules')).schedules.length,1);
  const recordImage=await recordPortabilityImage(call,recordIds);
  const billingImage=await billingPortabilityImage(call,billingIds);
  // Later fixture writes can legitimately add held account revisions. Compare
@@ -207,7 +208,7 @@ try{
  assert.ok(restored.some(e=>e.action==='survey.response-recorded'),'Recorded survey audit restores');
  assertBillingAwareRevenue(await call('/revenue'),revenueBefore,billingImage);
  assert.ok(restored.some(e=>e.action==='revenue.contract-confirmed'),'Recurring confirmation audit survives archive restore');
- assert.equal((await call('/ai')).enabled,false,'An archive never restores permission to send records to a model; the fresh owner must explicitly configure it.');
+ assert.deepEqual((await call('/ai/schedules')).schedules,[],'AI-006 standing authority never restores');assert.equal((await call('/ai')).enabled,false,'An archive never restores permission to send records to a model; the fresh owner must explicitly configure it.');
  const scorecardAfter=await call('/scorecards');
  assert.deepEqual(scorecardAfter.versions,scorecardBefore.versions,'Published scorecard versions and their dependency image restore exactly');
  assertBillingAwareScorecardHistory(scorecardAfter.history,scorecardBefore.history,billingImage);

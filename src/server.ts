@@ -1,3 +1,4 @@
+import {runScheduledAi} from './buoy/ai/schedules'
 import {snapshotForecast} from './buoy/renewals/forecast'
 import {reconcileBilling} from './buoy/billing'
 import {runPlaybooks} from './buoy/play/engine'
@@ -69,5 +70,6 @@ export default withDemo({
     await runPlaybooks(env.DB,at)
     await runReminders(runtimeBindings(env), at)
     await runNotifications(runtimeBindings(env), at)
+    await runScheduledAi(runtimeBindings(env), at)
   },
 } satisfies ExportedHandler<Bindings>, { seed: seedDemo })

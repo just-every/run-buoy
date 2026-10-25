@@ -628,3 +628,6 @@ test('AGENT-002 approved matched interventions and independently seeded effects'
 test('AI-001 scoped extractive questions and working citations',async()=>{const {aiQuestionJourney}=await import('./ai-journey.mjs');await aiQuestionJourney()})
 test('AI-002 cited conversation proposals require reviewed acceptance',async()=>{const {aiConversationJourney}=await import('./ai-journey.mjs');await aiConversationJourney()})
 test('AI-004 model choice, excluded transcripts, budget and disablement',async()=>{const {aiControlJourney}=await import('./ai-journey.mjs');await aiControlJourney()})
+
+test('AI-006 standing scheduled consent and revocation',async()=>{const {aiScheduleJourney}=await import('./ai-journey.mjs');await aiScheduleJourney()})
+test('AI-005 generated claims cite current permitted source records',async()=>{const {aiGeneratedJourney}=await import('./ai-journey.mjs');await aiGeneratedJourney()})
