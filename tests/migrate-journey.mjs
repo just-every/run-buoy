@@ -62,7 +62,7 @@ test('MIGRATE-005 versioned export account custody uses the existing reviewed do
  } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
-test('MIGRATE-003 Totango segment CSV reconciles twenty accounts through reviewed owner imports',async()=>{
+test('MIGRATE-003 Totango account CSV and API pages reconcile twenty accounts through reviewed owner imports',async()=>{
  const app=await startWorker({clock:Date.parse('2026-10-25T12:00:00Z')}),scratch=await mkdtemp(join(tmpdir(),'buoy-totango-'))
  try {
   const before=await state(app),original='fixtures/move-in/totango/accounts.csv',prepared=join(scratch,'bundle.json')

@@ -54,7 +54,7 @@ try {
   const mail = JSON.parse(mailCode.match(/if \(!(\[[^\]]+\])\.includes\(env\.MAIL_PROVIDER\)\)/)[1].replaceAll("'", '"'))
   const mailNames = { resend: 'Resend', sendgrid: 'SendGrid', cloudflare: 'Cloudflare Email' }
   const { PRESETS } = await import(pathToFileURL(resolve('src/modules/operator-auth/identity/oidc/presets.mjs')).href)
-  const connectorCode=await readFile('src/buoy/connectors/stripe.ts','utf8')
+  const connectorCode=(await readFile('src/buoy/connectors/stripe.ts','utf8'))+(await readFile('src/buoy/migrate/totango-api.ts','utf8'))
   const aiCode=await readFile('src/buoy/ai/index.ts','utf8')
   const aiNames={anthropic:'Anthropic',openai:'OpenAI'}
   const modelProviders=[...new Set([...aiCode.matchAll(/https:\/\/api\.([a-z]+)\.com/g)].map(match=>aiNames[match[1]]??match[1]))]

@@ -158,3 +158,13 @@ Sends: The same permission-filtered selected facts and model, with the deploymen
 Receives: A compatible chat completions response. No provider certification is inferred.
 
 Terms: The operator must record the actual provider's no-training terms and agreement; a generic compatibility protocol has no provider terms of its own. External copies follow that provider's custody. Account erasure removes local proposals but cannot retract already submitted provider data.
+
+### Totango
+
+When: The owner explicitly runs the migration preparation CLI with an account segment query. This is a one-off account read; there is no background connector or native write until the owner approves the retained import fingerprint.
+
+Sends: The token-free segment query, requested attributes and page offsets to the selected US or EU Totango account search endpoint. The private `BUOY_TOTANGO_APP_TOKEN` is sent only in the `app-token` header. The CLI permits the fixed account search route, refuses redirects, bounds source size and account count, and paces subsequent pages. It never logs or retains the authentication header.
+
+Receives: Account IDs, display names, selected field values and reported totals. Exact response text, page digests, query, region and retrieval time remain in the private prepared bundle and then owner-only import custody. Missing and unmapped fields remain explicit. API errors, incomplete pages or changed totals produce no prepared bundle. These reads do not verify source completeness beyond the returned totals or the provider's security controls.
+
+Terms: Review the [Totango terms of service](https://www.totango.com/legal/terms-of-service), [Totango data processing agreement](https://www.totango.com/legal/data-processing-agreement) and your deployment's granted token authority before acquisition. Source data and files retained outside Buoy remain separately owned copies; erasure inside Buoy cannot delete them. This guide records data flow and responsibilities, not legal acceptance or certification.
