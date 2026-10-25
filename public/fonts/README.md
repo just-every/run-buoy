@@ -17,6 +17,7 @@ makes a font request to a third party, and local fonts are never shipped.
 - `plex-mono/`: IBM Plex Mono 400 and 500, Latin and Latin Extended, from
   `@fontsource/ibm-plex-mono` 5.3.0 (upstream https://github.com/IBM/plex).
   Commands, the terminal and the `/buoy` lookup.
-`fonts.css` declares every face once; Latin and Latin Extended are separate
-unicode ranges, so English pages load only the Latin files. `public/rer-theme.css`
-imports it, so every page that links the theme gets the faces.
+`fonts.css` holds Buoy's tokens and the rules that dress Base's pages; the faces
+are declared once, in `public/rer-theme.css`, the theme rer's reader takes, so
+every page that links the theme gets them. Latin and Latin Extended are separate
+unicode ranges, so English pages load only the Latin files.

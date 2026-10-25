@@ -1,61 +1,196 @@
-/* Buoy's self-hosted faces, all SIL Open Font License 1.1 (licences beside each face; see README.md).
-   Inter (variable weight and optical size) is the brand: the wordmark, every run-site heading and body line,
-   /run, the Lobby and sign-in. Caveat is the hand-inked notes and stickies in the run site's drawings; IBM Plex
-   Mono the commands, IDs and terminal. The app uses the same three. */
+/* Buoy's look beyond its theme: the one place the --buoy-* tokens are defined. /rer-theme.css holds only what rer's
+   theme reader takes (the --rer-* theme tokens and the faces), so everything else Buoy's pages wear is here: Buoy's own
+   --buoy-* tokens, Base's other --rer-* names and the rules that dress Base's pages. The root document and /setup
+   (src/base/font-head.ts), the Lobby and Base's Run, contract and not-found pages (the edition identity's fonts) and
+   the run site's own pages (src/site/head.ts) link this file before the theme; the app (src/buoy/ui/shell.ts) links it
+   after the theme frame, the sign-in pages (src/auth.server.ts) and the development sign-in and hand-off pages
+   (src/server.dev.ts) add it after their own style. It declares no face (the theme does): rer's demo host inlines this
+   path and the theme into the hosted demo's gate, and no other file. The --buoy-* tokens are the brand from the
+   owner-approved desk (desk-buoy, 19 Oct 2026: crisp white grid paper, heavy near-black grotesk, the plum-to-turquoise
+   second line, white hairline cards, red for the one failure, green for recovery, amber for Watch, the smiling
+   life-ring mark). Colours are sampled from logo-mark-1024.png and hero-1536.png; the app's runway chrome follows the
+   owner-picked app look (desk-buoy/app, option A). */
+:root {
+  /* Type: Inter carries the brand (display cuts at headline sizes); Caveat only the hand-inked notes and stickies;
+     IBM Plex Mono commands and the terminal. */
+  --buoy-font: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --buoy-font-hand: Caveat, 'Bradley Hand', 'Segoe Print', cursive;
+  --buoy-font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --buoy-heading-weight: 880;
+  --buoy-heading-tracking: -0.052em;
+  --buoy-heading-word-space: 0.13em;
 
-@font-face {
-  font-family: Inter;
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/fonts/inter/inter-latin-opsz-normal.woff2') format('woff2-variations');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  /* Paper, ink and hairlines. */
+  --buoy-paper: #ffffff;
+  --buoy-grid: #eff1f5;
+  --buoy-grid-step: 74px;
+  --buoy-ink: #0b0b1f;
+  --buoy-body: #50525e;
+  --buoy-eyebrow: #5c6071;
+  --buoy-muted: #767988;
+  --buoy-line: #e8e9ef;
+  --buoy-line-strong: #d9dbe4;
+  --buoy-card: #ffffff;
+  --buoy-panel: #f7f7fa;
+  --buoy-card-shadow: 0 1px 2px rgba(11, 11, 31, 0.05), 0 18px 40px -22px rgba(40, 24, 72, 0.26);
+  --buoy-card-shadow-soft: 0 1px 2px rgba(11, 11, 31, 0.04), 0 10px 26px -18px rgba(40, 24, 72, 0.22);
+  --buoy-radius: 16px;
+  --buoy-radius-small: 10px;
+
+  /* The mark's colours, the cursors and the gradient second line (plum through blue to turquoise). */
+  --buoy-plum: #8a2eae;
+  --buoy-plum-deep: #6e1d93;
+  --buoy-plum-ink: #5b1580;
+  --buoy-plum-soft: #f4e6fc;
+  --buoy-lilac: #ead6f7;
+  --buoy-maya: #7a24a0;
+  --buoy-jordan: #08a8b0;
+  --buoy-mark-ink: #0b0b1f;
+  --buoy-gradient: linear-gradient(90deg, #83279d 0%, #7a33a8 20%, #5a5fb3 36%, #3384bc 50%, #1fa6c2 66%, #0db3b0 82%, #09b9ad 100%);
+  /* The active view chip and the Today pill carry white text across it: the turquoise end is deepened (#1fb5a8 to
+     #188d83) by the least that keeps every glyph at 4.5:1. */
+  --buoy-chrome-gradient: linear-gradient(90deg, #8e2db8, #188d83);
+
+  /* States: always with a text label. */
+  --buoy-red: #f4513f;
+  --buoy-red-ink: #c9271c;
+  --buoy-red-soft: #feeeed;
+  --buoy-green: #06c25a;
+  --buoy-green-ink: #0a8a45;
+  --buoy-green-soft: #e9f8ef;
+  --buoy-amber: #fdb80b;
+  --buoy-amber-ink: #8f5a00;
+  --buoy-amber-soft: #fff5dc;
+  --buoy-sticky: #feef97;
+  --buoy-code: #17181f;
+  --buoy-code-text: #f2f1f7;
+
+  /* The app's surfaces (public/buoy.css, public/buoy-runway.css): the renewal runway's chrome, fields and bands. */
+  --buoy-chip-track: #f3f4f7;
+  --buoy-field-line: #d6d8e1;
+  --buoy-focus-ring: 0 0 0 3px rgba(142, 45, 184, 0.18);
+  --buoy-band-red: linear-gradient(110deg, #fff4f5, #ffeef1);
+  --buoy-band-calm: linear-gradient(110deg, #f8f6fc, #f3f7fa);
+  --buoy-finding-line: #ffc4cc;
+  --buoy-tick: #c3cad6;
+  --buoy-notice: #b0b8c6;
+  --buoy-chevron: #50525e;
+  /* Small text in the app and Base's forms meets WCAG AA (4.5:1) on white, the app's grid lines and the open bands:
+     the muted grey and the green label, each darkened by the least that passes. The run site keeps --buoy-muted and
+     --buoy-green-ink. */
+  --buoy-muted-text: #6d6f7d;
+  --buoy-green-text: #098141;
+
+  /* Base's other --rer-* names, which Base reads beside the theme's tokens: the mono stack, the pill buttons, the
+     dark code card and the wordmark. */
+  --rer-font-mono: var(--buoy-font-mono);
+  --rer-button-radius: 999px;
+  --rer-code-background: var(--buoy-code);
+  --rer-code-text: var(--buoy-code-text);
+  --rer-wordmark-weight: 850;
+  --rer-wordmark-tracking: -0.045em;
 }
-@font-face {
-  font-family: Inter;
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/fonts/inter/inter-latin-ext-opsz-normal.woff2') format('woff2-variations');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+
+/* The grid paper behind every public Buoy page: the hero's faint square grid. */
+.buoy-paper,
+body:has(> header.bar),
+body:has(> main.door),
+html.rer-themed {
+  background-color: var(--buoy-paper);
+  background-image: linear-gradient(var(--buoy-grid) 1px, transparent 1px), linear-gradient(90deg, var(--buoy-grid) 1px, transparent 1px);
+  background-size: var(--buoy-grid-step) var(--buoy-grid-step);
+  background-position: center -1px;
 }
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/plex-mono/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+
+/* Base's Run, contract and not-found pages (src/base/run-site.ts): the landing's lockup, heavy heading, white step
+   cards, ink step numbers and the dark code card. The :has() prefix outranks the page's own <style>, which follows
+   this stylesheet. */
+body:has(> header.bar) > .bar { max-width: 1440px; padding: 24px clamp(16px, 4.2vw, 64px) 0; }
+body:has(> header.bar) > .bar .brand { gap: 12px; font-size: 34px; font-weight: 850; letter-spacing: -0.045em; }
+body:has(> header.bar) > .bar .brand img { width: 44px; height: 44px; }
+body:has(> header.bar) > .bar nav { gap: clamp(20px, 3vw, 40px); }
+body:has(> header.bar) > .bar nav a { color: var(--buoy-ink); font-size: 18px; font-weight: 500; }
+body:has(> header.bar) h1 { font-weight: var(--buoy-heading-weight); letter-spacing: var(--buoy-heading-tracking); word-spacing: var(--buoy-heading-word-space); line-height: 1.02; }
+body:has(> header.bar) .intro h1 { font-size: 66px; }
+body:has(> header.bar) .sub { color: var(--buoy-body); }
+body:has(> header.bar) .step { background: var(--buoy-card); border-color: var(--buoy-line); border-radius: 20px; box-shadow: var(--buoy-card-shadow); backdrop-filter: none; }
+body:has(> header.bar) .num { background: var(--buoy-ink); color: #fff; font-weight: 800; box-shadow: 0 0 0 4px var(--buoy-plum-soft); }
+body:has(> header.bar) .step h2 { font-weight: 800; letter-spacing: -0.03em; word-spacing: 0.1em; }
+body:has(> header.bar) .code { background: var(--buoy-code); color: var(--buoy-code-text); border-radius: 14px; box-shadow: 0 22px 40px -26px rgba(20, 12, 60, 0.6); }
+body:has(> header.bar) .code pre { font-size: 15.5px; }
+body:has(> header.bar) .copy { border-color: rgba(234, 214, 247, 0.45); color: #f1e6fa; }
+body:has(> header.bar) .copy:hover { background: rgba(138, 46, 174, 0.35); }
+body:has(> header.bar) .note code,
+body:has(> header.bar) .alt code { padding: 2px 6px; border-radius: 6px; background: var(--buoy-plum-soft); color: var(--buoy-plum-ink); }
+body:has(> header.bar) .facts a,
+body:has(> header.bar) .link { text-decoration-color: rgba(138, 46, 174, 0.5); }
+body:has(> header.bar) .hero h1::after,
+body:has(> header.bar) .intro h1::after { content: ""; display: block; width: 96px; height: 6px; margin: 22px auto 0; border-radius: 6px; background: var(--buoy-gradient); }
+@media (max-width: 760px) {
+  body:has(> header.bar) > .bar .brand { font-size: 27px; gap: 9px; }
+  body:has(> header.bar) > .bar .brand img { width: 34px; height: 34px; }
+  body:has(> header.bar) > .bar nav a { font-size: 16px; }
+  body:has(> header.bar) .intro h1 { font-size: 42px; }
+  body:has(> header.bar) .code pre { font-size: 13px; }
 }
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/plex-mono/ibm-plex-mono-latin-ext-400-normal.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+/* A command never wraps inside itself: on the narrowest phones its block scrolls sideways instead. */
+@media (max-width: 420px) { body:has(> header.bar) .code pre { white-space: pre; overflow-x: auto; overflow-wrap: normal; } }
+
+/* The Lobby: the lockup in the brand face on the grid paper. */
+body:has(> main.door) .word { font-weight: 850; }
+
+/* Base's plain HTTP forms (sign-in, setup, refusals) carry a quiet white card on the grid paper: heavy grotesk heading,
+   thin quiet fields with a plum focus ring, the ink pill button. */
+html.rer-themed body {
+  position: relative;
+  display: grid;
+  align-content: center;
+  min-height: 100dvh;
+  padding: 80px 20px 120px;
+  background: transparent;
+  font: 400 15px/1.55 var(--buoy-font);
+  color: var(--buoy-ink);
+  -webkit-font-smoothing: antialiased;
+  isolation: isolate;
 }
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/plex-mono/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+html.rer-themed main {
+  width: 100%;
+  max-width: 460px;
+  padding: 44px 44px 40px;
+  border: 1px solid var(--buoy-line);
+  border-radius: 20px;
+  box-shadow: var(--buoy-card-shadow);
 }
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/plex-mono/ibm-plex-mono-latin-ext-500-normal.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+html.rer-themed h1, html.rer-themed h2, html.rer-themed h3 { font-family: var(--buoy-font); font-weight: 850; letter-spacing: -0.035em; color: var(--buoy-ink); }
+html.rer-themed h1 { font-size: 38px; line-height: 1.05; letter-spacing: var(--buoy-heading-tracking); word-spacing: var(--buoy-heading-word-space); text-align: center; margin-bottom: 18px; }
+/* The lockup everywhere (sign-in, setup, the app's bar): the mark beside "Buoy" in the brand face. */
+html.rer-themed .rer-brand,
+html.rer-themed .brand { justify-content: center; font: 850 30px/1 var(--buoy-font); letter-spacing: -0.045em; color: var(--buoy-ink); }
+html.rer-themed .rer-brand::before { width: 38px; height: 38px; }
+html.rer-themed .brand { margin-bottom: 32px; }
+html.rer-themed main > p { text-align: center; color: var(--buoy-body); }
+html.rer-themed button { border-radius: 999px; font-weight: 650; background: var(--buoy-ink); color: #fff; }
+html.rer-themed button:hover { background: #24243c; }
+html.rer-themed label { font-weight: 550; color: var(--buoy-ink); font-size: 13px; }
+html.rer-themed input:not([type=checkbox]):not([type=hidden]) { min-height: 44px; border: 1px solid var(--buoy-field-line); border-radius: 10px; background: #fff; color: var(--buoy-ink); font: 400 15px/1.4 var(--buoy-font); transition: border-color .15s, box-shadow .15s; }
+html.rer-themed input:not([type=checkbox]):not([type=hidden]):hover { border-color: #bfc3cf; }
+html.rer-themed input:not([type=checkbox]):not([type=hidden]):focus-visible, html.rer-themed select:focus-visible, html.rer-themed textarea:focus-visible { outline: none; border-color: var(--buoy-plum); box-shadow: var(--buoy-focus-ring); }
+html.rer-themed input[type=checkbox] { accent-color: var(--buoy-plum); }
+/* Base's sign-in pages load this file after their own style, whose ring won two ties while this rule sat in the
+   theme, before that style: a secondary link's 3px ring, and the --rer-focus colour of a button in Base's sign-in
+   frame (the only themed document with main > .brand + h1). So the ring skips those links and its colour skips
+   those buttons; :where() keeps the specificity the rule had, so it wins and loses everywhere else as before. */
+html.rer-themed :focus-visible:not(:where(.secondary-link a)) { outline-width: 2px; outline-style: solid; outline-offset: 3px; }
+html.rer-themed :focus-visible:not(:where(.secondary-link a, main:has(> .brand + h1) button)) { outline-color: var(--buoy-plum); }
+html.rer-themed dt { color: var(--buoy-muted-text); }
+html.rer-themed dl { row-gap: 12px; }
+html.rer-themed dd { overflow-wrap: anywhere; font-weight: 550; }
+html.rer-themed a { color: var(--buoy-ink); text-underline-offset: 4px; text-decoration-color: rgba(138, 46, 174, 0.5); }
+@media (max-width: 600px) {
+  html.rer-themed body { padding: 48px 16px 72px; }
+  html.rer-themed main { padding: 30px 22px 28px; }
+  html.rer-themed h1 { font-size: 32px; }
 }
-@font-face {
-  font-family: Caveat;
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('/fonts/caveat/caveat-latin-wght-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
+
+/* STYLE-001: commands in the installed Lobby use the declared local mono face. */
+body:has(> main.door) code { font-family: var(--buoy-font-mono); }

@@ -1,5 +1,6 @@
 /* Buoy's app: the shell, cards, records and forms of the owner-picked look (desk-buoy/app, option A). Tokens live
-   once in rer-theme.css; the runway and its open band are public/buoy-runway.css. */
+   once in fonts/fonts.css (the --rer-* theme tokens in rer-theme.css); the runway and its open band are
+   public/buoy-runway.css. */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-padding-top: 24px; }
 html.rer-themed:has(body.buoy-app) { --buoy-grid-step: 44px; --buoy-grid: #f4f6f8; }
