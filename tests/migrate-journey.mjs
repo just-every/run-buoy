@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import {totangoApiJourney,apiBrowserBundle} from './totango-api-journey.mjs'
 import {test} from 'node:test'
 import {createHash} from 'node:crypto'
 import {execFileSync} from 'node:child_process'
@@ -94,6 +95,7 @@ test('MIGRATE-003 Totango segment CSV reconciles twenty accounts through reviewe
   invalidSupport.originalSha256=createHash('sha256').update(invalidSupport.csv).digest('hex')
   const rejected=await door.plan(invalidSupport);assert.equal(rejected.counts.mapped,19);assert.equal(rejected.counts.rejected,1);assert.match(rejected.rejected[0].reason,/urgentTickets cannot exceed openTickets/)
   await door.json('undo',{planId:rejected.planId})
+  await totangoApiJourney({app,scratch,door,columns,state,before,target})
  }finally{await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
@@ -134,14 +136,15 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
  const app=await startWorker(),browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
  const evidence=process.env.EVIDENCE_DIR??'../evidence/migrate';await mkdir(evidence,{recursive:true})
  try {
-  for(const width of [1440,390]) for(const source of ['csv','totango']) {
+  for(const width of [1440,390]) for(const source of ['csv','totango','totango-api']) {
    const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
    try {
     await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...value]=pair.split('=');return{name,value:value.join('='),url:app.origin}}))
     const page=await context.newPage(),before=await state(app)
     await page.goto(app.origin+'/app/imports',{waitUntil:'networkidle'})
     await page.waitForFunction(()=>!document.getElementById('import-settings-fields').disabled)
-    const input={...bundle(header+csvRow('synthetic-buoy-'+width)+csvRow('synthetic-buoy-invalid','31/02/2027')),source}
+    const raw={...bundle(header+csvRow('synthetic-buoy-'+width)+csvRow('synthetic-buoy-invalid','31/02/2027')),source}
+    const input=source==='totango-api'?apiBrowserBundle(raw):raw
     await page.setInputFiles('#import-bundle',{name:'synthetic-buoy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))})
     await page.getByRole('button',{name:'Upload and review',exact:true}).click()
     await page.locator('#import-review').waitFor({state:'visible'})

@@ -46,3 +46,21 @@ Without `--columns`, the same terminal guide asks for exact headers. Totango imp
 The synthetic twenty-account fixture is documented in `./fixtures/move-in/totango/README.md`. This is partial MIGRATE-003 work: native users, health profiles, SuccessFlows as paused playbooks with mapped or explicitly unmapped steps, tasks, touchpoints, segments, success plays and API intake remain unimplemented. It does not claim a full Totango migration.
 
 Optional support columns are `supportObservedAt`, `supportReference`, `openTickets` and `urgentTickets`. Supply all four or leave all empty. Counts must be exact nonnegative whole numbers; urgent tickets cannot exceed open tickets. The observation uses the same real-date and not-in-the-future checks as native entry. These are manually attributed source snapshots, not connected tickets or support history. Health profiles are not inferred from them.
+
+## Totango account API acquisition
+
+The preparation command can also read an account segment through Totango's documented [account search API](https://support.totango.com/hc/en-us/articles/204174135-Search-API-accounts-and-users). Export the segment's query from Totango and save its `terms`, `fields`, and optional `count`, `sort_by`, `sort_order` and `scope` in a private JSON file. Omit `offset`; preparation walks every page and refuses changing totals, incomplete pages and more than 2,000 accounts. Requests are paced below Totango's documented token rate. There is no automatic retry.
+
+Every selected field needs a unique `field_display_name`. Map the destination `id` to `name` and destination `name` to `display_name`; other column mappings name those exact selected-field labels. Include explicit source attributes for the required renewal date, notice days and contract evidence. API dates and amounts pass the same strict native validation as CSV values; missing contract terms are never inferred.
+
+Set `BUOY_TOTANGO_APP_TOKEN` through your private environment configuration, then run:
+
+```sh
+node src/buoy/migrate/cli.mjs --source totango --api-query account-query.json --region us --columns '{"id":"name","name":"display_name","renewalDate":"Renewal","noticeDays":"Notice","renewalEvidence":"Evidence"}' --output reviewed.json
+```
+
+`--columns` accepts the same JSON object syntax as the CSV command. Choose `us` for `https://api.totango.com` or `eu` for `https://api-eu1.totango.com`. The only provider operation is a read-only POST to `/api/v1/search/accounts`, authenticated with the private `app-token` header. Redirects are refused. Totango receives the selected query and credential; Buoy receives account identities, display names, selected field values and pagination totals. The token and request headers never enter the bundle. Provider terms: [Totango terms](https://www.totango.com/terms-of-service).
+
+The bundle retains the token-free query, region, retrieval time, exact UTF-8 response text and digest for every page. Upload it in the same owner-only Imports screen, review the fingerprint and unmapped fields, then explicitly apply. No native write occurs during acquisition. Native reconciliation and undo use the same Totango source identity as CSV imports. This closes account API intake only; it does not map users or automate a complete migration.
+
+Totango's documented [flows](https://support.totango.com/hc/en-us/articles/212116426-Understand-flows) are activity categories. Its [flow lookup](https://support.totango.com/hc/en-us/articles/115000597266-Touchpoints-API) supplies category metadata without ordered steps. These must not be invented as ordered playbooks. SuccessPlay definition migration, its paused native representation and per-step mapping remain unbuilt; an account or task's flow name never activates automation.

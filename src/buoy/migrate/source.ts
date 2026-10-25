@@ -1,4 +1,5 @@
 import { csvRows } from './csv'
+import {totangoApiRows} from './totango-api'
 import { sha256 } from '../../modules/import-kit/src/d1/index.ts'
 import type { Json, ParsedRecord, ImportMapping } from '../../modules/import-kit/src/d1/index.ts'
 import { parseAccount } from '../imports/validation'
@@ -41,12 +42,17 @@ function rejection(id: string, reason: string, pointer: string): ParsedRecord {
 export function parseMigration(value: Json, source: MigrationSource): ParsedRecord[] {
  try {
   const bundle = object(value)
-  if (Object.keys(bundle).some(key=>!['format','source','dateOrder','columns','csv','originalSha256','data','exportText'].includes(key))) throw new Error('Unsupported migration bundle field.')
+  if (Object.keys(bundle).some(key=>!['format','source','dateOrder','columns','csv','originalSha256','data','exportText','api'].includes(key))) throw new Error('Unsupported migration bundle field.')
   if (bundle.format !== 'buoy-migration-v1' || bundle.source !== source) throw new Error('Choose a matching versioned migration bundle.')
   if (!['iso','day-first','month-first'].includes(String(bundle.dateOrder))) throw new Error('Choose iso, day-first or month-first date order.')
   let rows: Record<string,unknown>[], columns: Record<string,unknown>, pointers: string[]
   let exportData: Record<string,unknown> | undefined
-  if (source === 'csv' || source === 'totango') {
+  if(bundle.api!==undefined){
+   if(source!=='totango'||bundle.csv!==undefined||bundle.data!==undefined||bundle.exportText!==undefined||bundle.originalSha256!==undefined)throw new Error('Totango API bundles cannot contain a second export representation.')
+   const parsed=totangoApiRows(bundle.api);rows=parsed.rows;pointers=parsed.pointers;columns=object(bundle.columns)
+   for(const [key,column]of Object.entries(columns))if(!fields.includes(key as typeof fields[number])||typeof column!=='string'||!column.trim())throw new Error('Invalid Totango API field mapping.')
+   const selected=Object.values(columns);if(new Set(selected).size!==selected.length)throw new Error('Each Totango source field maps to only one destination field.')
+  }else if (source === 'csv' || source === 'totango') {
    if (bundle.data !== undefined || bundle.exportText !== undefined) throw new Error('CSV bundles cannot contain a second export representation.')
    if (typeof bundle.csv !== 'string' || sha256(bundle.csv) !== bundle.originalSha256) throw new Error('Original CSV digest does not match its embedded UTF-8 text.')
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
