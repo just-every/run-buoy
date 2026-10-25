@@ -4,12 +4,77 @@
    (src/base/font-head.ts), the Lobby and Base's Run, contract and not-found pages (the edition identity's fonts) and
    the run site's own pages (src/site/head.ts) link this file before the theme; the app (src/buoy/ui/shell.ts) links it
    after the theme frame, the sign-in pages (src/auth.server.ts) and the development sign-in and hand-off pages
-   (src/server.dev.ts) add it after their own style. It declares no face (the theme does): rer's demo host inlines this
-   path and the theme into the hosted demo's gate, and no other file. The --buoy-* tokens are the brand from the
-   owner-approved desk (desk-buoy, 19 Oct 2026: crisp white grid paper, heavy near-black grotesk, the plum-to-turquoise
-   second line, white hairline cards, red for the one failure, green for recovery, amber for Watch, the smiling
-   life-ring mark). Colours are sampled from logo-mark-1024.png and hero-1536.png; the app's runway chrome follows the
-   owner-picked app look (desk-buoy/app, option A). */
+   (src/server.dev.ts) add it after their own style. It declares Buoy's faces too, the same seven as the theme (which
+   the installer reads): Chromium re-resolves a page's fonts on a window resize only for a stylesheet that holds both
+   @font-face rules and the @media rules the resize flips, as main's theme did through its @import, and without them
+   here the homepage narrowed past 760px kept glyph positions a fresh load does not. Change both copies. rer's demo host
+   inlines this path and the theme into the hosted demo's gate, and no other file. The --buoy-* tokens are the brand
+   from the owner-approved desk (desk-buoy, 19 Oct 2026: crisp white grid paper, heavy near-black grotesk, the
+   plum-to-turquoise second line, white hairline cards, red for the one failure, green for recovery, amber for Watch,
+   the smiling life-ring mark). Colours are sampled from logo-mark-1024.png and hero-1536.png; the app's runway chrome
+   follows the owner-picked app look (desk-buoy/app, option A). */
+/* Buoy's self-hosted faces, all SIL Open Font License 1.1 (licences beside each face; see README.md).
+   Inter (variable weight and optical size) is the brand: the wordmark, every run-site heading and body line,
+   /run, the Lobby and sign-in. Caveat is the hand-inked notes and stickies in the run site's drawings; IBM Plex
+   Mono the commands, IDs and terminal. The app uses the same three. */
+
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter/inter-latin-opsz-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter/inter-latin-ext-opsz-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/plex-mono/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/plex-mono/ibm-plex-mono-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/plex-mono/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/plex-mono/ibm-plex-mono-latin-ext-500-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: Caveat;
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/caveat/caveat-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   /* Type: Inter carries the brand (display cuts at headline sizes); Caveat only the hand-inked notes and stickies;
      IBM Plex Mono commands and the terminal. */

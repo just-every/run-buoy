@@ -2,8 +2,9 @@
    onboard reads it with that reader). Every Buoy page links it: the run site (landing, docs, /run, /contract, the 404),
    the Lobby, sign-in, setup and the app. Buoy's own --buoy-* tokens, Base's other --rer-* names and the rules that
    dress Base's pages are in /fonts/fonts.css, which every page that links this file links too. The grammar takes no
-   var(), so each token below is a literal copy of the --buoy-* token it stands for (fonts/fonts.css): change both. The
-   Inter faces name format('woff2'), the hint the reader takes; the file is the same variable font. */
+   var(), so each token below is a literal copy of the --buoy-* token it stands for (fonts/fonts.css): change both.
+   /fonts/fonts.css declares the same seven faces: change both. The Inter faces name format('woff2'), the hint the
+   reader takes; the file is the same variable font. */
 /* Buoy's self-hosted faces, all SIL Open Font License 1.1 (licences beside each face; see README.md).
    Inter (variable weight and optical size) is the brand: the wordmark, every run-site heading and body line,
    /run, the Lobby and sign-in. Caveat is the hand-inked notes and stickies in the run site's drawings; IBM Plex
