@@ -1,3 +1,4 @@
+import {aiPage} from './ai';
 import {reviewsPage,type ReviewsPage} from './reviews';
 import {reportsPage,type ReportsPage,type ReportResult} from './reports';
 import {forecastPage,type ForecastPage} from './forecast';
@@ -53,6 +54,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     if (error instanceof ApiError && error.status === 401) return new Response(null, { status: 303, headers: { location: `/signin?returnTo=${encodeURIComponent(path + url.search)}`, 'cache-control': 'no-store' } });
     return shell({ title: 'Work unavailable', body: section('Unable to load Buoy', '<p>Your work could not be loaded. Refresh this page to try again.</p><p><a href="/app">Return to accounts</a></p>'), state: null, current: '/app', status: error instanceof ApiError ? error.status : 503 });
   }
+  if(['/app/ai','/app/settings/ai'].includes(path))return aiPage(request,api,state);
   if('roleAccess' in state)return scopedPage(request,api,state as unknown as ProjectedState);
   if (!['GET', 'HEAD', 'POST'].includes(request.method)) {
     const response = await shell({ title: 'Action unavailable', body: section('Action unavailable', '<p>This request method is not supported. <a href="/app">Return to accounts</a>.</p>'), state, current: '/app', status: 405 });

@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 import {execFileSync} from 'node:child_process'
 
-export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true, secure = true, providerFetch, persistenceDirectory, keepPersistence = false } = {}) {
+export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true, secure = true, providerFetch, clock, persistenceDirectory, keepPersistence = false } = {}) {
  const require = createRequire(await realpath(join(root, 'node_modules/wrangler/package.json')))
  const { Miniflare, convertV4MiniflareOptions } = require('miniflare')
  const { unstable_splitSqlQuery: splitSql } = require('wrangler')
@@ -28,13 +28,13 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
   host:'127.0.0.1', port, https:secure,
   modulesRoot: join(root, 'dist/server'),
-  modules: [config.main, ...(await readdir(join(root, 'dist/server/assets'))).filter(file => file.endsWith('.js')).map(file => `assets/${file}`)].map(file => ({type:'ESModule',path:join(root,'dist/server',file)})),
+  modules: [...(clock===undefined?[]:[{type:'ESModule',path:join(root,'dist/server/test-clock.mjs'),contents:`import worker from './${config.main}'; const NativeDate=Date; globalThis.Date=class extends NativeDate {constructor(...args){super(...(args.length?args:[${Number(clock)}]));} static now(){return ${Number(clock)}}}; export default worker;`}]),...[config.main, ...(await readdir(join(root, 'dist/server/assets'))).filter(file => file.endsWith('.js')).map(file => `assets/${file}`)].map(file => ({type:'ESModule',path:join(root,'dist/server',file)}))],
   compatibilityDate: config.compatibility_date, compatibilityFlags: config.compatibility_flags,
   assets: {directory:join(root,'dist/client'),routerConfig:{has_user_worker:true}},
   d1Databases: {DB:databaseId}, bindings:vars,
   outboundService: async request => {
    outbound.push(request.url)
-   if(providerFetch&&new URL(request.url).hostname==='api.stripe.com')return providerFetch(request)
+   if(providerFetch&&['api.stripe.com','api.anthropic.com','api.openai.com'].includes(new URL(request.url).hostname))return providerFetch(request)
    assert.equal(request.url, 'https://api.resend.com/emails')
    mails.push(await request.json())
    return Response.json(mailStatus === 200 ? {id:`provider-receipt-${mails.length}`} : {error:'test provider failure'}, {status:mailStatus})

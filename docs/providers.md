@@ -124,3 +124,37 @@ Stripe test-mode inventory and billing reads are described below. Buoy makes no 
 - **Terms:** [Stripe Services Agreement](https://stripe.com/legal/ssa), [Stripe Data Processing Agreement](https://stripe.com/legal/dpa), [customer-list API](https://docs.stripe.com/api/customers/list) and [webhook signature verification](https://docs.stripe.com/webhooks/signature).
 
 This is a test-mode source, with supported normalized records and explicit failure/freshness boundaries. It does not establish live-mode acceptance, a verified least-access credential, a provider certification or the later subscription-financial/reconciliation and multi-provider billing clauses.
+
+## Optional model providers
+
+AI is off until the owner enables it in Settings, confirms no-training terms and chooses permitted data classes. Each request requires explicit consent. Source facts follow the current staff profile before transmission; excluded transcript processing is refused locally. Model credentials belong in the deployment secret `AI_API_KEY`, never in the browser. Costs use measured provider tokens and owner-recorded model tariffs, rounded up to USD cents, not provider invoices; uncertain responses retain the budget reservation and are never retried automatically.
+
+### Anthropic
+
+When: The owner selects Anthropic and enables assistance.
+
+Sends: The selected model, question and permission-filtered account facts; transcript lines only when transcripts are permitted and explicitly submitted. No provider credential is returned to the browser.
+
+Receives: Structured record selections or line-cited proposals. Buoy renders source facts and requires a person to accept task creation.
+
+Terms: Review [Anthropic commercial terms](https://www.anthropic.com/legal/commercial-terms) and the provider data-processing agreement. The recorded no-training confirmation is the owner's attestation, not provider verification.
+
+### OpenAI
+
+When: The owner selects OpenAI and enables assistance.
+
+Sends: The same permitted, scoped source facts and selected model through the chat completions endpoint.
+
+Receives: Structured selections and proposals under the same validation and approval rules.
+
+Terms: Review [OpenAI business terms](https://openai.com/policies/business-terms/) and the provider data-processing agreement. The owner must confirm the terms applicable to this deployment before enabling requests.
+
+### Compatible endpoint
+
+When: The deployment operator privately configures an approved HTTPS `AI_COMPATIBLE_URL`, and the owner selects compatible mode and confirms its terms. Request inputs cannot set an endpoint.
+
+Sends: The same permission-filtered selected facts and model, with the deployment credential. Redirects are refused.
+
+Receives: A compatible chat completions response. No provider certification is inferred.
+
+Terms: The operator must record the actual provider's no-training terms and agreement; a generic compatibility protocol has no provider terms of its own. External copies follow that provider's custody. Account erasure removes local proposals but cannot retract already submitted provider data.

@@ -1,0 +1,5 @@
+CREATE TABLE buoy_ai_settings(singleton INTEGER PRIMARY KEY CHECK(singleton=1), revision TEXT NOT NULL, document TEXT NOT NULL);
+INSERT INTO buoy_ai_settings VALUES(1,'initial','{"enabled":false,"provider":"anthropic","model":"claude-sonnet-4-5","classes":[],"budgetMinor":0,"requestMinor":100,"inputUsdPerMillion":3,"outputUsdPerMillion":15,"requestsPerMinute":5,"termsReference":""}');
+CREATE TABLE buoy_ai_requests(id TEXT PRIMARY KEY,actor_id TEXT NOT NULL,feature TEXT NOT NULL,status TEXT NOT NULL,reserved_minor INTEGER NOT NULL,charged_minor INTEGER NOT NULL DEFAULT 0,occurred_at TEXT NOT NULL);
+CREATE TABLE buoy_ai_minutes(actor_id TEXT NOT NULL,minute INTEGER NOT NULL,requests INTEGER NOT NULL,PRIMARY KEY(actor_id,minute));
+CREATE TABLE buoy_ai_proposals(id TEXT PRIMARY KEY,account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,account_revision TEXT NOT NULL,kind TEXT NOT NULL,line TEXT NOT NULL,line_number INTEGER NOT NULL,created_by TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',task_id TEXT);

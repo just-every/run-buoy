@@ -55,8 +55,11 @@ try {
   const mailNames = { resend: 'Resend', sendgrid: 'SendGrid', cloudflare: 'Cloudflare Email' }
   const { PRESETS } = await import(pathToFileURL(resolve('src/modules/operator-auth/identity/oidc/presets.mjs')).href)
   const connectorCode=await readFile('src/buoy/connectors/stripe.ts','utf8')
+  const aiCode=await readFile('src/buoy/ai/index.ts','utf8')
+  const aiNames={anthropic:'Anthropic',openai:'OpenAI'}
+  const modelProviders=[...new Set([...aiCode.matchAll(/https:\/\/api\.([a-z]+)\.com/g)].map(match=>aiNames[match[1]]??match[1]))]
   const connectorProviders=[...new Set([...connectorCode.matchAll(/https:\/\/api\.([a-z]+)\.com/g)].map(match=>match[1][0].toUpperCase()+match[1].slice(1)))]
-  const providers = [...connectorProviders, 'Segment', 'Cloudflare', ...mail.map(id => mailNames[id] ?? id), ...Object.values(PRESETS).map(preset => preset.label)]
+  const providers = [...modelProviders,...connectorProviders, 'Segment', 'Cloudflare', ...mail.map(id => mailNames[id] ?? id), ...Object.values(PRESETS).map(preset => preset.label)]
   const guide = documents.get('/docs/providers') ?? ''
   assert.match(guide, /SOC 2 or similar attestations cover your deployment/, 'BOUNDARY-005: certifications are the deployment\'s')
   for (const name of providers) {
