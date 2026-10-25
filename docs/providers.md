@@ -127,7 +127,7 @@ This is a test-mode source, with supported normalized records and explicit failu
 
 ## Optional model providers
 
-AI is off until the owner enables it in Settings, confirms no-training terms and chooses permitted data classes. Each request requires explicit consent. Source facts follow the current staff profile before transmission; excluded transcript processing is refused locally. Model credentials belong in the deployment secret `AI_API_KEY`, never in the browser. Costs use measured provider tokens and owner-recorded model tariffs, rounded up to USD cents, not provider invoices; uncertain responses retain the budget reservation and are never retried automatically.
+AI is off until the owner enables it in Settings, confirms no-training terms and chooses permitted data classes. Each request requires explicit consent. Account questions include permitted account names, renewal dates and health bands; the five class switches govern additional source content. Turning AI off prevents all of these requests. Source facts follow the current staff profile before transmission; excluded transcript processing is refused locally. Model credentials belong in separate deployment secrets `AI_ANTHROPIC_API_KEY`, `AI_OPENAI_API_KEY` and `AI_COMPATIBLE_API_KEY`, never in the browser. Selecting a provider uses only that provider’s credential; a missing credential is refused before any request. Costs use measured provider tokens and owner-recorded model tariffs, rounded up to USD cents, not provider invoices; uncertain responses retain the budget reservation and are never retried automatically.
 
 ### Anthropic
 

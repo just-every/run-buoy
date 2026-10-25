@@ -3,8 +3,8 @@ import {startWorker} from './worker.mjs'
 
 export async function aiFixture(){
  const sent=[];let invalid=false,fail=false
- const app=await startWorker({clock:Date.parse('2026-10-25T12:00:00Z'),bindings:()=>({AI_API_KEY:'synthetic-buoy-8000'}),providerFetch:async request=>{
-  const body=await request.json();sent.push({url:request.url,body});if(fail)return new Response('unavailable',{status:503})
+ const app=await startWorker({clock:Date.parse('2026-10-25T12:00:00Z'),bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8000',AI_OPENAI_API_KEY:'synthetic-buoy-8010'}),providerFetch:async request=>{
+  assert.equal(request.headers.get(new URL(request.url).hostname==='api.anthropic.com'?'x-api-key':'authorization'),new URL(request.url).hostname==='api.anthropic.com'?'synthetic-buoy-8000':'Bearer synthetic-buoy-8010','Provider selection never forwards another provider credential');const body=await request.json();sent.push({url:request.url,body});if(fail)return new Response('unavailable',{status:503})
   const payload=JSON.parse(body.messages[0].content.slice(body.messages[0].content.indexOf('{')))
   const result=invalid?{indexes:[999999]}:payload.instructions.startsWith('Identify')?{proposals:[{kind:'task',line:1},{kind:'risk',line:2},{kind:'expansion',line:3}]}:{indexes:payload.records.map((_,i)=>i)}
   const content=JSON.stringify(result)
@@ -64,7 +64,8 @@ export async function aiControlJourney(){
   await api('/ai/questions','POST',{question:'Prepare a meeting brief',consent:true});assert.equal(sent.at(-1).body.model,'synthetic-buoy-anthropic');assert.equal(sent.at(-1).url,'https://api.anthropic.com/v1/messages');assert.doesNotMatch(JSON.stringify(sent),/private-transcript/)
   assert.ok((await api('/ai')).costs.some(c=>c.feature==='questions'&&c.chargedMinor===1))
   await configure({provider:'openai',model:'synthetic-buoy-openai'});await api('/ai/questions','POST',{question:'Current accounts',consent:true});assert.equal(sent.at(-1).url,'https://api.openai.com/v1/chat/completions')
-  await configure({budgetMinor:2});count=sent.length;assert.equal((await call('/ai/questions','POST',{question:'Over budget',consent:true})).status,403);assert.equal(sent.length,count)
+  await configure({provider:'compatible'});count=sent.length;assert.equal((await call('/ai/questions','POST',{question:'Missing selected-provider credential',consent:true})).status,409);assert.equal(sent.length,count)
+  await configure({provider:'openai',model:'synthetic-buoy-openai',budgetMinor:2});count=sent.length;assert.equal((await call('/ai/questions','POST',{question:'Over budget',consent:true})).status,403);assert.equal(sent.length,count)
   await configure({requestsPerMinute:1});count=sent.length;assert.equal((await call('/ai/questions','POST',{question:'Minute cap',consent:true})).status,429);assert.equal(sent.length,count)
   await configure();await api('/agents/settings','PUT',{disabled:true});count=sent.length;assert.equal((await call('/ai/questions','POST',{question:'Killed',consent:true})).status,409);assert.equal(sent.length,count);await api('/agents/settings','PUT',{disabled:false})
   await configure({enabled:false});count=sent.length;assert.equal((await call('/ai/questions','POST',{question:'Off',consent:true})).status,403);assert.equal(sent.length,count)

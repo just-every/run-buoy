@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/providers.md": {
-      "sha256": "b813e8937b4d4a64e95e7b491689276cfc7e1c67365e61277e3d682978b45ceb",
+      "sha256": "056b64c40cbfbac8a360d4cf473a55196d783d4f32aabfe9b0b3e939674800c3",
       "executable": false
     },
     "docs/renewals.md": {
@@ -264,7 +264,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "eecf8ebcd5d56dc6f4e7bcb16c79232c417b661f02bff71177d2c3e167a7bd41",
+      "sha256": "700c41db557310c1d3e9834e670150e80880b6ab165919e93f7a06bb4215acc9",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -556,7 +556,7 @@
       "executable": false
     },
     "packaging.json": {
-      "sha256": "b1901815446aafd27809a953604ba053457a08c877131b1fa3bdad10ba6d1e98",
+      "sha256": "01dea309a6fd1805d819a9fe101fb53c3148e3ae4f18a4f11183542465541169",
       "executable": false
     },
     "pnpm-lock.yaml": {
@@ -924,7 +924,7 @@
       "executable": false
     },
     "src/auth.server.ts": {
-      "sha256": "ae268757255fec0dec6075003eb6835b613a95765ffd4d22a2826b8727747d2b",
+      "sha256": "b535310b91a34902e39ee93712128808aab9936ce88c91fe9d9d9837df8ed752",
       "executable": false
     },
     "src/base/contract-filter.ts": {
@@ -1120,7 +1120,7 @@
       "executable": false
     },
     "src/buoy/ai/index.ts": {
-      "sha256": "3569456add59e6a3409388eb547f4bcc5717e1e9f6a327d80d3faa421a53fa12",
+      "sha256": "50ad4aa12832517ede245dbc5b07ce6bfd3b1d0bf9956b6663394eb8a9ca35f1",
       "executable": false
     },
     "src/buoy/api.ts": {
@@ -1664,7 +1664,7 @@
       "executable": false
     },
     "src/buoy/ui/ai.ts": {
-      "sha256": "ac87f82d56f44cfb0e366eb2be77825e945afc7f517e875526d694c9b59703a2",
+      "sha256": "19cb1e484a4c22a6588929df7d509fae543b50926d292706bd2b738de8d29306",
       "executable": false
     },
     "src/buoy/ui/audit.ts": {
@@ -3816,7 +3816,7 @@
       "executable": false
     },
     "tests/ai-journey.mjs": {
-      "sha256": "2cf774fbbd7378451a28034cbbaf7f591d0ca3c5a0c3ab52cb024e869ed6f350",
+      "sha256": "e7b9183d08fd400470e82bca14c901fc1b7029d13b49e0b437f8700698e416e2",
       "executable": false
     },
     "tests/billing-browser.mjs": {
