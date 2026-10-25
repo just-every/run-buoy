@@ -10,7 +10,7 @@ export interface Account {
   billing: Billing | null; support: Support | null; revision: string; noticeDate: string; ownerId: string | null;
   tier:string|null;stage:string|null;segments:{id:string;name:string;enteredAt:string}[];
   handovers?: {fromId:string|null;toId:string;note:string;actorId:string;recordedAt:string}[];
-  health: { score?:number|null;recalculatedAt?:string;scorecard?:ScorecardHealth; interpretation: string; evaluatedOn: string; status: 'at-risk' | 'healthy' | 'unknown' | 'watch'; reasons: string[]; sentiment: Sentiment | null; evidence: Evidence[] };
+  health: {communication?:import('../ai/communication-health').CommunicationScore|null; score?:number|null;recalculatedAt?:string;scorecard?:ScorecardHealth; interpretation: string; evaluatedOn: string; status: 'at-risk' | 'healthy' | 'unknown' | 'watch'; reasons: string[]; sentiment: Sentiment | null; evidence: Evidence[] };
   /** Today's band, then each later day before renewal on which today's evidence projects a new band. */
   outlook: { from: string; status: 'at-risk' | 'healthy' | 'unknown' | 'watch' }[];
 }

@@ -1,3 +1,4 @@
+import {communicationScore,communicationNote} from '../ai/communication-health'
 import {PLAN_SQL,goalMeasure,type PlanRow} from '../plans/model'
 import {STRIPE_FIELDS,stripeFreshness} from '../billing-evidence'
 import {descendantIds} from '../fields/model'
@@ -30,7 +31,7 @@ export async function inputImage(db:D1Database,at:Date){
  const related=await relatedInputs(db,image.people)
  const surveys=parseSurveyImage(JSON.stringify(image.surveys),on)
  const revenues=parseRevenueImage(JSON.stringify(image.revenue),on)
- const fields:ScorecardField[]=[...STRIPE_FIELDS,
+ const fields:ScorecardField[]=[{key:'communications.score',name:'Cited communication sentiment',kind:'communications',unit:'0–100 model interpretation'},...STRIPE_FIELDS,
   ...['arrMinor','mrrMinor','seats'].map(key=>({key:`revenue.${key}`,name:`Confirmed recurring ${key}`,kind:'billing' as const,unit:key==='seats'?'purchased units':'native currency minor units'})),
   ...['totalMinor','creditsMinor','allocatedMinor','balanceMinor'].map(key=>({key:`billing.${key}`,name:`Recorded billing ${key} (minor currency units)`,kind:'billing' as const,unit:'minor currency units'})),
   ...['openTickets','urgentTickets'].map(key=>({key:`support.${key}`,name:`Recorded support ${key}`,kind:'support' as const,unit:'tickets'})),
@@ -48,6 +49,9 @@ export async function inputImage(db:D1Database,at:Date){
    let evidence:SourceEvidence[]=[]
    if(field.related){
     const value=related.account(account.account.id,field);relatedValues[field.key]=value.values;evidence=value.evidence;raw=null
+   }else if(field.kind==='communications'){
+    const score=communicationScore(image.communications,account.account.id);raw=score?.score??null
+    evidence=[{kind:'communications',label:score?'Cited communication sentiment':communicationNote(image.communications),freshness:score?'current':'missing',observedAt:score?score.month+'-01':null,reference:score?.requestId??null,details:{disabled:!image.communications?.enabled||!image.communications.classes.some(c=>['emails','tickets'].includes(c)),citations:score?.citations??[],themes:score?.themes??[]}}]
    }else if(field.kind==='survey'){
     const survey=surveys.find(a=>a.accountId===account.account.id)!,assessment=survey.assessments[field.key.startsWith('survey.nps')?'nps':'csat']
     evidence=[{kind:'survey',label:'Staff-recorded '+assessment.kind.toUpperCase()+' responses',freshness:assessment.freshness,observedAt:assessment.latestDatum?.observedAt??null,reference:assessment.latestDatum?.reference??null,details:{respondentCount:assessment.respondentCount,responses:assessment.responses,windowDays:90}}]

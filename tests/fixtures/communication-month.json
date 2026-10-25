@@ -1,0 +1,567 @@
+{
+  "synthetic": true,
+  "description": "Entirely synthetic customer communications and organization names for AI-003 evaluation. Expected labels are authored independently of application scoring. Rank 1 is lowest sentiment health and rank 10 is highest. Message text contains no numeric scoring instructions.",
+  "period": {
+    "from": "2026-09-01",
+    "through": "2026-09-30",
+    "timeZone": "UTC"
+  },
+  "expectedThemeVocabulary": [
+    "frustration",
+    "competitor",
+    "budget",
+    "champion change"
+  ],
+  "accounts": [
+    {
+      "id": "synthetic-buoy-9000",
+      "name": "Harborline Logistics",
+      "expected": {
+        "rank": 1,
+        "band": "at-risk",
+        "themes": [
+          "frustration",
+          "competitor",
+          "budget",
+          "champion change"
+        ]
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9100",
+          "dataClass": "emails",
+          "observedAt": "2026-09-02T15:10:00Z",
+          "subject": "Escalation after another failed close",
+          "text": "Our third month-end close failed again. Operations rebuilt the reports overnight and missed the board deadline. We cannot keep paying for a system our team has to work around."
+        },
+        {
+          "id": "synthetic-buoy-9101",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-06T17:25:00Z",
+          "subject": "Export still failing",
+          "text": "The export error is back after the proposed fix. This is blocking dispatch reconciliation today. Please escalate to someone who can resolve it rather than asking us to repeat the same steps."
+        },
+        {
+          "id": "synthetic-buoy-9102",
+          "dataClass": "emails",
+          "observedAt": "2026-09-11T16:00:00Z",
+          "subject": "Change in project ownership",
+          "text": "Our original executive sponsor has left. The interim operations lead has frozen rollout and does not support renewing until we see a reliable close."
+        },
+        {
+          "id": "synthetic-buoy-9103",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-17T13:40:00Z",
+          "subject": "Unresolved duplicate records",
+          "text": "Duplicate shipments are still appearing. We have stopped importing live work and are keeping the old spreadsheet running. The workaround you sent did not help."
+        },
+        {
+          "id": "synthetic-buoy-9104",
+          "dataClass": "emails",
+          "observedAt": "2026-09-23T19:15:00Z",
+          "subject": "Alternative evaluation underway",
+          "text": "Procurement has begun a trial of another vendor. Finance removed this subscription from the draft renewal budget because the repeated incidents have cost more than the license."
+        },
+        {
+          "id": "synthetic-buoy-9105",
+          "dataClass": "emails",
+          "observedAt": "2026-09-30T16:30:00Z",
+          "subject": "Please send the exit requirements",
+          "text": "We have no approved funds to renew and no replacement sponsor. Send the data export and termination requirements. We will reconsider only if leadership sees evidence the recurring failures are resolved."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9001",
+      "name": "Cedarfield Services",
+      "expected": {
+        "rank": 2,
+        "band": "at-risk",
+        "themes": [
+          "frustration",
+          "competitor",
+          "budget"
+        ]
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9106",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-01T14:20:00Z",
+          "subject": "Scheduled jobs missed again",
+          "text": "The overnight jobs did not run for the second week. Our service managers had to call customers manually. This is becoming unacceptable."
+        },
+        {
+          "id": "synthetic-buoy-9107",
+          "dataClass": "emails",
+          "observedAt": "2026-09-07T16:10:00Z",
+          "subject": "Need a recovery plan",
+          "text": "We need dates and an accountable owner for the missed jobs. Generic reassurance is not enough after three escalations."
+        },
+        {
+          "id": "synthetic-buoy-9108",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-12T12:45:00Z",
+          "subject": "Patch did not restore the queue",
+          "text": "We applied the patch, but queued work is still missing. Please stop closing this ticket before our team confirms the result."
+        },
+        {
+          "id": "synthetic-buoy-9109",
+          "dataClass": "emails",
+          "observedAt": "2026-09-18T18:20:00Z",
+          "subject": "Renewal discussion on hold",
+          "text": "Finance has asked us to reduce software spend and this tool is first on the review list. We cannot justify the current fee while managers do the work manually."
+        },
+        {
+          "id": "synthetic-buoy-9110",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-24T15:50:00Z",
+          "subject": "Another missed customer reminder",
+          "text": "A customer complained about a missed reminder this morning. We need a durable fix, not another restart."
+        },
+        {
+          "id": "synthetic-buoy-9111",
+          "dataClass": "emails",
+          "observedAt": "2026-09-29T17:00:00Z",
+          "subject": "Comparing replacement options",
+          "text": "We are comparing two competing products this week. Our sponsor would prefer to stay, but renewal remains on hold until the queue works reliably and we can defend the spend."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9002",
+      "name": "Stonebrook Equipment",
+      "expected": {
+        "rank": 3,
+        "band": "at-risk",
+        "themes": [
+          "frustration",
+          "budget",
+          "champion change"
+        ]
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9112",
+          "dataClass": "emails",
+          "observedAt": "2026-09-03T14:00:00Z",
+          "subject": "Rollout pause",
+          "text": "Our program sponsor moved to a different division. The new manager wants proof of value before committing any more teams."
+        },
+        {
+          "id": "synthetic-buoy-9113",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-08T17:10:00Z",
+          "subject": "Permissions preventing branch access",
+          "text": "Three branches still cannot access their own reports. We have followed the setup guide twice and the branch managers are losing patience."
+        },
+        {
+          "id": "synthetic-buoy-9114",
+          "dataClass": "emails",
+          "observedAt": "2026-09-13T15:35:00Z",
+          "subject": "Funding under review",
+          "text": "The next quarter allocation is smaller than expected. We need to demonstrate savings or this subscription will be cut back substantially."
+        },
+        {
+          "id": "synthetic-buoy-9115",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-19T18:05:00Z",
+          "subject": "Access fix incomplete",
+          "text": "One branch can now log in, but the other two remain blocked. This has dragged on too long and is delaying the value review."
+        },
+        {
+          "id": "synthetic-buoy-9116",
+          "dataClass": "emails",
+          "observedAt": "2026-09-25T13:20:00Z",
+          "subject": "New manager still unconvinced",
+          "text": "We showed the pilot results to the incoming manager. They were not convinced because most branches cannot use the reporting yet. Please bring a concrete remediation plan."
+        },
+        {
+          "id": "synthetic-buoy-9117",
+          "dataClass": "emails",
+          "observedAt": "2026-09-30T18:15:00Z",
+          "subject": "No rollout approval yet",
+          "text": "The smaller allocation is still unapproved. We want this to work, but without resolved access and a sponsor willing to own the outcome we cannot promise continuation."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9003",
+      "name": "Willowcrest Manufacturing",
+      "expected": {
+        "rank": 4,
+        "band": "at-risk",
+        "themes": [
+          "frustration",
+          "competitor"
+        ]
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9118",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-02T18:10:00Z",
+          "subject": "Report totals do not reconcile",
+          "text": "The weekly totals differ from our source ledger again. Our analysts are checking everything manually before sharing it."
+        },
+        {
+          "id": "synthetic-buoy-9119",
+          "dataClass": "emails",
+          "observedAt": "2026-09-06T15:00:00Z",
+          "subject": "Trust in reporting",
+          "text": "The team is frustrated by the repeated discrepancies. We need to understand the cause before we can use the dashboards in production meetings."
+        },
+        {
+          "id": "synthetic-buoy-9120",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-12T16:40:00Z",
+          "subject": "Correction helped only one site",
+          "text": "The correction fixed the north site, but the south site still shows missing shifts. Please investigate the remaining discrepancy."
+        },
+        {
+          "id": "synthetic-buoy-9121",
+          "dataClass": "emails",
+          "observedAt": "2026-09-18T14:30:00Z",
+          "subject": "Looking at other reporting tools",
+          "text": "Our analytics lead booked a demonstration with a competing supplier. We have not decided to switch, but need an alternative if the totals remain unreliable."
+        },
+        {
+          "id": "synthetic-buoy-9122",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-24T17:20:00Z",
+          "subject": "Reconciliation still manual",
+          "text": "We found two more missing shifts this week. The support team has been responsive, but we are still doing the reconciliation ourselves."
+        },
+        {
+          "id": "synthetic-buoy-9123",
+          "dataClass": "emails",
+          "observedAt": "2026-09-29T15:45:00Z",
+          "subject": "Need evidence before renewal review",
+          "text": "The sponsor is staying engaged and funding is available. However, we cannot recommend renewal until the remaining reporting defects are resolved and verified across both sites."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9004",
+      "name": "Maplehaven Consulting",
+      "expected": {
+        "rank": 5,
+        "band": "watch",
+        "themes": [
+          "budget"
+        ]
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9124",
+          "dataClass": "emails",
+          "observedAt": "2026-09-01T17:00:00Z",
+          "subject": "Planning next quarter",
+          "text": "The team likes the shared workspace, but our operating budget has been reduced. Please help us understand which seats are actually being used."
+        },
+        {
+          "id": "synthetic-buoy-9125",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-07T15:15:00Z",
+          "subject": "Usage export question",
+          "text": "Could you help us export monthly seat activity? We need accurate figures for the finance review and could not find the filter."
+        },
+        {
+          "id": "synthetic-buoy-9126",
+          "dataClass": "emails",
+          "observedAt": "2026-09-13T16:30:00Z",
+          "subject": "Possible seat reduction",
+          "text": "We are considering fewer licenses rather than stopping altogether. Finance needs a clear value case before approving the full allocation."
+        },
+        {
+          "id": "synthetic-buoy-9127",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-18T14:10:00Z",
+          "subject": "Export now working",
+          "text": "The instructions worked, thank you. We have the activity data and are checking it with the practice leads."
+        },
+        {
+          "id": "synthetic-buoy-9128",
+          "dataClass": "emails",
+          "observedAt": "2026-09-24T18:00:00Z",
+          "subject": "Budget review still open",
+          "text": "The practice leads want to keep the workspace. We still need agreement on the seat count and cannot confirm the renewal amount yet."
+        },
+        {
+          "id": "synthetic-buoy-9129",
+          "dataClass": "emails",
+          "observedAt": "2026-09-30T15:20:00Z",
+          "subject": "Follow up on right sizing",
+          "text": "Please schedule a short session to right size the subscription. The product is useful, but preserving the current spend will be difficult this quarter."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9005",
+      "name": "Pinebridge Education",
+      "expected": {
+        "rank": 6,
+        "band": "watch",
+        "themes": [
+          "champion change"
+        ]
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9130",
+          "dataClass": "emails",
+          "observedAt": "2026-09-02T14:45:00Z",
+          "subject": "New program contact",
+          "text": "Our implementation lead is leaving at the end of the week. I am covering temporarily and need help understanding the rollout plan."
+        },
+        {
+          "id": "synthetic-buoy-9131",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-08T16:20:00Z",
+          "subject": "Administrator handover",
+          "text": "Please explain how to transfer the administrator role without losing the existing templates. We are missing some handover notes."
+        },
+        {
+          "id": "synthetic-buoy-9132",
+          "dataClass": "emails",
+          "observedAt": "2026-09-14T15:00:00Z",
+          "subject": "Training attendance",
+          "text": "Only half the coordinators joined the training. We need another session before expanding to the remaining centers."
+        },
+        {
+          "id": "synthetic-buoy-9133",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-19T13:30:00Z",
+          "subject": "Handover complete",
+          "text": "Administrator access is transferred and the templates are intact. Thanks for walking us through it."
+        },
+        {
+          "id": "synthetic-buoy-9134",
+          "dataClass": "emails",
+          "observedAt": "2026-09-25T17:10:00Z",
+          "subject": "Permanent owner not appointed",
+          "text": "The pilot team is getting useful results. Leadership has not appointed a permanent program owner yet, so the wider rollout is still waiting."
+        },
+        {
+          "id": "synthetic-buoy-9135",
+          "dataClass": "emails",
+          "observedAt": "2026-09-30T14:20:00Z",
+          "subject": "Keeping pilot running",
+          "text": "We will keep the pilot running next month. Please help us prepare a short progress brief for whoever takes ownership; expansion will wait for that appointment."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9006",
+      "name": "Elmstone Facilities",
+      "expected": {
+        "rank": 7,
+        "band": "watch",
+        "themes": []
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9136",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-03T16:10:00Z",
+          "subject": "Mobile checklist sync delay",
+          "text": "Some checklists take several minutes to appear on the supervisor dashboard. Nothing appears lost, but staff are checking twice."
+        },
+        {
+          "id": "synthetic-buoy-9137",
+          "dataClass": "emails",
+          "observedAt": "2026-09-09T14:30:00Z",
+          "subject": "Uneven team adoption",
+          "text": "Two teams use the checklists daily and one still uses paper. We need practical coaching to bring the last group along."
+        },
+        {
+          "id": "synthetic-buoy-9138",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-14T17:25:00Z",
+          "subject": "Sync configuration adjusted",
+          "text": "The configuration change shortened the delay. We will monitor it during the next round of inspections."
+        },
+        {
+          "id": "synthetic-buoy-9139",
+          "dataClass": "emails",
+          "observedAt": "2026-09-20T15:45:00Z",
+          "subject": "Training helped",
+          "text": "The coaching session helped the supervisors. We are seeing more completed checklists, although coverage is not yet consistent."
+        },
+        {
+          "id": "synthetic-buoy-9140",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-25T13:50:00Z",
+          "subject": "One late update",
+          "text": "One checklist arrived late yesterday. It did arrive intact. Can you confirm whether there is anything else we should adjust?"
+        },
+        {
+          "id": "synthetic-buoy-9141",
+          "dataClass": "emails",
+          "observedAt": "2026-09-30T18:05:00Z",
+          "subject": "Continue the adoption plan",
+          "text": "The inspections are easier to track than before. We will continue with the current teams and review broader adoption after the remaining sync delay is understood."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9007",
+      "name": "Alderbrook Research",
+      "expected": {
+        "rank": 8,
+        "band": "healthy",
+        "themes": []
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9142",
+          "dataClass": "emails",
+          "observedAt": "2026-09-01T15:20:00Z",
+          "subject": "Pilot results ready",
+          "text": "The pilot has reduced the time we spend assembling project updates. The research leads are pleased and want to keep using it."
+        },
+        {
+          "id": "synthetic-buoy-9143",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-07T17:30:00Z",
+          "subject": "Template configuration question",
+          "text": "Can we add a reviewer field to the weekly template? The existing workflow is working well; we would like to capture one additional detail."
+        },
+        {
+          "id": "synthetic-buoy-9144",
+          "dataClass": "emails",
+          "observedAt": "2026-09-13T14:50:00Z",
+          "subject": "Review meeting feedback",
+          "text": "The directors found the shared updates clear and useful. We have agreed to make this our standard process for the active projects."
+        },
+        {
+          "id": "synthetic-buoy-9145",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-18T16:00:00Z",
+          "subject": "Reviewer field configured",
+          "text": "That worked exactly as described. The new field is live and the team has already used it in this week’s review."
+        },
+        {
+          "id": "synthetic-buoy-9146",
+          "dataClass": "emails",
+          "observedAt": "2026-09-24T15:40:00Z",
+          "subject": "Next period planning",
+          "text": "Our sponsor has approved keeping the current subscription in the next planning period. Please send the normal renewal details when available."
+        },
+        {
+          "id": "synthetic-buoy-9147",
+          "dataClass": "emails",
+          "observedAt": "2026-09-29T18:10:00Z",
+          "subject": "Thanks for the onboarding support",
+          "text": "We are comfortable managing the workflow ourselves now. Your onboarding guidance was useful and the team is getting steady value from the workspace."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9008",
+      "name": "Birchvale Distribution",
+      "expected": {
+        "rank": 9,
+        "band": "healthy",
+        "themes": []
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9148",
+          "dataClass": "emails",
+          "observedAt": "2026-09-02T16:00:00Z",
+          "subject": "Regional rollout results",
+          "text": "All three regional teams are using the workspace now. Managers say it has removed duplicate status meetings and made handoffs much clearer."
+        },
+        {
+          "id": "synthetic-buoy-9149",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-08T14:35:00Z",
+          "subject": "Adding the next region",
+          "text": "We are preparing another regional team. Could you confirm the best way to copy the existing setup while keeping their permissions separate?"
+        },
+        {
+          "id": "synthetic-buoy-9150",
+          "dataClass": "emails",
+          "observedAt": "2026-09-14T17:00:00Z",
+          "subject": "Sponsor feedback",
+          "text": "The operations director praised the rollout at our leadership meeting and has approved the next region joining."
+        },
+        {
+          "id": "synthetic-buoy-9151",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-19T15:10:00Z",
+          "subject": "New region configured",
+          "text": "The setup went smoothly using your instructions. We completed the first handoff without needing a separate tracking sheet."
+        },
+        {
+          "id": "synthetic-buoy-9152",
+          "dataClass": "emails",
+          "observedAt": "2026-09-25T16:45:00Z",
+          "subject": "Renewal and additional seats",
+          "text": "Finance has approved renewal and the additional seats for the new region. Please send a proposal reflecting that plan."
+        },
+        {
+          "id": "synthetic-buoy-9153",
+          "dataClass": "emails",
+          "observedAt": "2026-09-30T14:55:00Z",
+          "subject": "Happy to share our experience",
+          "text": "The regional leads are enthusiastic about the results. We would be happy to speak with another customer about how we organized the rollout."
+        }
+      ]
+    },
+    {
+      "id": "synthetic-buoy-9009",
+      "name": "Ashgrove Clinical Supply",
+      "expected": {
+        "rank": 10,
+        "band": "healthy",
+        "themes": []
+      },
+      "messages": [
+        {
+          "id": "synthetic-buoy-9154",
+          "dataClass": "emails",
+          "observedAt": "2026-09-03T15:30:00Z",
+          "subject": "Outstanding rollout feedback",
+          "text": "Every site is now using the workspace for supply reviews. Our leadership team called it one of the most useful changes we have made this year."
+        },
+        {
+          "id": "synthetic-buoy-9155",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-09T16:50:00Z",
+          "subject": "Preparing more site administrators",
+          "text": "The existing setup is running smoothly. We want to train two more site administrators so we can support our expansion without waiting on the central team."
+        },
+        {
+          "id": "synthetic-buoy-9156",
+          "dataClass": "emails",
+          "observedAt": "2026-09-15T14:10:00Z",
+          "subject": "Expansion approved",
+          "text": "The executive sponsor has approved adding the newly acquired sites. Funding is confirmed and we would like to start their onboarding next month."
+        },
+        {
+          "id": "synthetic-buoy-9157",
+          "dataClass": "tickets",
+          "observedAt": "2026-09-20T17:15:00Z",
+          "subject": "Administrator training complete",
+          "text": "The training was excellent. Both administrators completed the setup independently and the new sites are ready for onboarding."
+        },
+        {
+          "id": "synthetic-buoy-9158",
+          "dataClass": "emails",
+          "observedAt": "2026-09-26T15:00:00Z",
+          "subject": "Longer term agreement",
+          "text": "Procurement is ready to proceed with renewal and the expansion. We would also like to discuss a longer term agreement because this workflow has become central to our site reviews."
+        },
+        {
+          "id": "synthetic-buoy-9159",
+          "dataClass": "emails",
+          "observedAt": "2026-09-30T17:40:00Z",
+          "subject": "Reference and case study offer",
+          "text": "The site leaders are delighted with the consistency and time saved. Our sponsor has offered to be a reference and would welcome a conversation about sharing the rollout story."
+        }
+      ]
+    }
+  ]
+}
