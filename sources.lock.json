@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "5afff575c5601d1891c324792ab491e5c5a66c9d2d11656d66d7ab3a7cb7a427",
+      "sha256": "7cce2e88b724c79406250ad9b24176dacea23abaa05a40f03cf875d0adc68a54",
       "executable": false
     },
     "AGENTS.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/providers.md": {
-      "sha256": "1d2d62a5d49ba23f2757acd5ad2a2251f52ecca2469cfc851b40f885b896f176",
+      "sha256": "b813e8937b4d4a64e95e7b491689276cfc7e1c67365e61277e3d682978b45ceb",
       "executable": false
     },
     "docs/renewals.md": {
@@ -1120,7 +1120,7 @@
       "executable": false
     },
     "src/buoy/ai/index.ts": {
-      "sha256": "e63130e36cfe55f42d15a4b9627a6767a4c924458aca7fa57f9ef2a67bb314d1",
+      "sha256": "3569456add59e6a3409388eb547f4bcc5717e1e9f6a327d80d3faa421a53fa12",
       "executable": false
     },
     "src/buoy/api.ts": {
