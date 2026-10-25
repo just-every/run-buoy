@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "0720ef93b5d9aa13905ee662700f0a5671c708a139eada1e2fa78d30c676bd89",
+      "sha256": "19cd6d18cddb1c594c170b2ebcf6fd70482f25ed0d15e9f3541d11d3090477f7",
       "executable": false
     },
     "AGENTS.md": {
@@ -1664,7 +1664,7 @@
       "executable": false
     },
     "src/buoy/ui/ai.ts": {
-      "sha256": "bafe5c0d8bc352fe5d6d53b7a4f15d782be04dc4c5121e7e9b2171e61744c1a9",
+      "sha256": "b03fc50b205b6fcfe962a14042d03b69b1e9e025040b3d40b29349bdd548a12d",
       "executable": false
     },
     "src/buoy/ui/audit.ts": {
@@ -3812,7 +3812,7 @@
       "executable": false
     },
     "tests/ai-browser.mjs": {
-      "sha256": "8e611e50bb4d005b2939d4c90330fa6aed53bc830c0221e59871c978ab276c3c",
+      "sha256": "1cbb216bc335b766835443b3390dc377991bce2e6dd2568ca1875914bd92f765",
       "executable": false
     },
     "tests/ai-journey.mjs": {

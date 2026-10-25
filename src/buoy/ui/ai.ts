@@ -1,8 +1,10 @@
 import {apiCall,ApiError} from './actions'
-import {escape,section,form,field,hidden,textarea,button} from './html'
+import {escape,section,form as nativeForm,field,hidden,textarea,button} from './html'
 import {shell} from './shell'
 import type {Api,State} from './types'
 import type {ProjectedState} from '../roles'
+// AI consent and transcript text must never become automatic browser drafts.
+const form=(id:string,action:string,content:string)=>nativeForm(id,action,content).replace(' data-draft','')
 interface Page {enabled:boolean;canConfigure:boolean;canPropose:boolean;settings?:{revision:string;enabled:boolean;provider:string;model:string;classes:string[];budgetMinor:number;requestMinor:number;inputUsdPerMillion:number;outputUsdPerMillion:number;requestsPerMinute:number;termsReference:string};costs?:{feature:string;status:string;requests:number;chargedMinor:number;heldMinor:number}[]}
 export async function aiPage(request:Request,api:Api,state:State|ProjectedState){
  const path=new URL(request.url).pathname,configPath=path==='/app/settings/ai';let data=await apiCall<Page>(api,request,'/api/buoy/ai'),error:string|undefined,result:unknown,status=200,draft:FormData|undefined
