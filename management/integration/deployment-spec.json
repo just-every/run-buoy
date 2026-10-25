@@ -414,6 +414,12 @@
       "name": "0067_buoy_ai.sql",
       "sha256": "445e515f43dacf5740d24b888d6a16b68fdddfbf5e0dc8fd7183f02ddbd4bb90",
       "sql": "CREATE TABLE buoy_ai_settings(singleton INTEGER PRIMARY KEY CHECK(singleton=1), revision TEXT NOT NULL, document TEXT NOT NULL);\nINSERT INTO buoy_ai_settings VALUES(1,'initial','{\"enabled\":false,\"provider\":\"anthropic\",\"model\":\"claude-sonnet-4-5\",\"classes\":[],\"budgetMinor\":0,\"requestMinor\":100,\"inputUsdPerMillion\":3,\"outputUsdPerMillion\":15,\"requestsPerMinute\":5,\"termsReference\":\"\"}');\nCREATE TABLE buoy_ai_requests(id TEXT PRIMARY KEY,actor_id TEXT NOT NULL,feature TEXT NOT NULL,status TEXT NOT NULL,reserved_minor INTEGER NOT NULL,charged_minor INTEGER NOT NULL DEFAULT 0,occurred_at TEXT NOT NULL);\nCREATE TABLE buoy_ai_minutes(actor_id TEXT NOT NULL,minute INTEGER NOT NULL,requests INTEGER NOT NULL,PRIMARY KEY(actor_id,minute));\nCREATE TABLE buoy_ai_proposals(id TEXT PRIMARY KEY,account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,account_revision TEXT NOT NULL,kind TEXT NOT NULL,line TEXT NOT NULL,line_number INTEGER NOT NULL,created_by TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',task_id TEXT);\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0068_buoy_ai_schedules.sql",
+      "sha256": "cb2634ba4047c852a8821032c2cc3bf10a13de5c9360496d236ff79c147d8c57",
+      "sql": "CREATE TABLE buoy_ai_schedules(\n id TEXT PRIMARY KEY,\n name TEXT NOT NULL,\n account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,\n question TEXT NOT NULL,\n hour_utc INTEGER NOT NULL CHECK(hour_utc BETWEEN 0 AND 23),\n owner_id TEXT NOT NULL,\n owner_version INTEGER NOT NULL,\n policy_revision TEXT NOT NULL,\n policy_document TEXT NOT NULL,\n revision TEXT NOT NULL,\n revoked_at TEXT,\n last_slot TEXT\n);\n"
     }
   ],
   "compatibilityDate": "2026-09-08",
