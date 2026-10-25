@@ -94,7 +94,7 @@ When the owner links an OpenID sign-in provider during setup, people can sign in
 
 ## Not connected yet
 
-Stripe test-mode inventory and billing reads are described below. Buoy makes no outbound calls to other billing, CRM, support, product-usage, mailbox, calendar, chat, survey or model providers yet. Incoming product observations are described below. Manual or file-based billing and support evidence remains separate from the Stripe source. Each connector adds its section to this guide, with its data flows and terms, before it ships.
+Stripe test-mode inventory and billing reads are described below. Buoy makes no outbound calls to other billing, CRM, support, product-usage, mailbox, calendar, chat or survey providers yet. Optional model requests are described below and require owner configuration and explicit consent. Incoming product observations are described below. Manual or file-based billing and support evidence remains separate from the Stripe source. Each connector adds its section to this guide, with its data flows and terms, before it ships.
 
 ## Incoming product observations
 
