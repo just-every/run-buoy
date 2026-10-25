@@ -3828,7 +3828,7 @@
       "executable": false
     },
     "tests/ai-browser.mjs": {
-      "sha256": "a3612a4f54a3ff8145843d4a2ad462b4ba3e3a0ab499ff5d943269ca494a80ba",
+      "sha256": "888438f3da29e38bf8d021ab4352b7b7bf67c6a6af65e4846b240f96f10e4130",
       "executable": false
     },
     "tests/ai-journey.mjs": {
