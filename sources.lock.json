@@ -1708,7 +1708,7 @@
       "executable": false
     },
     "src/buoy/ui/ai.ts": {
-      "sha256": "9b1811390f2bbca28a2b3d5258da8419cc385f106aaf570da46b54dfddfde21f",
+      "sha256": "c4750be39bcb9e854223a15a74b1e2208b6ac98993703358549f5e0b93c12953",
       "executable": false
     },
     "src/buoy/ui/audit.ts": {
@@ -1732,7 +1732,7 @@
       "executable": false
     },
     "src/buoy/ui/communications.ts": {
-      "sha256": "d245ddd256081200a1d87b4b64ab8e790db176eea42b38017d8b52cad3f4dd84",
+      "sha256": "9d877ee9b87eb1567c8ed26bf01774863b077fd41e740526b2bfde24a7858cd9",
       "executable": false
     },
     "src/buoy/ui/connected-billing.ts": {
@@ -3908,7 +3908,7 @@
       "executable": false
     },
     "tests/communication-browser.mjs": {
-      "sha256": "d9602eec00be1e0a21f4500a37eeaa82a35c45cba5bfced91c94115fa9b1acfa",
+      "sha256": "6a03910ee84eabb9289e465d78afb5f2e2ca40d4785bae61e917daa199ed5863",
       "executable": false
     },
     "tests/communication-journey.mjs": {
