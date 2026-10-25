@@ -408,6 +408,12 @@
       "name": "0066_buoy_experiments.sql",
       "sha256": "82e21e8b7a3bd5302111401986c5451c2843cdbe325e6da182639a6e3b74bcce",
       "sql": "CREATE TABLE buoy_experiments (\n id TEXT PRIMARY KEY, operation_key TEXT NOT NULL UNIQUE, request TEXT NOT NULL,\n document TEXT NOT NULL CHECK(json_valid(document)), revision TEXT NOT NULL,\n status TEXT NOT NULL CHECK(status IN('proposed','approved')), proposed_at TEXT NOT NULL,\n prepared_by TEXT NOT NULL, approved_by TEXT, approved_at TEXT, approval_reference TEXT,\n health_report_id TEXT REFERENCES buoy_outcomes(id), renewal_report_id TEXT REFERENCES buoy_outcomes(id),\n playbook_id TEXT REFERENCES buoy_playbooks(id)\n);\nCREATE TABLE buoy_experiment_accounts (\n experiment_id TEXT NOT NULL REFERENCES buoy_experiments(id) ON DELETE CASCADE,\n account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,\n pair_index INTEGER NOT NULL, cohort TEXT NOT NULL CHECK(cohort IN('enrolled','comparison')),\n baseline TEXT NOT NULL CHECK(json_valid(baseline)), run_id TEXT REFERENCES buoy_playbook_runs(id) ON DELETE SET NULL,\n PRIMARY KEY(experiment_id,account_id), UNIQUE(experiment_id,pair_index,cohort)\n);\n-- Preserve the existing ledger while extending its allowed command vocabulary.\nALTER TABLE buoy_agent_ledger RENAME TO buoy_agent_ledger_before_experiments;\nCREATE TABLE buoy_agent_ledger (\n id TEXT PRIMARY KEY, request_id TEXT NOT NULL, token_id TEXT NOT NULL,\n command TEXT NOT NULL CHECK(command IN ('renewals.list','playbook.prepare','renewal.prepare','experiment.prepare','experiment.report','commands.read','commands.request','other.route')),\n status TEXT NOT NULL CHECK(status IN ('attempt','succeeded','refused')), reason TEXT NOT NULL,\n spent_minor INTEGER NOT NULL DEFAULT 0 CHECK(spent_minor>=0), occurred_at TEXT NOT NULL\n);\nINSERT INTO buoy_agent_ledger SELECT * FROM buoy_agent_ledger_before_experiments;\nDROP TABLE buoy_agent_ledger_before_experiments;\nCREATE INDEX buoy_agent_ledger_time ON buoy_agent_ledger(occurred_at DESC,id);\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0067_buoy_ai.sql",
+      "sha256": "445e515f43dacf5740d24b888d6a16b68fdddfbf5e0dc8fd7183f02ddbd4bb90",
+      "sql": "CREATE TABLE buoy_ai_settings(singleton INTEGER PRIMARY KEY CHECK(singleton=1), revision TEXT NOT NULL, document TEXT NOT NULL);\nINSERT INTO buoy_ai_settings VALUES(1,'initial','{\"enabled\":false,\"provider\":\"anthropic\",\"model\":\"claude-sonnet-4-5\",\"classes\":[],\"budgetMinor\":0,\"requestMinor\":100,\"inputUsdPerMillion\":3,\"outputUsdPerMillion\":15,\"requestsPerMinute\":5,\"termsReference\":\"\"}');\nCREATE TABLE buoy_ai_requests(id TEXT PRIMARY KEY,actor_id TEXT NOT NULL,feature TEXT NOT NULL,status TEXT NOT NULL,reserved_minor INTEGER NOT NULL,charged_minor INTEGER NOT NULL DEFAULT 0,occurred_at TEXT NOT NULL);\nCREATE TABLE buoy_ai_minutes(actor_id TEXT NOT NULL,minute INTEGER NOT NULL,requests INTEGER NOT NULL,PRIMARY KEY(actor_id,minute));\nCREATE TABLE buoy_ai_proposals(id TEXT PRIMARY KEY,account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,account_revision TEXT NOT NULL,kind TEXT NOT NULL,line TEXT NOT NULL,line_number INTEGER NOT NULL,created_by TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',task_id TEXT);\n"
     }
   ],
   "compatibilityDate": "2026-09-08",
@@ -430,7 +436,9 @@
   ],
   "optionalSecretNames": [
     "MAIL_API_KEY",
-    "INSTALLATION_KEY_PREVIOUS"
+    "INSTALLATION_KEY_PREVIOUS",
+    "AI_API_KEY",
+    "AI_COMPATIBLE_URL"
   ],
   "schedules": [
     "0 * * * *"
@@ -439,7 +447,8 @@
   "healthPath": "/health",
   "recovery": "Follow OPERATIONS.md and README.md: pause writes and hourly scheduled work, retain the exact source and private configuration, export the installation, restore into fresh empty resources with a new owner, re-export and compare domain data before routing traffic. Preserve all applied migration names and bytes.",
   "providerEffects": [
-    "outbound-mail"
+    "outbound-mail",
+    "outbound-model"
   ],
   "surfaces": {
     "app": {
