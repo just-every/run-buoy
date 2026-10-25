@@ -13,7 +13,7 @@ export async function settings(db:D1Database){const row=await db.prepare('SELECT
 export async function aiState(db:D1Database,actor:Actor){
  const config=await settings(db),access=await roleAccess(db,actor)
  const costs=(await db.prepare("SELECT feature,status,count(*) requests,sum(charged_minor) chargedMinor,sum(CASE WHEN status='reserved' OR status='unknown' THEN reserved_minor ELSE 0 END) heldMinor FROM buoy_ai_requests GROUP BY feature,status").all()).results
- return {trainingAttestation:{status:'unverified',basis:'Owner-recorded provider terms; Buoy has not verified provider training practices.'},enabled:config.enabled,canConfigure:actor.role==='owner',canPropose:!access.restricted&&['owner','admin'].includes(actor.role),...(actor.role==='owner'?{settings:config,costs}:{}),interpretation:'Extractive assistance, not a prediction. Missing and excluded sources cannot support an answer.'}
+ return {trainingAttestation:{status:'unverified',basis:'Owner-recorded provider terms; Buoy has not verified provider training practices.'},enabled:config.enabled,canConfigure:actor.role==='owner',canPropose:!access.restricted&&['owner','admin'].includes(actor.role),...(actor.role==='owner'?{settings:config,costs}:{}),interpretation:'Cited assistance, not a prediction. Generated interpretations require human review. Missing and excluded sources cannot support an answer.'}
 }
 async function saveSettings(db:D1Database,actor:Actor,input:Record<string,unknown>){
  requirePerson(actor,true);const old=await settings(db)
@@ -113,7 +113,7 @@ async function decide(db:D1Database,actor:Actor,key:string,input:Record<string,u
 export const aiApi=new Hono<{Bindings:Bindings;Variables:{actor:Actor}}>()
 aiApi.use('/api/buoy/ai/*',async(c,next)=>{
  await next()
- if(c.req.method==='POST'&&['/api/buoy/ai/questions','/api/buoy/ai/conversations'].includes(c.req.path)&&c.res.status>=400){const actor=c.get('actor');await auditRecord(c.env.DB,actor,'ai.refused','ai:request','Request refused; no source text retained in this audit.').run()}
+ if(c.req.method==='POST'&&['/api/buoy/ai/questions','/api/buoy/ai/answers','/api/buoy/ai/conversations'].includes(c.req.path)&&c.res.status>=400){const actor=c.get('actor');await auditRecord(c.env.DB,actor,'ai.refused','ai:request','Request refused; no source text retained in this audit.').run()}
 })
 aiApi.post('/api/buoy/ai/answers',async c=>c.json(await answer(c.env,c.get('actor'),await jsonBody(c.req.raw))))
 aiApi.get('/api/buoy/ai/evidence/:accountId/:field',async c=>c.json(await evidence(c.env,c.get('actor'),c.req.param('accountId'),c.req.param('field'),c.req.query('revision'))))

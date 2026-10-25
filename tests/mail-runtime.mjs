@@ -20,7 +20,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
  const databaseId=dbConfig.preview_database_id??dbConfig.database_id??dbConfig.binding
  // Wrangler --persist-to takes the unversioned root; Miniflare and the rer
  // archive proxy take its v3 directory. Use the actual declared database ID.
- if(persistenceDirectory)execFileSync(process.execPath,[join(root,'node_modules/wrangler/bin/wrangler.js'),'d1','migrations','apply','DB','--local','--persist-to',directory,'--config',join(root,'dist/server/wrangler.json')],{cwd:root,stdio:'pipe',env:{...process.env,CI:'true',WRANGLER_SEND_METRICS:'false'}})
+ if(persistenceDirectory)execFileSync(process.execPath,[join(root,'node_modules/wrangler/bin/wrangler.js'),'d1','migrations','apply','DB','--local','--persist-to',directory,'--config',join(root,'dist/server/wrangler.json')],{cwd:root,stdio:'pipe',maxBuffer:16*1024*1024,env:{...process.env,CI:'true',WRANGLER_SEND_METRICS:'false'}})
  const secret = () => randomBytes(32).toString('base64url'), mails = [], outbound = []
  const vars = { AUTH_LOCAL: secure ? 'false' : 'true', AUTH_ORIGIN: origin, OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
  Object.assign(vars, bindings(origin))

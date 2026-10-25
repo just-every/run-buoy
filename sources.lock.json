@@ -139,6 +139,10 @@
       "sha256": "dc38cf44c0d58407d467a293d70b6619a86c2c3a8b7419db474cb68911de65c2",
       "executable": false
     },
+    "docs/ai-schedules.md": {
+      "sha256": "bf97352e5f17a13bd1c726f939c5599821e3ff0398bf6fd781172e91ce464cea",
+      "executable": false
+    },
     "docs/backups.md": {
       "sha256": "e123b925d4ab9ef298b8bfeac96baae84056602f3d253f7c6de939d139866194",
       "executable": false
@@ -537,6 +541,10 @@
     },
     "migrations/core/0067_buoy_ai.sql": {
       "sha256": "445e515f43dacf5740d24b888d6a16b68fdddfbf5e0dc8fd7183f02ddbd4bb90",
+      "executable": false
+    },
+    "migrations/core/0068_buoy_ai_schedules.sql": {
+      "sha256": "cb2634ba4047c852a8821032c2cc3bf10a13de5c9360496d236ff79c147d8c57",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -1119,8 +1127,16 @@
       "sha256": "f21db4dc7622dbff7967b352d7dbf4d5a81e0bbc95babf1763b6e530dc7634e8",
       "executable": false
     },
+    "src/buoy/ai/answers.ts": {
+      "sha256": "a598652597ac0614b29d139873fdf7c5050cdf89af584615f306263f9398b5f8",
+      "executable": false
+    },
     "src/buoy/ai/index.ts": {
-      "sha256": "da27cf330c206387e22d437cb731a2a2974868617112a8840d829c67ca28dce6",
+      "sha256": "7b8343f2485583aa10f5c0ca5624ceb9d5452a1df1dd2bf36a0f19671a078ab8",
+      "executable": false
+    },
+    "src/buoy/ai/schedules.ts": {
+      "sha256": "52fd87818b6419e400d2d1463042ed1cbff19b08cacad4ae7944ff3116b47be5",
       "executable": false
     },
     "src/buoy/api.ts": {
@@ -1664,7 +1680,7 @@
       "executable": false
     },
     "src/buoy/ui/ai.ts": {
-      "sha256": "786b340353f3573c815c78bbf1072f45e1126a6d35abf9c6ab090d1cddb6116f",
+      "sha256": "cb499d0f551207b204a98da2cfc94f225edb308f2ac15955c984e8811af34a44",
       "executable": false
     },
     "src/buoy/ui/audit.ts": {
@@ -3812,7 +3828,7 @@
       "executable": false
     },
     "tests/ai-browser.mjs": {
-      "sha256": "f6b09e28ae4b863eb401742c8fdcc3652ae8b5a7c94d9913444002f3332a10b4",
+      "sha256": "471fc72ac205bd1caf837275a574fa4c95f85450acda1ec0c952854d3a258ce2",
       "executable": false
     },
     "tests/ai-journey.mjs": {
@@ -3952,7 +3968,7 @@
       "executable": false
     },
     "tests/mail-runtime.mjs": {
-      "sha256": "71f9b168842ce16cb528950bd1372a9d598d4f08bd744090ecdf341d6006dfe5",
+      "sha256": "5660f89920fee9c32638875f438a12cf309e31d5f9e6f81944d90b54119cd610",
       "executable": false
     },
     "tests/migrate-journey.mjs": {
