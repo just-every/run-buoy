@@ -8,7 +8,7 @@ Choose an account and calendar month, then explicitly consent to send its permit
 
 The model returns a sentiment score from 0 to 100, exact supporting quotations and supported risk themes: frustration, competitor, budget and champion change. Buoy validates every quotation against the selected source message. Scores below 40 are at risk; scores from 40 to below 70 are watch; scores from 70 are healthy. These are model interpretations for human review, never guaranteed predictions. Native health takes the more cautious band; weighted scorecards can use the communications.score field.
 
-Follow Source message to inspect the original text. New messages invalidate the account's score. Changing AI policy removes existing scores: process permitted messages again. Excluding a data class prevents its text from being sent or opened through citations. Disabling the measure removes it from native health, excludes its weight from numeric scorecards, and leaves a visible explanation.
+Follow Source message to inspect the original text. New messages invalidate the account's score. Changing AI policy removes existing scores: process permitted messages again. Excluding a data class prevents its text from being sent or opened through citations. Disabling the measure removes it from native health, excludes its weight from numeric scorecards, and leaves a visible explanation. A non-authorizing product marker preserves the configured-state explanation after archive restoration. Provider settings, consent and execution authority remain excluded from the archive; the restored measure remains disabled.
 
 ## Reproducing model accuracy
 

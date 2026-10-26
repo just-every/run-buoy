@@ -152,7 +152,7 @@
       "executable": false
     },
     "docs/communication-sentiment.md": {
-      "sha256": "658a93ba4c566f28bd5bccea9df0d0ef5e1705e69207b3fbee8a2733fe6b19f0",
+      "sha256": "2066dc4d76b0769a8d251e67e8006c2176eb9a9cb5ccef4de3710ca1c2fd0a85",
       "executable": false
     },
     "docs/experiments.md": {
@@ -280,7 +280,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "1b588dd99f16c920cfd4a7717c148f848fa519830e1747e5122bfd06f0624916",
+      "sha256": "34774c6de3db158a542be42ee99cf38eb6ab2f8558473a9da6d139ff5b4b0592",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -561,6 +561,10 @@
     },
     "migrations/core/0069_buoy_communications.sql": {
       "sha256": "5c67b90ed6215d0108e4e394a6d5d2fad86ae1ce0414286f44469c3a67fa464a",
+      "executable": false
+    },
+    "migrations/core/0070_buoy_communication_state.sql": {
+      "sha256": "7416a37c5b3f52f17c0579d2770c1d7472d25454b8a952a030df8b122178883c",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -1148,7 +1152,7 @@
       "executable": false
     },
     "src/buoy/ai/communication-health.ts": {
-      "sha256": "d264cf4de55db75618fc6477d3e018b60736d46cc2ce9331b3fa9de047114e7b",
+      "sha256": "d0d0808fc2ec3705317941576e0a08d31c3397515321e0f5f527c3591f327eab",
       "executable": false
     },
     "src/buoy/ai/communications.ts": {
@@ -1156,7 +1160,7 @@
       "executable": false
     },
     "src/buoy/ai/index.ts": {
-      "sha256": "95e365f67e75d2561995cd69eeba89f071f463f8e8e6e829884c9d0cd01abe16",
+      "sha256": "b0a5a09557448c430993c677ebcb462ee5f113800bafc7b1cd8810413e81ce28",
       "executable": false
     },
     "src/buoy/ai/schedules.ts": {
@@ -3860,7 +3864,7 @@
       "executable": false
     },
     "tests/ai-browser.mjs": {
-      "sha256": "8de1f48962ab47b39f98eba1d7922383e155e3c5c6f154da13eacf3dadda0731",
+      "sha256": "9b01f6ed1a9f14bcaca5f564c8fdb8e4c7fbb40ecbc53f6e7ff270bfe2a1c04c",
       "executable": false
     },
     "tests/ai-journey.mjs": {
@@ -3908,7 +3912,7 @@
       "executable": false
     },
     "tests/communication-browser.mjs": {
-      "sha256": "6a03910ee84eabb9289e465d78afb5f2e2ca40d4785bae61e917daa199ed5863",
+      "sha256": "390670066d33a556baf2eee7dfc471c4f4a1d6c17b2209d0050dd97307db5d98",
       "executable": false
     },
     "tests/communication-journey.mjs": {

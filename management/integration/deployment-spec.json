@@ -426,6 +426,12 @@
       "name": "0069_buoy_communications.sql",
       "sha256": "5c67b90ed6215d0108e4e394a6d5d2fad86ae1ce0414286f44469c3a67fa464a",
       "sql": "CREATE TABLE buoy_communications(id TEXT PRIMARY KEY,account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,person_id TEXT REFERENCES buoy_customer_people(id) ON DELETE CASCADE,data_class TEXT NOT NULL CHECK(data_class IN ('emails','tickets')),observed_on TEXT NOT NULL,body TEXT NOT NULL);\nCREATE TABLE buoy_communication_scores(account_id TEXT PRIMARY KEY REFERENCES buoy_accounts(id) ON DELETE CASCADE,document TEXT NOT NULL);\nCREATE TRIGGER buoy_communication_erasure AFTER DELETE ON buoy_communications BEGIN\n DELETE FROM buoy_communication_scores WHERE account_id=OLD.account_id;\n DELETE FROM buoy_scorecard_history WHERE account_id=OLD.account_id AND json_type(document,'$.inputs.values.\"communications.score\"') IS NOT NULL;\n DELETE FROM buoy_scorecard_results WHERE account_id=OLD.account_id AND json_type(document,'$.inputs.values.\"communications.score\"') IS NOT NULL;\nEND;\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0070_buoy_communication_state.sql",
+      "sha256": "7416a37c5b3f52f17c0579d2770c1d7472d25454b8a952a030df8b122178883c",
+      "sql": "-- This product marker carries no consent, provider policy or execution authority.\nCREATE TABLE buoy_communication_state (\n singleton INTEGER PRIMARY KEY CHECK(singleton=1),\n configured INTEGER NOT NULL CHECK(configured IN (0,1))\n);\nINSERT INTO buoy_communication_state(singleton,configured)\n SELECT 1, CASE WHEN json_type(document,'$.communicationsEnabled') IS NULL THEN 0 ELSE 1 END\n FROM buoy_ai_settings WHERE singleton=1;\n"
     }
   ],
   "compatibilityDate": "2026-09-08",

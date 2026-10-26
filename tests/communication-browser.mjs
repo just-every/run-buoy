@@ -5,7 +5,7 @@ import {chromium} from '@playwright/test'
 import {communicationFixture} from './communication-journey.mjs'
 import {scan,submit,failures} from './a11y-checks.mjs'
 const directory=process.env.EVIDENCE_DIR??'./evidence/communications';await mkdir(directory,{recursive:true})
-const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+const browser=await chromium.launch({headless:true,...(process.env.BUOY_CHROMIUM_PATH?{executablePath:process.env.BUOY_CHROMIUM_PATH}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
 try{for(const width of [1440,390]){
  const f=await communicationFixture(),{app,account,api}=f,context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
  try{
