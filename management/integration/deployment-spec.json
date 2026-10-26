@@ -432,6 +432,30 @@
       "name": "0070_buoy_communication_state.sql",
       "sha256": "7416a37c5b3f52f17c0579d2770c1d7472d25454b8a952a030df8b122178883c",
       "sql": "-- This product marker carries no consent, provider policy or execution authority.\nCREATE TABLE buoy_communication_state (\n singleton INTEGER PRIMARY KEY CHECK(singleton=1),\n configured INTEGER NOT NULL CHECK(configured IN (0,1))\n);\nINSERT INTO buoy_communication_state(singleton,configured)\n SELECT 1, CASE WHEN json_type(document,'$.communicationsEnabled') IS NULL THEN 0 ELSE 1 END\n FROM buoy_ai_settings WHERE singleton=1;\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0071_buoy_connection_notices.sql",
+      "sha256": "c59aab9862ff9480383906918528fa08e8a845356c8158206957dfbe00815c95",
+      "sql": "-- Connector notices need no account when the source has not been bound yet.\nCREATE TABLE buoy_connection_notices (\n id TEXT PRIMARY KEY, connection_id TEXT NOT NULL REFERENCES buoy_connections(id),\n person_id TEXT NOT NULL, source TEXT NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,\n created_at TEXT NOT NULL, read_at TEXT, UNIQUE(person_id,source)\n);\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0072_buoy_revenue_reconciliation.sql",
+      "sha256": "b67f738611185d575fce2c4cee9bcfdb3399f813ac609f3402089bbe371a3d52",
+      "sql": "CREATE TABLE buoy_revenue_resolutions (\n id TEXT PRIMARY KEY,\n account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,\n account_revision TEXT NOT NULL,\n contract_version_id TEXT NOT NULL,\n contract_revision TEXT NOT NULL,\n billing_snapshot_id TEXT NOT NULL,\n resolved_by TEXT NOT NULL,\n resolved_at TEXT NOT NULL,\n reason TEXT NOT NULL CHECK(length(trim(reason)) BETWEEN 1 AND 2000),\n UNIQUE(account_id,contract_version_id,contract_revision,billing_snapshot_id)\n);\nCREATE TRIGGER buoy_revenue_resolution_immutable BEFORE UPDATE ON buoy_revenue_resolutions BEGIN\n SELECT RAISE(ABORT,'Revenue resolutions are immutable');\nEND;\nCREATE TRIGGER buoy_revenue_resolution_delete BEFORE DELETE ON buoy_revenue_resolutions\n WHEN EXISTS(SELECT 1 FROM buoy_accounts WHERE id=OLD.account_id) BEGIN\n SELECT RAISE(ABORT,'Revenue resolutions are immutable');\nEND;\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0073_buoy_integration_api.sql",
+      "sha256": "5da552fb927e1a1e134da2a468eee3d0e0b89b2605093f662983c98cb8ee3944",
+      "sql": "-- Integration authority never travels with an installation archive.\nCREATE TABLE buoy_integration_tokens (\n id TEXT PRIMARY KEY,\n token_hash TEXT NOT NULL UNIQUE,\n owner_id TEXT NOT NULL,\n owner_version INTEGER NOT NULL,\n scopes TEXT NOT NULL,\n account_ids TEXT NOT NULL,\n requests_per_minute INTEGER NOT NULL CHECK(requests_per_minute BETWEEN 1 AND 600),\n expires_at INTEGER NOT NULL,\n revoked_at INTEGER,\n last_used_at TEXT\n);\nCREATE TABLE buoy_integration_minutes (\n token_id TEXT NOT NULL REFERENCES buoy_integration_tokens(id) ON DELETE CASCADE,\n minute INTEGER NOT NULL,\n requests INTEGER NOT NULL,\n PRIMARY KEY(token_id,minute)\n);\n-- No request bytes or account snapshots are retained. Erasure removes receipts.\nCREATE TABLE buoy_integration_receipts (\n token_id TEXT NOT NULL REFERENCES buoy_integration_tokens(id) ON DELETE CASCADE,\n key_hash TEXT NOT NULL,\n request_hash TEXT NOT NULL,\n account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,\n revision TEXT NOT NULL,\n status INTEGER NOT NULL,\n PRIMARY KEY(token_id,key_hash)\n);\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0074_buoy_integration_erasure.sql",
+      "sha256": "0935ced33eace2057c8cb18e38ab15dc44a1f5d873d08952ffcd936fcdbaadce",
+      "sql": "-- Removing an account also withdraws integration grants that name it. Keep\n-- only the opaque revoked credential identity; never retain the erased ID.\nCREATE TRIGGER buoy_integration_account_removed BEFORE DELETE ON buoy_accounts\nBEGIN\n UPDATE buoy_integration_tokens\n SET revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER)*1000),\n     account_ids=(SELECT json_group_array(value) FROM json_each(account_ids) WHERE value<>OLD.id)\n WHERE EXISTS(SELECT 1 FROM json_each(account_ids) WHERE value=OLD.id);\nEND;\n"
     }
   ],
   "compatibilityDate": "2026-09-08",
