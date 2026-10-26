@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "14df8eefdd49203137f0451af4c7275271df98938a5949812d3f7dd09322298c",
+      "sha256": "ec260a9596826747439c06b650b0ab5f8aef33c4fb931a2892ef49989543f141",
       "executable": false
     },
     "DEMO.md": {
@@ -3848,7 +3848,7 @@
       "executable": false
     },
     "tests/ai-question-browser.mjs": {
-      "sha256": "1c9d1d369461a3e30b56f3f57479941f465a8b5acba6b3acdffe17483a5bac2f",
+      "sha256": "7bc2191fa66c7a041dca04b5e35359d4ea1a4efa5ed7b11d1a9e0f0aa33880e2",
       "executable": false
     },
     "tests/ai-question-edge.mjs": {

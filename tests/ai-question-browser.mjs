@@ -35,9 +35,12 @@ export async function scriptedQuestionBrowser({fixture,page,person,api,proof}){
     await proof(role+'-'+(generated?'generated':'extractive')+'-question-'+index)
     const links=await result.locator('a').evaluateAll(nodes=>nodes.map(n=>({href:n.getAttribute('href'),label:n.textContent})))
     for(const link of links){
-     const [destination]=await Promise.all([page.context().waitForEvent('page'),page.getByRole('link',{name:link.label,exact:true}).click({modifiers:['ControlOrMeta']})])
+     // A middle click opens the real link in a tab on every desktop platform.
+     // Modified clicks can leave macOS headless Chromium without a new tab.
+     const [destination]=await Promise.all([page.context().waitForEvent('page'),page.getByRole('link',{name:link.label,exact:true}).click({button:'middle'})])
      try{
-      await destination.waitForLoadState('networkidle')
+      // The page event can precede navigation; about:blank is already loaded.
+      await destination.waitForURL(new URL(link.href,fixture.app.origin).href,{waitUntil:'networkidle'})
       assert.equal(new URL(destination.url()).pathname,new URL(link.href,fixture.app.origin).pathname)
       if(generated){const source=JSON.parse(await destination.locator('body').innerText());assert.equal(source.source.accountName,link.label.split(': ')[0])}
       else assert.equal(await destination.getByRole('heading',{name:link.label,exact:true,level:1}).count(),1)
