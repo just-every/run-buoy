@@ -41,8 +41,9 @@ export async function integrationJourney(existing){
   const page2=await json(await server('/accounts?limit=1&after='+page.next,{token:grant.token}));assert.deepEqual(page2.items.map(a=>a.id),[second]);assert.equal(page2.next,null)
   assert.equal((await server('/accounts?limit=0',{token:grant.token})).status,400)
   assert.equal((await server('/accounts/'+outside,{token:grant.token})).status,403)
-  const update={...write,method:'PUT',body:{...input(first),name:'Updated synthetic account',revision:a.revision},headers:{'idempotency-key':'synthetic-buoy-914-update'}}
-  const updated=await json(await server('/accounts/'+first,update));assert.notEqual(updated.revision,a.revision)
+  const current=await json(await server('/accounts/'+first,{token:grant.token}))
+  const update={...write,method:'PUT',body:{...input(first),name:'Updated synthetic account',revision:current.revision},headers:{'idempotency-key':'synthetic-buoy-914-update'}}
+  const updated=await json(await server('/accounts/'+first,update));assert.notEqual(updated.revision,current.revision)
   assert.deepEqual(await json(await server('/accounts/'+first,update)),updated)
   assert.equal((await server('/accounts/'+first,{...update,headers:{'idempotency-key':'synthetic-buoy-914-stale'}})).status,409)
   assert.deepEqual(await json(await server('/accounts',write),201),concurrent[0],'Original create replay does not overwrite a later edit')

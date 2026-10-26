@@ -4080,7 +4080,7 @@
       "executable": false
     },
     "tests/integration-journey.mjs": {
-      "sha256": "4a10e39751692b698e9a625af490ea1bed60289ea78bc05eccc7e1cc75b24170",
+      "sha256": "1bcaab42f774b8f15a6db8f617f66c4df52ce397ada9d0dfae1b29530a4f9fe9",
       "executable": false
     },
     "tests/keyboard.mjs": {
