@@ -24,11 +24,13 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
  const secret = () => randomBytes(32).toString('base64url'), mails = [], outbound = []
  const vars = { AUTH_LOCAL: secure ? 'false' : 'true', AUTH_ORIGIN: origin, OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
  Object.assign(vars, bindings(origin))
+ const responses=new Set()
  let mailStatus = 200
+ const clockValue=()=>Number(typeof clock==='function'?clock():clock)
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
   host:'127.0.0.1', port, https:secure,
   modulesRoot: join(root, 'dist/server'),
-  modules: [...(clock===undefined?[]:[{type:'ESModule',path:join(root,'dist/server/test-clock.mjs'),contents:`import worker from './${config.main}'; const NativeDate=Date; globalThis.Date=class extends NativeDate {constructor(...args){super(...(args.length?args:[${Number(clock)}]));} static now(){return ${Number(clock)}}}; export default worker;`}]),...[config.main, ...(await readdir(join(root, 'dist/server/assets'))).filter(file => file.endsWith('.js')).map(file => `assets/${file}`)].map(file => ({type:'ESModule',path:join(root,'dist/server',file)}))],
+  modules: [...(clock===undefined?[]:[{type:'ESModule',path:join(root,'dist/server/test-clock.mjs'),contents:`import worker from './${config.main}'; const NativeDate=Date; let instant=${clockValue()}; globalThis.Date=class extends NativeDate {constructor(...args){super(...(args.length?args:[instant]));} static now(){return instant}}; export default {...worker,fetch(request,env,ctx){const value=request.headers.get('x-buoy-test-time');if(value)instant=Number(value);return worker.fetch(request,env,ctx)}};`}]),...[config.main, ...(await readdir(join(root, 'dist/server/assets'))).filter(file => file.endsWith('.js')).map(file => `assets/${file}`)].map(file => ({type:'ESModule',path:join(root,'dist/server',file)}))],
   compatibilityDate: config.compatibility_date, compatibilityFlags: config.compatibility_flags,
   assets: {directory:join(root,'dist/client'),routerConfig:{has_user_worker:true}},
   d1Databases: {DB:databaseId}, bindings:vars,
@@ -46,7 +48,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   for(const file of (persistenceDirectory?[]:await readdir(join(root,'migrations/core'))).filter(file=>file.endsWith('.sql')).sort()) {
    for(const sql of splitSql(await readFile(join(root,'migrations/core',file),'utf8'))) await db.prepare(sql).run()
   }
-  const request=(path,{method='GET',body,cookie,token,headers={}}={})=>mf.dispatchFetch(origin+path,{method,redirect:'manual',headers:{origin,...(body===undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})})
+  const request=async(path,{method='GET',body,cookie,token,headers={}}={})=>{const response=await mf.dispatchFetch(origin+path,{method,redirect:'manual',headers:{origin,...(clock===undefined?{}:{'x-buoy-test-time':String(clockValue())}),...(body===undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});responses.add(response);return response}
   const boot=await request('/auth/bootstrap',{method:'POST',body:{token:vars.SETUP_TOKEN,displayName:'Harbour CS owner'}})
   assert.equal(boot.status,303,await boot.clone().text())
   const cookie=boot.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
@@ -64,6 +66,6 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   }
   // The Cron Trigger door, as Cloudflare calls it.
   const scheduled=async(cron='0 * * * *',scheduledTime=Date.now())=>(await mf.getWorker()).scheduled({cron,scheduledTime})
-  return {origin,directory,request,dispatch:async request=>mf.dispatchFetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()})}),cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true})}}
+  return {origin,directory,request,dispatch:async request=>mf.dispatchFetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()})}),cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){for(const response of responses)if(response.body&&!response.body.locked)await response.body.cancel();responses.clear();await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true})}}
  }catch(error){await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true});throw error}
 }

@@ -1,7 +1,7 @@
 import { insist } from '../core'
 // A fixed provider origin and GET-only transport: product requests cannot
 // select an endpoint, change subscriptions or move money.
-export async function customers(secret: string, cursor: string | null) {
+export async function customers(secret: string, cursor: string | null, observedAt:string) {
  const url=new URL('https://api.stripe.com/v1/customers')
  url.searchParams.set('limit','100')
  if(cursor)url.searchParams.set('starting_after',cursor)
@@ -13,7 +13,7 @@ export async function customers(secret: string, cursor: string | null) {
  insist(Array.isArray(body.data)&&typeof body.has_more==='boolean','Invalid Stripe customer page.',502)
  const records=body.data.map(row=>{
   insist(row.object==='customer'&&typeof row.id==='string'&&/^cus_[A-Za-z0-9]+$/.test(row.id)&&row.livemode===false&&Number.isSafeInteger(row.created)&&Number(row.created)>=0,'Invalid Stripe test customer record.',502)
-  const observedAt=new Date(Number(row.created)*1000).toISOString()
+  new Date(Number(row.created)*1000).toISOString()
   return {id:row.id,observedAt}
  })
  insist(new Set(records.map(r=>r.id)).size===records.length&&(!body.has_more||records.length>0),'Invalid Stripe pagination.',502)

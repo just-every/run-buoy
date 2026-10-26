@@ -51,6 +51,7 @@ export function calculateRevenue(contract:ConfirmedContract|null,on:string,sourc
   amountMeaning:'Line amountMinor is the total for its billing period, not a unit price'}
 }
 export function revenueValues(revenue:Revenue):RevenueValues {
+ if(revenue.sourceKind==='billing'&&revenue.freshness!=='current')revenue={...revenue,arrMinor:null,mrrMinor:null,reporting:revenue.reporting?{...revenue.reporting,arrMinor:null,mrrMinor:null}:undefined}
  return {'revenue.usdArrMinor':revenue.reporting?.arrMinor??null,'revenue.usdMrrMinor':revenue.reporting?.mrrMinor??null,'revenue.reportingCurrency':'USD','revenue.rateTableRevision':revenue.reporting?.rate?.tableRevision??null,'revenue.usdPerUnit':revenue.reporting?.rate?.usdPerUnit??null,'revenue.arrMinor':revenue.arrMinor,'revenue.mrrMinor':revenue.mrrMinor,'revenue.currency':revenue.currency,
   'revenue.products':revenue.products?.join('\n')??null,'revenue.seats':revenue.seats,'revenue.contractStart':revenue.contractStart,'revenue.contractEnd':revenue.contractEnd,
   'revenue.sourceKind':revenue.sourceKind,'revenue.reference':revenue.reference,'revenue.confirmedOn':revenue.confirmedOn,'revenue.status':revenue.status}

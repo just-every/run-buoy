@@ -1,4 +1,7 @@
 import {date,insist,stmt,type Actor} from '../core'
+import {providerAmounts} from './provider'
+import type {RateTable} from './fx'
+import {stripeFreshness,type StripeEvidence} from '../billing-evidence'
 import {parseRevenueImage,revenueImageSql} from './snapshot'
 import type {ContractVersion} from './types'
 
@@ -16,6 +19,8 @@ export async function revenueState(db:D1Database,actor:Actor,on=new Date().toISO
  ])
  const raw=(image.results[0] as {snapshot:string}).snapshot
  const versions=history.results.map(row=>{const {document,...rest}=row;return {...rest,contract:JSON.parse(String(document))} as ContractVersion})
- return {on:day,accounts:parseRevenueImage(raw,day),versions,
-  interpretation:'Contracted recurring revenue in native minor units. USD reporting uses the explicitly named rate table; missing rates remain unavailable. No provider invoice reconciliation is inferred.'}
+ const parsed=JSON.parse(raw),table:RateTable=parsed.rateDocument?{...JSON.parse(parsed.rateDocument),revision:parsed.rateVersionId}:{name:'Corporate budget rates',mode:'corporate',rates:[],revision:null}
+ const providers=(parsed.billing??[] as StripeEvidence[]).map((s:StripeEvidence)=>({accountId:s.accountId,snapshotId:s.snapshotId,reference:s.reference,observedAt:s.observedAt,freshness:stripeFreshness(s,day),amounts:s.document?providerAmounts(s.document,table,day).map(({currency,arr,mrr,reporting})=>({currency,arr,mrr,reporting})):[]}))
+ return {on:day,providers,accounts:parseRevenueImage(raw,day),versions,
+  interpretation:'Contracted recurring revenue in native minor units. USD reporting uses the explicitly named rate table; missing rates remain unavailable. Reviewed Stripe sources supply revenue when no person-confirmed contract exists. Both sources remain separate when a contract exists.'}
 }

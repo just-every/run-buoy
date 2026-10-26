@@ -19,7 +19,7 @@ billingApi.put('/api/buoy/billing/:id/settings',async c=>{
  const actor=c.get('actor');requirePerson(actor);const body=await jsonBody(c.req.raw),connectionId=c.req.param('id'),days=body.staleDays
  insist(Number.isInteger(days)&&Number(days)>=1&&Number(days)<=365,'Stripe billing threshold must be 1 to 365 whole UTC days.')
  await settings(c.env.DB,connectionId)
- await c.env.DB.batch([authority(c.env.DB,actor,true),stmt(c.env.DB,'UPDATE buoy_billing_settings SET stale_days=?,version=version+1,lease_until=0 WHERE connection_id=?',days,connectionId),auditRecord(c.env.DB,actor,'billing.freshness-changed',connectionId),stmt(c.env.DB,'DELETE FROM buoy_assertions')])
+ await c.env.DB.batch([authority(c.env.DB,actor,true),stmt(c.env.DB,'UPDATE buoy_billing_settings SET stale_days=?,version=version+1,lease_until=0 WHERE connection_id=?',days,connectionId),stmt(c.env.DB,'UPDATE buoy_connections SET stale_days=? WHERE id=?',days,connectionId),auditRecord(c.env.DB,actor,'billing.freshness-changed',connectionId),stmt(c.env.DB,'DELETE FROM buoy_assertions')])
  return c.json({status:'Stripe billing freshness threshold saved.'})
 })
 billingApi.put('/api/buoy/billing/:id/webhook-secret',async c=>{

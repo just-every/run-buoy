@@ -1,7 +1,7 @@
 // CONNECT-001 real public Worker doors; fake only at Stripe's network edge.
 import assert from 'node:assert/strict'
 import {startWorker} from './worker.mjs'
-const fixtureKey=['rk','test','fixtureCustomerReadOnly'].join('_')
+const fixtureKey='synthetic-buoy-9001'
 let fail=false,invalid=false, hold, started
 const calls=[]
 const app=await startWorker({providerFetch:async request=>{
@@ -27,16 +27,18 @@ try{
  const success=(await json(await call('/connections'))).connections[0].last_success
  fail=true;run=await json(await sync());assert.equal(run.status,'failed');assert.equal(run.cursor_before,'cus_first');assert.match(run.error,/reconnect/i)
  let state=await json(await call('/connections'));assert.equal(state.connections[0].last_success,success);assert.equal(state.connections[0].cursor,'cus_first');assert.equal(state.connections[0].freshness,'Failed')
+ const notices=await json(await call('/notifications'));assert.equal(notices.sourceNotices.length,1);assert.equal(notices.sourceNotices[0].connectionId,connection.id);assert.equal((await json(await call('/notifications','GET',undefined,{cookie:member}))).sourceNotices.length,0);await json(await call('/notifications/'+notices.sourceNotices[0].id+'/read','POST',{}));assert.ok((await json(await call('/notifications'))).sourceNotices[0].readAt)
  await json(await call(path+'/credential','PUT',{key:fixtureKey}));fail=false
  run=await json(await sync());assert.equal(run.status,'succeeded',run.error);assert.equal(run.cursor_before,'cus_first');assert.equal(run.cursor_after,null);assert.equal(run.added_count,1)
  run=await json(await sync());assert.equal(run.added_count,0,'CONNECT-001 reconciliation does not duplicate source IDs')
- const records=(await json(await call(path+'/records'))).records;assert.equal(records.length,2);assert.ok(records.every(row=>row.observed_at==='2023-11-14T22:13:20.000Z'))
+ const records=(await json(await call(path+'/records'))).records;assert.equal(records.length,2);assert.ok(records.every(row=>Date.parse(row.observed_at)>=Date.parse(success)&&Date.parse(row.observed_at)<=Date.now()),'Inventory observations record actual read instants, not customer creation')
  invalid=true;run=await json(await sync());assert.equal(run.status,'failed');assert.equal((await json(await call(path+'/records'))).records.length,2);invalid=false
  // Credential change during a live provider response invalidates the local commit.
  let release;hold=new Promise(r=>release=r);const ready=new Promise(r=>started=r)
  const inFlight=sync();await ready
  await json(await call(path,'DELETE',{}));release();hold=null
  assert.equal((await json(await inFlight)).status,'failed')
+ assert.ok((await json(await call('/notifications'))).sourceNotices.length>=2,'Explicit disconnection creates a reconnection notice')
  const count=calls.length;assert.equal((await sync()).status,409);await app.scheduled();assert.equal(calls.length,count,'CONNECT-001 disconnected connector makes no next-run request')
  await json(await call(path+'/credential','PUT',{key:fixtureKey}));await app.scheduled()
  state=await json(await call('/connections'));assert.equal(state.connections[0].last_error,null);assert.equal(state.connections[0].record_count,2)

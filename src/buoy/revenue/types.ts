@@ -14,13 +14,13 @@ export interface ContractVersion {
 export interface Revenue {
  reporting?:ReturnType<typeof import('./fx').reportingRevenue>;
  arrMinor:number|null;mrrMinor:number|null;currency:string|null;
- mrrExact:{numeratorMinor:number;denominator:12}|null;
+ mrrExact:{numeratorMinor:number;denominator:12}|{numeratorMinor:string;denominator:string}|null;
  mrrRounding:'half-up to whole native minor unit';
  products:string[]|null;seats:number|null;
  contractStart:string|null;contractEnd:string|null;
  sourceKind:RevenueSourceKind|null;reference:string|null;confirmedOn:string|null;
  status:'missing'|'scheduled'|'active'|'expired';
- freshness:'missing'|'current'|'stale';staleAfterDays:30;
+ freshness:'missing'|'current'|'stale';staleAfterDays:number;
  amountMeaning:'Line amountMinor is the total for its billing period, not a unit price'
 }
 export interface RevenueAccount {

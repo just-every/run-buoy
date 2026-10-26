@@ -37,8 +37,13 @@ export function selectedRate(table:RateTable,currency:string,on:string){
 export function convertMinor(amount:number,currency:string,rate:ReturnType<typeof selectedRate>,divisor=1n){
  if(!rate)return null
  insist(Number.isSafeInteger(amount),'Native minor-unit amount exceeds a safe integer.')
+ return convertExactMinor({numeratorMinor:String(amount),denominator:String(divisor)},currency,rate)
+}
+export function convertExactMinor(amount:{numeratorMinor:string;denominator:string},currency:string,rate:ReturnType<typeof selectedRate>){
+ if(!rate)return null
  const digits=minorUnitDigits(currency);insist(digits!==undefined,'Native currency has no supported minor unit.')
- const {numerator,denominator}=decimal(rate.usdPerUnit),value=BigInt(amount)*numerator*100n,denom=denominator*10n**BigInt(digits)*divisor,absolute=value<0n?-value:value
+ insist(/^-?\d+$/.test(amount.numeratorMinor)&&/^[1-9]\d*$/.test(amount.denominator),'Invalid exact source amount.')
+ const {numerator,denominator}=decimal(rate.usdPerUnit),value=BigInt(amount.numeratorMinor)*numerator*100n,denom=denominator*10n**BigInt(digits)*BigInt(amount.denominator),absolute=value<0n?-value:value
  const rounded=(absolute*2n+denom)/(2n*denom),signed=value<0n?-rounded:rounded
  insist(signed<=BigInt(Number.MAX_SAFE_INTEGER)&&signed>=BigInt(Number.MIN_SAFE_INTEGER),'Converted USD cents exceed a safe integer.')
  return Number(signed)

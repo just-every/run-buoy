@@ -1,3 +1,5 @@
+import {BILLING_EVIDENCE_SQL,providerRevenue} from './provider'
+import type {StripeEvidence} from '../billing-evidence'
 import {reportingRevenue,type RateTable} from './fx'
 import {date,insist} from '../core'
 import {calculateRevenue,revenueValues} from './model'
@@ -7,7 +9,8 @@ import type {ConfirmedContract,RevenueAccount,RevenueSourceKind} from './types'
 // revision and current contract, so consumers cannot publish from stale inputs.
 export function revenueImageSql(on?:string){
  if(on!==undefined)date(on,'Revenue measurement date')
- return `SELECT json_object('rateDocument',(SELECT v.document FROM buoy_fx_current c JOIN buoy_fx_versions v ON v.id=c.version_id WHERE c.singleton=1),
+ const billingSql=on===undefined?BILLING_EVIDENCE_SQL:BILLING_EVIDENCE_SQL.replace('LEFT JOIN buoy_billing_current p ON p.account_id=b.account_id LEFT JOIN buoy_billing_snapshots s ON s.id=p.snapshot_id',`LEFT JOIN buoy_billing_snapshots s ON s.id=(SELECT h.id FROM buoy_billing_snapshots h WHERE h.account_id=b.account_id AND substr(h.observed_at,1,10)<='${on}' ORDER BY h.observed_at DESC,h.received_at DESC,h.id DESC LIMIT 1)`)
+ return `SELECT json_object('billing',json((${billingSql})),'rateDocument',(SELECT v.document FROM buoy_fx_current c JOIN buoy_fx_versions v ON v.id=c.version_id WHERE c.singleton=1),
   'rateVersionId',(SELECT version_id FROM buoy_fx_current WHERE singleton=1),
   'accounts',json((SELECT json_group_array(json_object('accountId',accountId,'name',name,'revision',revision,'versionId',versionId,
   'contractRevision',contractRevision,'sourceKind',sourceKind,'contract',json(contract),'recordedBy',recordedBy,'recordedAt',recordedAt)) FROM (
@@ -21,11 +24,11 @@ export interface RevenueImageRow {
  sourceKind:RevenueSourceKind|null;contract:ConfirmedContract|null;recordedBy:string|null;recordedAt:string|null
 }
 // Retained scorecard inputs from before reporting have the original array shape.
-export type RevenueImage=RevenueImageRow[]|{accounts:RevenueImageRow[];rateDocument:string|null;rateVersionId:string|null}
+export type RevenueImage=RevenueImageRow[]|{accounts:RevenueImageRow[];rateDocument:string|null;rateVersionId:string|null;billing?:StripeEvidence[]}
 export function parseRevenueImage(raw:string,on:string){
  const image=JSON.parse(raw) as RevenueImage,rows=Array.isArray(image)?image:image.accounts
  const table:RateTable=!Array.isArray(image)&&image.rateDocument?{...JSON.parse(image.rateDocument),revision:image.rateVersionId}:{name:'Corporate budget rates',mode:'corporate',rates:[],revision:null}
- return rows.map(row=>{const revenue=calculateRevenue(row.contract,on,row.sourceKind);return {...row,revenue:{...revenue,reporting:reportingRevenue(revenue,table,on)}}}) as RevenueAccount[]
+ return rows.map(row=>{const source=Array.isArray(image)?undefined:image.billing?.find(b=>b.accountId===row.accountId),revenue=calculateRevenue(row.contract,on,row.sourceKind);return {...row,revenue:!row.contract&&source?providerRevenue(source,on,table):{...revenue,reporting:reportingRevenue(revenue,table,on)}}}) as RevenueAccount[]
 }
 export async function revenueInputs(db:D1Database,on=new Date().toISOString().slice(0,10)){
  const day=date(on,'Revenue measurement date'),sql=revenueImageSql(day),row=await db.prepare(sql).first<{snapshot:string}>()

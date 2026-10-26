@@ -124,7 +124,10 @@ export async function billingJourney(app,source){
  const webhook=async(e,status=200,header=signature(e))=>{const result=await api(base+'/webhook','POST',e,status,{cookie:undefined,headers:{'stripe-signature':header}});lastWebhookReturnedAt=new Date().toISOString();return result}
  const unsigned=event();await webhook(unsigned,400,'');await webhook(unsigned,400,signature(unsigned,Math.floor(Date.now()/1000)-301))
  const tampered={...unsigned,id:'synthetic-buoy-tampered'};await webhook(tampered,400,signature(unsigned))
+ const retainedInput=await read(a1.id),draft=await api('/proposals','POST',{accountId:a1.id,kind:'playbook',payload:{title:'Review original Stripe source',dueDate:future(7)}},201)
+ const prepared=(await api('/state')).proposals.find(p=>p.id===draft.id);assert.equal(prepared.snapshot.connectedBilling.snapshotId,retainedInput.id);assert.equal(prepared.snapshot.connectedBilling.sourceReference,retainedInput.sourceReference)
  const upgrade=event();source.amount=5500;await webhook(upgrade)
+ const earlier=(await api('/state')).proposals.find(p=>p.id===draft.id);assert.deepEqual(earlier.snapshot,prepared.snapshot,'Connected-source refresh preserves earlier work on its exact retained input');await api('/proposals/'+draft.id+'/approve','POST',{},409)
  first=await read(a1.id);assert.equal(first.document.revenue[0].arr.roundedMinor,5500*3*12)
  const upgradeScore=(await api('/scorecards')).accounts.find(a=>a.accountId===a1.id);assert.equal(upgradeScore.breakdown.find(m=>m.field==='stripe.arrMinor').rawValue,198000);assert.ok(upgradeScore.score>published.score,'Webhook refresh recalculates published connected-source health');assert.ok(Date.parse(upgradeScore.calculatedAt)<=Date.parse(lastWebhookReturnedAt),'Published health recalculation completed before the successful public webhook returned')
  const afterUpgrade=await state();await webhook(upgrade);assert.equal((await state()).history.length,afterUpgrade.history.length,'Duplicate webhook produces no extra snapshot')
@@ -185,5 +188,6 @@ export async function billingJourney(app,source){
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const source=billingSource(),app=await startWorker({providerFetch:source.fetch})
  try{const result=await billingJourney(app,source);if(process.argv.includes('--browser')){const {billingBrowser}=await import('./billing-browser.mjs');await billingBrowser(app,result)}}finally{await app.close()}
+ const {providerReportingJourney}=await import('./provider-reporting.mjs');await providerReportingJourney(billingSource(),billingFixtureKey)
  const {pricingJourney}=await import('./billing-pricing.mjs');await pricingJourney()
 }

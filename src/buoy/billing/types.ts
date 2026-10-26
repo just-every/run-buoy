@@ -20,7 +20,7 @@ export interface BillingSubscription {
 export interface BillingInvoice {
  id:string;currency:string;status:string;amountDueMinor:number;amountPaidMinor:number;
  amountRemainingMinor:number;dueAt:string|null;attempted:boolean;attemptCount:number;
- paymentIntentId:string|null;createdAt:string
+ paymentIntentId:string|null;subscriptionId?:string|null;createdAt:string
 }
 export interface BillingPayment {
  id:string;currency:string;amountMinor:number;amountReceivedMinor:number;status:string;

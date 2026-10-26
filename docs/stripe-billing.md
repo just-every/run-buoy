@@ -173,3 +173,9 @@ Provider references: [subscription items](https://docs.stripe.com/api/subscripti
 [credit notes](https://docs.stripe.com/api/credit_notes/list?api-version=2025-02-24.acacia),
 [refunds](https://docs.stripe.com/api/refunds/object), and
 [raw webhook verification](https://github.com/stripe/stripe-node/blob/master/src/Webhooks.ts).
+
+## Reporting and source confidence
+
+Revenue and retention reports read the immutable Stripe observations at their actual read instants. The account revenue panel shows native and USD ARR and MRR, with the effective rate and table. Reporting converts exact provider fractions before half-up cent rounding. Rate edits preserve subscriptions, invoices and payments. Actual subscription changes and retained invoices have direct drilldown links. A non-subscription invoice is an explicit unmatched-source exception rather than recurring revenue.
+
+The source threshold on the billing page also controls the customer inventory threshold shown on Connections. Customer inventory observations record the read instant, not the customer's creation date. Failed reads and explicit disconnection create in-app reconnection notices for current owners and admins, including sources without account bindings. They authorize no outbound message. Existing account signal notices disclose reduced confidence while their Stripe source is failed, disconnected or stale. Key scope and provider-side revocation remain separately unverified.

@@ -5,7 +5,7 @@ import {mkdir} from 'node:fs/promises'
 import {startWorker} from './worker.mjs'
 import {scan,failures,manual,submit} from './a11y-checks.mjs'
 const live=process.env.BUOY_STRIPE_TEST_KEY
-const fixtureKey=['rk','test','browserFixtureCustomerRead'].join('_')
+const fixtureKey='synthetic-buoy-9002'
 let fail=false
 const app=await startWorker({secure:false,providerFetch:async request=>{
  assert.equal(request.method,'GET','BOUNDARY-001 Stripe transport is read-only');assert.equal(new URL(request.url).pathname,'/v1/customers','BOUNDARY-001 fixed customer-list endpoint')
@@ -49,6 +49,7 @@ try{
    state=await read();assert.equal(state.connections.find(c=>c.id===connection.id).freshness,'Failed')
    assert.ok((await page.locator('#connection-'+connection.id).innerText()).includes('Stripe refused'))
    await scan(page,`CONNECT-001 failed ${width}`);await snap('failed')
+   await page.goto(app.origin+'/app/notifications',{waitUntil:'networkidle'});assert.equal(await page.getByRole('heading',{name:'Connection notices',exact:true}).count(),1);const notice=page.locator('li').filter({has:page.getByRole('link',{name:connection.name,exact:true})});assert.match(await notice.innerText(),/Reconnect Stripe source/);await scan(page,`CONNECT-001 source notice ${width}`);await snap('source-notice');await submit(page,notice.getByRole('button',{name:'Mark read',exact:true}));assert.match(await notice.innerText(),/Read/);await page.goto(app.origin+'/app/connections',{waitUntil:'networkidle'})
    await show('connection-key-panel-'+connection.id);form=page.locator('#connection-key-'+connection.id)
    await scan(page,`CONNECT-001 reconnect form ${width}`);await snap('reconnect-form')
    await form.getByLabel('Stripe test key',{exact:true}).fill(live??fixtureKey)

@@ -110,7 +110,8 @@ export function assertBillingAwareAccounts(after,before,image){
 }
 export function assertBillingAwareRevenue(after,before,image){
  const prior=before.accounts.find(a=>a.accountId===image.accountId),restored=after.accounts.find(a=>a.accountId===image.accountId)
- assert.deepEqual(after,{...before,accounts:before.accounts.map(a=>a.accountId===image.accountId?{...prior,revision:restored.revision}:a)},'All confirmed revenue and metadata restore exactly; only the new source account confidence revision changes')
+ assert.equal(prior.revenue.sourceKind,'billing');assert.equal(restored.revenue.freshness,'stale','Retained provider money does not restore read authority')
+ assert.deepEqual(after,{...before,providers:before.providers.map(p=>p.accountId===image.accountId?{...p,freshness:'reconnect required'}:p),accounts:before.accounts.map(a=>a.accountId===image.accountId?{...prior,revision:restored.revision,revenue:{...prior.revenue,freshness:'stale'}}:a)},'All native and USD revenue, rates and source references restore exactly; only the restored provider confidence and account revision change')
 }
 export function assertBillingAwareScorecardHistory(after,before,image){
  const ids=new Set(before.map(row=>row.id)),retained=after.filter(row=>ids.has(row.id)),added=after.filter(row=>!ids.has(row.id))
@@ -128,5 +129,7 @@ export function billingAwareAccountCatalog(rows,sourceAccounts,restoredAccounts,
 }
 export function billingAwareRecordImage(before,sourceAccounts,restoredAccounts,image){
  const revisions=rows=>billingAwareAccountCatalog(rows,sourceAccounts,restoredAccounts,image)
- return {...before,fields:{...before.fields,accounts:revisions(before.fields.accounts)},hierarchy:{...before.hierarchy,accounts:revisions(before.hierarchy.accounts)},relationship:{...before.relationship,accounts:revisions(before.relationship.accounts)}}
+ const source=sourceAccounts.find(row=>row.id===image.accountId),exceptions=before.retention.exceptions.flatMap(row=>row.accountId===image.accountId?[{accountId:image.accountId,name:source.name,reason:'Stripe source requires reconnection or its latest read failed. Historical amounts are retained evidence with reduced confidence.'},row]:[row])
+ assert.equal(exceptions.length,before.retention.exceptions.length+1,'Restored retention adds the source authority gap without changing historical money or existing exceptions')
+ return {...before,retention:{...before.retention,exceptions},fields:{...before.fields,accounts:revisions(before.fields.accounts)},hierarchy:{...before.hierarchy,accounts:revisions(before.hierarchy.accounts)},relationship:{...before.relationship,accounts:revisions(before.relationship.accounts)}}
 }

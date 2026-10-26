@@ -1,3 +1,4 @@
+import {billingAccountSignals} from './billing/storage'
 import { authority, commit, guard, id, insist, now, stmt, text, type Actor } from './core'
 import { notifications } from './reminders'
 import { accountHealth } from './sentiment'
@@ -23,12 +24,14 @@ export async function setPreferences(db: D1Database, actor: Actor, input: Record
 export async function inbox(db: D1Database, actor: Actor) {
  personal(actor)
  const {results} = await stmt(db, `SELECT n.id,n.type,n.title,n.body,n.created_at AS createdAt,n.read_at AS readAt,n.email,n.account_id AS accountId,json_extract(a.document,'$.name') AS accountName,r.rule_id AS adoptionRuleId,CASE WHEN d.rule_id IS NULL THEN NULL ELSE json_object('reason',d.reason,'until',d.until,'createdAt',d.created_at) END AS dismissal FROM buoy_inbox n JOIN buoy_accounts a ON a.id=n.account_id LEFT JOIN buoy_adoption_alert_notices r ON r.notice_id=n.id LEFT JOIN buoy_adoption_dismissals d ON d.rule_id=r.rule_id AND d.account_id=r.account_id AND d.person_id=r.person_id WHERE n.person_id=? ORDER BY n.created_at DESC,n.id`, actor.id).all()
- return {items: results.map(row=>({...row,dismissal:typeof row.dismissal==='string'?JSON.parse(row.dismissal):null})), reminders: await notifications(db, actor), preferences: await preferences(db, actor.id), digests: (await stmt(db, 'SELECT id,period,frequency,email FROM buoy_digests WHERE person_id=? ORDER BY created_at DESC', actor.id).all()).results}
+ const billingSources=await billingAccountSignals(db)
+ const sourceNotices=(await stmt(db,"SELECT n.id,n.title,n.body,n.created_at AS createdAt,n.read_at AS readAt,c.name AS connectionName,n.connection_id AS connectionId FROM buoy_connection_notices n JOIN buoy_connections c ON c.id=n.connection_id JOIN oa_operators o ON o.id=n.person_id WHERE n.person_id=? AND o.status='active' AND o.role IN ('owner','admin') ORDER BY n.created_at DESC,n.id",actor.id).all()).results
+ return {sourceNotices,items: results.map(row=>({...row,sourceConfidence:row.type==='signal'?billingSources.get(String(row.accountId))?.reason??null:null,dismissal:typeof row.dismissal==='string'?JSON.parse(row.dismissal):null})), reminders: await notifications(db, actor), preferences: await preferences(db, actor.id), digests: (await stmt(db, 'SELECT id,period,frequency,email FROM buoy_digests WHERE person_id=? ORDER BY created_at DESC', actor.id).all()).results}
 }
 export async function markRead(db: D1Database, actor: Actor, noticeId: string) {
  personal(actor)
- const changed = await stmt(db, "UPDATE buoy_inbox SET read_at=COALESCE(read_at,?) WHERE id=? AND person_id=? AND EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')", now(), noticeId, actor.id, actor.id).run()
- insist(changed.meta.changes === 1, 'Notification not found.', 404)
+ const changed = await db.batch([stmt(db, "UPDATE buoy_inbox SET read_at=COALESCE(read_at,?) WHERE id=? AND person_id=? AND EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active')", now(), noticeId, actor.id, actor.id),stmt(db, "UPDATE buoy_connection_notices SET read_at=COALESCE(read_at,?) WHERE id=? AND person_id=? AND EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active' AND role IN ('owner','admin'))",now(),noticeId,actor.id,actor.id)])
+ insist(changed.reduce((sum,r)=>sum+r.meta.changes,0) === 1, 'Notification not found.', 404)
  return {id: noticeId, read: true}
 }
 export async function mention(db: D1Database, actor: Actor, accountId: string, input: Record<string, unknown>) {

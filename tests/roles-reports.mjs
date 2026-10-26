@@ -76,5 +76,6 @@ export async function roleReportsJourney(){
   await assign(finance,custom.id)
   assert.equal((await request('/revenue/retention?'+query,'GET',undefined,{cookie:finance.cookie})).status,403,'A custom permission change immediately withdraws reporting')
   assert.equal((await request('/revenue/rates','POST',{},{cookie:csm.cookie})).status,403,'Report read/export does not authorize publishing rates')
+  console.log('Scoped report HTTP assertions passed: financial totals, source isolation, filters, CSV, authority changes and export audit.')
  }finally{await app.close()}
 }

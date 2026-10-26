@@ -35,11 +35,12 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
  const adoptionProof=image?await aggregateProof(image.value,current.id):undefined
  if(adoptionProof)normalized.adoptionProof=adoptionProof
  const hierarchy=await hierarchyApprovalImage(db,current.id);if(hierarchy.proof)normalized.hierarchyProof=hierarchy.proof
+ const connectedBilling=await stmt(db,'SELECT s.id AS snapshotId,s.source_reference AS sourceReference,s.observed_at AS observedAt FROM buoy_billing_current c JOIN buoy_billing_snapshots s ON s.id=c.snapshot_id WHERE c.account_id=?',accountId).first<{snapshotId:string;sourceReference:string;observedAt:string}>()
  const proposalId = id(), at = now()
  await commit(db, actor, accountId, `${kind}.prepared`, [
   ...(image?[fence(db,image)]:[]),hierarchyApprovalFence(db,hierarchy),
   guard(db, 'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)', accountId, current.revision),
-  stmt(db, "INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,?,?,?,?,'prepared',?,?)", proposalId, accountId, kind, current.revision, JSON.stringify(current), JSON.stringify(normalized), `${actor.kind}:${actor.id}:${actor.displayName}`, at)])
+  stmt(db, "INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,?,?,?,?,'prepared',?,?)", proposalId, accountId, kind, current.revision, JSON.stringify({...current,...(connectedBilling?{connectedBilling}: {})}), JSON.stringify(normalized), `${actor.kind}:${actor.id}:${actor.displayName}`, at)])
  return {id: proposalId, accountId, kind, payload: normalized, status: 'prepared'}
 }
 export async function approve(db: D1Database, actor: Actor, proposalId: string) {

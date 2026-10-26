@@ -1,3 +1,4 @@
+import {connectionNotice} from './notices'
 import { Hono } from 'hono'
 import type { Bindings } from '../../auth.server'
 import { jsonBody } from '../access'
@@ -16,7 +17,7 @@ connectionsApi.get('/api/buoy/connections',async c=>{
  requirePerson(c.get('actor'))
  const connections=(await c.env.DB.prepare('SELECT c.id,name,provider,creator_id,created_at,disconnected_at,cursor,last_success,last_error,stale_days,(SELECT count(*) FROM buoy_connection_records r WHERE r.connection_id=c.id) AS record_count, EXISTS(SELECT 1 FROM buoy_connection_credentials k WHERE k.connection_id=c.id) AS credential_present FROM buoy_connections c ORDER BY created_at,c.id').all()).results
  const runs=(await c.env.DB.prepare('SELECT * FROM buoy_connection_runs ORDER BY started_at DESC,id LIMIT 100').all()).results
- return c.json({connections:connections.map(row=>({...row,freshness:row.disconnected_at?'Disconnected':!row.credential_present?'Reconnect required':row.last_error?'Failed':!row.last_success?'Never synced':Date.now()-Date.parse(String(row.last_success))>Number(row.stale_days)*86400000?'Stale':'Last run succeeded'})),runs})
+ return c.json({connections:connections.map(row=>({...row,freshness:row.disconnected_at?'Disconnected':!row.credential_present?'Reconnect required':row.last_error?'Failed':!row.last_success?'Never synced':Date.parse(now().slice(0,10))-Date.parse(String(row.last_success).slice(0,10))>Number(row.stale_days)*86400000?'Stale':'Last run succeeded'})),runs})
 })
 connectionsApi.get('/api/buoy/connections/:id/records',async c=>{
  requirePerson(c.get('actor'))
@@ -38,7 +39,7 @@ connectionsApi.put('/api/buoy/connections/:id/credential',async c=>{
 connectionsApi.delete('/api/buoy/connections/:id',async c=>{
  const actor=c.get('actor');requirePerson(actor);const connectionId=c.req.param('id');await jsonBody(c.req.raw)
  insist(await stmt(c.env.DB,'SELECT id FROM buoy_connections WHERE id=?',connectionId).first(),'Connection not found.',404)
- await c.env.DB.batch([authority(c.env.DB,actor,true),stmt(c.env.DB,'DELETE FROM buoy_connection_credentials WHERE connection_id=?',connectionId),stmt(c.env.DB,'UPDATE buoy_connections SET disconnected_at=?,version=version+1,lease_until=0 WHERE id=?',now(),connectionId),stmt(c.env.DB,'UPDATE buoy_billing_settings SET version=version+1,lease_until=0 WHERE connection_id=?',connectionId),auditRecord(c.env.DB,actor,'connector.disconnected',connectionId)])
+ await c.env.DB.batch([authority(c.env.DB,actor,true),stmt(c.env.DB,'DELETE FROM buoy_connection_credentials WHERE connection_id=?',connectionId),stmt(c.env.DB,'UPDATE buoy_connections SET disconnected_at=?,version=version+1,lease_until=0 WHERE id=?',now(),connectionId),stmt(c.env.DB,'UPDATE buoy_billing_settings SET version=version+1,lease_until=0 WHERE connection_id=?',connectionId),auditRecord(c.env.DB,actor,'connector.disconnected',connectionId),connectionNotice(c.env.DB,connectionId,'disconnect:'+connectionId+':'+id(),now())])
  return c.json({status:'Disconnected'})
 })
 connectionsApi.post('/api/buoy/connections/:id/sync',async c=>{
