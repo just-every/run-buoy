@@ -64,10 +64,28 @@ export async function integrationJourney(existing){
   assert.equal((await call('/tokens/'+grant.id,'DELETE',undefined,{headers:{origin:'https://other.invalid'}})).status,403)
   if(!existing){
    await json(await worker.request('/api/buoy/accounts/'+first,{cookie,method:'DELETE',body:{confirmation:'Updated synthetic account'}}))
-   assert.equal((await server('/accounts',write)).status,409,'Erasure removes a replay receipt and the tombstone prevents resurrection')
-   assert.equal((await server('/accounts/'+first,{token:grant.token})).status,404)
+   assert.equal((await server('/accounts',write)).status,401,'Erasure withdraws the credential that granted the removed account')
+   const fresh=await mint({accountIds:[first]})
+   assert.equal((await server('/accounts',{...write,token:fresh.token})).status,409,'A freshly authorized attempt still cannot resurrect an erased account')
+   assert.equal((await server('/accounts/'+first,{token:fresh.token})).status,404)
+   await json(await call('/tokens/'+fresh.id,'DELETE'))
   }
   for(const token of [grant,writer,limited])await json(await call('/tokens/'+token.id,'DELETE'))
+  if(!existing){
+   const versionGrant=await mint({accountIds:[second]})
+   const ownerState=await json(await worker.request('/api/buoy/state',{cookie}))
+   await json(await worker.request('/auth/step-up',{method:'POST',cookie,body:{action:'owner:transfer'}}),202)
+   const proof=worker.mails.findLast(mail=>mail.to.includes('owner@example.test'))
+   const proofUrl=new URL(proof.html.match(/href="([^"]*\/auth\/confirm\?token=[^"]+)"/)[1].replaceAll('&amp;','&'))
+   assert.equal((await worker.request(proofUrl.pathname+proofUrl.search,{cookie})).status,200)
+   assert.equal((await worker.request('/auth/confirm',{method:'POST',cookie,body:{token:proofUrl.searchParams.get('token')}})).status,303)
+   await json(await worker.request('/auth/invite',{method:'POST',cookie,body:{email:'synthetic-buoy-914-owner@example.test',displayName:'Second integration owner',role:'owner'}}),202)
+   const secondOwner=await worker.signIn('synthetic-buoy-914-owner@example.test')
+   for(const status of ['inactive','active']){
+    await json(await worker.request('/auth/operator/status',{method:'POST',cookie:secondOwner,body:{operatorId:ownerState.operator.id,status}}))
+    assert.equal((await server('/accounts',{token:versionGrant.token})).status,401,'An issuing-owner change invalidates the grant even after reactivation')
+   }
+  }
   return {accountId:first}
  }finally{if(!existing)await worker.close()}
 }

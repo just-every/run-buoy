@@ -37,7 +37,8 @@ or hyphens). A key is local to one token and binds the method, path and canonica
 JSON request. Concurrent identical requests return the same ID and revision;
 a different request with that key returns 409. Failed validation reserves no key.
 Successful receipts remain for the life of the account and token; account erasure
-removes them, and the native erasure fence prevents recreation. A replay returns
+removes them, revokes grants naming that account and removes its ID from those
+grants. The native erasure fence prevents recreation even with a fresh grant. A replay returns
 the original write reference, not a fresh account snapshot. Consumer refresh may
 be retried after interruption without repeating the account write or its audit.
 

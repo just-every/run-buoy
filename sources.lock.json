@@ -180,7 +180,7 @@
       "executable": false
     },
     "docs/integration-api.md": {
-      "sha256": "a13278c4f302d64369756a5e1d2ccc1497579207ca4da9e942f571105c6d72e1",
+      "sha256": "5140abf70b391dbfc3fc47921916a92c9da9e6ebab867a103c31c953be56a59c",
       "executable": false
     },
     "docs/migrations.md": {
@@ -581,6 +581,10 @@
     },
     "migrations/core/0073_buoy_integration_api.sql": {
       "sha256": "5da552fb927e1a1e134da2a468eee3d0e0b89b2605093f662983c98cb8ee3944",
+      "executable": false
+    },
+    "migrations/core/0074_buoy_integration_erasure.sql": {
+      "sha256": "0935ced33eace2057c8cb18e38ab15dc44a1f5d873d08952ffcd936fcdbaadce",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -4076,7 +4080,7 @@
       "executable": false
     },
     "tests/integration-journey.mjs": {
-      "sha256": "24d8df7468e9b883dfae195c5e8df5e468bcc1895ab49fd6f9c8c7187730091f",
+      "sha256": "4a10e39751692b698e9a625af490ea1bed60289ea78bc05eccc7e1cc75b24170",
       "executable": false
     },
     "tests/keyboard.mjs": {
