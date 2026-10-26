@@ -53,6 +53,9 @@ try{
  const job=await door.apply(plan)
  assert.equal(job.state,'completed')
  const accountId=fixture.accounts[0].id
+ const integration=await call('/v1/tokens','POST',{scopes:['accounts.read'],accountIds:[accountId],requestsPerMinute:10,expiresDays:1})
+ const integrationRead=()=>running.dispatch(new Request(running.origin+'/api/buoy/v1/accounts/'+accountId,{headers:{authorization:'Bearer '+integration.token}}))
+ assert.equal((await integrationRead()).status,200,'API-001 scoped server token reads before export')
  const proposal=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'renewed',reason:'Annual renewal accepted',evidence:'Signed renewal R-17'}})
  await call(`/proposals/${proposal.id}/approve`,'POST',{})
  const token=await call('/agent-tokens','POST',{label:'Portable preparation assistant'})
@@ -217,6 +220,7 @@ try{
  assert.ok(!archiveRows.some(item=>item.table==='buoy_proposals'&&(item.row.id===acceptedProposal.id||item.row.account_id===erasedTranscriptAccount.id)),'AI-002 account erasure removes accepted native proposals from the persisted export')
  for(const transcript of [retainedTranscript,discardedTranscript,erasedTranscript])for(const line of transcript.lines)assert.ok(!JSON.stringify(archivedAudit).includes(line),'AI-002 audit custody contains no transcript source text')
  assert.ok(!archiveRows.some(item=>['buoy_report_shares','buoy_dashboard_shares','buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
+ assert.ok(!archiveRows.some(item=>['buoy_integration_tokens','buoy_integration_minutes','buoy_integration_receipts'].includes(item.table)),'API-001 integration authority and replay state are excluded from the actual archive');
  assertBillingArchiveRows(archiveRows,billingImage);
  assert.ok(archiveRows.some(item=>item.table==='buoy_success_plans'&&item.row.id===successPlan.id),'The real archive contains the persisted success plan');
  assert.ok(archiveRows.some(item=>item.table==='buoy_success_plan_history'&&item.row.plan_id===successPlan.id),'The real archive contains success plan version history');
@@ -279,6 +283,7 @@ try{
  assert.deepEqual((await call('/notifications')).items.filter(i=>i.title===portableMeasure.name),freshAlerts,'ADOPT-001 unchanged restored evidence does not duplicate the new recipient’s episode');
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,401,'agent secrets are not restored')
  assert.equal((await webhookIntake()).status,401,'PLAY-001 restored run history cannot authorize old webhook intake');
+ assert.equal((await integrationRead()).status,401,'API-001 an exported token cannot authorize the restored installation');
  assert.equal((await usageIntake()).status,401,'USAGE-001 archived ingestion credentials cannot authorize restored intake')
  assert.equal((await call('/usage')).credentials.length,0,'No archived ingestion credentials restore');
  assert.deepEqual(await call('/privacy/requests'),privacyRequestsBefore,'Verified request records survive real archive restoration');

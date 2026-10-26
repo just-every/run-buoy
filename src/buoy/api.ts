@@ -1,3 +1,4 @@
+import {integrationApi} from './integration'
 import {aiApi} from './ai'
 import {communicationApi} from './ai/communications'
 import {scheduleApi} from './ai/schedules'
@@ -65,6 +66,7 @@ import { agentState, setAgentSettings } from './agent-policy/owner'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
 buoyApi.use('/api/buoy/billing/:id/webhook',async(c,next)=>{await next();if(c.res.ok)await refreshBillingConsumers(c.env)})
+buoyApi.route('/',integrationApi)
 buoyApi.route('/',billingIngest)
 buoyApi.route('/',playIngest)
 buoyApi.route('/',usageIngest)
