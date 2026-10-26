@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "1298ec8fdb2c5fe68c4e28664731904ca08ed5bd6211919ce412eeb287598899",
+      "sha256": "9d39e61b3c0f27c5c825199fc838cd13860bed38a655a6259cd6da691a080844",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "21bef22aa7d3e1491899740d1def3e9427188eb19d210ef9d8a928b2fe76e7e5",
+      "sha256": "5be54c89353992421ef3a1ebb41fda945be3f2b1f1702d5e771153dae5b65be7",
       "executable": false
     },
     "DEMO.md": {
@@ -212,7 +212,7 @@
       "executable": false
     },
     "docs/revenue-reporting.md": {
-      "sha256": "390c182c37b7c48c79fad91d2da50dad5dd89e34d22690a32c328de7eea8bfa8",
+      "sha256": "8be7aca97e7905e1e77e6e936087a0ccea8b123350fbde6c2b23261457ff879c",
       "executable": false
     },
     "docs/reviews.md": {
@@ -569,6 +569,10 @@
     },
     "migrations/core/0071_buoy_connection_notices.sql": {
       "sha256": "c59aab9862ff9480383906918528fa08e8a845356c8158206957dfbe00815c95",
+      "executable": false
+    },
+    "migrations/core/0072_buoy_revenue_reconciliation.sql": {
+      "sha256": "b67f738611185d575fce2c4cee9bcfdb3399f813ac609f3402089bbe371a3d52",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -1172,7 +1176,7 @@
       "executable": false
     },
     "src/buoy/api.ts": {
-      "sha256": "5fb2a2e66d84f0d9bf116b8dbde623b35e4bb441c5aced8f57e16c73eaa656a8",
+      "sha256": "18983909d22521f7a0a0fac1585991c99038115b4530ccdc3b8e0ae6caa14632",
       "executable": false
     },
     "src/buoy/audit-records.ts": {
@@ -1487,20 +1491,28 @@
       "sha256": "bac4c572555ab1b92481110d5eeb249d5dccc4941120b907a3ef3257a103c538",
       "executable": false
     },
+    "src/buoy/revenue/monthly.ts": {
+      "sha256": "3dd5d3da6530bb02fb4a12efe49bc4caa1a1d8c56da16213b2eda2530f6e7290",
+      "executable": false
+    },
     "src/buoy/revenue/provider-retention.ts": {
       "sha256": "1c73abba6e81f5a7fafd481bef98e8b767f91d119df7f4b63c94fc4470f7c3d0",
       "executable": false
     },
     "src/buoy/revenue/provider.ts": {
-      "sha256": "ed7009d692a165cd5b5157e41df5e6ed9f59e677c036b1ab1300c7d252f12433",
+      "sha256": "fd6cce44e56e00b6f9103f612e723cbbaee84372a9ec73c563bb0f0db6927424",
       "executable": false
     },
     "src/buoy/revenue/read.ts": {
-      "sha256": "135025aa297e0c589f27d76c6b70a1c985f70ce124777906e25ca67fa5220af8",
+      "sha256": "530448e27243cdc234c584113ce85dfb77a57115ce743e5cdf245bc47946ba4d",
+      "executable": false
+    },
+    "src/buoy/revenue/reconciliation.ts": {
+      "sha256": "3916f95fd6c837eda21c1a84b7be6acc39cf49b773381392c18df5a92ffe33d7",
       "executable": false
     },
     "src/buoy/revenue/retention.ts": {
-      "sha256": "b68f0072cefe75712fa4823119e198b1239d156f4f18f2840878a0e1f3077afb",
+      "sha256": "3892fcd2933e25a31fe71607a6e87c9b8fe6c11e1943c4fa3fa7657b9926de35",
       "executable": false
     },
     "src/buoy/revenue/snapshot.ts": {
@@ -1708,7 +1720,7 @@
       "executable": false
     },
     "src/buoy/ui/actions.ts": {
-      "sha256": "2c43a4b1e5b0b5f6a0aa67af6566601568a76d339100b7dd98182bf04398a013",
+      "sha256": "76d820521327efc0db824cc98ce6bd2158d967af29585dd3b424fe96aea5ca8a",
       "executable": false
     },
     "src/buoy/ui/adoption-consumers.ts": {
@@ -1795,6 +1807,10 @@
       "sha256": "37bb848c786cef2da4c8c329d1c20bab4b53e0cefbc9603fcd879150c623c30a",
       "executable": false
     },
+    "src/buoy/ui/monthly-revenue.ts": {
+      "sha256": "f01189d2fe1f2e9b675b216974e05d57618e56d14988efc740c438698252b5f6",
+      "executable": false
+    },
     "src/buoy/ui/notifications.ts": {
       "sha256": "f902886a4f07ea1752a2c3c6e88f07a5474d8ff958d777e01e8f76e43bfa62e1",
       "executable": false
@@ -1827,8 +1843,12 @@
       "sha256": "080147560057f234f25c97e455b67b17ef78e6d99d8dcf3f516611937d0c9558",
       "executable": false
     },
+    "src/buoy/ui/revenue-reconciliation.ts": {
+      "sha256": "3ee7f08d12ce2e2cd43a23ba0a03fe71ea703261a8560627ad6282fd761d0ac2",
+      "executable": false
+    },
     "src/buoy/ui/revenue.ts": {
-      "sha256": "2b67431a64be0b653103bc1211e94827baa939fd1bb79b505576ccbbe2a39236",
+      "sha256": "8e62305757f9732e2263bb86a877b5f6a372c0b0b2ebe7f7056ef42d08104e80",
       "executable": false
     },
     "src/buoy/ui/reviews.ts": {
@@ -3904,7 +3924,7 @@
       "executable": false
     },
     "tests/billing-journey.mjs": {
-      "sha256": "4acc19712920185a588cc7cfd10f286984976b14d111494cdedb802a52eea09e",
+      "sha256": "d5c835582ab312ebf69c68ec07749c35ce5873917ca76e540bb186817114559c",
       "executable": false
     },
     "tests/billing-portability.mjs": {
@@ -3984,7 +4004,7 @@
       "executable": false
     },
     "tests/flows.test.mjs": {
-      "sha256": "9ee177e93c79efba8c0315660a06b3c79065c7edab2fcf466ee142506d22a07f",
+      "sha256": "5665c446cebd3705164597073967cd795485cf69b0b3c2c57f15c91546caec23",
       "executable": false
     },
     "tests/forecast-journey.mjs": {
@@ -4096,11 +4116,11 @@
       "executable": false
     },
     "tests/provider-reporting-browser.mjs": {
-      "sha256": "630382948cbb5a05aec55914039141340c108a0587a35b5a5db1e4f865b95d69",
+      "sha256": "9a13506d2bff31aec4dd889e07027c0d42e1ea18ad5be495f754087771f695b5",
       "executable": false
     },
     "tests/provider-reporting.mjs": {
-      "sha256": "25836c5101347b3c84f96fc63baa3b754ff1e571140e90c987e548027e892849",
+      "sha256": "f4a095c527fc37cba740cc406fefe94708458249a57e7333109fef907009ecf3",
       "executable": false
     },
     "tests/record-browser.mjs": {
@@ -4136,7 +4156,7 @@
       "executable": false
     },
     "tests/reporting-sandbox.mjs": {
-      "sha256": "4a647fd7d94d762b987979bfd78849d24ba6bd03aac9a31e812b2665c404774a",
+      "sha256": "f09534dd27ac4856f828f5e4c2e3c7418bfbc5b1f0da616ff66b754fdf6d0cbf",
       "executable": false
     },
     "tests/revenue-health-browser.mjs": {
@@ -4144,7 +4164,7 @@
       "executable": false
     },
     "tests/revenue-health-journey.mjs": {
-      "sha256": "d45c6a9f2d7b5b9395cf56cc35e55d121f892e0450b0a1cf146d3ec08f7cdf14",
+      "sha256": "78a7bb52ed637ecb66fa262e7130e85dff8a36f294188992a5939e7073056d6d",
       "executable": false
     },
     "tests/review-journey.mjs": {

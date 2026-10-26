@@ -1,5 +1,5 @@
 import {providerRetention,type RetentionRow,type SourceException} from './provider-retention'
-import {PROVIDER_HISTORY_SQL,type ProviderVersion} from './provider'
+import {providerArrMatches,PROVIDER_HISTORY_SQL,type ProviderVersion} from './provider'
 import {authority,date,guard,insist} from '../core'
 import type {Actor} from '../core'
 import {SNAPSHOT,evaluated,definitions,type Image} from '../segments/snapshot'
@@ -55,6 +55,8 @@ export async function retentionReport(db:D1Database,actor:Actor,query:URLSearchP
   const cohort=versions.map(v=>v.contract.contractStart).sort()[0]?.slice(0,7)
   if(query.has('cohort')&&cohort!==query.get('cohort'))return []
   if(query.has('plan')&&![...(start?.contract.lines??[]),...end.contract.lines].some(l=>l.product===query.get('plan')))return []
+  const billing=revenueImage.billing?.find(b=>b.accountId===account.accountId)
+  if(billing?.document&&!providerArrMatches(billing.document,end.contract.currency,calculateRevenue(end.contract,window.end,end.sourceKind).arrMinor!))exceptions.push({accountId:account.accountId,name:account.name,reason:'Confirmed contract and Stripe ARR differ. Both source values remain unchanged; review the revenue reconciliation on the account. Recording a review note does not remove this financial variance.'})
   if(start&&start.contract.currency!==end.contract.currency){blockedCurrencies.add(start.contract.currency);blockedCurrencies.add(end.contract.currency);exceptions.push({accountId:account.accountId,name:account.name,reason:'Native currency changed inside the period; review the source history. No cross-currency adjustment is inferred.'});return []}
   const currency=end.contract.currency,startMinor=start?calculateRevenue(start.contract,window.basisOn,start.sourceKind).arrMinor!:0,endMinor=calculateRevenue(end.contract,window.end,end.sourceKind).arrMinor!,inCohort=startMinor>0
   const earlier=versions.some(v=>v.contract.source.confirmedOn<window.start&&calculateRevenue(v.contract,v.contract.source.confirmedOn,v.sourceKind).arrMinor!>0)

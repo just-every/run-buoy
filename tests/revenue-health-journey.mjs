@@ -61,7 +61,8 @@ export async function revenueHealth(app,fixture,member,healthResult){
  assert.equal(row(currencies).revenue.currency,'USD');assert.equal(row(currencies,otherId).revenue.currency,'EUR')
  assert.equal(row(currencies,otherId).revenue.arrMinor,6000000)
  assert.equal(Object.hasOwn(currencies,'arrMinor'),false,'The portfolio does not invent a cross-currency ARR total')
- assert.deepEqual(await (await status('/revenue','GET',undefined,200,{cookie:member})).json(),await read(),'A staff member can read the confirmed terms and retained history')
+ const staffRevenue=await (await status('/revenue','GET',undefined,200,{cookie:member})).json(),ownerRevenue=await read()
+ assert.deepEqual(staffRevenue,{...ownerRevenue,monthly:[],reconciliation:[]},'Staff retain confirmed financial amounts and contract history; privileged provider history and resolutions stay with owners and admins')
  const config={name:'Customer success review health',measures:[{key:'success',name:'Customer success index',field:'custom.'+fieldKey,min:0,max:100,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:60,healthyAt:75},segments:[]}
  await custom(50);await custom(50,otherId)
  await api('/scorecards/publish','POST',{revision:(await api('/scorecards')).revision,config})

@@ -27,6 +27,7 @@ import {renewalsApi,generateRenewals} from './renewals'
 import {refreshRenewalFields} from './renewals/fields'
 import {privacyApi} from './privacy'
 import {surveyState,recordResponse} from './surveys'
+import {resolveRevenueReconciliation} from './revenue/reconciliation'
 import {revenueState,saveContract} from './revenue'
 import {scorecardState,previewScorecard,publishScorecard,recalculateScorecards} from './scorecards'
 import {search} from './search'
@@ -157,6 +158,7 @@ buoyApi.get('/api/buoy/revenue/retention',async c=>{const actor=c.get('actor'),p
 buoyApi.get('/api/buoy/revenue/retention.csv',async c=>c.body(await scopedRetentionExport(c.env.DB,c.get('actor'),new URL(c.req.url).searchParams),200,{'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename=buoy-retention.csv'}))
 buoyApi.get('/api/buoy/revenue/rates',async c=>{requirePerson(c.get('actor'));return c.json(await fxState(c.env.DB))})
 buoyApi.post('/api/buoy/revenue/rates',async c=>c.json(await publishRates(c.env.DB,c.get('actor'),await jsonBody(c.req.raw)),201))
+buoyApi.post('/api/buoy/accounts/:id/revenue-reconciliation',async c=>c.json(await resolveRevenueReconciliation(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
 buoyApi.post('/api/buoy/accounts/:id/contract',async c=>c.json(await saveContract(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
 buoyApi.put('/api/buoy/accounts/:id/scorecard',async c=>c.json(await setScorecardAssignment(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw))))
 buoyApi.get('/api/buoy/scorecards',async c=>c.json(await scorecardState(c.env.DB,c.get('actor'))))

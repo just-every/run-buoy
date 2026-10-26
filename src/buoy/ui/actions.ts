@@ -3,6 +3,7 @@ import type {PrivacyPreview,PrivacyReceipt} from './privacy';
 import type {WorkspaceListPreview,WorkspaceBulkPreview} from './workspace';
 import type {RenewalPreview} from './renewals';
 import {surveyForm} from './surveys';
+import {revenueReconciliationForm} from './revenue-reconciliation';
 import {contractForm} from './revenue';
 import {scorecardFormConfig,type ScorecardPreview} from './scorecards';
 import {mutateInapp,type InappCredential} from './inapp';
@@ -90,6 +91,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   }
   if(accountId&&action==='account-scorecard'){await send(accountPath+'/scorecard',{revision:fields.revision,versionId:fields.versionId||null},'PUT');return {redirect:path+'#health-scorecard',message:'Record scorecard saved.',saved:'account-scorecard'}}
   if(accountId&&action==='survey-response'){await send('/api/buoy/surveys/responses',surveyForm(fields,accountId));return {redirect:path+'#surveys',message:'Received survey response recorded.'}}
+  if(accountId&&action==='revenue-reconcile'){await send(accountPath+'/revenue-reconciliation',revenueReconciliationForm(fields));return {redirect:path+'#revenue-reconciliation',message:'Revenue mismatch resolved; both sources retained.'}}
   if(accountId&&action==='contract'){await send(accountPath+'/contract',contractForm(fields));return {redirect:path+'#revenue',message:'Recurring contract confirmed.'}}
   if(path==='/app'&&action==='scorecard'){
     const config=scorecardFormConfig(fields);

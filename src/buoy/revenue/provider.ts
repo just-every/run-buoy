@@ -13,6 +13,10 @@ export function providerVersion(versions:ProviderVersion[],on:string){
 export function providerAmounts(document:BillingDocument,table:RateTable,on:string){
  return document.revenue.map(r=>{const rate=selectedRate(table,r.currency,on);return {...r,reporting:{currency:'USD' as const,arrMinor:convertExactMinor(r.arr,r.currency,rate),mrrMinor:convertExactMinor(r.mrr,r.currency,rate),rate,rounding:'half-up to USD cents from exact provider fractions'}}})
 }
+export function providerArrMatches(document:BillingDocument,currency:string,minor:number){
+ const rows=document.revenue;if(!rows.length)return minor===0
+ return rows.length===1&&rows[0].currency===currency&&BigInt(rows[0].arr.numeratorMinor)===BigInt(minor)*BigInt(rows[0].arr.denominator)
+}
 export function providerRevenue(source:StripeEvidence,on:string,table:RateTable):Revenue{
  const rows=source.document?providerAmounts(source.document,table,on):[],single=rows.length===1?rows[0]:null,fresh=stripeFreshness(source,on)
  return {...calculateRevenue(null,on),arrMinor:single?.arr.roundedMinor??null,mrrMinor:single?.mrr.roundedMinor??null,currency:single?.currency??null,

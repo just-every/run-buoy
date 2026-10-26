@@ -188,6 +188,6 @@ export async function billingJourney(app,source){
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const source=billingSource(),app=await startWorker({providerFetch:source.fetch})
  try{const result=await billingJourney(app,source);if(process.argv.includes('--browser')){const {billingBrowser}=await import('./billing-browser.mjs');await billingBrowser(app,result)}}finally{await app.close()}
- const {providerReportingJourney}=await import('./provider-reporting.mjs');await providerReportingJourney(billingSource(),billingFixtureKey)
+ const {providerReportingJourney,providerMonthlyJourney}=await import('./provider-reporting.mjs');await providerReportingJourney(billingSource(),billingFixtureKey);await providerMonthlyJourney(billingSource(),billingFixtureKey)
  const {pricingJourney}=await import('./billing-pricing.mjs');await pricingJourney()
 }
