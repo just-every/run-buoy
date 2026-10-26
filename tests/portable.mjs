@@ -53,9 +53,12 @@ try{
  const job=await door.apply(plan)
  assert.equal(job.state,'completed')
  const accountId=fixture.accounts[0].id
- const integration=await call('/v1/tokens','POST',{scopes:['accounts.read'],accountIds:[accountId],requestsPerMinute:10,expiresDays:1})
+ const integration=await call('/v1/tokens','POST',{scopes:['accounts.read','accounts.write'],accountIds:[accountId],requestsPerMinute:10,expiresDays:1})
  const integrationRead=()=>running.dispatch(new Request(running.origin+'/api/buoy/v1/accounts/'+accountId,{headers:{authorization:'Bearer '+integration.token}}))
  assert.equal((await integrationRead()).status,200,'API-001 scoped server token reads before export')
+ const integrationCurrent=await (await integrationRead()).json()
+ const integrationWrite=await running.dispatch(new Request(running.origin+'/api/buoy/v1/accounts/'+accountId,{method:'PUT',headers:{authorization:'Bearer '+integration.token,'content-type':'application/json','idempotency-key':'synthetic-buoy-914-portable'},body:JSON.stringify(integrationCurrent)}))
+ assert.equal(integrationWrite.status,200,'API-001 a real successful write creates replay custody before export')
  const proposal=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'renewed',reason:'Annual renewal accepted',evidence:'Signed renewal R-17'}})
  await call(`/proposals/${proposal.id}/approve`,'POST',{})
  const token=await call('/agent-tokens','POST',{label:'Portable preparation assistant'})

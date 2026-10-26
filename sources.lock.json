@@ -4132,7 +4132,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "dc58dbbd4407e62c567274a6d28ba93dcf304f7c2f912df6df32f29f1d3ac3b5",
+      "sha256": "f676012d768757a538425c4965883cee602b0a29dbc09dae19d870ea28162d55",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
