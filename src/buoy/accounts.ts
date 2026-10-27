@@ -22,6 +22,7 @@ export async function saveAccount(db: D1Database, actor: Actor, input: Record<st
  const statements: D1PreparedStatement[] = []
  if (accountId) {
   const prior = await account(db, accountId)
+  if(prior.migrationHealth)value.migrationHealth=prior.migrationHealth
   insist(input.revision === prior.revision, 'Account changed. Reload before saving.', 409)
   statements.push(guard(db, 'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)', accountId, prior.revision),
    stmt(db, 'UPDATE buoy_accounts SET document=?,revision=? WHERE id=?', canonicalJson(value), id(), accountId))
