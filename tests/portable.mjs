@@ -1,3 +1,4 @@
+import {playConfig} from './play-fixture.mjs'
 import {billingSource} from './billing-journey.mjs'
 import {billingFixtureKey} from './billing-fixture.mjs'
 import {seedBillingPortability,billingPortabilityImage,assertBillingArchiveRows,assertBillingPortability,assertBillingAwareAccounts,assertBillingAwareRevenue,assertBillingAwareScorecardHistory,billingAwareRecordImage,billingAwareAccountCatalog} from './billing-portability.mjs'
@@ -59,6 +60,13 @@ try{
  const integrationCurrent=await (await integrationRead()).json()
  const integrationWrite=await running.dispatch(new Request(running.origin+'/api/buoy/v1/accounts/'+accountId,{method:'PUT',headers:{authorization:'Bearer '+integration.token,'content-type':'application/json','idempotency-key':'synthetic-buoy-914-portable'},body:JSON.stringify(integrationCurrent)}))
  assert.equal(integrationWrite.status,200,'API-001 a real successful write creates replay custody before export')
+ const planOwner=(await call('/state')).operator.id
+ const planBook=await call('/playbooks','POST',{config:playConfig(planOwner,{name:'Portable plan work',steps:[{id:'task',kind:'task',title:'Portable plan follow-up',dueDays:2}]})})
+ const planRun=await call('/playbooks/'+planBook.id+'/enroll','POST',{accountId,operationKey:'synthetic-buoy-1956'})
+ const planPending=(await call('/playbooks')).runs.find(r=>r.id===planRun.id);await call('/proposals/'+planPending.proposalId+'/approve','POST',{})
+ const planTask=(await call('/state')).tasks.find(t=>t.proposalId===planPending.proposalId)
+ const planSegment=await call('/segments','POST',{name:'Portable milestone cohort',mode:'static',rules:{match:'all',conditions:[]},accountIds:[accountId],tier:null,stage:null,playbook:null})
+ const planOutcome=await call('/outcomes','POST',{name:'Portable approved renewal milestone',segmentId:planSegment.id,kind:'renewed',windowDays:2,taskIds:[planTask.id],operationKey:'synthetic-buoy-1957'})
  const proposal=await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'renewed',reason:'Annual renewal accepted',evidence:'Signed renewal R-17'}})
  await call(`/proposals/${proposal.id}/approve`,'POST',{})
  const token=await call('/agent-tokens','POST',{label:'Portable preparation assistant'})
@@ -146,9 +154,10 @@ try{
  assert.equal((await webhookIntake()).status,202);
  const portableCard=await call('/scorecards/publish','POST',{revision:recordIds.card.revision,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
  const planChampion=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-1940',accountIds:[accountId],source:'synthetic-buoy-1941'});
- const successPlan=await call('/accounts/'+accountId+'/plans','POST',{accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,name:'Portable internal success plan',staffOwnerId:(await call('/state')).operator.id,customerOwnerId:planChampion.id,objectives:[{id:'usage',title:'Observed product use',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'customer',title:'Actual customer confirmation required',kind:'customer-statement',dueOn:'2027-03-01'}]});
+ const successPlan=await call('/accounts/'+accountId+'/plans','POST',{accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,name:'Portable internal success plan',taskIds:[planTask.id],milestones:[{id:'renewed',title:'Approved renewal evidence',objectiveId:'usage',outcomeId:planOutcome.id}],staffOwnerId:(await call('/state')).operator.id,customerOwnerId:planChampion.id,objectives:[{id:'usage',title:'Observed product use',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'customer',title:'Actual customer confirmation required',kind:'customer-statement',dueOn:'2027-03-01'}]});
  const successPlansBefore=await call('/accounts/'+accountId+'/plans');
  assert.equal(successPlansBefore.plans.find(p=>p.id===successPlan.id).objectives[0].status,'achieved');
+ assert.deepEqual(successPlansBefore.plans[0].linkedTasks.map(t=>t.id),[planTask.id]);assert.equal(successPlansBefore.plans[0].milestoneEvidence[0].status,'reached');assert.equal(successPlansBefore.plans[0].milestoneEvidence[0].kind,'renewed');
  const scorecardBefore=await call('/scorecards');
  const revenueBefore=await call('/revenue');
  const surveysBefore=await call('/surveys');
@@ -242,7 +251,7 @@ try{
  running=await startWorker({root:destination,secure:true,providerFetch:stripe.fetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
  assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
- assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective source values and awaiting-confirmation state restore exactly');
+ assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective values, task links, retained milestone evidence and awaiting-confirmation state restore exactly');
  await assertBillingPortability(call,running.request,running.cookie,billingImage)
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'Restored native reads and rejected source/webhook attempts never call Stripe without fresh authority')
  await assertRecordPortability(call,(path,options)=>running.request(path,{...options,cookie:running.cookie}),recordIds,billingAwareRecordImage(recordImage,before.accounts,after.accounts,billingImage))
