@@ -280,7 +280,7 @@ Agents act with GOVERN-001's scoped authority on the data named in each clause. 
 
 ## Status
 
-Status is evaluated against this candidate tree (27 October 2026); the fleet records its exact immutable commit and landing receipts separately. This includes ct's AI-001, AI-005 and AI-006 completion judgement and partial MIGRATE-003 ruling. Done needs a cited test through a public door; a partial row names what ships in Evidence and what is missing in Gap. No status here is acceptance. BILLING-003, BILLING-004 and REPORT-001 were updated on 26 October 2026 from the held-key test-mode and native journeys named below; CONNECT-001 retains only its explicit provider-grant dependency.
+Judged from the code and tests at commit `73dd8fb58f38289ca821b45a89aa0d5dc623a292` (27 October 2026). Only this provenance line and source-lock metadata change after that code and test pin; the fleet records exact candidate and landing receipts separately. This includes ct's AI-001, AI-005 and AI-006 completion judgement and partial MIGRATE-003 ruling. Done needs a cited test through a public door; a partial row names what ships in Evidence and what is missing in Gap. No status here is acceptance. BILLING-003, BILLING-004 and REPORT-001 were updated on 26 October 2026 from the held-key test-mode and native journeys named below; CONNECT-001 retains only its explicit provider-grant dependency.
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
