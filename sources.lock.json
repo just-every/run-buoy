@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "a09ff9787411e5a21493cf92d903b7658cc7d55ec83b1d5c009ce703d11a38c0",
+      "sha256": "ef2c94ee4c3741c9ababdbf5b898f6574e9987692ef19dd2ad8b94e723744f2c",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "151170dd1a768e7ad40f6a32fec0f0888b5af32b3ed54171aa0f865425fb7dc4",
+      "sha256": "8c1f0d9d013efba60a0c63bbbda60a3cd6f41dc05a730214d4d518f2c9054a19",
       "executable": false
     },
     "DEMO.md": {
@@ -184,7 +184,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "be05dd8bdf95e8b860fe72fb65f3fe8ce7228e0cab7c77be84e1ec1138c20a68",
+      "sha256": "b4805b2e8d78697f70d07070a9ae816e498a603fbb38cb5883ff70eda0d28a7a",
       "executable": false
     },
     "docs/move-in.md": {

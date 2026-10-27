@@ -65,6 +65,14 @@ The bundle retains the token-free query, region, retrieval time, exact UTF-8 res
 
 Totango's documented [flows](https://support.totango.com/hc/en-us/articles/212116426-Understand-flows) are activity categories. Its [flow lookup](https://support.totango.com/hc/en-us/articles/115000597266-Touchpoints-API) supplies category metadata without ordered steps. These must not be invented as ordered playbooks. SuccessPlay definition migration, its paused native representation and per-step mapping remain unbuilt; an account or task's flow name never activates automation.
 
+## SuccessPlay definition prerequisite
+
+MIGRATE-003 remains partial. The [SuccessPlay API](https://support.totango.com/hc/en-us/articles/19685213236116-SuccessPlay-API) triggers an existing active manual play; it does not document a definition-read response. Never call that execution endpoint to obtain migration data. The [creation guide](https://support.totango.com/hc/en-us/articles/360033300652-Create-SuccessPlays) explains triggers, ordered actions, task assignment and schedules, but does not supply a versioned export schema. These guides describe behavior, not a definition artifact that Buoy can map.
+
+Before definition mapping can ship, supply an authorized, sanitized definition export and its documented schema or version, with available SuccessFlow associations. Keep source identity, trigger criteria, ordered actions, task timing and assignment, post-completion actions, references and unsupported elements distinguishable. Remove credentials at the source; do not upload execution tokens or webhook authentication material. Missing fields stay unavailable, and unsupported elements need source references and explicit reasons. The current preparation command accepts account CSV or account-search bundles only; it cannot import these definitions yet.
+
+The required future representation is paused configuration. Import review and approval will authorize data migration only. Import, replay, reload, trigger and schedule evaluation, and archive restoration must create no sends, operational tasks or execution authority. Definition custody, exact reconciliation and strict undo need their own proof through the existing Imports door; the twenty-account journey is account evidence only. The synchronized ct clarification and all six named Gaps remain in CONTRACT.md and ACCEPTANCE.md.
+
 ## ChurnZero account CSV
 
 ChurnZero documents [Live Exports](https://support.churnzero.com/hc/en-us/articles/16422781859341-Work-With-Live-Exports) as reports driven by segments in Google Sheets or Excel 365. Save the chosen account report locally as CSV, then prepare it with the same explicit-header mapper. Buoy does not access the spreadsheet or connect to ChurnZero during preparation:
