@@ -9,8 +9,8 @@ The first-release candidate (items 1 to 8 as done or partial) remains the shippe
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 7 | 1 | 0 | 8 |
-| Target and push further | 31 | 26 | 40 | 97 |
-| All | 38 | 27 | 40 | 105 |
+| Target and push further | 31 | 27 | 39 | 97 |
+| All | 38 | 28 | 39 | 105 |
 
 HTTP-001 ships the owner-selected read/preparation grant described in CONTRACT.md; invalid bearer credentials are refused even when a valid session cookie accompanies them. RESTORE-001 remains partial because SCALE-001 archive volumes are unproven and installations remain capped at 500 accounts. A11Y-001 is done for every currently shipped screen: named public Worker/browser journeys assert axe, computed text contrast over grid/gradient backgrounds, keyboard-only work with visible unobscured focus, labeled controls, text health, semantic runway values and reflow at 1440/390 down to 320 pixels. Entry/setup, import review/apply/reconcile/undo and one-time agent issuance/pause/resume/revocation are included; br’s approved colours are unchanged. PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 inherit that acceptance before their new screens ship. BILLING-004 and REPORT-001 are done for the named live Stripe test-mode acceptance and existing confirmed-term doors: native provider money, exact USD projections, provider forecast, a year of retained source reads, source-linked retention and unmatched-invoice exceptions are proven. Daily-rate origin and provider key scope remain unverified.
 
