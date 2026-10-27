@@ -7,6 +7,7 @@ import { importClient } from './import-door-client.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
 // Source and destination run sequentially; only Stripe/mail network edges use synthetic provider records.
 import assert from 'node:assert/strict'
+import {mock} from 'node:test'
 import {randomUUID,createHmac,createHash} from 'node:crypto'
 import { cp, mkdtemp, rm, symlink, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
@@ -32,6 +33,7 @@ async function command(cwd,args,expected=0){
  if(expected===0)assert.equal(code,0,safe.slice(-3000));else assert.notEqual(code,0,'Restore should refuse this destination or archive')
 }
 const configurationNow=Date.now()
+mock.timers.enable({apis:['Date'],now:configurationNow})
 let running,configurationClock=configurationNow
 const stripe=billingSource()
 const aiSelection=[{kind:'task',line:2},{kind:'risk',line:4},{kind:'expansion',line:6}]
