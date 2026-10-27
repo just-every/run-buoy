@@ -138,5 +138,16 @@ export async function configurationKindsJourney(){
   const savedSegment=(await api('/segments')).segments.find(s=>s.name===segment.name);assert.deepEqual(savedSegment.members.map(a=>a.accountId),[accountId])
   const savedReport=(await api('/reports')).reports.find(r=>r.spec.name===report.name);assert.equal((await api('/reports/'+savedReport.id)).result.count,2)
   const savedBook=(await api('/playbooks')).definitions.find(b=>b.config.name===book.name);assert.deepEqual(savedBook.config.steps,book.steps);assert.equal(savedBook.config.enabled,false);assert.equal((await api('/state')).tasks.length,0,'Publishing a paused definition creates no operational task')
+  // The beginning of a UTC week and later observations that day share one bucket.
+  const boundaryId='synthetic-buoy-8510'
+  f.setClock(Date.parse('2026-10-18T00:00:00Z'));app.cookie=await app.signIn('owner@example.test')
+  await api('/accounts','POST',{id:boundaryId,name:'Boundary support customer',renewalDate:'2027-01-01',noticeDays:30,renewalEvidence:'synthetic-buoy-8511',billing:null,support:{observedAt:'2026-10-18',reference:'synthetic-buoy-8512',openTickets:10,urgentTickets:10}})
+  f.setClock(Date.parse('2026-10-18T12:00:00Z'))
+  const boundary=(await api('/state')).accounts.find(a=>a.id===boundaryId)
+  await api('/accounts/'+boundaryId,'PUT',{id:boundary.id,name:boundary.name,renewalDate:boundary.renewalDate,noticeDays:boundary.noticeDays,renewalEvidence:boundary.renewalEvidence,billing:null,revision:boundary.revision,support:{observedAt:'2026-10-18',reference:'synthetic-buoy-8513',openTickets:10,urgentTickets:0}})
+  f.setClock(Date.parse('2026-10-25T12:00:00Z'));app.cookie=await app.signIn('owner@example.test')
+  const boundaryReview=await prepare('scorecard',card,'Review urgent support score history')
+  assert.deepEqual(boundaryReview.backtest.observations.filter(r=>r.accountId===boundaryId).map(r=>({on:r.on,score:r.score,matched:r.matched})),[{on:'2026-10-18',score:100,matched:false}],'The latest healthy observation replaces the risk recorded at midnight in the same account week')
+  assert.ok(!boundaryReview.backtest.matchedAccountIds.includes(boundaryId),'The superseded risk never contributes a fire')
  }finally{await app.close()}
 }

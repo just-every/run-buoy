@@ -36,7 +36,9 @@ operator knew at that time. Source completeness and historical identity changes
 remain unknown.
 
 Scorecards replay retained native calculation inputs, selecting the latest
-calculation in each account week. A durable sequence resolves equal timestamps
+calculation in each account week. Weeks end at the test end minus a whole
+number of seven-day periods; each starts at UTC midnight, inclusive, and ends
+at the next boundary, exclusive. A durable sequence resolves equal timestamps
 and survives restoration. Weeks without retained calculations are counted as
 missing, never reconstructed from current values. Fire counts mean matching
 account weeks, not delivered alerts. Churn capture counts distinct accounts with
