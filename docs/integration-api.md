@@ -6,10 +6,14 @@ Events, contacts, users, metrics, tasks, plans, opportunities, timeline entries,
 custom objects and outbound webhooks remain unfinished under API-001.
 
 An owner signs in and sends a same-origin JSON `POST /api/buoy/v1/tokens` with
+`label` (1 to 100 characters; omitted labels use "Integration credential"),
 `scopes` (an explicit nonempty selection of `accounts.read` and `accounts.write`),
-`accountIds` (1 to 50 explicit native IDs, including intended new IDs),
+`accountIds` (1 to 50 explicit native IDs, including intended new IDs), or
+`accountScope: "all"` with no `accountIds` to grant existing and future accounts,
 `requestsPerMinute` (1 to 600), and `expiresDays` (1 to 365).
-Only the owner can issue or revoke tokens. There is no implicit wildcard grant.
+Only the owner can issue or revoke tokens. Omitting `accountScope` keeps the
+explicit-ID model. An all-accounts grant still requires each operation scope;
+it never grants a missing write permission.
 Account scopes include the account's billing and support snapshots; issue them
 only to a trusted server authorized to receive that complete account document.
 The token is returned once; only its hash is stored. Keep it in server secret
@@ -51,12 +55,22 @@ Expiry, revocation and the issuing owner's active role and identity version are
 checked on every request and fenced in each write transaction. An owner's role
 or identity version change invalidates existing tokens.
 
+An owner-session `GET /api/buoy/v1/tokens` lists every credential with its label,
+operation scopes, account scope, rate, expiry, issuer, creation and last use.
+The list returns neither secrets nor hashes. Earlier credentials whose creation
+instant was not recorded show `createdAt: null`. `expiringSoon` flags active
+credentials in their final 14 days. `stoppedReason` is `revocation`, `expiry`,
+`issuer_change` or `account_erasure`; active credentials return null. Account
+erasure removes the erased ID from named grants while preserving the stop reason.
+This owner-only inventory is the backend for the still-unbuilt native screen.
+
 Revoke with a same-origin owner-session `DELETE /api/buoy/v1/tokens/{id}`.
 Integration tokens, rate reservations and replay receipts are excluded from
 installation archives: restore cannot reinstate integration authority. Existing
 product data and opaque audit history retain their normal custody.
 
-Policy is conservative and pending ct approval: owner-only issuance and
-revocation, explicit account IDs and operation scopes, bounded expiry and rate,
-server-only use and no new outbound transport. API-001 remains PARTIAL until
-that policy is approved and every remaining record and webhook point is proved.
+CT approved the account foundation with riders on 26 October 2026. Owner-only
+issuance remains the interim; admin authority bounded by current record and
+commercial-field rules, the native credential screen, event attribution, the
+remaining record kinds and outbound webhooks are unfinished. Webhook transport
+requires its own CT ruling before shipping. API-001 remains PARTIAL.

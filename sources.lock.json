@@ -72,7 +72,7 @@
       "executable": false
     },
     ".github/workflows/verify.yml": {
-      "sha256": "5aef5ce31e5c9ccf3ef89980ea4d9d4bc9494066acfe2290837e675bf88970a3",
+      "sha256": "d36fa73569709a3181e3d8f0eeae5091e9109feeeceb5e3cf3b2214f7f762cfa",
       "executable": false
     },
     ".gitignore": {
@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "487c70ab50d8ec1e557372203f6490030dc4f03650fa8c420ff8fb8d50170ccc",
+      "sha256": "4ec682763e42b1e283edfecdf45496c18cc3a5255287c6607eecd9943838f5dd",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "f18baba228b96ef0bef27ca694504ebcd4e449449e160a66a2b2826ed39fb32b",
+      "sha256": "c72230f0c9ef087895ca945d0ebd3226d5c9bfe2246dbbf9c6ea01d3bc48f9e1",
       "executable": false
     },
     "DEMO.md": {
@@ -180,7 +180,7 @@
       "executable": false
     },
     "docs/integration-api.md": {
-      "sha256": "5140abf70b391dbfc3fc47921916a92c9da9e6ebab867a103c31c953be56a59c",
+      "sha256": "f441147db4a6e45455f2f090578ef38e0c9525ca158e368f37e6690d8737dc87",
       "executable": false
     },
     "docs/migrations.md": {
@@ -587,6 +587,10 @@
       "sha256": "0935ced33eace2057c8cb18e38ab15dc44a1f5d873d08952ffcd936fcdbaadce",
       "executable": false
     },
+    "migrations/core/0075_buoy_integration_account_scope.sql": {
+      "sha256": "605d38a8ee9f0c25c708923e52e64af5eae58f69d69ac0ebcbd2493fb960f25c",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
@@ -600,7 +604,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "848ab361d5a8c590701798f952d954bed18fa8aff154bfdcd5cd993c35c5f8d6",
+      "sha256": "0e51a3d4886cc7099ee6bb28dae1c5972155c9d385bf4ba149cbfeb5279cfa91",
       "executable": false
     },
     "packaging.json": {
@@ -944,7 +948,7 @@
       "executable": false
     },
     "scripts/verify-app.mjs": {
-      "sha256": "a408379f9d0f63b2802f75602215efd7a06ca6d980ba0a810a6ea6918148328b",
+      "sha256": "6abf647506b84f37f028b0ca9062eb2bf0c002334b4a31d983f246e10a67851b",
       "executable": false
     },
     "sdk/inapp.mjs": {
@@ -1348,11 +1352,11 @@
       "executable": false
     },
     "src/buoy/integration/index.ts": {
-      "sha256": "de9ea098dc2ee5e719fffa691b5946ca491176fac21dc3f871f33d7bd2482322",
+      "sha256": "8710fb013cd6824d1c21175f0dd9e7d8525ad225fdc3173f5ccb891f1e27a29c",
       "executable": false
     },
     "src/buoy/integration/openapi.ts": {
-      "sha256": "58e7012b9cf69031066eef0724b414a837c60f8ecb131af5d40f8a90793a6dd5",
+      "sha256": "b06650fae263641d69e428f8dc6aef6304017b622a42c65140b4b68859274491",
       "executable": false
     },
     "src/buoy/migrate/cli.mjs": {
@@ -4080,7 +4084,7 @@
       "executable": false
     },
     "tests/integration-journey.mjs": {
-      "sha256": "1bcaab42f774b8f15a6db8f617f66c4df52ce397ada9d0dfae1b29530a4f9fe9",
+      "sha256": "343a6945428977cebead3c7937ea681f03d7f7802be658ac3b14c44a448d434d",
       "executable": false
     },
     "tests/keyboard.mjs": {

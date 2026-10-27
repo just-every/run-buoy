@@ -67,6 +67,7 @@
     "test:billing": "node tests/billing-journey.mjs --browser",
     "test:dashboards-browser": "node tests/record-browser.mjs dashboards",
     "test:reviews-browser": "node tests/record-browser.mjs reviews",
+    "test:integration-browser": "node tests/integration-journey.mjs --browser",
     "test:plans": "node --test --test-concurrency=1 --test-name-pattern=\"^PLAN-001\" tests/flows.test.mjs",
     "test:plans-browser": "node tests/record-browser.mjs plans",
     "test:migrate": "node --test --test-concurrency=1 tests/migrate-journey.mjs",

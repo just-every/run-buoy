@@ -11,17 +11,53 @@ export async function integrationJourney(existing){
  const json=async(response,status=200)=>{assert.equal(response.status,status,await response.clone().text());return response.json()}
  const first='synthetic-buoy-9140',second='synthetic-buoy-9141',outside='synthetic-buoy-9142'
  const input=id=>({id,name:'Synthetic integration account',renewalDate:'2027-10-31',noticeDays:30,renewalEvidence:'Synthetic signed order',billing:null,support:null})
- const mint=async(overrides={})=>json(await call('/tokens','POST',{scopes:['accounts.read','accounts.write'],accountIds:[first,second],requestsPerMinute:600,expiresDays:1,...overrides}),201)
+ const mint=async(overrides={})=>json(await call('/tokens','POST',{label:'Synthetic integration',scopes:['accounts.read','accounts.write'],accountIds:[first,second],requestsPerMinute:600,expiresDays:1,...overrides}),201)
  try{
   const spec=await json(await call('/openapi.json'));assert.equal(spec.openapi,'3.1.0');assert.ok(spec.paths['/accounts'].post);assert.ok(spec.paths['/accounts/{id}'].put)
   assert.equal((await worker.request('/api/buoy/v1/tokens',{method:'POST',body:{}})).status,401)
+  assert.equal((await worker.request('/api/buoy/v1/tokens')).status,401)
   const invited=await worker.request('/auth/invite',{method:'POST',cookie,body:{email:'synthetic-buoy-914@example.test',displayName:'Integration member',role:'member'}});assert.equal(invited.status,202)
   const member=await worker.signIn('synthetic-buoy-914@example.test')
   assert.equal((await call('/tokens','POST',{}, {cookie:member})).status,403)
+  assert.equal((await call('/tokens','GET',undefined,{cookie:member})).status,403)
   assert.equal((await call('/tokens/synthetic-buoy-914','DELETE',undefined,{cookie:member})).status,403)
   assert.equal((await call('/tokens','POST',{scopes:['accounts.write'],accountIds:['*'],requestsPerMinute:10,expiresDays:1})).status,400)
   assert.equal((await call('/tokens','POST',{scopes:['all'],accountIds:[first],requestsPerMinute:10,expiresDays:1})).status,400)
+  for(const setting of [{accountScope:'wildcard'},{accountScope:'all'},{expiresDays:0},{expiresDays:366},{requestsPerMinute:0},{requestsPerMinute:601},{label:''},{label:'x'.repeat(101)}]){
+   assert.equal((await call('/tokens','POST',{scopes:['accounts.read'],accountIds:[first],requestsPerMinute:10,expiresDays:1,...setting})).status,400)
+  }
+  const all=await mint({label:'Synthetic all accounts',accountScope:'all',accountIds:[],expiresDays:30})
+  const future='synthetic-buoy-9240'
+  await json(await server('/accounts',{method:'POST',body:input(future),token:all.token,headers:{'idempotency-key':'synthetic-buoy-924-create'}}),201)
+  assert.equal((await json(await server('/accounts/'+future,{token:all.token}))).id,future,'An explicit all-accounts grant reaches an account created after issuance')
+  const allIds=[];let cursor=''
+  do{
+   const page=await json(await server('/accounts?limit=100&after='+encodeURIComponent(cursor),{token:all.token}))
+   allIds.push(...page.items.map(a=>a.id));assert.ok(page.next===null||page.next>cursor,'Pagination advances toward completion');cursor=page.next
+  }while(cursor!==null)
+  assert.ok(allIds.includes(future),'All-accounts pagination includes the new account across the full installation')
+  const allReader=await mint({accountScope:'all',accountIds:undefined,scopes:['accounts.read']})
+  assert.equal((await server('/accounts',{method:'POST',body:input('synthetic-buoy-9241'),token:allReader.token,headers:{'idempotency-key':'synthetic-buoy-924-refused'}})).status,403,'All accounts never grants a missing write scope')
+  await json(await call('/tokens/'+allReader.id,'DELETE'))
   const grant=await mint()
+  const inventory=await json(await call('/tokens'))
+  const listed=inventory.items.find(t=>t.id===all.id)
+  assert.equal(listed.label,'Synthetic all accounts');assert.equal(listed.accountScope,'all')
+  assert.deepEqual(listed.scopes,['accounts.read','accounts.write']);assert.deepEqual(listed.accountIds,[])
+  assert.equal(listed.requestsPerMinute,600);assert.equal(listed.expiresAt,all.expiresAt)
+  assert.ok(listed.createdAt&&listed.lastUsedAt);assert.equal(listed.expiringSoon,false);assert.equal(listed.stoppedReason,null)
+  assert.equal(listed.issuer.id,(await json(await worker.request('/api/buoy/state',{cookie}))).operator.id)
+  assert.equal(inventory.items.find(t=>t.id===allReader.id).stoppedReason,'revocation')
+  assert.equal(inventory.items.find(t=>t.id===grant.id).lastUsedAt,null)
+  assert.equal(inventory.items.find(t=>t.id===grant.id).expiringSoon,true)
+  assert.equal(inventory.items.find(t=>t.id===allReader.id).expiringSoon,false)
+  assert.ok(inventory.items.every(t=>!Object.hasOwn(t,'token')&&!Object.hasOwn(t,'token_hash')))
+  for(const secret of [all.token,allReader.token,grant.token]){
+   assert.ok(!JSON.stringify(inventory).includes(secret),'The inventory never returns an issued secret')
+   const hash=await import('node:crypto').then(({createHash})=>createHash('sha256').update(secret).digest('hex'))
+   assert.ok(!JSON.stringify(inventory).includes(hash),'The inventory never returns a stored credential hash')
+  }
+
   assert.equal((await server('/accounts')).status,401)
   assert.equal((await server('/accounts',{token:'synthetic-buoy-914-invalid',headers:{cookie}})).status,401,'A session cookie cannot rescue an invalid bearer credential')
   await json(await server('/accounts',{token:grant.token,headers:{cookie}}))
@@ -56,22 +92,29 @@ export async function integrationJourney(existing){
   const requests=await Promise.all(Array.from({length:5},()=>server('/accounts',{token:limited.token})))
   assert.equal(requests.filter(r=>r.status===200).length,2);assert.equal(requests.filter(r=>r.status===429).length,3)
   for(const response of requests.filter(r=>r.status===429)){assert.match(response.headers.get('retry-after'),/^[1-9]\d*$/);assert.ok(Number(response.headers.get('retry-after'))<=60);assert.equal(response.headers.get('ratelimit-limit'),'2')}
-  if(!existing){instant+=60000;await json(await server('/accounts',{token:limited.token}));instant+=86400000;assert.equal((await server('/accounts',{token:limited.token})).status,401);instant-=86400000}
+  if(!existing){instant+=60000;await json(await server('/accounts',{token:limited.token}));instant+=86400000;assert.equal((await server('/accounts',{token:limited.token})).status,401);assert.equal((await json(await call('/tokens'))).items.find(t=>t.id===limited.id).stoppedReason,'expiry');instant-=86400000}
   const entries=await json(await worker.request('/api/buoy/audit?action=account.created',{cookie}))
   assert.equal(entries.entries.filter(e=>e.actor==='integration:'+grant.id).length,2,'Each create has exactly one opaque audit entry')
   assert.ok(entries.entries.filter(e=>e.actor==='integration:'+grant.id).every(e=>!e.detail&&e.subject!==first&&e.subject!==second))
   await json(await call('/tokens/'+reader.id,'DELETE'));assert.equal((await server('/accounts',{token:reader.token})).status,401)
   await json(await call('/tokens/'+reader.id,'DELETE'))
+  const credentialAudit=await json(await worker.request('/api/buoy/audit?subject=integration:'+reader.id,{cookie}))
+  assert.deepEqual(credentialAudit.entries.map(e=>e.action).sort(),['integration.credential-issued','integration.credential-revoked'],'Issuance and the first revocation each record one audit; repeated revocation records none')
+  assert.ok(credentialAudit.entries.every(e=>e.actor.startsWith('person:')&&!JSON.stringify(e).includes(reader.token)))
   assert.equal((await call('/tokens/'+grant.id,'DELETE',undefined,{headers:{origin:'https://other.invalid'}})).status,403)
   if(!existing){
    await json(await worker.request('/api/buoy/accounts/'+first,{cookie,method:'DELETE',body:{confirmation:'Updated synthetic account'}}))
    assert.equal((await server('/accounts',write)).status,401,'Erasure withdraws the credential that granted the removed account')
+   const withdrawn=(await json(await call('/tokens'))).items.find(t=>t.id===grant.id)
+   assert.equal(withdrawn.stoppedReason,'account_erasure');assert.ok(!withdrawn.accountIds.includes(first))
+   assert.equal((await server('/accounts/'+first,{token:all.token})).status,404,'All-accounts authority cannot read an erased account')
+   assert.equal((await server('/accounts',{...write,token:all.token})).status,409,'All-accounts authority cannot recreate an erased account')
    const fresh=await mint({accountIds:[first]})
    assert.equal((await server('/accounts',{...write,token:fresh.token})).status,409,'A freshly authorized attempt still cannot resurrect an erased account')
    assert.equal((await server('/accounts/'+first,{token:fresh.token})).status,404)
    await json(await call('/tokens/'+fresh.id,'DELETE'))
   }
-  for(const token of [grant,writer,limited])await json(await call('/tokens/'+token.id,'DELETE'))
+  for(const token of [grant,writer,limited,all])await json(await call('/tokens/'+token.id,'DELETE'))
   if(!existing){
    const versionGrant=await mint({accountIds:[second]})
    const ownerState=await json(await worker.request('/api/buoy/state',{cookie}))
@@ -85,6 +128,8 @@ export async function integrationJourney(existing){
    for(const status of ['inactive','active']){
     await json(await worker.request('/auth/operator/status',{method:'POST',cookie:secondOwner,body:{operatorId:ownerState.operator.id,status}}))
     assert.equal((await server('/accounts',{token:versionGrant.token})).status,401,'An issuing-owner change invalidates the grant even after reactivation')
+    const stopped=await json(await call('/tokens','GET',undefined,{cookie:secondOwner}))
+    assert.equal(stopped.items.find(t=>t.id===versionGrant.id).stoppedReason,'issuer_change')
    }
   }
   return {accountId:first}
@@ -98,7 +143,7 @@ if(process.argv.includes('--browser')){
  let browser
  try{
   const {accountId}=await integrationJourney(worker)
-  browser=await chromium.launch({headless:true,executablePath:process.env.BUOY_CHROMIUM??'/usr/bin/chromium',args:['--no-sandbox']})
+  browser=await chromium.launch({headless:true,...(process.env.BUOY_CHROMIUM?{executablePath:process.env.BUOY_CHROMIUM}:{}),args:['--no-sandbox']})
   const directory=process.env.BUOY_API_EVIDENCE
   if(directory)await mkdir(directory,{recursive:true})
   for(const width of [1440,390]){
