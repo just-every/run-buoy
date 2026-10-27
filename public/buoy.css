@@ -45,9 +45,9 @@ html.rer-themed .buoy-app :focus-visible { outline: 2px solid var(--buoy-plum); 
 /* Cards: white, hairline, soft shadow. */
 html.rer-themed .buoy-app .panel { min-width: 0; margin: 0 0 20px; padding: 22px 24px; background: var(--buoy-card); border: 1px solid var(--buoy-line); border-radius: var(--buoy-radius); box-shadow: var(--buoy-card-shadow-soft); }
 .panel > :last-child { margin-bottom: 0; }
-.notice { margin: 0 0 20px; padding: 14px 18px; border: 1px solid var(--buoy-line); border-left: 4px solid var(--buoy-green); border-radius: 12px; background: var(--buoy-green-soft); }
+.notice { margin: 0 0 20px; padding: 14px 18px; border: 1px solid var(--buoy-line); border-radius: var(--buoy-radius); background: var(--buoy-panel); }
 html.rer-themed .buoy-app p.notice { color: var(--buoy-ink); font-weight: 550; }
-.notice.error { border-left-color: var(--buoy-red); background: var(--buoy-red-soft); }
+.notice.error { background: var(--buoy-red-soft); }
 html.rer-themed .buoy-app .notice.error h2, .error-text { color: var(--buoy-red-ink); }
 .notice.error p:last-child { margin: 0; }
 
