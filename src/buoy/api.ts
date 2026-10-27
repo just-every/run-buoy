@@ -1,3 +1,4 @@
+import {configurationApi} from './ai/configuration'
 import {integrationApi} from './integration'
 import {aiApi} from './ai'
 import {communicationApi} from './ai/communications'
@@ -131,6 +132,7 @@ buoyApi.onError((error, c) => {
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
 buoyApi.route('/',aiApi)
+buoyApi.route('/',configurationApi)
 buoyApi.route('/',communicationApi)
 buoyApi.route('/',scheduleApi)
 buoyApi.route('/',experimentsApi)

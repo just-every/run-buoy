@@ -120,7 +120,13 @@ async function respond(c:Context<{Bindings:Bindings;Variables:{token:Token}}>,ac
  const env=runtimeBindings(c.env),t=c.get('token'),result=await write(env.DB,t,c.req.raw,accountId)
  // Consumers use the existing owner-approved native path. Replays repair an
  // interrupted refresh without repeating the account write or its audit entry.
- await refreshAccountConsumers(env,ownerActor(t))
+ // Concurrent receipts can reach a consumer with an older source snapshot.
+ // Recompute only failed transaction fences; the committed receipt, account
+ // effect and mail reservations remain idempotent. Provider failures never retry.
+ for(let attempt=0;;attempt++){
+  try{await refreshAccountConsumers(env,ownerActor(t));break}
+  catch(error){if(attempt>=4||!(error instanceof Error)||!/constraint|SQLITE_CONSTRAINT/i.test(error.message))throw error}
+ }
  return c.json({id:result.account_id,revision:result.revision},result.status as 200)
 }
 integrationApi.post(prefix+'/accounts',c=>respond(c))

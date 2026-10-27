@@ -1,3 +1,4 @@
+import {configurationSignals} from './ai/configuration-signals'
 import {roleNotification} from './roles'
 import {recordAdoptionAlerts} from './adoption/consumers-alerts'
 import type { Bindings } from '../auth.server'
@@ -51,6 +52,7 @@ export async function runDigests(env: Bindings, at = new Date()) {
 }
 export async function runNotifications(env: Bindings, at = new Date()) {
  await recordAdoptionAlerts(env.DB)
+ await configurationSignals(env.DB)
  await recordHealthAlerts(env.DB)
  await flushNotifications(env)
  await runDigests(env, at)
