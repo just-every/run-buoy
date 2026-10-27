@@ -1,4 +1,4 @@
-import {trustJourney} from './trust-journey.mjs'
+import {trustJourney,trustPrivacyJourney,trustUndoJourney} from './trust-journey.mjs'
 import {integrationJourney} from './integration-journey.mjs'
 import {reviewJourney} from './review-journey.mjs'
 import {dashboardJourney} from './dashboard-journey.mjs'
@@ -641,3 +641,5 @@ test('AI-003 cited communication health, class disablement and guarded model eff
 test('API-001 scoped account integration with atomic replay and bounded authority',()=>integrationJourney())
 
 test('AGENT-007 evidence review, admin-only correction and immediate health refresh',trustJourney)
+test('AGENT-007 person evidence export, reviewed redaction, holds and erasure',trustPrivacyJourney)
+test('AGENT-007 import undo preserves dependent trust work on either account',trustUndoJourney)

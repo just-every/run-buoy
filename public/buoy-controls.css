@@ -5,7 +5,7 @@ html.rer-themed .buoy-app .rw-open { position: relative; }
  z-index: 40; width: max-content; max-width: 120px; padding: 4px 6px;
  border: 1px solid currentColor; border-radius: 4px;
  background: var(--buoy-panel, #fff); color: var(--buoy-body, #111);
- font: 12px/1.4 sans-serif; white-space: normal; pointer-events: none;
+ font: 13px/1.4 sans-serif; white-space: normal; pointer-events: none;
  visibility: hidden; opacity: 0; transition: visibility 0s, opacity 0s;
 }
 .rw-open:hover::after { visibility: visible; opacity: 1; transition-delay: 300ms; }

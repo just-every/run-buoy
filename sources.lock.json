@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "0e19335bb78fea49c8ffdae9e2ae37fb56872644226e38f0765ae94803250d03",
+      "sha256": "73fc2e433c54d8e5efc7aa6c443168bbd2f08824bcb7582fbdc3c8eb82db3d22",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "51a2c773d39f6670e71839c1cec4e99b9ddc490817aea9b2f74fe0c1380e2ce5",
+      "sha256": "83d928af825ef2ec566a54c8c1e15e1e00c0fbbcb272e709182d480d3a245adc",
       "executable": false
     },
     "DEMO.md": {
@@ -284,7 +284,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "5491dd8c6fa847a93d8df5d780bfafc614d977daf36257f0ef7e26c0d964933b",
+      "sha256": "f1b9aeae89031d3d651aedb008c4e11b2620ad32e6b3d8f23b355620322c84ff",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -595,6 +595,10 @@
       "sha256": "605d38a8ee9f0c25c708923e52e64af5eae58f69d69ac0ebcbd2493fb960f25c",
       "executable": false
     },
+    "migrations/core/0076_buoy_trust_privacy.sql": {
+      "sha256": "94af9239f8fd9d0c25041f684b0a187799bd87c6e1e4defa1fe5bd99689b5359",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
@@ -636,7 +640,7 @@
       "executable": false
     },
     "public/buoy-controls.css": {
-      "sha256": "a232153e2c4f596bc8de647add1dd88f74e86dc97de4416a7486cd9827396ccf",
+      "sha256": "cd45080d6af84033fe29bdcc41aca6b06191b31e34fc516a9ddc73e1d962de4f",
       "executable": false
     },
     "public/buoy-inapp.js": {
@@ -648,7 +652,7 @@
       "executable": false
     },
     "public/buoy-runway.css": {
-      "sha256": "f47eee8eda45a1a24b9ce1c716dcc6b52ff75f7c49f8e06b397573a0c1689139",
+      "sha256": "5890c925cf2a5a495fdebb3f159c44f3ff3a69963c37bb2c37d887f086179511",
       "executable": false
     },
     "public/buoy-usage.js": {
@@ -656,7 +660,7 @@
       "executable": false
     },
     "public/buoy.css": {
-      "sha256": "552366aa91547ae547c45cf243b09f8e161b8fc1be097d5899f8d72e4569105c",
+      "sha256": "0a6ab8c00b309db0805598956bbcd342686dcaca924ce65f5b17e01518f0485b",
       "executable": false
     },
     "public/favicon-16.svg": {
@@ -1332,7 +1336,7 @@
       "executable": false
     },
     "src/buoy/imports/targets.ts": {
-      "sha256": "fd1b4ab21429eb0e9c5a98f843a38e7ecd32326de42d148c2b336750bec25794",
+      "sha256": "a888eb1ff1c42c8179e97d94e4aab102ddfb66e66e7bfc7dc7c2ce431c1adb8e",
       "executable": false
     },
     "src/buoy/imports/validation.ts": {
@@ -1464,7 +1468,7 @@
       "executable": false
     },
     "src/buoy/privacy.ts": {
-      "sha256": "479da6fbabde7ffa2229ffeb519a4704178904f42cf5ac422cb3aac35576ecc4",
+      "sha256": "68210412120d544e7e3552f1bfe48800a3205f71755bbd920625e61ad1b24568",
       "executable": false
     },
     "src/buoy/privacy/discovery.ts": {
@@ -1472,7 +1476,7 @@
       "executable": false
     },
     "src/buoy/privacy/native-text.ts": {
-      "sha256": "eb589317fab9830007ad003937c643bf57b237643a31d4cbcbf6adcc54096a2a",
+      "sha256": "eead1e5136daadb7b9a472deefbf8f83c1fa6fdd697b71da71ccba6f2fdd8ab3",
       "executable": false
     },
     "src/buoy/privacy/replay.ts": {
@@ -4044,7 +4048,7 @@
       "executable": false
     },
     "tests/flows.test.mjs": {
-      "sha256": "446f39fe008094c4db7126f5d8ec92ca942c2fdbdcafcff85ddaa2b71cf1fca6",
+      "sha256": "ede58f801b89a717bb47f2f2b2e3278d46b548a22ff958de4ec29b4d62f2fc40",
       "executable": false
     },
     "tests/forecast-journey.mjs": {
@@ -4308,7 +4312,7 @@
       "executable": false
     },
     "tests/trust-journey.mjs": {
-      "sha256": "7eb6dd22aa182d4d580afb45f70531a4a4bd2792021d5b75be70ec86ae062af0",
+      "sha256": "87a992bdf7c93bd92ddc497e7dce4b35fd353024ddff80e4ccf3e2ba3e5d7fde",
       "executable": false
     },
     "tests/usage-browser.mjs": {
