@@ -3,6 +3,7 @@ import {ATTRIBUTED,MAPPED_JOIN} from './usage/mappings'
 export function activityParts(mode:'account'|'search'){
  const filter=(account:string)=>mode==='account'?' AND '+account+'=?':''
  return [
+  `SELECT 'portal:'||id,'customer-'||kind,recorded_at,person_id,'Customer '||kind,body,'#success-plans','customer-portal',account_id FROM buoy_portal_events WHERE 1=1 ${filter('account_id')}`,
   `SELECT 'business-review:'||id,'business-review',created_at,NULL,json_extract(document,'$.name'),'Generated review with retained sources','/app/reviews?review='||id,'native',account_id FROM buoy_reviews WHERE 1=1 ${filter('account_id')}`,
   `SELECT 'review-meeting:'||id,'review-meeting',recorded_at,NULL,'Business review meeting logged',json_extract(receipt,'$.evidence'),'/app/reviews?review='||review_id,'native',account_id FROM buoy_review_meetings WHERE 1=1 ${filter('account_id')}`,
   `SELECT 'plan:'||id,'success-plan',recorded_at,NULL,'Success plan objectives updated','Versioned internal draft','#success-plans','native',account_id FROM buoy_success_plan_history WHERE 1=1 ${filter('account_id')}`,

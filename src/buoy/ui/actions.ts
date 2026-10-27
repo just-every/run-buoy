@@ -43,6 +43,15 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   // authenticates and authorizes every forwarded write independently.
   if (request.headers.get('origin') !== new URL(request.url).origin) throw new ApiError('This form must be submitted from this Buoy installation. Reload and try again.', 403);
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
+  if(fields.action==='portal-invite'){await send('/api/buoy/portal-invitations',{email:fields.email,displayName:fields.displayName});return {redirect:path+'#success-plans',message:'Customer invitation requested. Share the reviewed plan after the recipient confirms their email.'}}
+  if(accountId&&fields.action==='plan-milestone-start'){await send('/api/buoy/outcomes',{name:fields.name,kind:'plan-objective',planIds:[fields.planId],objectiveId:fields.objectiveId,segmentId:fields.segmentId,windowDays:Number(fields.windowDays),operationKey:fields.operationKey});return {redirect:path+'#success-plans',message:'Objective outcome report started. Link it to this plan as a milestone.'}}
+  if(accountId&&fields.action==='plan-share'){
+   await send('/api/buoy/accounts/'+encodeURIComponent(accountId)+'/portal-sharing',{planId:fields.planId,planRevision:fields.planRevision,email:fields.email,days:Number(fields.days),taskIds:Object.keys(fields).filter(k=>k.startsWith('customerTask:')&&fields[k]==='on').map(k=>k.slice(13))});return {redirect:path+'#success-plans',message:'Plan shared. Give the recipient their portal sign-in address.'}
+  }
+  if(accountId&&fields.action==='plan-revoke'){
+   await send('/api/buoy/accounts/'+encodeURIComponent(accountId)+'/portal-sharing/'+encodeURIComponent(fields.grantId),{revision:fields.revision},'DELETE');return {redirect:path+'#success-plans',message:'Customer access revoked.'}
+  }
+
   const accountPath = `/api/buoy/accounts/${encodeURIComponent(accountId ?? '')}`;
   const action = fields.action;
   if(path==='/app/reviews') {
@@ -75,7 +84,9 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   if(path==='/app/revenue'&&action==='rates'){let rates:unknown;try{rates=JSON.parse(fields.rates)}catch{throw new ApiError('Enter valid JSON for the rate periods.')}await send('/api/buoy/revenue/rates',{revision:fields.revision||null,table:{name:fields.name,mode:fields.mode,rates}});return {redirect:path+'#rate-table-panel',message:'Reporting rates published.',saved:'rate-table-editor'}}
   if(accountId&&action==='plan-save'){
     let objectives:unknown;try{objectives=JSON.parse(fields.objectives)}catch{throw new ApiError('Enter valid JSON for the objectives.')}
-    await send(accountPath+'/plans',{...(fields.planId?{id:fields.planId,revision:fields.revision}:{}),accountRevision:fields.accountRevision,name:fields.name,staffOwnerId:fields.staffOwnerId,customerOwnerId:fields.customerOwnerId,objectives});
+    const taskIds=Object.keys(fields).filter(k=>k.startsWith('linkTask:')&&fields[k]==='on').map(k=>k.slice('linkTask:'.length))
+    const milestones=Object.keys(fields).filter(k=>k.startsWith('milestoneTitle:')&&fields[k].trim()&&fields['milestoneRemove:'+k.slice('milestoneTitle:'.length)]!=='on').map(k=>{const key=k.slice('milestoneTitle:'.length);return {id:key==='new'?crypto.randomUUID():key,title:fields[k],objectiveId:fields['milestoneObjective:'+key],outcomeId:fields['milestoneReport:'+key]}})
+    await send(accountPath+'/plans',{...(fields.planId?{id:fields.planId,revision:fields.revision}:{}),accountRevision:fields.accountRevision,name:fields.name,staffOwnerId:fields.staffOwnerId,customerOwnerId:fields.customerOwnerId,objectives,milestones,taskIds});
     return {redirect:path+'#success-plans',message:'Internal success plan saved.',saved:'plan-edit-'+(fields.planId||'new')};
   }
   if(accountId&&action==='play-publish'){
