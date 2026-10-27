@@ -1,3 +1,4 @@
+import {migrationScoreFields} from '../migrate/churnzero-health'
 import {communicationScore,communicationNote} from '../ai/communication-health'
 import {PLAN_SQL,goalMeasure,type PlanRow} from '../plans/model'
 import {STRIPE_FIELDS,stripeFreshness} from '../billing-evidence'
@@ -35,7 +36,7 @@ export async function inputImage(db:D1Database,at:Date){
   ...['arrMinor','mrrMinor','seats'].map(key=>({key:`revenue.${key}`,name:`Confirmed recurring ${key}`,kind:'billing' as const,unit:key==='seats'?'purchased units':'native currency minor units'})),
   ...['totalMinor','creditsMinor','allocatedMinor','balanceMinor'].map(key=>({key:`billing.${key}`,name:`Recorded billing ${key} (minor currency units)`,kind:'billing' as const,unit:'minor currency units'})),
   ...['openTickets','urgentTickets'].map(key=>({key:`support.${key}`,name:`Recorded support ${key}`,kind:'support' as const,unit:'tickets'})),
-  ...customFields(image.custom.definitions),...related.fields,
+  ...customFields(image.custom.definitions),...related.fields,...migrationScoreFields(image.accounts.map(row=>JSON.parse(row.document).migrationHealth)),
   ...['nps','csat','npsResponses','csatResponses'].map(key=>({key:`survey.${key}`,name:`Recorded survey ${key}`,kind:'survey' as const,unit:key==='nps'?'−100 to 100':key==='csat'?'1 to 5':'respondents'})),
   ...Object.keys(adoptionRuleFields(image.adoption)).map(key=>({key,name:`Recorded ${key}`,kind:'adoption' as const})),
   {key:'sentiment.score',name:'Current CSM sentiment (red 0, amber 50, green 100)',kind:'sentiment',unit:'0–100 judgment'}
@@ -49,6 +50,10 @@ export async function inputImage(db:D1Database,at:Date){
    let evidence:SourceEvidence[]=[]
    if(field.related){
     const value=related.account(account.account.id,field);relatedValues[field.key]=value.values;evidence=value.evidence;raw=null
+   }else if(field.kind==='migration'){
+    const observation=account.account.migrationHealth
+    raw=field.migrationFactor===undefined?observation?.score:observation&&Object.hasOwn(observation.factors,field.migrationFactor)?observation.factors[field.migrationFactor]:null
+    evidence=[{kind:'incumbent-health',label:field.name,freshness:raw===null||raw===undefined?'missing':'untracked',observedAt:null,reference:observation?'churnzero account '+observation.sourceId:null,details:{source:'churnzero',sourceId:observation?.sourceId??null,sourceField:field.migrationFactor===undefined?observation?.fields.score:observation?.fields.factors,factor:field.migrationFactor??null,rawValue:raw??null,observationDateAvailable:false}}]
    }else if(field.kind==='communications'){
     const score=communicationScore(image.communications,account.account.id);raw=score?.score??null
     evidence=[{kind:'communications',label:score?'Cited communication sentiment':communicationNote(image.communications),freshness:score?'current':'missing',observedAt:score?score.month+'-01':null,reference:score?.requestId??null,details:{disabled:!image.communications?.enabled||!image.communications.classes.some(c=>['emails','tickets'].includes(c)),citations:score?.citations??[],themes:score?.themes??[]}}]
