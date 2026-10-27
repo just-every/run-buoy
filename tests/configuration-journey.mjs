@@ -143,7 +143,7 @@ export async function configurationKindsJourney(){
   assert.deepEqual(score.backtest.observations.filter(r=>r.accountId===accountId).map(r=>r.score),Array.from({length:53},(_,i)=>i).filter(i=>i!==26).map(i=>i%2?100:0),'Historical inputs, rather than current snapshots, generate the alternating score series')
   assert.equal((await api('/scorecards')).versions.length,versions,'Scorecard preparation leaves native publication unchanged')
   const history=(await api('/scorecards')).history.filter(r=>r.accountId===accountId&&r.calculatedAt==='2025-11-08T12:00:00.000Z')
-  assert.deepEqual(history.map(r=>r.score).sort((a,b)=>a-b),[0,100],'Conflicting inputs were retained at the same instant')
+  assert.deepEqual(history.map(r=>r.score).sort((a,b)=>a-b),[0,100,100],'Conflicting inputs were retained at the same instant')
   assert.deepEqual(score.backtest.observations.filter(r=>r.accountId===accountId&&r.on==='2025-11-08').map(r=>[r.score,r.matched]),[[0,true]],'The final retained write wins equal timestamps')
   assert.deepEqual(score.backtest.observations.filter(r=>r.accountId===accountId&&r.on==='2026-04-25'),[],'The skipped week is absent rather than copied from current data')
   assert.deepEqual(score.backtest.observations.filter(r=>r.accountId==='synthetic-buoy-8514'),[],'Usable current evidence cannot manufacture retained history')

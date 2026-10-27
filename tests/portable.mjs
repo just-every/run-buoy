@@ -163,7 +163,7 @@ try{
  adoptionBefore=await call('/adoption');
  consumersBefore=await call('/adoption/consumers');
 
- const aiConfiguration=(await call('/ai')).settings;await call('/ai/settings','PUT',{...aiConfiguration,enabled:true,classes:['transcripts'],budgetMinor:100,requestMinor:100,noTraining:true,termsReference:'synthetic-buoy-8050'});
+ const aiConfiguration=(await call('/ai')).settings;await call('/ai/settings','PUT',{...aiConfiguration,enabled:true,classes:['transcripts'],budgetMinor:100,requestMinor:100,requestsPerMinute:100,noTraining:true,termsReference:'synthetic-buoy-8050'});
  await call('/ai/schedules','POST',{name:'synthetic-buoy-8150',feature:'questions',accountId,question:'Prepare a meeting brief',hourUtc:12,authorize:true,policyRevision:(await call('/ai')).settings.revision});assert.equal((await call('/ai/schedules')).schedules.length,1);
  const prepareTranscript=async(target,base)=>{
   const lines=Array.from({length:7},(_,index)=>'synthetic-buoy-'+(base+index)),transcript=lines.join('\n')
@@ -338,7 +338,7 @@ try{
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'The restored scheduled Worker makes no next Stripe source call');
  assert.deepEqual(restoredBillingAfterSchedule,restoredBillingBeforeSchedule,'No restored source observation or billing run advances until the new owner reconnects');
  const restoredAi=(await call('/ai')).settings
- await call('/ai/settings','PUT',{...restoredAi,enabled:true,classes:[],budgetMinor:100,requestMinor:100,noTraining:true,termsReference:'synthetic-buoy-8524'})
+ await call('/ai/settings','PUT',{...restoredAi,enabled:true,classes:[],budgetMinor:100,requestMinor:100,requestsPerMinute:100,noTraining:true,termsReference:'synthetic-buoy-8524'})
  assert.deepEqual(await assertConfigurationBacktest(call,configurationHistory),configurationBacktestBefore,'A fresh scorecard draft selects the same latest historical result and exact missing history after real restoration')
  await running.close();running=null
  const restoredArchive=join(parent,'restored.rer');await command(destination,['export','--output',restoredArchive])
