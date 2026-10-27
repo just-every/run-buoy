@@ -89,13 +89,15 @@ jobs:
           package-manager-cache: false
       - run: npm install --global pnpm@10.12.4
       - run: pnpm install --frozen-lockfile
-      - name: Install and probe Chromium
+      - name: Install Chromium
         run: |
+          set -euo pipefail
           pnpm exec playwright install chromium
-          if ! node --input-type=module -e "import {chromium} from '@playwright/test'; const browser=await chromium.launch(); await browser.close()"; then
-            pnpm exec playwright install-deps chromium
-            node --input-type=module -e "import {chromium} from '@playwright/test'; const browser=await chromium.launch(); await browser.close()"
-          fi
+          # Hosted ubuntu-24.04 already carries Chromium's libraries. Use apt only when a real launch fails.
+          node scripts/ci/chromium-probe.mjs || {
+            timeout 420 pnpm exec playwright install-deps chromium
+            node scripts/ci/chromium-probe.mjs
+          }
       - run: pnpm run verify
 
   verify:
