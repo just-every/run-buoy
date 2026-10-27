@@ -1,3 +1,5 @@
+import {dataTrustPanel} from './data-trust';
+import type {TrustPage} from '../data-trust';
 import {aiPage} from './ai';
 import {reviewsPage,type ReviewsPage} from './reviews';
 import {reportsPage,type ReportsPage,type ReportResult} from './reports';
@@ -148,6 +150,7 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     title = 'Audit';
     try {
       body = auditPage(await apiCall<AuditPage>(api, request, '/api/buoy/audit?' + url.searchParams.toString()), url.searchParams);
+      body=dataTrustPanel(await apiCall<TrustPage>(api,request,'/api/buoy/trust'),state,fields)+body;
       if(state.operator.role==='owner') body=agentsPage(await apiCall<AgentPage>(api,request,'/api/buoy/agents'),fields,agentCredential)+body;
     } catch (caught) {
       status = caught instanceof ApiError ? caught.status : 503;

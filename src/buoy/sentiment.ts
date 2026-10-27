@@ -1,3 +1,4 @@
+import {trustNotes} from './trust-notes'
 import {COMMUNICATION_SQL,type CommunicationImage} from './ai/communication-health'
 import {stripeEvidence} from './billing-evidence'
 import {currentScores,recalculateScorecards} from './scorecards'
@@ -21,7 +22,8 @@ export async function latestSentiment(db: D1Database, accountId: string) {
 }
 export async function accountHealth(db: D1Database, current: Account, on = today()) {
  const communications=JSON.parse((await db.prepare(COMMUNICATION_SQL).first<{snapshot:string}>())!.snapshot) as CommunicationImage
- return health(current, on, await latestSentiment(db, current.id), await staleness(db), (await consumerMeasurements(db,on)).get(current.id)??[],(await currentScores(db)).get(current.id),(await stripeEvidence(db)).find(r=>r.accountId===current.id),communications)
+ const result=health(current, on, await latestSentiment(db, current.id), await staleness(db), (await consumerMeasurements(db,on)).get(current.id)??[],(await currentScores(db)).get(current.id),(await stripeEvidence(db)).find(r=>r.accountId===current.id),communications)
+ return {...result,reasons:[...result.reasons,...(await trustNotes(db,current.id)).get(current.id)??[]]}
 }
 export async function recordSentiment(db: D1Database, actor: Actor, accountId: string, input: Record<string, unknown>) {
  insist(actor.kind === 'person', 'Sentiment is a person’s judgment. Agents cannot record it.', 403)

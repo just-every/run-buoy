@@ -1,3 +1,4 @@
+import {trustApi} from './data-trust'
 import {integrationApi} from './integration'
 import {aiApi} from './ai'
 import {communicationApi} from './ai/communications'
@@ -130,6 +131,7 @@ buoyApi.onError((error, c) => {
  console.error('Buoy request failed', error.name)
  return c.json({error: 'The operation could not be completed.'}, 500)
 })
+buoyApi.route('/',trustApi)
 buoyApi.route('/',aiApi)
 buoyApi.route('/',communicationApi)
 buoyApi.route('/',scheduleApi)
