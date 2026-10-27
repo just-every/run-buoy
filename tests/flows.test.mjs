@@ -1,3 +1,5 @@
+import {planOutcomeJourney} from './plan-outcome-journey.mjs'
+import {portalJourney,portalWithdrawalJourney} from './portal-journey.mjs'
 import {integrationJourney} from './integration-journey.mjs'
 import {reviewJourney} from './review-journey.mjs'
 import {dashboardJourney} from './dashboard-journey.mjs'
@@ -641,3 +643,8 @@ test('API-001 scoped account integration with atomic replay and bounded authorit
 
 test('AGENT-008 plain-language signal drafts, historical evidence and approval',async()=>{const {configurationJourney}=await import('./configuration-journey.mjs');await configurationJourney()})
 test('AGENT-008 native configuration kinds and retained scorecard back-testing',async()=>{const {configurationKindsJourney}=await import('./configuration-journey.mjs');await configurationKindsJourney()})
+test('PLAN-001 customer portal confirmation and isolated collaboration',portalJourney)
+
+test('PLAN-001 customer access expiry and withdrawal',portalWithdrawalJourney)
+
+test('PLAN-001 objective milestone windows and frozen comparison',planOutcomeJourney)
