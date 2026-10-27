@@ -12,7 +12,7 @@ for(let i=2;i<process.argv.length;i+=2) {
  flags.set(name,value)
 }
 const source=flags.get('--source'), input=flags.get('--input'), output=flags.get('--output'), dateOrder=flags.get('--date-order')??'iso'
-if(!['csv','vitally','velaris','totango'].includes(source)||(!input&&!flags.has('--api-query'))||(input&&flags.has('--api-query'))||!output||!['iso','day-first','month-first'].includes(dateOrder))throw new Error('Choose csv, totango, vitally or velaris, input and output files, and an explicit date order.')
+if(!['csv','vitally','velaris','totango','churnzero'].includes(source)||(!input&&!flags.has('--api-query'))||(input&&flags.has('--api-query'))||!output||!['iso','day-first','month-first'].includes(dateOrder))throw new Error('Choose csv, totango, churnzero, vitally or velaris, input and output files, and an explicit date order.')
 if(flags.has('--api-query')){
  if(source!=='totango'||!flags.has('--columns'))throw new Error('Totango API acquisition requires explicit --columns and --source totango.')
  const query=JSON.parse(await readFile(flags.get('--api-query'),'utf8'))
@@ -28,7 +28,7 @@ if(flags.has('--region'))throw new Error('--region applies only to Totango API a
 const bytes=await readFile(input)
 if(bytes.length>2_000_000)throw new Error('Source exceeds the 2 MB migration bundle bound.')
 const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes)
-const csvSource=source==='csv'||source==='totango'
+const csvSource=source==='csv'||source==='totango'||source==='churnzero'
 const header=csvSource?csvRows(text)[0]:null
 if(!csvSource)JSON.parse(text.replace(/^\uFEFF/,''))
 let columns=flags.has('--columns')?JSON.parse(flags.get('--columns')):undefined

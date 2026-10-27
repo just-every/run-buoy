@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "487c70ab50d8ec1e557372203f6490030dc4f03650fa8c420ff8fb8d50170ccc",
+      "sha256": "828c24b15f1ebcbe28ffd6c7c07dc7910d9346ca3f681872d61083f285e457fa",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "f18baba228b96ef0bef27ca694504ebcd4e449449e160a66a2b2826ed39fb32b",
+      "sha256": "0aed2c89c717a33b533502778f3e1378a7b65a6a013197d43f64b677e5dee00c",
       "executable": false
     },
     "DEMO.md": {
@@ -184,7 +184,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "290eaaea72574c7cee8cd5608b3bb836ad9b46fd33e3e45db05c02597aa4b245",
+      "sha256": "be05dd8bdf95e8b860fe72fb65f3fe8ce7228e0cab7c77be84e1ec1138c20a68",
       "executable": false
     },
     "docs/move-in.md": {
@@ -261,6 +261,14 @@
     },
     "fixtures/move-in/accounts-unknown-synthetic.json": {
       "sha256": "c871f0a5c284215490e1f35f29c832a59e99f48066433e043a93dfef4c2c5651",
+      "executable": false
+    },
+    "fixtures/move-in/churnzero/accounts.csv": {
+      "sha256": "365eef1a3b7bc30c7243f4bb0bda3655f2285ffb9a53516ecd8f36889b0300e3",
+      "executable": false
+    },
+    "fixtures/move-in/churnzero/README.md": {
+      "sha256": "28c6366ede31dedb4b4a76fdbd351c3e760857e3726209bdad80ba47b7a64287",
       "executable": false
     },
     "fixtures/move-in/README.md": {
@@ -712,7 +720,7 @@
       "executable": false
     },
     "public/import-door.js": {
-      "sha256": "e1e300e88952e8ae5c3eb4897abbd164660b0be6de6c817ff2107d65844e1bfa",
+      "sha256": "3842c497e671c94554e3833d85f4ea1e082161edc09dcc6dc8c50700d0b08395",
       "executable": false
     },
     "public/rer-theme.css": {
@@ -1356,7 +1364,7 @@
       "executable": false
     },
     "src/buoy/migrate/cli.mjs": {
-      "sha256": "2b0d03e39f197aacb28ab186071d99bf8984897488bf8ab7f98a095e8a11ab78",
+      "sha256": "5097514ce24eec1a1cd929e1c924d059a1e8782a0ef34057befb6df0aa8bc909",
       "executable": false
     },
     "src/buoy/migrate/csv.ts": {
@@ -1364,7 +1372,7 @@
       "executable": false
     },
     "src/buoy/migrate/source.ts": {
-      "sha256": "1071c68a89108681ab50ecc4fe290675909ad516a6152838c97858357fa4fb73",
+      "sha256": "be9c9079e8cbfdd8727b853f1ec936fbec41c8ed7b02aa5b95e1b6090d22124b",
       "executable": false
     },
     "src/buoy/migrate/totango-api.ts": {
@@ -1816,7 +1824,7 @@
       "executable": false
     },
     "src/buoy/ui/imports.ts": {
-      "sha256": "f0b28cb42303095d24b5e41e70bdb658b12f845034a9145912a3a30d3862a58a",
+      "sha256": "215bb571fa5d98cd781e99dc7e44a1b055c37486a250b06c6b735f80463f3a9f",
       "executable": false
     },
     "src/buoy/ui/inapp.ts": {
@@ -4092,7 +4100,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "4e75ac99b0c078f8d42eb43c3386312af0007bb725384db2a1cbb35fa2a8e4cc",
+      "sha256": "e95a794f96d5dd96f821f64a675b9cac84c70dac0560ba2189cca23816dd8223",
       "executable": false
     },
     "tests/notifications.mjs": {

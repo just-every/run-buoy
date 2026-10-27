@@ -5,7 +5,7 @@ import type { Json, ParsedRecord, ImportMapping } from '../../modules/import-kit
 import { parseAccount } from '../imports/validation'
 import { KIND } from '../imports/source'
 import { minorUnitDigits } from '../currencies'
-export const migrationSources = ['vitally', 'velaris', 'csv', 'totango'] as const
+export const migrationSources = ['vitally', 'velaris', 'csv', 'totango', 'churnzero'] as const
 export type MigrationSource = typeof migrationSources[number]
 export const migrationNamespace = (source: MigrationSource) => `buoy-migrate-${source}-v1`
 export const migrationSource = (value: string | null): MigrationSource | undefined => migrationSources.find(source => source === value)
@@ -52,7 +52,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
    const parsed=totangoApiRows(bundle.api);rows=parsed.rows;pointers=parsed.pointers;columns=object(bundle.columns)
    for(const [key,column]of Object.entries(columns))if(!fields.includes(key as typeof fields[number])||typeof column!=='string'||!column.trim())throw new Error('Invalid Totango API field mapping.')
    const selected=Object.values(columns);if(new Set(selected).size!==selected.length)throw new Error('Each Totango source field maps to only one destination field.')
-  }else if (source === 'csv' || source === 'totango') {
+  }else if (source === 'csv' || source === 'totango' || source === 'churnzero') {
    if (bundle.data !== undefined || bundle.exportText !== undefined) throw new Error('CSV bundles cannot contain a second export representation.')
    if (typeof bundle.csv !== 'string' || sha256(bundle.csv) !== bundle.originalSha256) throw new Error('Original CSV digest does not match its embedded UTF-8 text.')
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
@@ -98,7 +98,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
     return {kind:KIND,sourceId:id,payload:{account:account as unknown as Json,unmapped},pointer}
    } catch (error) { return rejection(`row-${i+1}`,error instanceof Error ? error.message : 'Invalid migration row.',pointer) }
   })
-  if (source !== 'csv' && source !== 'totango') {
+  if (source !== 'csv' && source !== 'totango' && source !== 'churnzero') {
    for (const [kind,items] of Object.entries(exportData!)) if (kind !== 'accounts') {
     const count = Array.isArray(items) ? items.length : 1
     records.push({kind:'migration-unmapped',sourceId:`collection-${kind}`,payload:{collection:kind,count,reason:'This record kind is not mapped. No native records or automation are created.'},pointer:['','data',kind.replaceAll('~','~0').replaceAll('/','~1')].join('/')})
