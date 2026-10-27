@@ -7,7 +7,8 @@ import {billingFixtureKey,billingWebhookSecret} from './billing-fixture.mjs'
 export {billingFixtureKey,billingWebhookSecret} from './billing-fixture.mjs'
 const c1='synthetic-buoy-101',c2='synthetic-buoy-102',c3='synthetic-buoy-103'
 const baseTime=Math.floor(Date.now()/1000)-3600
-export function billingSource(){
+export function billingSource({now=Date.now()}={}){
+ const baseTime=Math.floor(now/1000)-3600
  const source={calls:[],fail:false,invalid:null,paymentFailed:true,amount:2500,status:'active',hold:null,onRead:null,pages:true}
  const price=(id,amount,interval='month')=>({id,object:'price',livemode:false,billing_scheme:'per_unit',transform_quantity:null,tiers_mode:null,product:'synthetic-buoy-201',currency:'usd',unit_amount_decimal:String(amount),recurring:{interval,interval_count:1,usage_type:'licensed'}})
  const sub=customer=>({id:customer===c1?'synthetic-buoy-301':'synthetic-buoy-302',object:'subscription',livemode:false,customer,status:customer===c1?source.status:'active',created:baseTime,current_period_start:baseTime,current_period_end:baseTime+31536000,cancel_at_period_end:false,canceled_at:customer===c1&&source.status==='canceled'?baseTime:null,discounts:[]})
