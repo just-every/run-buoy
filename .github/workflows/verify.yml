@@ -66,17 +66,12 @@ jobs:
           fi
           echo "skip=$skip" >> "$GITHUB_OUTPUT"
 
-  shards:
+  build:
     needs: plan
     if: needs.plan.outputs.skip != 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        suite: [plans, permissions, http, volume, records, reporting-browser, records-browser, workspace-browser, hierarchy-browser, adoption, adoption-consumers, adoption-aggregates, health, browser, accessibility-browser, settings-browser, intake-browser, ai-browser, archive]
+    timeout-minutes: 10
     env:
-      BUOY_VERIFY_SUITE: ${{ matrix.suite }}
       CI: 'true'
       WRANGLER_SEND_METRICS: 'false'
     steps:
@@ -89,7 +84,110 @@ jobs:
           package-manager-cache: false
       - run: npm install --global pnpm@10.12.4
       - run: pnpm install --frozen-lockfile
+      - name: Check edition source lock freshness
+        run: node scripts/edition-authoring/cli.mjs check
+      - name: Build application and site once
+        run: |
+          pnpm run build
+          pnpm run build:site
+          pnpm run typecheck
+      - name: Archive production output
+        run: tar -czf buoy-build.tar.gz dist
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: buoy-build
+          path: buoy-build.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+  shards:
+    needs: [plan, build]
+    if: needs.plan.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: plans
+            browser: true
+            hosted: true
+          - suite: permissions
+            browser: true
+            hosted: false
+          - suite: http
+            browser: true
+            hosted: false
+          - suite: volume
+            browser: false
+            hosted: false
+          - suite: records
+            browser: false
+            hosted: false
+          - suite: reporting-browser
+            browser: true
+            hosted: false
+          - suite: records-browser
+            browser: true
+            hosted: false
+          - suite: workspace-browser
+            browser: true
+            hosted: false
+          - suite: hierarchy-browser
+            browser: true
+            hosted: false
+          - suite: adoption
+            browser: false
+            hosted: false
+          - suite: adoption-consumers
+            browser: false
+            hosted: false
+          - suite: adoption-aggregates
+            browser: false
+            hosted: false
+          - suite: health
+            browser: true
+            hosted: false
+          - suite: browser
+            browser: true
+            hosted: false
+          - suite: accessibility-browser
+            browser: true
+            hosted: false
+          - suite: settings-browser
+            browser: true
+            hosted: false
+          - suite: intake-browser
+            browser: true
+            hosted: false
+          - suite: ai-browser
+            browser: true
+            hosted: false
+          - suite: archive
+            browser: false
+            hosted: false
+    env:
+      BUOY_VERIFY_SUITE: ${{ matrix.suite }}
+      BUOY_VERIFY_PREBUILT: 'true'
+      CI: 'true'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1; action runtime Node 24
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0; action runtime Node 24
+        with:
+          node-version: '22.20.0'
+          package-manager-cache: false
+      - run: npm install --global pnpm@10.12.4
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: buoy-build
+      - name: Restore production output
+        run: tar -xzf buoy-build.tar.gz
       - name: Install Chromium
+        if: matrix.browser
         run: |
           set -euo pipefail
           pnpm exec playwright install chromium
@@ -98,10 +196,14 @@ jobs:
             timeout 420 pnpm exec playwright install-deps chromium
             node scripts/ci/chromium-probe.mjs
           }
-      - run: pnpm run verify
+      - name: Verify selected suites
+        env:
+          HOSTED: ${{ matrix.hosted }}
+        run: |
+          if [ "$HOSTED" = true ]; then pnpm run verify; else pnpm run verify:app; fi
 
   verify:
-    needs: [plan, shards]
+    needs: [plan, build, shards]
     if: ${{ always() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 1
