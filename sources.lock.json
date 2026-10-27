@@ -1392,7 +1392,7 @@
       "executable": false
     },
     "src/buoy/integration/index.ts": {
-      "sha256": "dd1aed3f0d4f213ddef8c32e0f6d05655a3b59805fc35fb967535b150451bed8",
+      "sha256": "6f898244beaca8a2b0adb58c3c4d81b8cd195b8f7668e8c1bd9ef822d3afe312",
       "executable": false
     },
     "src/buoy/integration/openapi.ts": {
