@@ -31,7 +31,7 @@ async function command(cwd,args,expected=0){
  if(expected===0)assert.equal(code,0,safe.slice(-3000));else assert.notEqual(code,0,'Restore should refuse this destination or archive')
 }
 let running
-let configurationClock=Date.now(),configurationModelResult={name:'Portable approved configuration',weeklyDropPercent:30,urgentTickets:1}
+let configurationClock=null,configurationModelResult={name:'Portable approved configuration',weeklyDropPercent:30,urgentTickets:1}
 const stripe=billingSource()
 const aiSelection=[{kind:'task',line:2},{kind:'risk',line:4},{kind:'expansion',line:6}]
 const providerFetch=async request=>{
@@ -47,7 +47,7 @@ const providerFetch=async request=>{
 const intake=(path,body,secret)=>running.dispatch(new Request(running.origin+path,{method:'POST',headers:{authorization:'Bearer '+secret,'content-type':'application/json'},body:JSON.stringify(body)}))
 try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
- running=await startWorker({root:source,secure:true,clock:()=>configurationClock,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
+ running=await startWorker({root:source,secure:true,clock:()=>configurationClock??Date.now(),bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
  const allAudit=async()=>{const entries=[];let offset=0;do{const page=await call('/audit?offset='+offset);entries.push(...page.entries);offset=page.nextOffset}while(offset!==null);return entries}
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
@@ -186,7 +186,7 @@ try{
  await call('/ai/configuration/'+configurationDraft.id+'/approve','POST',{approve:true,fingerprint:configurationDraft.fingerprint})
  const pendingConfiguration=await call('/ai/configuration','POST',{description:'Flag a weekly activity drop with an urgent ticket',consent:true})
  const configurationSignalsBefore=(await call('/ai/configuration')).signals
- const tieAccountId='synthetic-buoy-8530',tieAt=new Date(new Date(configurationClock).toISOString().slice(0,10)+'T12:00:00Z').getTime()-86400000,tieDate=new Date(tieAt).toISOString().slice(0,10),originalClock=configurationClock
+ const tieAccountId='synthetic-buoy-8530',tieAt=new Date(new Date().toISOString().slice(0,10)+'T12:00:00Z').getTime()-86400000,tieDate=new Date(tieAt).toISOString().slice(0,10),originalClock=configurationClock
  configurationClock=tieAt;running.cookie=await running.signIn('owner@example.test')
  const tieDocument={id:tieAccountId,name:'Equal timestamp archive customer',renewalDate:'2027-12-31',noticeDays:30,renewalEvidence:'synthetic-buoy-8531',billing:{observedAt:tieDate,reference:'synthetic-buoy-8532',currency:'USD',totalMinor:100000,creditsMinor:0,allocatedMinor:0,dueDate:'2027-12-31'},support:null}
  await call('/accounts','POST',tieDocument)
@@ -265,7 +265,7 @@ try{
  const bytes=await readFile(archive);bytes[Math.floor(bytes.length/2)]^=1
  const damaged=join(parent,'damaged.rer');await writeFile(damaged,bytes)
  await command(broken,['import','--input',damaged,'--yes'],1)
- running=await startWorker({root:destination,secure:true,clock:()=>configurationClock,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
+ running=await startWorker({root:destination,secure:true,clock:()=>configurationClock??Date.now(),bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
  assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
  assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective source values and awaiting-confirmation state restore exactly');
