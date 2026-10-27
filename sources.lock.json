@@ -607,6 +607,10 @@
       "sha256": "605d38a8ee9f0c25c708923e52e64af5eae58f69d69ac0ebcbd2493fb960f25c",
       "executable": false
     },
+    "migrations/core/0076_buoy_migration_scorecard_custody.sql": {
+      "sha256": "bf774cb91e44c2310354de32594cab579a2581f326fe6e093f86080bf2ad4807",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
