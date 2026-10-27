@@ -91,7 +91,7 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   for(let n=1;n<=20;n++){
    const actual=native.find(row=>row.id===target('churnzero','synthetic-buoy-'+n));assert.ok(actual)
    assert.equal(actual.name,'Synthetic ChurnZero '+n);assert.equal(actual.renewalDate,'2027-03-31');assert.equal(actual.noticeDays,n);assert.equal(actual.renewalEvidence,'synthetic-buoy-contract-'+n)
-   assert.deepEqual(actual.billing,{observedAt:'2026-01-01',reference:'churnzero account synthetic-buoy-'+n,currency:'USD',totalMinor:n*100+25,creditsMinor:0,allocatedMinor:0,dueDate:'2026-01-31'});assert.equal(actual.support,null);assert.equal(actual.health.status,'unknown','An exported score cannot become native health without its configuration')
+   assert.deepEqual(actual.billing,{observedAt:'2026-01-01',reference:'churnzero account synthetic-buoy-'+n,currency:'USD',totalMinor:n*100+25,creditsMinor:0,allocatedMinor:0,dueDate:'2026-01-31'});assert.equal(actual.support,null)
   }
   assert.equal((await door.json('reconcile',{planId:plan.planId})).ok,true)
   assert.equal((await client(app,'csv').send('status',{planId:plan.planId})).status,404)
@@ -99,6 +99,16 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   assert.equal(history.find(row=>row.planId===plan.planId).namespace,'buoy-migrate-churnzero-v1')
   assert.equal(app.outbound.length,outbound,'Account import does not send or execute provider work')
   await door.undo(plan);assert.deepEqual(await state(app),before)
+  // Isolate exported scores from invoice observations that legitimately affect native health.
+  const scoreCsv=input.csv.replaceAll('synthetic-buoy-','synthetic-buoy-score-only-')
+  const scorePlan=await door.plan({...input,csv:scoreCsv,originalSha256:createHash('sha256').update(scoreCsv).digest('hex'),columns:Object.fromEntries(Object.entries(churnzeroColumns).filter(([field])=>!field.startsWith('invoice')))})
+  await door.apply(scorePlan)
+  const scoreAccounts=await state(app)
+  for(let n=1;n<=20;n++){
+   const actual=scoreAccounts.find(row=>row.id===target('churnzero','synthetic-buoy-score-only-'+n));assert.ok(actual)
+   assert.equal(actual.billing,null);assert.equal(actual.health.status,'unknown','An exported score cannot become native health without its configuration')
+  }
+  await door.undo(scorePlan);assert.deepEqual(await state(app),before)
   const malformed=await door.plan({...input,originalSha256:'0'.repeat(64)})
   assert.equal(malformed.counts.mapped,0);assert.match(malformed.rejected[0].reason,/digest/);await door.json('undo',{planId:malformed.planId})
   const mixed=await door.plan({...input,data:{accounts:[]}})
