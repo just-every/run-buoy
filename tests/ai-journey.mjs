@@ -2,13 +2,14 @@ import assert from 'node:assert/strict'
 import {startWorker} from './worker.mjs'
 import {scriptedQuestions,scriptedResponse} from './ai-question-edge.mjs'
 
-export async function aiFixture(){
- const sent=[];let invalid=false,fail=false,generatedInvalid=false,onProvider,indexes=null,selectedProposals=null,scripted=false
- const app=await startWorker({clock:Date.parse('2026-10-25T12:00:00Z'),bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8000',AI_OPENAI_API_KEY:'synthetic-buoy-8010'}),providerFetch:async request=>{
+export async function aiFixture({clock:initialClock=Date.parse('2026-10-25T12:00:00Z')}={}){
+ let clock=initialClock
+ const sent=[];let invalid=false,fail=false,generatedInvalid=false,onProvider,indexes=null,selectedProposals=null,scripted=false,configuration={name:'Weekly activity and urgent ticket risk',weeklyDropPercent:30,urgentTickets:1}
+ const app=await startWorker({clock:()=>clock,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8000',AI_OPENAI_API_KEY:'synthetic-buoy-8010'}),providerFetch:async request=>{
   assert.equal(request.headers.get(new URL(request.url).hostname==='api.anthropic.com'?'x-api-key':'authorization'),new URL(request.url).hostname==='api.anthropic.com'?'synthetic-buoy-8000':'Bearer synthetic-buoy-8010','Provider selection never forwards another provider credential');const body=await request.json();sent.push({url:request.url,body});if(fail)return new Response('unavailable',{status:503})
   const payload=JSON.parse(body.messages[0].content.slice(body.messages[0].content.indexOf('{')))
   if(onProvider)await onProvider()
-  const result=scripted?scriptedResponse(payload):payload.instructions.startsWith('Generate')?(generatedInvalid?{claims:[{text:'Unsupported claim',sources:generatedInvalid==='missing'?[]:[{index:generatedInvalid==='quote'?0:99999,quote:'invented'}]}]}:{claims:payload.records.map((r,index)=>({text:r.accountName+' has recorded '+r.field+' evidence: '+r.quote,sources:[{index,quote:r.quote}]}))}):invalid?{indexes:[999999]}:payload.instructions.startsWith('Identify')?{proposals:selectedProposals??[{kind:'task',line:1},{kind:'risk',line:2},{kind:'expansion',line:3}]}:{indexes:indexes??payload.records.map((_,i)=>i)}
+  const result=payload.instructions.startsWith('Translate')?configuration:scripted?scriptedResponse(payload):payload.instructions.startsWith('Generate')?(generatedInvalid?{claims:[{text:'Unsupported claim',sources:generatedInvalid==='missing'?[]:[{index:generatedInvalid==='quote'?0:99999,quote:'invented'}]}]}:{claims:payload.records.map((r,index)=>({text:r.accountName+' has recorded '+r.field+' evidence: '+r.quote,sources:[{index,quote:r.quote}]}))}):invalid?{indexes:[999999]}:payload.instructions.startsWith('Identify')?{proposals:selectedProposals??[{kind:'task',line:1},{kind:'risk',line:2},{kind:'expansion',line:3}]}:{indexes:indexes??payload.records.map((_,i)=>i)}
   const content=JSON.stringify(result)
   return Response.json(body.model==='synthetic-buoy-openai'?{choices:[{message:{content}}],usage:{prompt_tokens:100,completion_tokens:100}}:{content:[{text:content}],usage:{input_tokens:100,output_tokens:100}})
  }})
@@ -16,7 +17,7 @@ export async function aiFixture(){
  const api=async(...args)=>{const r=await call(...args);assert.ok(r.ok,await r.clone().text());return r.json()}
  const configure=async(extra={})=>{const {settings}=await api('/ai');return api('/ai/settings','PUT',{...settings,enabled:true,classes:['tickets','revenue','transcripts'],budgetMinor:100,requestMinor:100,requestsPerMinute:100,noTraining:true,termsReference:'synthetic-buoy-8001 no-training agreement',...extra})}
  for(const [id,name]of [['synthetic-buoy-8002','Visible Harbour'],['synthetic-buoy-8003','Outside Coastal']])await api('/accounts','POST',{id,name,renewalDate:'2027-12-31',noticeDays:30,renewalEvidence:'synthetic-buoy-8004',billing:null,support:null})
- return {app,api,call,sent,configure,setScripted(value){scripted=value},setIndexes(value){indexes=value},setProposals(value){selectedProposals=value},setGeneratedInvalid(value){generatedInvalid=value},setOnProvider(value){onProvider=value},setInvalid(value){invalid=value},setFail(value){fail=value}}
+ return {app,api,call,sent,configure,setClock(value){clock=value},setConfiguration(value){configuration=value},setScripted(value){scripted=value},setIndexes(value){indexes=value},setProposals(value){selectedProposals=value},setGeneratedInvalid(value){generatedInvalid=value},setOnProvider(value){onProvider=value},setInvalid(value){invalid=value},setFail(value){fail=value}}
 }
 export async function seedQuestionEvidence({api}){
  const rows=[{id:'synthetic-buoy-8002',name:'Visible Harbour',amountMinor:65432100,totalMinor:98765432,openTickets:12,urgentTickets:3,reference:'synthetic-buoy-8021',renewalDate:'2026-12-31'}, {id:'synthetic-buoy-8020',name:'Selected Harbour',amountMinor:12345600,totalMinor:45678901,openTickets:7,urgentTickets:2,reference:'synthetic-buoy-8022',renewalDate:'2027-02-15'}]
