@@ -4,6 +4,56 @@ import {execFileSync,spawnSync} from 'node:child_process'
 import {readFile,writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {csvRows} from '../src/buoy/migrate/csv.ts'
+import {importClient} from './import-door-client.mjs'
+import {startWorker} from './worker.mjs'
+
+export const totangoDoor=app=>importClient((path,options)=>app.request(path,{...options,headers:{...options.headers,'x-buoy-import-source':'totango'}}),app.cookie)
+export async function seedTotangoArchive(app){
+ const csv=await readFile('fixtures/move-in/totango/accounts.csv','utf8')
+ const bundle={format:'buoy-migration-v1',source:'totango',dateOrder:'iso',csv,originalSha256:createHash('sha256').update(csv).digest('hex'),columns:{id:'Account ID',name:'Account Name',renewalDate:'Contract Renewal Date',noticeDays:'Notice Days',renewalEvidence:'Contract Reference'},references:referenceFiles()}
+ const door=totangoDoor(app),plan=await door.plan(bundle)
+ assert.equal(plan.counts.mapped,20);assert.equal(plan.counts.rejected,0)
+ const job=await door.apply(plan),reconciliation=await door.json('reconcile',{planId:plan.planId})
+ assert.equal(reconciliation.ok,true,JSON.stringify(reconciliation))
+ // Each account also has explicitly unmapped source columns, so all records
+ // carry an explanation while the twenty native account targets still match.
+ assert.deepEqual(reconciliation.counts,{sourceRecords:22,present:0,explained:22,nativeTargets:20,byKind:{'customer-account':20}})
+ const state=await (await app.request('/api/buoy/state',{cookie:app.cookie})).json()
+ const ids=Array.from({length:20},(_,i)=>'migration_'+createHash('sha256').update(JSON.stringify(['totango','synthetic-buoy-'+(i+1)])).digest('hex').slice(0,40))
+ const accounts=ids.map(id=>{const row=state.accounts.find(a=>a.id===id);assert.ok(row);return row})
+ return {bundle,plan,job,reconciliation,accounts}
+}
+
+export function assertTotangoArchiveRows(rows,image){
+ const originals=rows.filter(item=>item.table==='ik_originals'&&item.row.job_id===image.job.id&&item.row.sha256===image.plan.bundleSha256)
+ assert.equal(originals.length,1,'Totango archive retains exactly one matching original artifact')
+ const original=originals[0].row
+ const chunks=rows.filter(item=>item.table==='ik_d1_original_chunks'&&item.row.job_id===image.job.id&&item.row.kind===original.kind&&item.row.original_key===original.original_key).map(item=>item.row).sort((a,b)=>a.ordinal-b.ordinal)
+ assert.ok(chunks.length>0,'Totango original custody is nonempty')
+ const encoded=chunks.map((chunk,index)=>{assert.equal(chunk.ordinal,index);assert.equal(typeof chunk.bytes,'string');return chunk.bytes}).join('')
+ const bytes=Buffer.from(encoded,'base64');assert.equal(bytes.toString('base64'),encoded);assert.equal(bytes.length,original.size)
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),image.plan.bundleSha256)
+ assert.deepEqual(bytes,Buffer.from(JSON.stringify(image.bundle)),'Totango original account bytes, reference text, associations and digests survive the real archive')
+ const approval=rows.filter(item=>item.table==='ik_door_approvals'&&item.row.plan_id===image.plan.planId)
+ assert.equal(approval.length,1);assert.equal(approval[0].row.fingerprint,image.plan.fingerprint)
+}
+
+export async function assertTotangoRestored(app,image){
+ const door=totangoDoor(app),status=await door.json('status',{planId:image.plan.planId})
+ assert.equal(status.job.id,image.job.id);assert.equal(status.job.state,'completed');assert.equal(status.fingerprint,image.plan.fingerprint)
+ assert.equal(status.approval.owner,'owner@example.test');assert.ok(status.approval.approval_id)
+ assert.deepEqual(await door.json('reconcile',{planId:image.plan.planId}),image.reconciliation,'Totango durable native reconciliation survives a fresh installation owner')
+ const state=async()=>(await (await app.request('/api/buoy/state',{cookie:app.cookie})).json())
+ assert.deepEqual((await state()).accounts.filter(row=>image.accounts.some(a=>a.id===row.id)).sort((a,b)=>a.id.localeCompare(b.id)),image.accounts.toSorted((a,b)=>a.id.localeCompare(b.id)))
+ const replay=await door.plan(image.bundle)
+ assert.equal(replay.planId,image.plan.planId);assert.equal(replay.fingerprint,image.plan.fingerprint)
+ assert.equal((await door.apply(replay)).id,image.job.id,'Restored replay creates no second import')
+ const automation=async()=>{const books=await (await app.request('/api/buoy/playbooks',{cookie:app.cookie})).json();return {definitions:books.definitions,runs:books.runs,tasks:(await state()).tasks,outbound:app.outbound.length}}
+ const inert=await automation();await app.scheduled();assert.deepEqual(await automation(),inert,'Restored opaque reference custody grants no execution authority')
+ await door.undo(image.plan)
+ assert.deepEqual((await state()).accounts.filter(row=>image.accounts.some(a=>a.id===row.id)),[],'Clean restored Totango undo removes every imported account')
+ assert.deepEqual(await automation(),inert)
+}
 
 export async function totangoApiJourney({app,scratch,door,columns,state,before,target}){
  const [header,...rows]=csvRows(await readFile('fixtures/move-in/totango/accounts.csv','utf8'))
@@ -110,4 +160,20 @@ export async function totangoReferenceJourney({app,scratch,input,door,state,befo
  assert.notEqual(denied.status,0);assert.doesNotMatch(denied.stdout+denied.stderr,/synthetic-buoy-9199/)
  await assert.rejects(readFile(join(scratch,'credential-reference.json')),{code:'ENOENT'})
  assert.deepEqual(await automation(),inert)
+ for(const conflict of ['edit','dependent-work']){
+  const isolated=await startWorker()
+  try{
+   const isolatedDoor=totangoDoor(isolated),reviewed=await isolatedDoor.plan(bundle)
+   await isolatedDoor.apply(reviewed)
+   const current=(await state(isolated))[0]
+   const response=conflict==='edit'
+    ?await isolated.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:isolated.cookie,body:{id:current.id,name:'Synthetic reviewed owner edit',renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,billing:current.billing,support:current.support,revision:current.revision}})
+    :await isolated.request('/api/buoy/proposals',{method:'POST',cookie:isolated.cookie,body:{accountId:current.id,kind:'renewal',payload:{outcome:'deferred',reason:'Synthetic later decision',evidence:'synthetic-buoy-9290'}}})
+   assert.equal(response.status,conflict==='edit'?200:201)
+   const retained=await state(isolated);assert.equal(retained.length,20)
+   assert.equal((await isolatedDoor.send('undo',{planId:reviewed.planId})).status,409,'Totango reference import strictly refuses undo after '+conflict)
+   assert.deepEqual(await state(isolated),retained,'A refused Totango undo removes no accounts')
+   if(conflict==='dependent-work')assert.equal((await (await isolated.request('/api/buoy/state',{cookie:isolated.cookie})).json()).proposals.length,1)
+  }finally{await isolated.close()}
+ }
 }

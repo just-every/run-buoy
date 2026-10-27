@@ -5,6 +5,7 @@ import {seedBillingPortability,billingPortabilityImage,assertBillingArchiveRows,
 import {seedRecordPortability,recordPortabilityImage,assertRecordPortability} from './record-portability.mjs'
 import {portableConfigurationCard,seedConfigurationPortability,assertConfigurationBacktest,assertConfigurationArchive} from './configuration-portability.mjs'
 import { importClient } from './import-door-client.mjs'
+import {seedTotangoArchive,assertTotangoArchiveRows,assertTotangoRestored} from './totango-api-journey.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
 // Source and destination run sequentially; only Stripe/mail network edges use synthetic provider records.
 import assert from 'node:assert/strict'
@@ -356,5 +357,18 @@ try{
  assert.deepEqual(restoredRows.filter(item=>item.table==='buoy_support_history').map(item=>item.row).sort((a,b)=>a.id-b.id),supportHistoryBefore.toSorted((a,b)=>a.id-b.id),'Dated support observations survive public archive restoration exactly')
  const restoredScoreRows=new Map(restoredRows.filter(item=>item.table==='buoy_scorecard_history').map(item=>[item.row.id,item.row]))
  for(const {row}of archiveRows.filter(item=>item.table==='buoy_scorecard_history'))assert.equal(restoredScoreRows.get(row.id).observed_seq,row.observed_seq,'Retained calculation ordering survives restoration')
+ // A clean migration has no later derived work. The broad archive fixture
+ // above publishes scorecards and calculated fields; those are dependencies
+ // that intentionally prevent strict undo, so use fresh installations here.
+ const totangoSource=await copy('totango-source'),totangoDestination=await copy('totango-destination'),totangoArchive=join(parent,'totango.rer')
+ running=await startWorker({root:totangoSource,secure:true,persistenceDirectory:join(totangoSource,'.wrangler/state'),keepPersistence:true})
+ const totangoImage=await seedTotangoArchive(running)
+ await running.close();running=null
+ await command(totangoSource,['export','--output',totangoArchive])
+ const totangoRows=(await readFile(totangoArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assertTotangoArchiveRows(totangoRows,totangoImage)
+ await command(totangoDestination,['import','--input',totangoArchive,'--yes'])
+ running=await startWorker({root:totangoDestination,secure:true,persistenceDirectory:join(totangoDestination,'.wrangler/state'),keepPersistence:true})
+ await assertTotangoRestored(running,totangoImage)
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
 }finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}
