@@ -1,3 +1,4 @@
+import {planReadinessState} from '../plans'
 import {generateBillingRenewals} from './billing'
 import {Hono} from 'hono'
 import type {Bindings} from '../../auth.server'
@@ -44,7 +45,8 @@ export async function renewalsState(db:D1Database,actor:Actor,query=new URLSearc
  insist(actor.kind==='person','Renewals require a staff session.',403)
  const quarter=query.get('quarter');insist(!quarter||/^\d{4}-Q[1-4]$/.test(quarter),'Choose a quarter such as 2027-Q1.')
  const records=(await db.prepare('SELECT id,document,revision,created_at AS createdAt FROM buoy_renewals ORDER BY json_extract(document,\'$.renewalDate\'),id').all<{id:string;document:string;revision:string;createdAt:string}>()).results.map(({document,...row})=>({...JSON.parse(document),...row})) as Renewal[]
- const all=records.map(r=>({...r,quarter:r.renewalDate.slice(0,4)+'-Q'+Math.ceil(Number(r.renewalDate.slice(5,7))/3)}))
+ const readiness=records.length&&['owner','admin'].includes(actor.role)?await planReadinessState(db,actor):null
+ const all=records.map(r=>({...r,...(readiness?{goalReadiness:readiness.get(r.accountId)}:{}),quarter:r.renewalDate.slice(0,4)+'-Q'+Math.ceil(Number(r.renewalDate.slice(5,7))/3)}))
  return {settings:await renewalSettings(db),quarters:[...new Set(all.map(r=>r.quarter))].sort(),records:all.filter(r=>!quarter||r.quarter===quarter),fields:await renewalFieldsState(db),interpretation:'Expected ARR is confirmed contract annualized native-currency minor units. Renewal outcomes do not change billing. Provider-backed approved outcomes compare expected ARR with the next successful subscription snapshot, retaining matches and differences separately; no provider write occurs. Dates and quarters use UTC. A changed contract period creates its own opportunity; source revisions within the same period refresh one opportunity. Earlier periods remain as history.'}
 }
 export async function saveRenewal(db:D1Database,actor:Actor,recordId:string,input:Record<string,unknown>){
