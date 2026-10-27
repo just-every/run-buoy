@@ -3,6 +3,7 @@ import {billingFixtureKey} from './billing-fixture.mjs'
 import {seedBillingPortability,billingPortabilityImage,assertBillingArchiveRows,assertBillingPortability,assertBillingAwareAccounts,assertBillingAwareRevenue,assertBillingAwareScorecardHistory,billingAwareRecordImage,billingAwareAccountCatalog} from './billing-portability.mjs'
 import {seedRecordPortability,recordPortabilityImage,assertRecordPortability} from './record-portability.mjs'
 import { importClient } from './import-door-client.mjs'
+import {seedTotangoArchive,assertTotangoArchiveRows,assertTotangoRestored} from './totango-api-journey.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
 // Source and destination run sequentially; only Stripe/mail network edges use synthetic provider records.
 import assert from 'node:assert/strict'
@@ -318,5 +319,19 @@ try{
  const restoredBillingBeforeSchedule=await call('/billing');await running.scheduled();const restoredBillingAfterSchedule=await call('/billing');
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'The restored scheduled Worker makes no next Stripe source call');
  assert.deepEqual(restoredBillingAfterSchedule,restoredBillingBeforeSchedule,'No restored source observation or billing run advances until the new owner reconnects');
+ await running.close();running=null
+ // A clean migration has no later derived work. The broad archive fixture
+ // above publishes scorecards and calculated fields; those are dependencies
+ // that intentionally prevent strict undo, so use fresh installations here.
+ const totangoSource=await copy('totango-source'),totangoDestination=await copy('totango-destination'),totangoArchive=join(parent,'totango.rer')
+ running=await startWorker({root:totangoSource,secure:true,persistenceDirectory:join(totangoSource,'.wrangler/state'),keepPersistence:true})
+ const totangoImage=await seedTotangoArchive(running)
+ await running.close();running=null
+ await command(totangoSource,['export','--output',totangoArchive])
+ const totangoRows=(await readFile(totangoArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assertTotangoArchiveRows(totangoRows,totangoImage)
+ await command(totangoDestination,['import','--input',totangoArchive,'--yes'])
+ running=await startWorker({root:totangoDestination,secure:true,persistenceDirectory:join(totangoDestination,'.wrangler/state'),keepPersistence:true})
+ await assertTotangoRestored(running,totangoImage)
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
 }finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}

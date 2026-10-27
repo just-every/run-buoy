@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "fbc3afd18bb2cddb38c8e5259c9f0b326100dd3dd08caaf839dd0bd306cddc37",
+      "sha256": "740f030ed8c769ed26a0ee9df430def730f3b9d02c45d3c04913871cacedb153",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "f01e727bbb145d1ddd352cfcc5cb198149cda8efd627b5cff70f7398e41f6e69",
+      "sha256": "caf9f9fe5025895b3a46ee9686d159dabb763f6e2c0475590df13df8f7a5a44d",
       "executable": false
     },
     "DEMO.md": {
@@ -184,7 +184,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "195c7b37003c20153792e570a2bf7fff98ed3b25e20ffdf24d1703952ead61c4",
+      "sha256": "a8e2b1ae69c6204a60f409005b06eaff686ee65adab3cd5215d28e47c2e481bc",
       "executable": false
     },
     "docs/move-in.md": {
@@ -4152,7 +4152,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "f676012d768757a538425c4965883cee602b0a29dbc09dae19d870ea28162d55",
+      "sha256": "b8969b3732c44641786ede3a4957639989772092a5dc58b0cf8d0ca1dab3a21e",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
@@ -4300,7 +4300,7 @@
       "executable": false
     },
     "tests/totango-api-journey.mjs": {
-      "sha256": "009bbe6c36dce32d8c47d8d4b3fbfaddc1eef06937efb788e2a216b0ed2a21bf",
+      "sha256": "54477f5a8875a3c167bbe02ef5aa6187a3bb6cb405eb7ec8a7309aed59f25d49",
       "executable": false
     },
     "tests/usage-browser.mjs": {
