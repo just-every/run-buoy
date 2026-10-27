@@ -1,11 +1,12 @@
 import { csvRows } from './csv'
 import {totangoApiRows} from './totango-api'
+import {referenceRecords} from './references'
 import { sha256 } from '../../modules/import-kit/src/d1/index.ts'
 import type { Json, ParsedRecord, ImportMapping } from '../../modules/import-kit/src/d1/index.ts'
 import { parseAccount } from '../imports/validation'
 import { KIND } from '../imports/source'
 import { minorUnitDigits } from '../currencies'
-export const migrationSources = ['vitally', 'velaris', 'csv', 'totango'] as const
+export const migrationSources = ['vitally', 'velaris', 'csv', 'totango', 'churnzero'] as const
 export type MigrationSource = typeof migrationSources[number]
 export const migrationNamespace = (source: MigrationSource) => `buoy-migrate-${source}-v1`
 export const migrationSource = (value: string | null): MigrationSource | undefined => migrationSources.find(source => source === value)
@@ -42,9 +43,11 @@ function rejection(id: string, reason: string, pointer: string): ParsedRecord {
 export function parseMigration(value: Json, source: MigrationSource): ParsedRecord[] {
  try {
   const bundle = object(value)
-  if (Object.keys(bundle).some(key=>!['format','source','dateOrder','columns','csv','originalSha256','data','exportText','api'].includes(key))) throw new Error('Unsupported migration bundle field.')
+  if (Object.keys(bundle).some(key=>!['format','source','dateOrder','columns','csv','originalSha256','data','exportText','api','references'].includes(key))) throw new Error('Unsupported migration bundle field.')
   if (bundle.format !== 'buoy-migration-v1' || bundle.source !== source) throw new Error('Choose a matching versioned migration bundle.')
   if (!['iso','day-first','month-first'].includes(String(bundle.dateOrder))) throw new Error('Choose iso, day-first or month-first date order.')
+  if(bundle.references!==undefined&&source!=='totango')throw new Error('Reference files are supported only for Totango account bundles.')
+  const references=referenceRecords(bundle.references)
   let rows: Record<string,unknown>[], columns: Record<string,unknown>, pointers: string[]
   let exportData: Record<string,unknown> | undefined
   if(bundle.api!==undefined){
@@ -52,7 +55,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
    const parsed=totangoApiRows(bundle.api);rows=parsed.rows;pointers=parsed.pointers;columns=object(bundle.columns)
    for(const [key,column]of Object.entries(columns))if(!fields.includes(key as typeof fields[number])||typeof column!=='string'||!column.trim())throw new Error('Invalid Totango API field mapping.')
    const selected=Object.values(columns);if(new Set(selected).size!==selected.length)throw new Error('Each Totango source field maps to only one destination field.')
-  }else if (source === 'csv' || source === 'totango') {
+  }else if (source === 'csv' || source === 'totango' || source === 'churnzero') {
    if (bundle.data !== undefined || bundle.exportText !== undefined) throw new Error('CSV bundles cannot contain a second export representation.')
    if (typeof bundle.csv !== 'string' || sha256(bundle.csv) !== bundle.originalSha256) throw new Error('Original CSV digest does not match its embedded UTF-8 text.')
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
@@ -98,18 +101,19 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
     return {kind:KIND,sourceId:id,payload:{account:account as unknown as Json,unmapped},pointer}
    } catch (error) { return rejection(`row-${i+1}`,error instanceof Error ? error.message : 'Invalid migration row.',pointer) }
   })
-  if (source !== 'csv' && source !== 'totango') {
+  if (source !== 'csv' && source !== 'totango' && source !== 'churnzero') {
    for (const [kind,items] of Object.entries(exportData!)) if (kind !== 'accounts') {
     const count = Array.isArray(items) ? items.length : 1
     records.push({kind:'migration-unmapped',sourceId:`collection-${kind}`,payload:{collection:kind,count,reason:'This record kind is not mapped. No native records or automation are created.'},pointer:['','data',kind.replaceAll('~','~0').replaceAll('/','~1')].join('/')})
    }
   }
-  return records
+  return [...records,...references]
  } catch (error) { return [rejection('bundle',error instanceof Error ? error.message : 'Invalid migration bundle.','')] }
 }
 export const migrationMapping: ImportMapping = {version:'migration-v1',map(record) {
  const payload = object(record.payload)
  if (record.kind === 'migration-rejected') return {effects:[],rejection:String(payload.reason)}
+ if (record.kind === 'migration-reference') return {effects:[],unmapped:(payload.fields as string[]).map(field=>({field:String(payload.name)+'#'+field,reason:String(payload.kind)+': source element retained without native mapping; no playbook or automation is created. A genuine definition schema and supported mapping remain required.'}))}
  if (record.kind === 'migration-unmapped') return {effects:[],unmapped:[{field:String(payload.collection),reason:`${payload.count} source records: ${payload.reason}`}]}
  if (record.kind !== KIND) return {effects:[],rejection:'Unsupported migration record.'}
  return {effects:[{targetKind:KIND,targetId:String(object(payload.account).id),value:payload.account as Json}],
