@@ -59,7 +59,8 @@ export async function scorecardHistory(db:D1Database,config:ScorecardConfig){
  const {start,end}=period()
  const retained=(await stmt(db,`SELECT document,calculated_at at FROM buoy_scorecard_history WHERE calculated_at>=? AND calculated_at<? ORDER BY calculated_at,observed_seq,id`,start,end).all<{document:string;at:string}>()).results
  const latest=new Map<string,{document:string;at:string}>()
- for(const row of retained){const r=JSON.parse(row.document) as ScorecardResult;latest.set(r.accountId+':'+Math.floor((Date.parse(end)-Date.parse(row.at))/604800000),row)}
+ // Weeks include their starting UTC midnight and exclude their ending midnight.
+ for(const row of retained){const r=JSON.parse(row.document) as ScorecardResult;latest.set(r.accountId+':'+(Math.ceil((Date.parse(end)-Date.parse(row.at))/604800000)-1),row)}
  const observations:Observation[]=[...latest.values()].map(row=>{
   const retained=JSON.parse(row.document) as ScorecardResult,result=calculate(config,retained.inputs,{accountId:retained.accountId,accountRevision:retained.accountRevision,configRevision:'backtest',versionId:'backtest',calculatedAt:row.at})
   return {accountId:retained.accountId,on:row.at.slice(0,10),current:null,previous:null,urgent:null,supportReference:null,score:result.score,matched:result.band==='at-risk',missing:result.score===null?['Required retained scorecard inputs unavailable.']:[]}
