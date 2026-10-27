@@ -1,4 +1,4 @@
-import {journeyBundle,journeyDefinition} from './churnzero-journey-fixture.mjs'
+import {churnzeroPortability} from './churnzero-portability.mjs'
 import {billingSource} from './billing-journey.mjs'
 import {billingFixtureKey} from './billing-fixture.mjs'
 import {seedBillingPortability,billingPortabilityImage,assertBillingArchiveRows,assertBillingPortability,assertBillingAwareAccounts,assertBillingAwareRevenue,assertBillingAwareScorecardHistory,billingAwareRecordImage,billingAwareAccountCatalog} from './billing-portability.mjs'
@@ -179,14 +179,6 @@ try{
  const acceptedProposal=acceptedState.proposals.find(proposal=>proposal.id===acceptedTask.proposalId)
  assert.equal(acceptedProposal?.payload.aiProposalId,erasedTranscript.proposals[0].id)
  await call('/accounts/'+erasedTranscriptAccount.id,'DELETE',{confirmation:erasedTranscriptAccount.name})
- // Seed this reviewed migration after erasure fixtures, whose security fence withdraws older import snapshots.
- const journeyCsv=(await readFile(join(root,'fixtures/move-in/churnzero/accounts.csv'),'utf8')).replaceAll('synthetic-buoy-','synthetic-buoy-migration-').split('\r\n').slice(0,2).join('\r\n')+'\r\n'
- const journeyInput=journeyBundle({format:'buoy-migration-v1',source:'churnzero',dateOrder:'iso',columns:{id:'Account External ID',name:'Account Name',renewalDate:'Renewal Date',noticeDays:'Notice Days',renewalEvidence:'Contract Reference'},csv:journeyCsv})
- const journeyDoor=()=>importClient((path,options)=>running.request(path,{...options,headers:{...options.headers,'x-buoy-import-source':'churnzero'}}),running.cookie)
- const journeyPlan=await journeyDoor().plan(journeyInput);await journeyDoor().apply(journeyPlan)
- const journeyAccountId='migration_'+createHash('sha256').update(JSON.stringify(['churnzero','synthetic-buoy-migration-1'])).digest('hex').slice(0,40)
- const journeyDraftsBefore=(await call('/state')).accounts.find(row=>row.id===journeyAccountId).migrationJourneys
- assert.equal(journeyDraftsBefore.length,1);assert.equal(journeyDraftsBefore[0].state,'paused');assert.deepEqual(journeyDraftsBefore[0].definition,journeyDefinition)
  const aiProposalsBefore=(await call('/ai/proposals')).proposals
  assert.deepEqual(aiProposalsBefore.map(({kind,line,lineNumber})=>({kind,line,lineNumber})),retainedTranscript.selected)
  const recordImage=await recordPortabilityImage(call,recordIds);
@@ -250,16 +242,6 @@ try{
  await command(broken,['import','--input',damaged,'--yes'],1)
  running=await startWorker({root:destination,secure:true,providerFetch:stripe.fetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
- assert.deepEqual((await call('/state')).accounts.find(row=>row.id===journeyAccountId).migrationJourneys,journeyDraftsBefore,'MIGRATE-002 real archive restores exact native paused drafts, source elements and unmapped diagnostics')
- assert.equal((await journeyDoor().json('reconcile',{planId:journeyPlan.planId})).ok,true,'Restored owner reconciles the durable definition import')
- const journeyTasksBefore=(await call('/state')).tasks.filter(row=>row.accountId===journeyAccountId),journeyEgressBefore=running.outbound.length
- const journeyBooksBefore=await call('/playbooks')
- await running.scheduled()
- assert.deepEqual((await call('/state')).tasks.filter(row=>row.accountId===journeyAccountId),journeyTasksBefore,'Restored source task steps cannot create operational work')
- assert.deepEqual(await call('/playbooks'),journeyBooksBefore,'Restored drafts cannot enroll runnable playbooks')
- assert.equal(running.outbound.length,journeyEgressBefore,'Restored source webhook configuration grants no provider authority')
- assert.deepEqual((await call('/state')).accounts.find(row=>row.id===journeyAccountId).migrationJourneys,journeyDraftsBefore,'Scheduled evaluation leaves restored drafts paused')
-
  assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
  assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective source values and awaiting-confirmation state restore exactly');
  await assertBillingPortability(call,running.request,running.cookie,billingImage)
@@ -338,4 +320,6 @@ try{
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'The restored scheduled Worker makes no next Stripe source call');
  assert.deepEqual(restoredBillingAfterSchedule,restoredBillingBeforeSchedule,'No restored source observation or billing run advances until the new owner reconnects');
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
+ await running.close();running=null
+ await churnzeroPortability()
 }finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}

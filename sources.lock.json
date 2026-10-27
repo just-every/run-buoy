@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "85b872cb19090917e753a445186406d85961e1be065f260c82f2b84a03b7553f",
+      "sha256": "0bd629fddd30a629f10247250a04092d63f3653d4088c43e619e5c8ff23596a6",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "3d50cf3b847f7f891afe4e327f0c7deaa6f9de1c435f6e312538bb9ca0e026e9",
+      "sha256": "69005ee0b43c8c9ca962d04c832671942317eb45211d51b0663f7437fc0362f9",
       "executable": false
     },
     "DEMO.md": {
@@ -292,7 +292,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "5491dd8c6fa847a93d8df5d780bfafc614d977daf36257f0ef7e26c0d964933b",
+      "sha256": "a84d6e00f5b6c706d59a3eb377d07c7cae163a6fd8c1945315e7388a2ca15cfb",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -3995,6 +3995,10 @@
       "sha256": "b5d944c547bccc7dc901ab65ff594b5f0f11f7c7856e46d24cab4f3ebe67ad04",
       "executable": false
     },
+    "tests/churnzero-portability.mjs": {
+      "sha256": "482601e4c802a1f5b2eb61395fb9a2086a0560ac22b457c122ff432e08ab64a7",
+      "executable": false
+    },
     "tests/communication-browser.mjs": {
       "sha256": "390670066d33a556baf2eee7dfc471c4f4a1d6c17b2209d0050dd97307db5d98",
       "executable": false
@@ -4160,7 +4164,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "9957e526d1942067dab8c2835691f840087b8d378d4ab8277a5812a1bec3ee6f",
+      "sha256": "9eae05b6d853fb33491b0d73d307aa5bedd744b908fc346632cec4153de5a3fe",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
