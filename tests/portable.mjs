@@ -37,6 +37,7 @@ const providerFetch=async request=>{
  if(new URL(request.url).hostname==='api.stripe.com')return stripe.fetch(request)
  assert.equal(request.url,'https://api.anthropic.com/v1/messages')
  const body=await request.json(),payload=JSON.parse(body.messages[0].content.slice(body.messages[0].content.indexOf('{')))
+ if(payload.instructions.startsWith('Translate'))return Response.json({content:[{text:JSON.stringify({name:'Portable approved configuration',weeklyDropPercent:30,urgentTickets:1})}],usage:{input_tokens:100,output_tokens:100}})
  assert.ok(payload.instructions.startsWith('Identify'))
  return Response.json({content:[{text:JSON.stringify({proposals:aiSelection})}],usage:{input_tokens:100,output_tokens:100}})
 }
@@ -180,6 +181,10 @@ try{
  await call('/accounts/'+erasedTranscriptAccount.id,'DELETE',{confirmation:erasedTranscriptAccount.name})
  const aiProposalsBefore=(await call('/ai/proposals')).proposals
  assert.deepEqual(aiProposalsBefore.map(({kind,line,lineNumber})=>({kind,line,lineNumber})),retainedTranscript.selected)
+ const configurationDraft=await call('/ai/configuration','POST',{description:'Flag a weekly activity drop with an urgent ticket',consent:true})
+ await call('/ai/configuration/'+configurationDraft.id+'/approve','POST',{approve:true,fingerprint:configurationDraft.fingerprint})
+ const pendingConfiguration=await call('/ai/configuration','POST',{description:'Flag a weekly activity drop with an urgent ticket',consent:true})
+ const configurationSignalsBefore=(await call('/ai/configuration')).signals
  const recordImage=await recordPortabilityImage(call,recordIds);
  const billingImage=await billingPortabilityImage(call,billingIds);
  // Later fixture writes can legitimately add held account revisions. Compare
@@ -205,6 +210,10 @@ try{
  // would also satisfy. No generated installation key is logged on failure.
  const archiveText=await readFile(archive,'utf8')
  const archiveRows=archiveText.trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assert.ok(!archiveRows.some(item=>['buoy_configuration_drafts','buoy_configuration_accounts'].includes(item.table)),'Unpublished drafts and approval authority never enter an archive')
+ assert.ok(archiveRows.some(item=>item.table==='buoy_configuration_signals'&&JSON.parse(item.row.document).name==='Portable approved configuration'),'Approved deterministic definitions are retained')
+ const supportHistoryBefore=archiveRows.filter(item=>item.table==='buoy_support_history').map(item=>item.row)
+ assert.ok(supportHistoryBefore.length>0,'Retained native support observations enter the actual archive')
  const aiArchiveRows=archiveRows.filter(item=>item.table==='buoy_ai_proposals').map(item=>item.row)
  assert.deepEqual(aiArchiveRows.map(({kind,line,line_number})=>({kind,line,lineNumber:line_number})).sort((a,b)=>a.lineNumber-b.lineNumber),retainedTranscript.selected,'AI-002 persisted proposals contain exactly the selected kind, source text and original line number')
  assert.deepEqual(aiArchiveRows.map(row=>row.id).sort(),retainedTranscript.proposals.map(row=>row.id).sort())
@@ -263,6 +272,9 @@ try{
  assert.ok(restored.some(e=>e.action==='survey.response-recorded'),'Recorded survey audit restores');
  assertBillingAwareRevenue(await call('/revenue'),revenueBefore,billingImage);
  assert.ok(restored.some(e=>e.action==='revenue.contract-confirmed'),'Recurring confirmation audit survives archive restore');
+ assert.deepEqual((await call('/ai/configuration')).drafts,[],'Restoration carries no pending configuration approval')
+ assert.deepEqual((await call('/ai/configuration')).signals,configurationSignalsBefore,'Approved deterministic signal definitions survive real restoration')
+ assert.equal((await running.request('/api/buoy/ai/configuration/'+pendingConfiguration.id,{cookie:running.cookie})).status,404,'Restored installations cannot reuse a pending draft')
  assert.deepEqual((await call('/ai/schedules')).schedules,[],'AI-006 standing authority never restores');assert.equal((await call('/ai')).enabled,false,'An archive never restores permission to send records to a model; the fresh owner must explicitly configure it.');
  const scorecardAfter=await call('/scorecards');
  assert.deepEqual(scorecardAfter.versions,scorecardBefore.versions,'Published scorecard versions and their dependency image restore exactly');
@@ -318,5 +330,11 @@ try{
  const restoredBillingBeforeSchedule=await call('/billing');await running.scheduled();const restoredBillingAfterSchedule=await call('/billing');
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'The restored scheduled Worker makes no next Stripe source call');
  assert.deepEqual(restoredBillingAfterSchedule,restoredBillingBeforeSchedule,'No restored source observation or billing run advances until the new owner reconnects');
+ await running.close();running=null
+ const restoredArchive=join(parent,'restored.rer');await command(destination,['export','--output',restoredArchive])
+ const restoredRows=(await readFile(restoredArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assert.deepEqual(restoredRows.filter(item=>item.table==='buoy_support_history').map(item=>item.row).sort((a,b)=>a.id-b.id),supportHistoryBefore.toSorted((a,b)=>a.id-b.id),'Dated support observations survive public archive restoration exactly')
+ const restoredScoreRows=new Map(restoredRows.filter(item=>item.table==='buoy_scorecard_history').map(item=>[item.row.id,item.row]))
+ for(const {row}of archiveRows.filter(item=>item.table==='buoy_scorecard_history'))assert.equal(restoredScoreRows.get(row.id).observed_seq,row.observed_seq,'Retained calculation ordering survives restoration')
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
 }finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}

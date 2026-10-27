@@ -1,3 +1,4 @@
+import {configurationSignals} from './ai/configuration-signals'
 import type {Bindings} from '../auth.server'
 import type {Actor} from './core'
 import {generateRenewals} from './renewals'
@@ -23,5 +24,6 @@ export async function refreshAccountConsumers(env:Bindings,actor:Actor){
  await runPlaybooks(env.DB)
  await alertFailures(env.DB)
  await recordAdoptionAlerts(env.DB)
+ await configurationSignals(env.DB)
  await flushNotifications(env)
 }

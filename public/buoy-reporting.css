@@ -2,7 +2,7 @@
 #saved-reports li > a, #saved-dashboards li > a, #saved-reviews li > a {
  display: inline-block; min-height: 28px; padding-block: 3px;
 }
-[id^="report-result-"] [data-scroll-x], [id^="review-slide-"] [data-scroll-x] {
+[id^="report-result-"] [data-scroll-x], #configuration-evidence [data-scroll-x], [id^="review-slide-"] [data-scroll-x] {
  max-width: 100%; overflow-x: auto;
 }
 [id^="report-result-"], [id^="report-inputs-"], [id^="review-slide-"], #review-introduction {
