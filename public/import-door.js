@@ -73,6 +73,7 @@ async function history() {
     section.className = 'import-history-entry'
     title.textContent = label(entry.state.replaceAll('_', ' '))
     caption.textContent = `${entry.reviewer === entry.approvalRecordId ? 'Approved via Business by' : 'Approved by'} ${entry.owner} · ${new Date(entry.approvedAt).toLocaleString()}${entry.failureCode ? ' · ' + failureMessage(entry.failureCode) : ''}`
+    open.dataset.importPlan = entry.planId
     open.type = 'button'; open.className = 'secondary'; open.textContent = 'Open import'
     open.addEventListener('click', () => { void run(async () => {
       migrationSource = sourceForNamespace(entry.namespace)

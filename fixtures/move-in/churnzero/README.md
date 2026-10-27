@@ -1,7 +1,7 @@
-# Synthetic ChurnZero account CSV
+# Synthetic ChurnZero account mapping example
 
-This twenty-account file contains synthetic data only. It is a selected-column account CSV for exercising explicit mapping, not a verified ChurnZero export schema or an export from a live provider account.
+`accounts.csv` is a synthetic twenty-account CSV for the explicit column mapper. The headers are an example mapping contract, not a verified ChurnZero export schema. No customer export or versioned vendor schema was supplied. Select and review the actual headers from your export; the mapper never guesses them or supplies missing contract terms.
 
-ChurnZero's [account data audit guide](https://churnzero.com/blog/7-point-audit-checklist-for-customer-success-software/) names Account External Id and Next Renewal Date among important account attributes. This fixture adds explicit account name and customer-supplied contract notice and reference columns; those contract terms must actually exist in the owner's source and are never inferred. The mapping uses the exact selected headers. A byte-order mark and CRLF line endings exercise lossless preparation.
+The fixture has explicit account identities, names, renewal dates, notice periods, contract references and invoice snapshots. `ChurnScore`, `ChurnScore Factors`, `Journey` and `Contact` are deliberately unmapped source columns. Their values remain in the retained original CSV; review names each unsupported column for each source account. They create no native health measures, customer people or journeys. In particular, retained journey labels are not paused Buoy journeys and establish no steps or execution authority.
 
-ChurnScore and Health Factor are deliberately unmapped for every row. Neither an exported score nor a label supplies native health configuration, factor weights, observations or history. Contacts, tasks, plays, plans, journeys, events, NPS and provider API acquisition are not represented or proven. No paused journey migration is claimed.
+MIGRATE-002 stays partial. Native contacts, ChurnScores and factors, tasks, plays, success plans, paused journeys with definition mapping, events, NPS, API intake and full source-schema verification remain required. These bytes are used only for deliberate review or tests and are never imported automatically.

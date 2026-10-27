@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "fbc3afd18bb2cddb38c8e5259c9f0b326100dd3dd08caaf839dd0bd306cddc37",
+      "sha256": "b22c8eb18875e9d1e429263f9998a88bb8625c380406824f908a017ed890487e",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "f01e727bbb145d1ddd352cfcc5cb198149cda8efd627b5cff70f7398e41f6e69",
+      "sha256": "11948a3695810f5d5393c35bfc833e8892705616ae4e216310a440c81024a614",
       "executable": false
     },
     "DEMO.md": {
@@ -184,7 +184,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "195c7b37003c20153792e570a2bf7fff98ed3b25e20ffdf24d1703952ead61c4",
+      "sha256": "df6a3927a246afc11d6c3a359db6f2a7822743175260c8d3d868d34a462704ad",
       "executable": false
     },
     "docs/move-in.md": {
@@ -264,11 +264,11 @@
       "executable": false
     },
     "fixtures/move-in/churnzero/accounts.csv": {
-      "sha256": "e7830d34390495c1b3e729cd3c254aa202543bafe2fe9d27844e95410b24a0b6",
+      "sha256": "365eef1a3b7bc30c7243f4bb0bda3655f2285ffb9a53516ecd8f36889b0300e3",
       "executable": false
     },
     "fixtures/move-in/churnzero/README.md": {
-      "sha256": "d43710d4e5935105ea1fa1e9dcbbc883ce152f483cc1a23ff6d8784caf3892e1",
+      "sha256": "28c6366ede31dedb4b4a76fdbd351c3e760857e3726209bdad80ba47b7a64287",
       "executable": false
     },
     "fixtures/move-in/README.md": {
@@ -660,7 +660,7 @@
       "executable": false
     },
     "public/buoy.css": {
-      "sha256": "552366aa91547ae547c45cf243b09f8e161b8fc1be097d5899f8d72e4569105c",
+      "sha256": "fd6abb78a2990eda45e906851fe15abce4d82b8909aaefe0260ffdb212b962ab",
       "executable": false
     },
     "public/favicon-16.svg": {
@@ -724,7 +724,7 @@
       "executable": false
     },
     "public/import-door.js": {
-      "sha256": "3842c497e671c94554e3833d85f4ea1e082161edc09dcc6dc8c50700d0b08395",
+      "sha256": "184f3435184dc7d1ed17efe18807286233556137b39a39119335dff7d8058226",
       "executable": false
     },
     "public/rer-theme.css": {
@@ -1832,7 +1832,7 @@
       "executable": false
     },
     "src/buoy/ui/imports.ts": {
-      "sha256": "5cbffadad57a2fa3cbb137119809dad66e9b8ece4e08c731cd00109bd8d172f9",
+      "sha256": "215bb571fa5d98cd781e99dc7e44a1b055c37486a250b06c6b735f80463f3a9f",
       "executable": false
     },
     "src/buoy/ui/inapp.ts": {
@@ -1936,7 +1936,7 @@
       "executable": false
     },
     "src/buoy/ui/shell.ts": {
-      "sha256": "e65af319ddf8835b4fe29b4a9498e4b2a74afe78e33bcb80d23511251786aca7",
+      "sha256": "dcd295855e08f92ee4b649fbf241fb8b5265457b4b6a1951a71995f67c8633ba",
       "executable": false
     },
     "src/buoy/ui/signal-dismissal.ts": {
@@ -3940,7 +3940,7 @@
       "executable": false
     },
     "tests/ai-journey.mjs": {
-      "sha256": "7280906a6560dfee25bbe5c084b2e44a2529cecd345a0893957cb3f312ca6057",
+      "sha256": "68c1f6341ff8843380b48b4e243cf84143589b62720fe7e29f5fac62c66b5335",
       "executable": false
     },
     "tests/ai-question-browser.mjs": {
@@ -3981,10 +3981,6 @@
     },
     "tests/boundary.mjs": {
       "sha256": "c520f9a3be4d6552e61fe36292ea6c14a82570cd59ea3bd79ac05cec6bb2ec8e",
-      "executable": false
-    },
-    "tests/churnzero-journey.mjs": {
-      "sha256": "689b2fe47b9b395ad323df7479471a35f80dac1496a32b04513bc6346602d669",
       "executable": false
     },
     "tests/communication-browser.mjs": {
@@ -4112,7 +4108,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "eaefe59852a4800210abd3ad17b963bbf6f0c66475af989725ee1df35eacd2c8",
+      "sha256": "d66cc40f7886c2190e1c9c53922490e96f65ae340c3bc7894b21bfe8d97b576e",
       "executable": false
     },
     "tests/notifications.mjs": {
@@ -4216,7 +4212,7 @@
       "executable": false
     },
     "tests/roles-account-edit.mjs": {
-      "sha256": "319349d74fb204cf9687eb0da596065d77fe3eac0423b995bde62ffa5c7853e0",
+      "sha256": "5fb1915f1ff4f2c044582321c87166a32feefc979ac39cbd868d7e409ae8178c",
       "executable": false
     },
     "tests/roles-browser.mjs": {
@@ -4272,7 +4268,7 @@
       "executable": false
     },
     "tests/style.mjs": {
-      "sha256": "0f374dcf257fb450587a4be95430887c6cd3c702f1441559dc398af42c005ad9",
+      "sha256": "e61988cae186b6c178701a569cf078ddbee0c0e15a6250dd27119967f2cc473b",
       "executable": false
     },
     "tests/survey-scorecard-browser.mjs": {

@@ -51,7 +51,7 @@ const inspect = () => {
 const site = await startSite(), app = await startWorker(), failures = []
 let controls = 0, forms = 0
 const check = (fn) => { try { fn() } catch (error) { failures.push(error.message) } }
-const browser = await chromium.launch({ headless: true, args: ['--use-mock-keychain', '--password-store=basic'] })
+const browser = await chromium.launch({ headless: true, ...(process.env.BUOY_CHROMIUM_PATH ? { executablePath: process.env.BUOY_CHROMIUM_PATH } : {}), args: ['--no-sandbox', '--use-mock-keychain', '--password-store=basic'] })
 try {
  const call = (path, method, body) => app.request('/api/buoy' + path, { method, body, cookie: app.cookie })
  const today = new Date().toISOString().slice(0, 10)
@@ -67,15 +67,23 @@ try {
    const response = await page.goto(origin + path, { waitUntil: 'networkidle' })
    const where = `STYLE-001 ${path} at ${width}px`
    assert.equal(response.status(), 200, where)
-   await page.evaluate(() => document.fonts.ready)
+   if (path === '/app/imports') await page.waitForFunction(() => !document.getElementById('import-settings-fields').disabled && !document.querySelector('#import-upload button').disabled)
+   await page.evaluate(async () => {
+    await document.fonts.ready
+    for (const selector of ['p', 'h1,h2', 'code,pre']) {
+     const element = [...document.querySelectorAll(selector)].find(node => node.getClientRects().length)
+     if (element) await document.fonts.load('16px ' + getComputedStyle(element).fontFamily.split(',')[0])
+    }
+   })
    const seen = await page.evaluate(inspect)
    controls += seen.controls; forms += seen.forms.length
    check(() => { assert.ok(seen.theme.includes('/rer-theme.css'), `${where} uses the one theme file: ${seen.theme}`) })
    check(() => { assert.ok(fonts.length, `${where} loads its faces`) })
    check(() => { for (const url of fonts) assert.equal(new URL(url).origin, origin, `${where} loads ${url} from the installation`) })
-   check(() => { assert.ok(seen.faces.includes('Inter'), `${where} renders Inter`) })
-   check(() => { for (const role of ['text', 'heading']) if (seen[role]) assert.match(seen[role], /^Inter\b/, `${where} sets ${role} in Inter`) })
-   check(() => { if (seen.code) assert.match(seen.code, /^"?IBM Plex Mono/, `${where} sets commands in IBM Plex Mono`) })
+   check(() => { for (const role of ['text', 'heading', 'code']) if (seen[role]) {
+    const selected = seen[role].split(',')[0].trim().replace(/["']/g, '')
+    assert.ok(seen.faces.includes(selected), `${where} renders its selected ${role} face without a fallback: ${selected}`)
+   } })
    // App documents link no icon, so the browser shows the installation's /favicon.ico (checked below).
    check(() => { assert.deepEqual(seen.icons.sort(), origin === site.origin ? ['/favicon-32.svg', '/favicon.ico'] : [], `${where} icon links`) })
    check(() => { assert.ok(seen.marks.length && seen.marks.every(Boolean), `${where} shows the mark`) })

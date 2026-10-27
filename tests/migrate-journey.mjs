@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import {totangoApiJourney,apiBrowserBundle,totangoReferenceJourney,referenceFiles} from './totango-api-journey.mjs'
-import {churnzeroJourney} from './churnzero-journey.mjs'
 import {test} from 'node:test'
 import {createHash} from 'node:crypto'
 import {execFileSync} from 'node:child_process'
@@ -16,6 +15,7 @@ const account=(id,extra={})=>({id,name:'Synthetic account '+id,renewalDate:'2027
 const client=(app,source)=>importClient((path,options)=>app.request(path,{...options,headers:{...options.headers,'x-buoy-import-source':source}}),app.cookie)
 const state=async app=>(await (await app.request('/api/buoy/state',{cookie:app.cookie})).json()).accounts
 const bundle=csv=>({format:'buoy-migration-v1',source:'csv',dateOrder:'day-first',csv,originalSha256:createHash('sha256').update(csv).digest('hex'),columns:{id:'Customer',name:'Company',renewalDate:'Renewal',noticeDays:'Notice',renewalEvidence:'Evidence',invoiceTotal:'Amount',invoiceCurrency:'Currency',invoiceObservedAt:'Observed',invoiceDueDate:'Due'}})
+const churnzeroColumns={id:'Account External ID',name:'Account Name',renewalDate:'Renewal Date',noticeDays:'Notice Days',renewalEvidence:'Contract Reference',invoiceTotal:'Invoice Amount',invoiceCurrency:'Currency',invoiceObservedAt:'Invoice Observed',invoiceDueDate:'Invoice Due'}
 const header='Customer,Company,Renewal,Notice,Evidence,Amount,Currency,Observed,Due,Other\r\n'
 const csvRow=(id,date='31/03/2027',currency='USD',amount='12.34')=>`${id},"Synthetic, ${id}",${date},30,synthetic-buoy-1,${amount},${currency},01/01/2026,31/01/2026,unmapped\r\n`
 
@@ -63,6 +63,64 @@ test('MIGRATE-005 versioned export account custody uses the existing reviewed do
  } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
+test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and protect reviewed custody',async()=>{
+ const app=await startWorker({clock:Date.parse('2026-10-27T12:00:00Z')}),scratch=await mkdtemp(join(tmpdir(),'buoy-churnzero-'))
+ try {
+  const before=await state(app),door=client(app,'churnzero'),otherCookies=[]
+  for(const role of ['member','admin']){
+   const email=role+'@example.test'
+   assert.equal((await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email,displayName:'Synthetic '+role,role}})).status,202)
+   otherCookies.push(await app.signIn(email))
+  }
+  const outbound=app.outbound.length
+  const original='fixtures/move-in/churnzero/accounts.csv',prepared=join(scratch,'bundle.json')
+  execFileSync(process.execPath,['src/buoy/migrate/cli.mjs','--source','churnzero','--input',original,'--output',prepared,'--columns',JSON.stringify(churnzeroColumns)])
+  const input=JSON.parse(await readFile(prepared,'utf8')),bytes=await readFile(original)
+  assert.equal(input.csv,bytes.toString('utf8'));assert.equal(input.originalSha256,createHash('sha256').update(bytes).digest('hex'))
+  const plan=await door.plan(input)
+  assert.equal(plan.counts.input,20);assert.equal(plan.counts.mapped,20);assert.equal(plan.counts.rejected,0)
+  assert.deepEqual(plan.diagnostics.map(d=>d.field).sort(),Array.from({length:20},()=>['ChurnScore','ChurnScore Factors','Journey','Contact']).flat().sort())
+  assert.deepEqual(await state(app),before,'Review creates no native records')
+  for(const cookie of otherCookies)for(const action of ['uploads','apply','undo','reconcile','status'])assert.equal((await door.send(action,{planId:plan.planId,reviewedFingerprint:plan.fingerprint},{cookie})).status,401,'Only the owner manages ChurnZero imports')
+  assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:'0'.repeat(64)})).status,403)
+  assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:plan.fingerprint},{cookie:undefined})).status,401)
+  assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:plan.fingerprint},{headers:{'x-buoy-import-source':'churnzero',origin:'https://foreign.invalid'}})).status,403)
+  const job=await door.apply(plan);assert.equal((await door.apply(plan)).id,job.id)
+  const native=await state(app);assert.equal(native.length,before.length+20)
+  assert.deepEqual(native.filter(row=>!before.some(old=>old.id===row.id)).map(row=>row.id).sort(),Array.from({length:20},(_,i)=>target('churnzero','synthetic-buoy-'+(i+1))).sort())
+  for(let n=1;n<=20;n++){
+   const actual=native.find(row=>row.id===target('churnzero','synthetic-buoy-'+n));assert.ok(actual)
+   assert.equal(actual.name,'Synthetic ChurnZero '+n);assert.equal(actual.renewalDate,'2027-03-31');assert.equal(actual.noticeDays,n);assert.equal(actual.renewalEvidence,'synthetic-buoy-contract-'+n)
+   assert.deepEqual(actual.billing,{observedAt:'2026-01-01',reference:'churnzero account synthetic-buoy-'+n,currency:'USD',totalMinor:n*100+25,creditsMinor:0,allocatedMinor:0,dueDate:'2026-01-31'});assert.equal(actual.support,null);assert.equal(actual.health.status,'unknown','An exported score cannot become native health without its configuration')
+  }
+  assert.equal((await door.json('reconcile',{planId:plan.planId})).ok,true)
+  assert.equal((await client(app,'csv').send('status',{planId:plan.planId})).status,404)
+  const history=(await (await app.request('/api/operator/import-history',{cookie:app.cookie})).json()).history
+  assert.equal(history.find(row=>row.planId===plan.planId).namespace,'buoy-migrate-churnzero-v1')
+  assert.equal(app.outbound.length,outbound,'Account import does not send or execute provider work')
+  await door.undo(plan);assert.deepEqual(await state(app),before)
+  const malformed=await door.plan({...input,originalSha256:'0'.repeat(64)})
+  assert.equal(malformed.counts.mapped,0);assert.match(malformed.rejected[0].reason,/digest/);await door.json('undo',{planId:malformed.planId})
+  const mixed=await door.plan({...input,data:{accounts:[]}})
+  assert.equal(mixed.counts.mapped,0);assert.match(mixed.rejected[0].reason,/second export representation/);await door.json('undo',{planId:mixed.planId})
+  const editedPlan=await door.plan(input);await door.apply(editedPlan)
+  const current=(await state(app)).find(row=>row.id===target('churnzero','synthetic-buoy-1'))
+  const edited={id:current.id,name:'Synthetic owner edit',renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,billing:current.billing,support:current.support,revision:current.revision}
+  assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:app.cookie,body:edited})).status,200)
+  assert.equal((await door.send('undo',{planId:editedPlan.planId})).status,409,'Undo preserves later native edits')
+  assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'DELETE',cookie:app.cookie,body:{confirmation:edited.name}})).status,200)
+  assert.equal((await door.send('reconcile',{planId:editedPlan.planId})).status,410)
+  await assert.rejects(door.plan(input),/source_erased/,'Erasure prevents ChurnZero replay')
+  const dependencyCsv=input.csv.replaceAll('synthetic-buoy-','synthetic-buoy-dependency-')
+  const dependencyPlan=await door.plan({...input,csv:dependencyCsv,originalSha256:createHash('sha256').update(dependencyCsv).digest('hex')});await door.apply(dependencyPlan)
+  const dependentId=target('churnzero','synthetic-buoy-dependency-1')
+  assert.equal((await app.request('/api/buoy/proposals',{method:'POST',cookie:app.cookie,body:{accountId:dependentId,kind:'renewal',payload:{outcome:'renewed',reason:'synthetic-buoy-1',evidence:'synthetic-buoy-2'}}})).status,201)
+  const withDependency=await state(app)
+  assert.equal((await door.send('undo',{planId:dependencyPlan.planId})).status,409,'Undo protects dependent reviewed work')
+  assert.deepEqual(await state(app),withDependency,'Refused undo removes no account from the batch')
+ }finally{await app.close();await rm(scratch,{recursive:true,force:true})}
+})
+
 test('MIGRATE-003 Totango account CSV and API pages reconcile twenty accounts through reviewed owner imports',async()=>{
  const app=await startWorker({clock:Date.parse('2026-10-25T12:00:00Z')}),scratch=await mkdtemp(join(tmpdir(),'buoy-totango-'))
  try {
@@ -101,7 +159,7 @@ test('MIGRATE-003 Totango account CSV and API pages reconcile twenty accounts th
  }finally{await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
-test('MIGRATE-002 and MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and source identities',async()=>{
+test('MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and source identities',async()=>{
  const app=await startWorker(),scratch=await mkdtemp(join(tmpdir(),'buoy-migrate-'))
  try {
   const csv='\uFEFF'+header+csvRow('synthetic-buoy-1')+csvRow('synthetic-buoy-2','31/03/2027','JPY','12')+csvRow('synthetic-buoy-3','31/03/2027','KWD','1.234')+csvRow('synthetic-buoy-4','31/02/2027')+csvRow('synthetic-buoy-5','31/03/2027','USD','1.001')+csvRow('synthetic-buoy-6','31/03/2027','BAD')+csvRow('synthetic-buoy-7')+csvRow('synthetic-buoy-7')
@@ -132,15 +190,14 @@ test('MIGRATE-002 and MIGRATE-005 CSV mapping rejects bad rows and preserves exa
   assert.equal(large.counts.input,2000);assert.equal(large.counts.mapped,3);assert.equal(large.counts.rejected,1997)
   assert.deepEqual(await state(app),before,'A 2000-row preview changes no native records')
   await door.json('undo',{planId:large.planId})
-  await churnzeroJourney({app,scratch,client,state,target})
  } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
-test('MIGRATE-002, MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390',async()=>{
- const app=await startWorker(),browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
+test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390',async()=>{
+ const app=await startWorker({clock:Date.parse('2026-10-27T12:00:00Z')}),browser=await chromium.launch({headless:true,...(process.env.BUOY_CHROMIUM_PATH?{executablePath:process.env.BUOY_CHROMIUM_PATH}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
  const evidence=process.env.EVIDENCE_DIR??'../evidence/migrate';await mkdir(evidence,{recursive:true})
  try {
-  for(const width of [1440,390]) for(const source of ['csv','totango','totango-api','churnzero']) {
+  for(const width of [Number(process.env.BUOY_MIGRATION_PROOF_WIDTH??1440)]) for(const source of (process.env.BUOY_MIGRATION_PROOF_SOURCE?[process.env.BUOY_MIGRATION_PROOF_SOURCE]:['csv','totango','totango-api','churnzero'])) {
    const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
    try {
     await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...value]=pair.split('=');return{name,value:value.join('='),url:app.origin}}))
@@ -148,7 +205,9 @@ test('MIGRATE-002, MIGRATE-003 and MIGRATE-005 existing Imports screen reviews m
     await page.goto(app.origin+'/app/imports',{waitUntil:'networkidle'})
     await page.waitForFunction(()=>!document.getElementById('import-settings-fields').disabled)
     const raw={...bundle(header+csvRow('synthetic-buoy-'+width)+csvRow('synthetic-buoy-invalid','31/02/2027')),source}
-    const input=source==='totango-api'?apiBrowserBundle(raw):raw
+    const churnzeroCsv=source==='churnzero'?await readFile('fixtures/move-in/churnzero/accounts.csv','utf8'):undefined
+    const badChurnzero=churnzeroCsv?.split('\r\n')[1].replace('synthetic-buoy-1,','synthetic-buoy-invalid,').replace('2027-03-31','2027-02-31')+'\r\n'
+    const input=source==='totango-api'?apiBrowserBundle(raw):source==='churnzero'?{format:'buoy-migration-v1',source,dateOrder:'iso',columns:churnzeroColumns,csv:churnzeroCsv+badChurnzero,originalSha256:createHash('sha256').update(churnzeroCsv+badChurnzero).digest('hex')}:raw
     if(source==='totango'||source==='totango-api')input.references=referenceFiles()
     await page.setInputFiles('#import-bundle',{name:'synthetic-buoy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))})
     await page.getByRole('button',{name:'Upload and review',exact:true}).click()
@@ -157,16 +216,25 @@ test('MIGRATE-002, MIGRATE-003 and MIGRATE-005 existing Imports screen reviews m
     assert.match(await page.locator('#import-rejections').innerText(),/real calendar date/)
     if(width===1440&&input.references){const diagnostics=await page.locator('#import-diagnostics').innerText();assert.match(diagnostics,/definitions.json#\/actions\/1\/configuration\/a ~1 b~0c/);assert.match(diagnostics,/categories.json#\/associations\/0/);assert.match(diagnostics,/no playbook or automation is created/)}
     assert.deepEqual(await state(app),before)
-    const proof=async stage=>{await scan(page,`Migration ${source} ${stage} ${width}`);await page.screenshot({path:join(evidence,`migration-${source}-${stage}-${width}.png`),fullPage:true})}
+    const proof=async stage=>{assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Import remains within viewport');await scan(page,`Migration ${source} ${stage} ${width}`);await page.screenshot({path:join(evidence,`migration-${source}-${stage}-${width}.png`),fullPage:true})}
     // This screen uses text-labelled controls throughout; any future symbolic control must supply a tooltip.
     assert.deepEqual(await page.locator('#work button, #work a').evaluateAll(nodes=>nodes.filter(n=>!n.textContent.trim()&&!n.querySelector('img[alt]')).map(n=>n.outerHTML)),[])
+    if(source==='churnzero')for(const field of ['ChurnScore','ChurnScore Factors','Journey','Contact'])assert.ok((await page.locator('#import-diagnostics').innerText()).includes(field))
     await proof('review')
     await page.getByLabel('I reviewed this plan and approve the changes for this fingerprint.',{exact:true}).check()
     await page.getByRole('button',{name:'Apply reviewed import',exact:true}).click()
     const ready=async title=>page.waitForFunction(expected=>document.getElementById('import-result-title').textContent===expected&&!document.getElementById('import-status').disabled,title)
-    await ready('Import completed');assert.equal((await state(app)).length,before.length+1)
+    await ready('Import completed');assert.equal((await state(app)).length,before.length+(source==='churnzero'?20:1))
+    const selectedPlanId=await page.evaluate(()=>sessionStorage.getItem('buoy:import:plan'))
+    assert.ok(selectedPlanId)
     await proof('completed')
     await page.reload({waitUntil:'networkidle'});await ready('Import completed')
+    if(source==='churnzero'){
+     await page.evaluate(()=>{sessionStorage.removeItem('buoy:import:plan');sessionStorage.removeItem('buoy:import:plan:source')})
+     await page.reload({waitUntil:'networkidle'})
+     await page.locator('button[data-import-plan="'+selectedPlanId+'"]').click();await ready('Import completed')
+     assert.equal(await page.evaluate(()=>sessionStorage.getItem('buoy:import:plan')),selectedPlanId,'History reopens the intended import even when approval timestamps tie')
+    }
     await page.getByRole('button',{name:'Reconcile native records',exact:true}).click()
     await page.locator('#import-reconciliation').waitFor({state:'visible'})
     assert.equal(await page.locator('#import-reconcile-summary').innerText(),'Native records reconcile with this import.')

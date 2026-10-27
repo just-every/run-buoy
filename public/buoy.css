@@ -209,3 +209,7 @@ html.rer-themed .buoy-app .app-footer p { margin: 0; color: var(--buoy-muted-tex
   .views { flex-wrap: wrap; overflow-x: visible; border-radius: 24px; }
   html.rer-themed .buoy-app pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 }
+
+/* Import custody uses the seed's self-hosted evidence face throughout. */
+html.rer-themed body.buoy-imports { --buoy-font: var(--buoy-font-mono); --rer-font-body: var(--buoy-font-mono); --rer-font-heading: var(--buoy-font-mono); }
+.buoy-imports code { font-size: max(13px, 0.9em); }

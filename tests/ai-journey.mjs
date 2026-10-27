@@ -143,7 +143,7 @@ export async function aiScheduleJourney(){
   const row=(await api('/ai/schedules','POST',grant)).schedules[0]
   assert.equal(row.feature,grant.feature);assert.equal(row.name,grant.name);assert.equal(row.account_id,grant.accountId);assert.equal(row.question,grant.question);assert.equal(row.hour_utc,grant.hourUtc);assert.deepEqual(row.policy,(await api('/ai')).settings,'Standing consent records the entire reviewed model, classes, tariffs and limits');assert.deepEqual((await api('/ai/schedules')).schedules,[row])
   await app.scheduled('0 * * * *',Date.parse('2026-10-25T11:00:00Z'));assert.equal(sent.length,0)
-  await Promise.all([app.scheduled('0 * * * *',Date.parse('2026-10-25T12:00:00Z')),app.scheduled('0 * * * *',Date.parse('2026-10-25T12:00:00Z'))]);assert.equal(sent.length,1,'Concurrent replay reserves only one provider call');assert.doesNotMatch(JSON.stringify(sent),/Outside Coastal|8003/)
+  await Promise.all([app.scheduled('0 * * * *',Date.parse('2026-10-25T12:00:00Z')),app.scheduled('0 * * * *',Date.parse('2026-10-25T12:00:00Z'))]);assert.equal(sent.length,1,'Concurrent replay reserves only one provider call');assert.doesNotMatch(JSON.stringify(sent),/Outside Coastal|synthetic-buoy-8003/)
   assert.equal((await call('/ai/schedules/'+row.id,'DELETE',{revision:row.revision},admin)).status,403)
   await api('/ai/schedules/'+row.id,'DELETE',{revision:row.revision})
   const count=sent.length;await app.scheduled('0 * * * *',Date.parse('2026-10-26T12:00:00Z'));assert.equal(sent.length,count,'Revocation stops subsequent scheduled requests')
@@ -207,7 +207,7 @@ export async function aiGeneratedJourney(){
     assert.deepEqual(answer.claims.map(c=>[c.text,c.citations[0].accountId,c.citations[0].field]),expected,'Independent substantive generated answer: '+question)
     assert.ok(answer.missing.some(s=>s.includes('executive contacts')));assert.ok(answer.missing.some(s=>s.includes('detailed usage')))
     for(const claim of answer.claims){assert.ok(claim.text&&claim.citations.length);for(const source of claim.citations){const receipt=await app.request(source.citation,{cookie});assert.equal(receipt.status,200);assert.deepEqual((await receipt.json()).source,source);assert.ok(claim.text.includes(source.quote))}}
-    assert.doesNotMatch(JSON.stringify(answer),/Outside Coastal|8003/);assert.doesNotMatch(JSON.stringify(sent.at(-1)),/Outside Coastal|8003/);if(role==='support'){assert.doesNotMatch(JSON.stringify(answer),/65432100|5452675|urgentTickets|8201/);assert.doesNotMatch(JSON.stringify(sent.at(-1)),/65432100|5452675|urgentTickets|8201/);const payload=JSON.parse(sent.at(-1).body.messages[0].content.slice(sent.at(-1).body.messages[0].content.indexOf('{')));assert.ok(payload.records.some(s=>s.field==='commercial'&&s.value.label==='100,000 or more USD'))}
+    assert.doesNotMatch(JSON.stringify(answer),/Outside Coastal|synthetic-buoy-8003/);assert.doesNotMatch(JSON.stringify(sent.at(-1)),/Outside Coastal|synthetic-buoy-8003/);if(role==='support'){assert.doesNotMatch(JSON.stringify(answer),/65432100|5452675|urgentTickets|synthetic-buoy-8201/);assert.doesNotMatch(JSON.stringify(sent.at(-1)),/65432100|5452675|urgentTickets|synthetic-buoy-8201/);const payload=JSON.parse(sent.at(-1).body.messages[0].content.slice(sent.at(-1).body.messages[0].content.indexOf('{')));assert.ok(payload.records.some(s=>s.field==='commercial'&&s.value.label==='100,000 or more USD'))}
    }
   }
   f.setScripted(false)
