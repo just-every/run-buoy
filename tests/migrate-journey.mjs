@@ -1,6 +1,6 @@
+import {csvRows} from '../src/buoy/migrate/csv.ts'
 import assert from 'node:assert/strict'
 import Ajv2020 from 'ajv/dist/2020.js'
-import {csvRows} from '../src/buoy/migrate/csv.ts'
 import {totangoApiJourney,apiBrowserBundle,totangoReferenceJourney,referenceFiles} from './totango-api-journey.mjs'
 import {test} from 'node:test'
 import {createHash} from 'node:crypto'
@@ -375,7 +375,6 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
     if(source==='churnzero'){
      await page.evaluate(()=>{sessionStorage.removeItem('buoy:import:plan');sessionStorage.removeItem('buoy:import:plan:source')})
      await page.reload({waitUntil:'networkidle'})
-import {csvRows} from '../src/buoy/migrate/csv.ts'
      await page.locator('button[data-import-plan="'+selectedPlanId+'"]').click();await ready('Import completed')
      assert.equal(await page.evaluate(()=>sessionStorage.getItem('buoy:import:plan')),selectedPlanId,'History reopens the intended import even when approval timestamps tie')
     }
