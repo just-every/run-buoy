@@ -147,7 +147,7 @@ export async function configurationKindsJourney(){
   assert.deepEqual(score.backtest.observations.filter(r=>r.accountId===accountId&&r.on==='2025-11-08').map(r=>[r.score,r.matched]),[[0,true]],'The final retained write wins equal timestamps')
   assert.deepEqual(score.backtest.observations.filter(r=>r.accountId===accountId&&r.on==='2026-04-25'),[],'The skipped week is absent rather than copied from current data')
   assert.deepEqual(score.backtest.observations.filter(r=>r.accountId==='synthetic-buoy-8514'),[],'Usable current evidence cannot manufacture retained history')
-  assert.deepEqual(score.backtest.observations.filter(r=>r.accountId==='synthetic-buoy-8003').map(r=>({on:r.on,score:r.score,matched:r.matched,missing:r.missing})),[{on:'2025-10-25',score:null,matched:false,missing:['Required retained scorecard inputs unavailable.']}])
+  assert.deepEqual(score.backtest.observations.filter(r=>r.accountId==='synthetic-buoy-8003').map(r=>({on:r.on,score:r.score,matched:r.matched,missing:r.missing})),Array.from({length:53},(_,w)=>w).filter(w=>w!==26).map(w=>({on:new Date(start+w*604800000).toISOString().slice(0,10),score:null,matched:false,missing:['Required retained scorecard inputs unavailable.']})))
   assert.equal(score.backtest.missingWeeks,107,'Three accounts over 53 weeks have exactly 52 known account weeks')
   assert.equal((await api('/scorecards')).accounts.find(r=>r.accountId==='synthetic-buoy-8514').score,0,'The history-free account has usable risk inputs today')
   const published=await api('/ai/configuration/'+score.id+'/approve','POST',{approve:true,fingerprint:score.fingerprint})
