@@ -76,7 +76,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   if(accountId&&action==='plan-save'){
     let objectives:unknown;try{objectives=JSON.parse(fields.objectives)}catch{throw new ApiError('Enter valid JSON for the objectives.')}
     const taskIds=Object.keys(fields).filter(k=>k.startsWith('linkTask:')&&fields[k]==='on').map(k=>k.slice('linkTask:'.length))
-    const milestones=Object.keys(fields).filter(k=>k.startsWith('milestoneTitle:')&&fields[k].trim()&&fields['milestoneRemove:'+k.slice('milestoneTitle:'.length)]!=='on').map(k=>{const key=k.slice('milestoneTitle:'.length);return {id:key==='new'?crypto.randomUUID():key,title:fields[k],objectiveId:fields['milestoneObjective:'+key],outcomeId:fields['milestoneReport:'+key]}})
+    const milestones=Object.keys(fields).filter(k=>k.startsWith('milestoneTitle:')&&fields[k].trim()&&fields['milestoneRemove:'+k.slice('milestoneTitle:'.length)]!=='on').map(k=>{const key=k.slice('milestoneTitle:'.length);return {id:key===''?crypto.randomUUID():key,title:fields[k],objectiveId:fields['milestoneObjective:'+key],outcomeId:fields['milestoneReport:'+key]}})
     await send(accountPath+'/plans',{...(fields.planId?{id:fields.planId,revision:fields.revision}:{}),accountRevision:fields.accountRevision,name:fields.name,staffOwnerId:fields.staffOwnerId,customerOwnerId:fields.customerOwnerId,objectives,milestones,taskIds});
     return {redirect:path+'#success-plans',message:'Internal success plan saved.',saved:'plan-edit-'+(fields.planId||'new')};
   }

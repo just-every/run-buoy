@@ -1,9 +1,10 @@
 # Business review preparation
 
 Open **Reviews** as an owner or administrator. Choose an account, a QBR or EBR
-template, and inclusive UTC review dates (90 days by default). Buoy captures six
+template, and inclusive UTC review dates (90 days by default). Buoy captures seven
 editable slides covering account/revenue evidence, approved outcomes, observed
-adoption, support snapshots, received surveys and renewals. Each figure retains
+adoption, support snapshots, received surveys, renewals and success-plan evidence. The plan slide captures
+objectives, milestone states and linked work. Each figure retains
 a source link and its reference. Outcomes and surveys use the review dates;
 other figures are explicitly a current capture, not historical reconstruction.
 Adoption uses the same current observation windows as the adoption report.
