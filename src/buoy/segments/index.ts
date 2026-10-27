@@ -56,7 +56,7 @@ export async function segmentState(db:D1Database) {
   history:image.entries.filter(e=>e.segmentId===s.id).map(e=>({accountId:e.accountId,enteredAt:e.enteredAt,exitedAt:e.exitedAt,proposalId:e.proposalId}))})),
   classifications:accounts.map(a=>({accountId:a.account.id,tier:a.tier,stage:a.stage,tierManual:!!a.classification?.tierManual,stageManual:!!a.classification?.stageManual}))}
 }
-export async function saveSegment(db:D1Database,actor:Actor,input:Record<string,unknown>) {
+export async function saveSegment(db:D1Database,actor:Actor,input:Record<string,unknown>,effects?:(key:string)=>D1PreparedStatement[]) {
  requirePerson(actor)
  const image=await snapshot(db),existing=input.id?image.value.segments.find(s=>s.id===input.id):undefined
  if(input.id)insist(existing&&input.revision===existing.revision,'Segment changed. Reload before saving.',409)
@@ -71,7 +71,7 @@ export async function saveSegment(db:D1Database,actor:Actor,input:Record<string,
   const selected=candidates.find(s=>s.id===override.segmentId);insist(selected,'Scorecard weight segment is unavailable.')
   const chain=layerOneDependency(selected,candidates);insist(!chain,`Scorecard dependency refused: ${chain?.join(' -> ')}.`)
  }
- await db.batch([authority(db,actor,true),assignmentFence(db,assignments.raw),fence(db,image),...(card?[guard(db,'EXISTS(SELECT 1 FROM buoy_scorecard_current WHERE revision=?)',card.revision)]:[guard(db,'NOT EXISTS(SELECT 1 FROM buoy_scorecard_current)')]),stmt(db,'INSERT INTO buoy_segments(id,document,revision,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',segmentId,JSON.stringify(value),id(),existing?.createdAt??now()),auditRecord(db,actor,'segment.saved',`segment:${segmentId}`),stmt(db,'DELETE FROM buoy_assertions')])
+ await db.batch([authority(db,actor,true),assignmentFence(db,assignments.raw),fence(db,image),...(card?[guard(db,'EXISTS(SELECT 1 FROM buoy_scorecard_current WHERE revision=?)',card.revision)]:[guard(db,'NOT EXISTS(SELECT 1 FROM buoy_scorecard_current)')]),stmt(db,'INSERT INTO buoy_segments(id,document,revision,created_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',segmentId,JSON.stringify(value),id(),existing?.createdAt??now()),...(effects?effects(segmentId):[]),auditRecord(db,actor,'segment.saved',`segment:${segmentId}`),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:segmentId}
 }
 export async function setClassification(db:D1Database,actor:Actor,accountId:string,input:Record<string,unknown>) {
