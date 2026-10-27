@@ -31,13 +31,14 @@ async function command(cwd,args,expected=0){
  if(expected===0)assert.equal(code,0,safe.slice(-3000));else assert.notEqual(code,0,'Restore should refuse this destination or archive')
 }
 let running
+let configurationClock=Date.now(),configurationModelResult={name:'Portable approved configuration',weeklyDropPercent:30,urgentTickets:1}
 const stripe=billingSource()
 const aiSelection=[{kind:'task',line:2},{kind:'risk',line:4},{kind:'expansion',line:6}]
 const providerFetch=async request=>{
  if(new URL(request.url).hostname==='api.stripe.com')return stripe.fetch(request)
  assert.equal(request.url,'https://api.anthropic.com/v1/messages')
  const body=await request.json(),payload=JSON.parse(body.messages[0].content.slice(body.messages[0].content.indexOf('{')))
- if(payload.instructions.startsWith('Translate'))return Response.json({content:[{text:JSON.stringify({name:'Portable approved configuration',weeklyDropPercent:30,urgentTickets:1})}],usage:{input_tokens:100,output_tokens:100}})
+ if(payload.instructions.startsWith('Translate'))return Response.json({content:[{text:JSON.stringify(configurationModelResult)}],usage:{input_tokens:100,output_tokens:100}})
  assert.ok(payload.instructions.startsWith('Identify'))
  return Response.json({content:[{text:JSON.stringify({proposals:aiSelection})}],usage:{input_tokens:100,output_tokens:100}})
 }
@@ -46,7 +47,7 @@ const providerFetch=async request=>{
 const intake=(path,body,secret)=>running.dispatch(new Request(running.origin+path,{method:'POST',headers:{authorization:'Bearer '+secret,'content-type':'application/json'},body:JSON.stringify(body)}))
 try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
- running=await startWorker({root:source,secure:true,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
+ running=await startWorker({root:source,secure:true,clock:()=>configurationClock,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
  const allAudit=async()=>{const entries=[];let offset=0;do{const page=await call('/audit?offset='+offset);entries.push(...page.entries);offset=page.nextOffset}while(offset!==null);return entries}
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
@@ -150,7 +151,7 @@ try{
  const successPlan=await call('/accounts/'+accountId+'/plans','POST',{accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,name:'Portable internal success plan',staffOwnerId:(await call('/state')).operator.id,customerOwnerId:planChampion.id,objectives:[{id:'usage',title:'Observed product use',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'customer',title:'Actual customer confirmation required',kind:'customer-statement',dueOn:'2027-03-01'}]});
  const successPlansBefore=await call('/accounts/'+accountId+'/plans');
  assert.equal(successPlansBefore.plans.find(p=>p.id===successPlan.id).objectives[0].status,'achieved');
- const scorecardBefore=await call('/scorecards');
+ let scorecardBefore=await call('/scorecards');
  const revenueBefore=await call('/revenue');
  const surveysBefore=await call('/surveys');
  const retainedScorecard=await call('/scorecards/preview','POST',{historyId:scorecardBefore.history.find(h=>h.accountId===accountId).id});
@@ -185,6 +186,22 @@ try{
  await call('/ai/configuration/'+configurationDraft.id+'/approve','POST',{approve:true,fingerprint:configurationDraft.fingerprint})
  const pendingConfiguration=await call('/ai/configuration','POST',{description:'Flag a weekly activity drop with an urgent ticket',consent:true})
  const configurationSignalsBefore=(await call('/ai/configuration')).signals
+ const tieAccountId='synthetic-buoy-8530',tieAt=new Date(new Date(configurationClock).toISOString().slice(0,10)+'T12:00:00Z').getTime()-86400000,tieDate=new Date(tieAt).toISOString().slice(0,10),originalClock=configurationClock
+ configurationClock=tieAt;running.cookie=await running.signIn('owner@example.test')
+ const tieDocument={id:tieAccountId,name:'Equal timestamp archive customer',renewalDate:'2027-12-31',noticeDays:30,renewalEvidence:'synthetic-buoy-8531',billing:{observedAt:tieDate,reference:'synthetic-buoy-8532',currency:'USD',totalMinor:100000,creditsMinor:0,allocatedMinor:0,dueDate:'2027-12-31'},support:null}
+ await call('/accounts','POST',tieDocument)
+ await call('/accounts/'+tieAccountId,'PUT',{...tieDocument,revision:(await call('/state')).accounts.find(a=>a.id===tieAccountId).revision,billing:{...tieDocument.billing,allocatedMinor:100000}})
+ const tiedHistory=(await call('/scorecards')).history.filter(r=>r.accountId===tieAccountId)
+ assert.deepEqual(tiedHistory.map(r=>r.calculatedAt),[new Date(tieAt).toISOString(),new Date(tieAt).toISOString()],'The portability fixture retains differing calculations at exactly equal timestamps')
+ assert.deepEqual(tiedHistory.map(r=>r.score).sort((a,b)=>a-b),[0,100])
+ configurationClock=originalClock;running.cookie=await running.signIn('owner@example.test')
+ const tieConfig={name:'Portable tie review',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}
+ configurationModelResult=tieConfig
+ const tiePayload={kind:'scorecard',description:'Review retained allocated billing health',consent:true}
+ const beforeTieDraft=(await call('/ai/configuration','POST',tiePayload)).backtest.observations.filter(r=>r.accountId===tieAccountId)
+ assert.deepEqual(beforeTieDraft.map(r=>({on:r.on,score:r.score,matched:r.matched})),[{on:tieDate,score:100,matched:false}],'The later equal-timestamp calculation is selected before export')
+
+ scorecardBefore=await call('/scorecards');
  const recordImage=await recordPortabilityImage(call,recordIds);
  const billingImage=await billingPortabilityImage(call,billingIds);
  // Later fixture writes can legitimately add held account revisions. Compare
@@ -248,7 +265,7 @@ try{
  const bytes=await readFile(archive);bytes[Math.floor(bytes.length/2)]^=1
  const damaged=join(parent,'damaged.rer');await writeFile(damaged,bytes)
  await command(broken,['import','--input',damaged,'--yes'],1)
- running=await startWorker({root:destination,secure:true,providerFetch:stripe.fetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
+ running=await startWorker({root:destination,secure:true,clock:()=>configurationClock,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
  assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
  assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective source values and awaiting-confirmation state restore exactly');
@@ -330,6 +347,10 @@ try{
  const restoredBillingBeforeSchedule=await call('/billing');await running.scheduled();const restoredBillingAfterSchedule=await call('/billing');
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'The restored scheduled Worker makes no next Stripe source call');
  assert.deepEqual(restoredBillingAfterSchedule,restoredBillingBeforeSchedule,'No restored source observation or billing run advances until the new owner reconnects');
+ const restoredAi=(await call('/ai')).settings
+ await call('/ai/settings','PUT',{...restoredAi,enabled:true,noTraining:true,termsReference:'synthetic-buoy-8533 fresh owner review',budgetMinor:10000})
+ const afterTieDraft=(await call('/ai/configuration','POST',tiePayload)).backtest.observations.filter(r=>r.accountId===tieAccountId)
+ assert.deepEqual(afterTieDraft.map(r=>({on:r.on,score:r.score,matched:r.matched})),[{on:tieDate,score:100,matched:false}],'Real archive restoration preserves selection of the later equal-timestamp calculation')
  await running.close();running=null
  const restoredArchive=join(parent,'restored.rer');await command(destination,['export','--output',restoredArchive])
  const restoredRows=(await readFile(restoredArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
