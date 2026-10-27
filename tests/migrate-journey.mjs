@@ -1,3 +1,4 @@
+import {journeyBundle,journeyDefinition,journeyPointers} from './churnzero-journey-fixture.mjs'
 import assert from 'node:assert/strict'
 import {csvRows} from '../src/buoy/migrate/csv.ts'
 import {totangoApiJourney,apiBrowserBundle,totangoReferenceJourney,referenceFiles} from './totango-api-journey.mjs'
@@ -201,6 +202,56 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
  }finally{await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
+test('MIGRATE-002 paused journey drafts retain every definition element without execution authority',async()=>{
+ const app=await startWorker({clock:Date.parse('2026-10-27T12:00:00Z')})
+ try{
+  const door=client(app,'churnzero'),csv=await readFile('fixtures/move-in/churnzero/accounts.csv','utf8')
+  const input=journeyBundle({format:'buoy-migration-v1',source:'churnzero',dateOrder:'iso',columns:{...churnzeroColumns,...churnzeroHealthColumns},csv})
+  const automation=async()=>{const snapshot=await (await app.request('/api/buoy/state',{cookie:app.cookie})).json(),books=await (await app.request('/api/buoy/playbooks',{cookie:app.cookie})).json();return {tasks:snapshot.tasks,proposals:snapshot.proposals,definitions:books.definitions,runs:books.runs,outbound:app.outbound.length}}
+  const before=await state(app),inert=await automation(),plan=await door.plan(input)
+  assert.equal(plan.counts.mapped,20);assert.equal(plan.counts.rejected,0)
+  assert.deepEqual(await state(app),before,'Review has no native effect')
+  assert.deepEqual(plan.diagnostics.filter(row=>row.sourceId==='synthetic-buoy-1').map(row=>row.field).sort(),['Journey','Contact',...journeyPointers.map(pointer=>'Journey Definitions#synthetic-buoy-journey-1'+pointer)].sort(),'Every source element is explicitly retained and labelled unmapped')
+  assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:'0'.repeat(64)})).status,403)
+  const job=await door.apply(plan);assert.equal((await door.apply(plan)).id,job.id)
+  for(let n=1;n<=20;n++){
+   const row=(await state(app)).find(row=>row.id===target('churnzero','synthetic-buoy-'+n))
+   assert.equal(row.migrationJourneys.length,1)
+   const draft=row.migrationJourneys[0]
+   assert.equal(draft.state,'paused');assert.equal(draft.source,'churnzero');assert.equal(draft.sourceId,'synthetic-buoy-journey-1');assert.equal(draft.sourceAccountId,'synthetic-buoy-'+n)
+   assert.equal(draft.name,'Synthetic renewal review');assert.deepEqual(draft.definition,journeyDefinition)
+   assert.deepEqual(draft.steps,[{sourceId:'synthetic-buoy-step-1',position:0,definition:journeyDefinition.steps[0]},{sourceId:'synthetic-buoy-step-2',position:1,definition:journeyDefinition.steps[1]}])
+   assert.deepEqual(draft.unmapped.map(row=>row.pointer),journeyPointers)
+  }
+  const imported=await state(app)
+  assert.equal((await door.json('status',{planId:plan.planId})).job.id,job.id)
+  assert.equal((await door.json('reconcile',{planId:plan.planId})).ok,true)
+  await app.scheduled('0 * * * *',Date.parse('2027-03-01T12:00:00Z'))
+  assert.deepEqual(await automation(),inert,'Import, replay, native reads and scheduled evaluation cannot execute a source task or webhook')
+  assert.deepEqual((await state(app)).map(row=>row.migrationJourneys),imported.map(row=>row.migrationJourneys),'Scheduled evaluation preserves every paused draft')
+  const current=imported.find(row=>row.id===target('churnzero','synthetic-buoy-1'))
+  const body={id:current.id,name:current.name,renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,billing:current.billing,support:current.support,revision:current.revision}
+  assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:app.cookie,body:{...body,migrationJourneys:[]}})).status,400,'Native writes cannot forge or enable imported drafts')
+  await door.undo(plan);assert.deepEqual(await state(app),before)
+  for(const definitions of [['Journey label'],[{...journeyDefinition,steps:[]}],[{...journeyDefinition,steps:[journeyDefinition.steps[0],journeyDefinition.steps[0]]}],[journeyDefinition,journeyDefinition]]){
+   const refused=await door.plan(journeyBundle(input,definitions))
+   assert.equal(refused.counts.mapped,0);assert.equal(refused.counts.rejected,20,'Invalid definitions reject their accounts without silent source loss')
+   await door.json('undo',{planId:refused.planId})
+  }
+  const empty=await door.plan(journeyBundle(input,[]));await door.apply(empty)
+  assert.deepEqual((await state(app)).map(row=>row.migrationJourneys),Array.from({length:20},()=>[]),'Explicitly absent definitions remain absent')
+  await door.undo(empty)
+  const editedPlan=await door.plan(input);await door.apply(editedPlan)
+  const editable=(await state(app)).find(row=>row.id===current.id)
+  assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:app.cookie,body:{...body,name:'Synthetic journey owner edit',revision:editable.revision}})).status,200)
+  assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationJourneys,current.migrationJourneys,'Ordinary edits retain draft custody')
+  assert.equal((await door.send('undo',{planId:editedPlan.planId})).status,409,'Strict undo protects later owner work')
+  assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'DELETE',cookie:app.cookie,body:{confirmation:'Synthetic journey owner edit'}})).status,200)
+  assert.equal((await door.send('reconcile',{planId:editedPlan.planId})).status,410)
+  await assert.rejects(door.plan(input),/source_erased/,'Account erasure withdraws journey source custody and refuses replay')
+ }finally{await app.close()}
+})
+
 test('MIGRATE-003 Totango account CSV and API pages reconcile twenty accounts through reviewed owner imports',async()=>{
  const app=await startWorker({clock:Date.parse('2026-10-25T12:00:00Z')}),scratch=await mkdtemp(join(tmpdir(),'buoy-totango-'))
  try {
@@ -289,6 +340,7 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
     const badChurnzero=churnzeroCsv?.split('\r\n')[1].replace('synthetic-buoy-1,','synthetic-buoy-invalid,').replace('2027-03-31','2027-02-31')+'\r\n'
     const input=source==='totango-api'?apiBrowserBundle(raw):source==='churnzero'?{format:'buoy-migration-v1',source,dateOrder:'iso',columns:{...churnzeroColumns,...churnzeroHealthColumns},csv:churnzeroCsv+badChurnzero,originalSha256:createHash('sha256').update(churnzeroCsv+badChurnzero).digest('hex')}:raw
     if(source==='totango'||source==='totango-api')input.references=referenceFiles()
+    if(source==='churnzero')Object.assign(input,journeyBundle(input))
     await page.setInputFiles('#import-bundle',{name:'synthetic-buoy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))})
     await page.getByRole('button',{name:'Upload and review',exact:true}).click()
     await page.locator('#import-review').waitFor({state:'visible'})
@@ -313,6 +365,7 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
      await detail.locator('[data-open="account-source-details"]').click()
      const retained=JSON.parse(await detail.locator('#account-source-details pre').innerText())
      assert.deepEqual(retained.migrationHealth,{source:'churnzero',sourceId:'synthetic-buoy-1',score:4,factors:{usage:1,engagement:19},fields:{score:'ChurnScore',factors:'ChurnScore Factors'}})
+     assert.equal(retained.migrationJourneys.length,1);assert.equal(retained.migrationJourneys[0].state,'paused');assert.deepEqual(retained.migrationJourneys[0].definition,journeyDefinition)
      await scan(detail,`ChurnZero retained health ${width}`)
      assert.deepEqual(await detail.locator('#work button, #work a').evaluateAll(nodes=>nodes.filter(n=>!n.textContent.trim()&&!n.querySelector('img[alt]')).map(n=>n.outerHTML)),[])
      assert.equal(await detail.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true)
