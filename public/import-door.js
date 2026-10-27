@@ -71,7 +71,8 @@ async function history() {
   for (const entry of rows) {
     const section = document.createElement('section'), title = document.createElement('h3'), caption = document.createElement('p'), open = document.createElement('button')
     section.className = 'import-history-entry'
-    title.textContent = label(entry.state.replaceAll('_', ' '))
+    const sourceName = ({churnzero:'ChurnZero',totango:'Totango',vitally:'Vitally',velaris:'Velaris',csv:'CSV'})[sourceForNamespace(entry.namespace)] || 'Buoy JSON'
+    title.textContent = `${label(entry.state.replaceAll('_', ' '))} · ${sourceName}`
     caption.textContent = `${entry.reviewer === entry.approvalRecordId ? 'Approved via Business by' : 'Approved by'} ${entry.owner} · ${new Date(entry.approvedAt).toLocaleString()}${entry.failureCode ? ' · ' + failureMessage(entry.failureCode) : ''}`
     open.type = 'button'; open.className = 'secondary'; open.textContent = 'Open import'
     open.addEventListener('click', () => { void run(async () => {

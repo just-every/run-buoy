@@ -57,8 +57,12 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
    if (bundle.data !== undefined || bundle.exportText !== undefined) throw new Error('CSV bundles cannot contain a second export representation.')
    if (typeof bundle.csv !== 'string' || sha256(bundle.csv) !== bundle.originalSha256) throw new Error('Original CSV digest does not match its embedded UTF-8 text.')
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
-   for (const [key,column] of Object.entries(columns)) if ((!(fields as readonly string[]).includes(key) && !(source==='churnzero' && (healthFields as readonly string[]).includes(key))) || typeof column !== 'string' || !header.includes(column)) throw new Error('Column mapping names an unsupported field or missing header.')
-   const selected = Object.values(columns)
+   for (const [key,column] of Object.entries(columns)) {
+    const factorColumns=source==='churnzero'&&key==='churnScoreFactors'&&column&&typeof column==='object'&&!Array.isArray(column)
+    const selected=factorColumns?Object.values(column):[column]
+    if((!(fields as readonly string[]).includes(key)&&!(source==='churnzero'&&(healthFields as readonly string[]).includes(key)))||!selected.length||selected.some(value=>typeof value!=='string'||!header.includes(value)))throw new Error('Column mapping names an unsupported field or missing header.')
+   }
+   const selected = Object.values(columns).flatMap(value=>value&&typeof value==='object'?Object.values(value):[value])
    if (new Set(selected).size !== selected.length) throw new Error('Each selected column maps to only one destination field.')
    rows = data.map(row => row.length === header.length ? Object.fromEntries(header.map((key,i)=>[key,row[i]])) : {__invalidRow:true})
    pointers = data.map((_,i)=>['','csv','rows',i+2].join('/'))
@@ -97,7 +101,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
      billing:hasInvoice ? {observedAt:realDate(get('invoiceObservedAt'),bundle.dateOrder),reference:`${source} account ${id}`,currency,totalMinor:money(get('invoiceTotal'),currency),creditsMinor:0,allocatedMinor:0,dueDate:realDate(get('invoiceDueDate'),bundle.dateOrder)} : null})
     const migrationHealth=source==='churnzero'?churnzeroHealth(row,columns,id):undefined
     const nativeAccount={...account,...(migrationHealth?{migrationHealth}:{})}
-    const used = new Set(Object.values(columns).map(String)), unmapped = Object.keys(row).filter(key=>!used.has(key))
+    const used = new Set(Object.values(columns).flatMap(value=>value&&typeof value==='object'?Object.values(value):[value]).map(String)), unmapped = Object.keys(row).filter(key=>!used.has(key))
     return {kind:KIND,sourceId:id,payload:{account:nativeAccount as unknown as Json,unmapped},pointer}
    } catch (error) { return rejection(`row-${i+1}`,error instanceof Error ? error.message : 'Invalid migration row.',pointer) }
   })
