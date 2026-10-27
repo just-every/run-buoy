@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "4ec682763e42b1e283edfecdf45496c18cc3a5255287c6607eecd9943838f5dd",
+      "sha256": "fbc3afd18bb2cddb38c8e5259c9f0b326100dd3dd08caaf839dd0bd306cddc37",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "c72230f0c9ef087895ca945d0ebd3226d5c9bfe2246dbbf9c6ea01d3bc48f9e1",
+      "sha256": "f01e727bbb145d1ddd352cfcc5cb198149cda8efd627b5cff70f7398e41f6e69",
       "executable": false
     },
     "DEMO.md": {
@@ -184,7 +184,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "290eaaea72574c7cee8cd5608b3bb836ad9b46fd33e3e45db05c02597aa4b245",
+      "sha256": "195c7b37003c20153792e570a2bf7fff98ed3b25e20ffdf24d1703952ead61c4",
       "executable": false
     },
     "docs/move-in.md": {
@@ -261,6 +261,14 @@
     },
     "fixtures/move-in/accounts-unknown-synthetic.json": {
       "sha256": "c871f0a5c284215490e1f35f29c832a59e99f48066433e043a93dfef4c2c5651",
+      "executable": false
+    },
+    "fixtures/move-in/churnzero/accounts.csv": {
+      "sha256": "e7830d34390495c1b3e729cd3c254aa202543bafe2fe9d27844e95410b24a0b6",
+      "executable": false
+    },
+    "fixtures/move-in/churnzero/README.md": {
+      "sha256": "d43710d4e5935105ea1fa1e9dcbbc883ce152f483cc1a23ff6d8784caf3892e1",
       "executable": false
     },
     "fixtures/move-in/README.md": {
@@ -716,7 +724,7 @@
       "executable": false
     },
     "public/import-door.js": {
-      "sha256": "e1e300e88952e8ae5c3eb4897abbd164660b0be6de6c817ff2107d65844e1bfa",
+      "sha256": "3842c497e671c94554e3833d85f4ea1e082161edc09dcc6dc8c50700d0b08395",
       "executable": false
     },
     "public/rer-theme.css": {
@@ -1360,15 +1368,19 @@
       "executable": false
     },
     "src/buoy/migrate/cli.mjs": {
-      "sha256": "2b0d03e39f197aacb28ab186071d99bf8984897488bf8ab7f98a095e8a11ab78",
+      "sha256": "168cbd21e3faf94f45f90541e53a418225f6e97ce7e7e487d6df987fb130c6f5",
       "executable": false
     },
     "src/buoy/migrate/csv.ts": {
       "sha256": "92baaaf62eb1c3a1e9849afb84df5a349e679f4dcff559462cba75ca12801056",
       "executable": false
     },
+    "src/buoy/migrate/references.ts": {
+      "sha256": "64b4feacc741de05e20f174cc480420865f0a7687288d9859751d6bb6ad1a9c4",
+      "executable": false
+    },
     "src/buoy/migrate/source.ts": {
-      "sha256": "1071c68a89108681ab50ecc4fe290675909ad516a6152838c97858357fa4fb73",
+      "sha256": "9eea87fa8993a33bf38e47ba0ac817c70a9573fa22c14a89a60ed27d90c82f4d",
       "executable": false
     },
     "src/buoy/migrate/totango-api.ts": {
@@ -1820,7 +1832,7 @@
       "executable": false
     },
     "src/buoy/ui/imports.ts": {
-      "sha256": "f0b28cb42303095d24b5e41e70bdb658b12f845034a9145912a3a30d3862a58a",
+      "sha256": "5cbffadad57a2fa3cbb137119809dad66e9b8ece4e08c731cd00109bd8d172f9",
       "executable": false
     },
     "src/buoy/ui/inapp.ts": {
@@ -3971,6 +3983,10 @@
       "sha256": "c520f9a3be4d6552e61fe36292ea6c14a82570cd59ea3bd79ac05cec6bb2ec8e",
       "executable": false
     },
+    "tests/churnzero-journey.mjs": {
+      "sha256": "689b2fe47b9b395ad323df7479471a35f80dac1496a32b04513bc6346602d669",
+      "executable": false
+    },
     "tests/communication-browser.mjs": {
       "sha256": "390670066d33a556baf2eee7dfc471c4f4a1d6c17b2209d0050dd97307db5d98",
       "executable": false
@@ -4096,7 +4112,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "4e75ac99b0c078f8d42eb43c3386312af0007bb725384db2a1cbb35fa2a8e4cc",
+      "sha256": "eaefe59852a4800210abd3ad17b963bbf6f0c66475af989725ee1df35eacd2c8",
       "executable": false
     },
     "tests/notifications.mjs": {
@@ -4284,7 +4300,7 @@
       "executable": false
     },
     "tests/totango-api-journey.mjs": {
-      "sha256": "996f382f98f55331472c00c1aa69a249b014f5cab24a0974bd2eee981e6ce56e",
+      "sha256": "009bbe6c36dce32d8c47d8d4b3fbfaddc1eef06937efb788e2a216b0ed2a21bf",
       "executable": false
     },
     "tests/usage-browser.mjs": {

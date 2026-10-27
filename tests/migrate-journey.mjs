@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import {totangoApiJourney,apiBrowserBundle} from './totango-api-journey.mjs'
+import {totangoApiJourney,apiBrowserBundle,totangoReferenceJourney,referenceFiles} from './totango-api-journey.mjs'
+import {churnzeroJourney} from './churnzero-journey.mjs'
 import {test} from 'node:test'
 import {createHash} from 'node:crypto'
 import {execFileSync} from 'node:child_process'
@@ -96,10 +97,11 @@ test('MIGRATE-003 Totango account CSV and API pages reconcile twenty accounts th
   const rejected=await door.plan(invalidSupport);assert.equal(rejected.counts.mapped,19);assert.equal(rejected.counts.rejected,1);assert.match(rejected.rejected[0].reason,/urgentTickets cannot exceed openTickets/)
   await door.json('undo',{planId:rejected.planId})
   await totangoApiJourney({app,scratch,door,columns,state,before,target})
+  await totangoReferenceJourney({app,scratch,input,door,state,before})
  }finally{await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
-test('MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and source identities',async()=>{
+test('MIGRATE-002 and MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and source identities',async()=>{
  const app=await startWorker(),scratch=await mkdtemp(join(tmpdir(),'buoy-migrate-'))
  try {
   const csv='\uFEFF'+header+csvRow('synthetic-buoy-1')+csvRow('synthetic-buoy-2','31/03/2027','JPY','12')+csvRow('synthetic-buoy-3','31/03/2027','KWD','1.234')+csvRow('synthetic-buoy-4','31/02/2027')+csvRow('synthetic-buoy-5','31/03/2027','USD','1.001')+csvRow('synthetic-buoy-6','31/03/2027','BAD')+csvRow('synthetic-buoy-7')+csvRow('synthetic-buoy-7')
@@ -129,14 +131,16 @@ test('MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and sou
   const large=await door.plan(bundle(header+Array.from({length:2000},(_,i)=>csvRow('synthetic-buoy-'+i,i<3?'31/03/2027':'31/02/2027')).join('')))
   assert.equal(large.counts.input,2000);assert.equal(large.counts.mapped,3);assert.equal(large.counts.rejected,1997)
   assert.deepEqual(await state(app),before,'A 2000-row preview changes no native records')
+  await door.json('undo',{planId:large.planId})
+  await churnzeroJourney({app,scratch,client,state,target})
  } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
-test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390',async()=>{
- const app=await startWorker(),browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+test('MIGRATE-002, MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390',async()=>{
+ const app=await startWorker(),browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
  const evidence=process.env.EVIDENCE_DIR??'../evidence/migrate';await mkdir(evidence,{recursive:true})
  try {
-  for(const width of [1440,390]) for(const source of ['csv','totango','totango-api']) {
+  for(const width of [1440,390]) for(const source of ['csv','totango','totango-api','churnzero']) {
    const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
    try {
     await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...value]=pair.split('=');return{name,value:value.join('='),url:app.origin}}))
@@ -145,11 +149,13 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
     await page.waitForFunction(()=>!document.getElementById('import-settings-fields').disabled)
     const raw={...bundle(header+csvRow('synthetic-buoy-'+width)+csvRow('synthetic-buoy-invalid','31/02/2027')),source}
     const input=source==='totango-api'?apiBrowserBundle(raw):raw
+    if(source==='totango'||source==='totango-api')input.references=referenceFiles()
     await page.setInputFiles('#import-bundle',{name:'synthetic-buoy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))})
     await page.getByRole('button',{name:'Upload and review',exact:true}).click()
     await page.locator('#import-review').waitFor({state:'visible'})
     await page.waitForFunction(()=>!document.getElementById('import-confirmed').disabled)
     assert.match(await page.locator('#import-rejections').innerText(),/real calendar date/)
+    if(width===1440&&input.references){const diagnostics=await page.locator('#import-diagnostics').innerText();assert.match(diagnostics,/definitions.json#\/actions\/1\/configuration\/a ~1 b~0c/);assert.match(diagnostics,/categories.json#\/associations\/0/);assert.match(diagnostics,/no playbook or automation is created/)}
     assert.deepEqual(await state(app),before)
     const proof=async stage=>{await scan(page,`Migration ${source} ${stage} ${width}`);await page.screenshot({path:join(evidence,`migration-${source}-${stage}-${width}.png`),fullPage:true})}
     // This screen uses text-labelled controls throughout; any future symbolic control must supply a tooltip.
