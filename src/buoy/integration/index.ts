@@ -133,7 +133,15 @@ async function respond(c:Context<{Bindings:Bindings;Variables:{token:Token}}>,ac
  const env=runtimeBindings(c.env),t=c.get('token'),result=await write(env.DB,t,c.req.raw,accountId)
  // Consumers use the existing owner-approved native path. Replays repair an
  // interrupted refresh without repeating the account write or its audit entry.
- await refreshAccountConsumers(env,ownerActor(t))
+ // Concurrent successful replays can race the source-consumer snapshot fence.
+ // Re-read and converge those derived records; never repeat the committed write.
+ for(let attempt=0;;attempt++){
+  try{await refreshAccountConsumers(env,ownerActor(t));break}
+  catch(error){
+   if(attempt>=3||!/constraint|SQLITE_CONSTRAINT/i.test((error as Error).message))throw error
+   await env.DB.batch([fence(env.DB,t),stmt(env.DB,'DELETE FROM buoy_assertions')])
+  }
+ }
  return c.json({id:result.account_id,revision:result.revision},result.status as 200)
 }
 integrationApi.post(prefix+'/accounts',c=>respond(c))
