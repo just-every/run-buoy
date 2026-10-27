@@ -122,15 +122,15 @@ export async function configurationKindsJourney(){
  const card={name:'Support risk score',measures:[{key:'urgent',name:'Urgent tickets',field:'support.urgentTickets',min:0,max:10,weight:1,direction:'lower',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}
  try{
   await f.configure({budgetMinor:10000})
-  const accountId='synthetic-buoy-8002',update=async(w)=>{
+  const accountId='synthetic-buoy-8002',update=async(w,urgent=w%2?0:10)=>{
    const a=(await api('/state')).accounts.find(a=>a.id===accountId),on=new Date(start+w*604800000).toISOString().slice(0,10)
-   await api('/accounts/'+accountId,'PUT',{id:accountId,name:a.name,renewalDate:'2026-10-24',noticeDays:30,renewalEvidence:'synthetic-buoy-8500',billing:null,support:{observedAt:on,reference:'synthetic-buoy-8501-'+w,openTickets:10,urgentTickets:w%2?0:10},revision:a.revision})
+   await api('/accounts/'+accountId,'PUT',{id:accountId,name:a.name,renewalDate:'2026-10-24',noticeDays:30,renewalEvidence:'synthetic-buoy-8500',billing:null,support:{observedAt:on,reference:'synthetic-buoy-8501-'+w,openTickets:10,urgentTickets:urgent},revision:a.revision})
   }
   await update(0);await api('/scorecards/publish','POST',{revision:null,config:card})
   for(let w=1;w<=52;w++){
    f.setClock(start+w*604800000);app.cookie=await app.signIn('owner@example.test')
    if(w===26)continue
-   if(w===2)await update(3)
+   if(w===2)await update(w,0)
    await update(w)
   }
   f.setClock(Date.parse('2026-10-25T12:00:00Z'))
