@@ -186,9 +186,9 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     }
   }
   if(path==='/app/audit') {
-    if(action==='trust-scan'){await send('/api/buoy/trust/scan',{});return {redirect:path+'#data-trust',message:'Data trust findings prepared for review.'};}
-    if(action==='trust-mapping'){await send('/api/buoy/trust/mappings',{sourceId:fields.sourceId,userId:fields.userId||null,groupId:fields.groupId,personId:fields.personId||null,accountId:fields.accountId,reason:fields.reason});return {redirect:path+'#data-trust',message:'Group correction prepared; mapping unchanged until approval.'};}
-    if(action==='trust-review'){await send('/api/buoy/trust/'+encodeURIComponent(fields.id)+'/review',{decision:fields.decision,reason:fields.reason,...(fields.ownerId?{ownerId:fields.ownerId,dueDate:fields.dueDate}:{})});return {redirect:path+'#data-trust',message:'Data trust decision recorded.'};}
+    if(action==='trust-scan'){await send('/api/buoy/trust/scan',{});return {redirect:path+'#data-trust',message:'Data trust findings prepared for review.',saved:'trust-scan'};}
+    if(action==='trust-mapping'){await send('/api/buoy/trust/mappings',{sourceId:fields.sourceId,userId:fields.userId||null,groupId:fields.groupId,personId:fields.personId||null,accountId:fields.accountId,reason:fields.reason});return {redirect:path+'#data-trust',message:'Group correction prepared; mapping unchanged until approval.',saved:'trust-mapping'};}
+    if(action==='trust-review'){await send('/api/buoy/trust/'+encodeURIComponent(fields.id)+'/review',{decision:fields.decision,reason:fields.reason,...(fields.ownerId?{ownerId:fields.ownerId,dueDate:fields.dueDate}:{})});return {redirect:path+'#data-trust',message:'Data trust decision recorded.',saved:'trust-review-'+fields.id};}
     if(action==='agent-issue') {
       const scopes=[['scopeList','renewals.list'],['scopePlaybook','playbook.prepare'],['scopeRenewal','renewal.prepare']].filter(([name])=>fields[name]==='on').map(([,value])=>value);
       const dataClasses=[['classAccount','account'],['classBilling','billing'],['classSupport','support'],['classSentiment','sentiment']].filter(([name])=>fields[name]==='on').map(([,value])=>value);
