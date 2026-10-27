@@ -4,7 +4,7 @@ export type MeasureAggregate='mean'|'min'|'max'|'sum'
 export interface RelatedScorecardValue {personId:string;revision:string;value:ScorecardValue;currency?:string}
 export interface Measure {key:string;name:string;field:string;min:number;max:number;weight:number;direction:'higher'|'lower';missing:'unknown'|'exclude';categoryValues?:Record<string,number>;aggregate?:MeasureAggregate}
 export interface ScorecardConfig {name:string;measures:Measure[];bands:{riskBelow:number;healthyAt:number};segments:{segmentId:string;weights:Record<string,number>}[]}
-export interface ScorecardField {key:string;name:string;kind:'communications'|'goal'|'billing'|'support'|'custom'|'calculated'|'adoption'|'sentiment'|'survey';unit?:string;valueType?:'number'|'text'|'boolean'|'multi-select'|'date';related?:boolean}
+export interface ScorecardField {key:string;name:string;kind:'communications'|'goal'|'billing'|'support'|'custom'|'calculated'|'adoption'|'sentiment'|'survey'|'migration';migrationFactor?:string;unit?:string;valueType?:'number'|'text'|'boolean'|'multi-select'|'date';related?:boolean}
 export interface SourceEvidence {kind:string;label:string;freshness:'current'|'stale'|'missing'|'untracked';observedAt:string|null;reference:string|null;details?:unknown}
 export interface RetainedInputs {
  values:Record<string,ScorecardValue>;sources:Record<string,SourceEvidence[]>;
