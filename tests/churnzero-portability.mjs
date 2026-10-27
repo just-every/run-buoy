@@ -23,6 +23,7 @@ export async function churnzeroPortability(){
  }
  let app
  try{
+  console.log('MIGRATE-002 archive: prepare source')
   const source=await copy('source'),destination=await copy('destination'),archive=join(parent,'migration.rer')
   app=await startWorker({root:source,secure:true,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
   const door=()=>importClient((path,options)=>app.request(path,{...options,headers:{...options.headers,'x-buoy-import-source':'churnzero'}}),app.cookie)
@@ -30,23 +31,31 @@ export async function churnzeroPortability(){
   const books=async()=>{const response=await app.request('/api/buoy/playbooks',{cookie:app.cookie});assert.equal(response.status,200);return response.json()}
   const csv=(await readFile('fixtures/move-in/churnzero/accounts.csv','utf8')).split('\r\n').slice(0,2).join('\r\n')+'\r\n'
   const input=journeyBundle({format:'buoy-migration-v1',source:'churnzero',dateOrder:'iso',columns:{id:'Account External ID',name:'Account Name',renewalDate:'Renewal Date',noticeDays:'Notice Days',renewalEvidence:'Contract Reference'},csv})
+  console.log('MIGRATE-002 archive: review and apply')
   const plan=await door().plan(input),job=await door().apply(plan),accountId='migration_'+createHash('sha256').update(JSON.stringify(['churnzero','synthetic-buoy-1'])).digest('hex').slice(0,40)
   const before=(await state()).accounts.find(row=>row.id===accountId).migrationJourneys
   assert.equal(before.length,1);assert.equal(before[0].state,'paused');assert.deepEqual(before[0].definition,journeyDefinition)
   assert.equal((await door().json('reconcile',{planId:plan.planId})).ok,true,'Source native draft reconciles before export')
+  console.log('MIGRATE-002 archive: close source')
   await app.close();app=null
+  console.log('MIGRATE-002 archive: export and restore')
   await command(source,['export','--output',archive]);await command(destination,['import','--input',archive,'--yes'])
+  console.log('MIGRATE-002 archive: open restored installation')
   app=await startWorker({root:destination,secure:true,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
   assert.deepEqual((await state()).accounts.find(row=>row.id===accountId).migrationJourneys,before,'Real archive restores exact native paused drafts and every source element')
+  console.log('MIGRATE-002 archive: reconcile restored journal')
   assert.equal((await door().json('reconcile',{planId:plan.planId})).ok,true,'Fresh owner reconciles the restored native draft and durable import journal')
+  console.log('MIGRATE-002 archive: replay restored import')
   assert.equal((await door().apply(plan)).id,job.id,'Restored replay remains idempotent')
   assert.deepEqual((await state()).tasks,[]);assert.deepEqual((await books()).definitions,[]);assert.deepEqual((await books()).runs,[])
   const egress=app.outbound.length
+  console.log('MIGRATE-002 archive: evaluate restored schedule')
   await app.scheduled('0 * * * *',Date.parse('2027-03-01T12:00:00Z'))
   assert.deepEqual((await state()).tasks,[],'Restored source task configuration creates no native task')
   assert.deepEqual((await books()).definitions,[]);assert.deepEqual((await books()).runs,[],'Restored source configuration grants no runnable enrollment')
   assert.equal(app.outbound.length,egress,'Restored source webhook configuration grants no outbound authority')
   assert.deepEqual((await state()).accounts.find(row=>row.id===accountId).migrationJourneys,before)
+  console.log('MIGRATE-002 archive: undo restored import')
   await door().undo(plan);assert.deepEqual((await state()).accounts,[],'Fresh owner can strictly undo the unchanged restored draft import')
   console.log('MIGRATE-002 real archive: exact paused drafts, journal, replay, reconciliation, inert scheduled evaluation and strict undo PASS')
  }finally{if(app)await app.close();await rm(parent,{recursive:true,force:true})}

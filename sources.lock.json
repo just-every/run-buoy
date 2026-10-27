@@ -3996,7 +3996,7 @@
       "executable": false
     },
     "tests/churnzero-portability.mjs": {
-      "sha256": "482601e4c802a1f5b2eb61395fb9a2086a0560ac22b457c122ff432e08ab64a7",
+      "sha256": "d82f4b8bca56a11c03c4396b995c1f19a439e1f7b3c4290572bf27bd86654efb",
       "executable": false
     },
     "tests/communication-browser.mjs": {
@@ -4120,7 +4120,7 @@
       "executable": false
     },
     "tests/mail-runtime.mjs": {
-      "sha256": "977a279936ef0c5e7215d92b2c2dea40a7f36e6b8fdd2ec6acb856bb33fc6953",
+      "sha256": "de4f6168e3e216b94078638aa01a703bed6514ceb4e09f0a77342f37e91c9729",
       "executable": false
     },
     "tests/migrate-journey.mjs": {

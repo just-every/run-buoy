@@ -44,7 +44,9 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
  }), resourcePersistencePath:join(directory,persistenceDirectory?'v3':'state') })
  try {
   await mf.ready
-  const db=await mf.getD1Database('DB')
+  // Persistent fixtures already applied migrations through Wrangler above.
+  // Do not open an unused second D1 proxy against that database.
+  const db=persistenceDirectory?null:await mf.getD1Database('DB')
   for(const file of (persistenceDirectory?[]:await readdir(join(root,'migrations/core'))).filter(file=>file.endsWith('.sql')).sort()) {
    for(const sql of splitSql(await readFile(join(root,'migrations/core',file),'utf8'))) await db.prepare(sql).run()
   }
