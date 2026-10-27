@@ -456,6 +456,24 @@
       "name": "0074_buoy_integration_erasure.sql",
       "sha256": "0935ced33eace2057c8cb18e38ab15dc44a1f5d873d08952ffcd936fcdbaadce",
       "sql": "-- Removing an account also withdraws integration grants that name it. Keep\n-- only the opaque revoked credential identity; never retain the erased ID.\nCREATE TRIGGER buoy_integration_account_removed BEFORE DELETE ON buoy_accounts\nBEGIN\n UPDATE buoy_integration_tokens\n SET revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER)*1000),\n     account_ids=(SELECT json_group_array(value) FROM json_each(account_ids) WHERE value<>OLD.id)\n WHERE EXISTS(SELECT 1 FROM json_each(account_ids) WHERE value=OLD.id);\nEND;\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0075_buoy_integration_account_scope.sql",
+      "sha256": "605d38a8ee9f0c25c708923e52e64af5eae58f69d69ac0ebcbd2493fb960f25c",
+      "sql": "-- Existing grants retain their explicit IDs. All-account authority is opt-in.\nALTER TABLE buoy_integration_tokens ADD COLUMN account_scope TEXT NOT NULL DEFAULT 'explicit' CHECK(account_scope IN ('explicit','all'));\n-- Earlier issuance instants are unknown; never invent historical metadata.\nALTER TABLE buoy_integration_tokens ADD COLUMN label TEXT NOT NULL DEFAULT 'Integration credential';\nALTER TABLE buoy_integration_tokens ADD COLUMN created_at TEXT;\nALTER TABLE buoy_integration_tokens ADD COLUMN revoked_reason TEXT CHECK(revoked_reason IN ('revocation','account_erasure'));\nDROP TRIGGER buoy_integration_account_removed;\nCREATE TRIGGER buoy_integration_account_removed BEFORE DELETE ON buoy_accounts\nBEGIN\n UPDATE buoy_integration_tokens\n SET revoked_reason=CASE WHEN revoked_at IS NULL THEN 'account_erasure' ELSE revoked_reason END,\n     revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER)*1000),\n     account_ids=(SELECT json_group_array(value) FROM json_each(account_ids) WHERE value<>OLD.id)\n WHERE EXISTS(SELECT 1 FROM json_each(account_ids) WHERE value=OLD.id);\nEND;\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0076_buoy_plan_portal.sql",
+      "sha256": "a58944c6e88e6b185aeff36367101883e66ffd546670b4fb071cd9c3e82a6a1e",
+      "sql": "-- Portal identity separation survives revocation; grants never enter archives.\nCREATE TABLE buoy_portal_recipients (\n operator_id TEXT PRIMARY KEY,\n email TEXT NOT NULL\n);\nCREATE TABLE buoy_portal_grants (\n id TEXT PRIMARY KEY,\n account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,\n plan_id TEXT NOT NULL REFERENCES buoy_success_plans(id) ON DELETE CASCADE,\n plan_revision TEXT NOT NULL,\n person_id TEXT NOT NULL REFERENCES buoy_customer_people(id) ON DELETE CASCADE,\n operator_id TEXT NOT NULL,\n operator_version INTEGER NOT NULL,\n owner_id TEXT NOT NULL,\n owner_version INTEGER NOT NULL,\n revision TEXT NOT NULL,\n task_ids TEXT NOT NULL CHECK(json_valid(task_ids)),\n expires_at INTEGER NOT NULL,\n revoked_at TEXT,\n created_at TEXT NOT NULL\n);\nCREATE TABLE buoy_plan_confirmations (\n plan_id TEXT NOT NULL REFERENCES buoy_success_plans(id) ON DELETE CASCADE,\n plan_revision TEXT NOT NULL,\n objective_id TEXT NOT NULL,\n person_id TEXT NOT NULL REFERENCES buoy_customer_people(id) ON DELETE CASCADE,\n operator_id TEXT NOT NULL,\n statement TEXT NOT NULL,\n recorded_at TEXT NOT NULL,\n PRIMARY KEY(plan_id,plan_revision,objective_id)\n);\nCREATE TABLE buoy_portal_events (\n id TEXT PRIMARY KEY,\n account_id TEXT NOT NULL REFERENCES buoy_accounts(id) ON DELETE CASCADE,\n plan_id TEXT NOT NULL REFERENCES buoy_success_plans(id) ON DELETE CASCADE,\n person_id TEXT NOT NULL REFERENCES buoy_customer_people(id) ON DELETE CASCADE,\n operator_id TEXT NOT NULL,\n kind TEXT NOT NULL,\n body TEXT NOT NULL,\n recorded_at TEXT NOT NULL\n);\nCREATE TRIGGER buoy_portal_membership_removed AFTER DELETE ON buoy_customer_memberships BEGIN\n UPDATE buoy_portal_grants SET revoked_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')\n WHERE person_id=OLD.person_id AND account_id=OLD.account_id AND revoked_at IS NULL;\nEND;\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0077_buoy_plan_outcomes.sql",
+      "sha256": "59bb35bdb647b1088384e5d4a52d807ba17cc9f10c962c41fde1791bafac9230",
+      "sql": "-- Freeze the exact reviewed plan revision for each milestone cohort member.\nALTER TABLE buoy_outcome_accounts ADD COLUMN plan_id TEXT REFERENCES buoy_success_plans(id) ON DELETE CASCADE;\nALTER TABLE buoy_outcome_accounts ADD COLUMN plan_revision TEXT;\nALTER TABLE buoy_outcome_accounts ADD COLUMN plan_objective TEXT;\nALTER TABLE buoy_outcome_accounts ADD COLUMN plan_customer_id TEXT REFERENCES buoy_customer_people(id) ON DELETE CASCADE;\n"
     }
   ],
   "compatibilityDate": "2026-09-08",

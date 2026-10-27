@@ -1,3 +1,4 @@
+import {portalPage} from './portal';
 import {aiPage} from './ai';
 import {reviewsPage,type ReviewsPage} from './reviews';
 import {reportsPage,type ReportsPage,type ReportResult} from './reports';
@@ -47,6 +48,7 @@ import { workPage } from './work';
  * other clients. No database access or independent authentication lives here. */
 export async function buoyPage(request: Request, _env: Bindings, api: Api): Promise<Response | null> {
   const url = new URL(request.url), path = url.pathname === '/app/import' ? '/app/imports' : url.pathname;
+  if(path==='/portal'||path.startsWith('/portal/'))return portalPage(request,api);
   if (path !== '/app' && !path.startsWith('/app/')) return null;
   let state: State;
   try { state = await apiCall<State>(api, request, '/api/buoy/state'); }

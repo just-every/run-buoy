@@ -1,3 +1,5 @@
+import {planOutcomeJourney} from './plan-outcome-journey.mjs'
+import {portalJourney,portalWithdrawalJourney} from './portal-journey.mjs'
 import {integrationJourney} from './integration-journey.mjs'
 import {reviewJourney} from './review-journey.mjs'
 import {dashboardJourney} from './dashboard-journey.mjs'
@@ -638,3 +640,9 @@ test('AI-005 generated claims cite current permitted source records',async()=>{c
 test('AI-003 cited communication health, class disablement and guarded model effects',async()=>{const {communicationJourney}=await import('./communication-journey.mjs');await communicationJourney()})
 
 test('API-001 scoped account integration with atomic replay and bounded authority',()=>integrationJourney())
+
+test('PLAN-001 customer portal confirmation and isolated collaboration',portalJourney)
+
+test('PLAN-001 customer access expiry and withdrawal',portalWithdrawalJourney)
+
+test('PLAN-001 objective milestone windows and frozen comparison',planOutcomeJourney)

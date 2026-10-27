@@ -1,3 +1,4 @@
+import {sharingState} from '../portal'
 import {Hono} from 'hono'
 import type {Bindings} from '../../auth.server'
 import {jsonBody} from '../access'
@@ -15,7 +16,8 @@ export async function plansState(db:D1Database,actor:Actor,accountId:string){
  const tasks=(await stmt(db,'SELECT id,title,completed_at AS completedAt FROM buoy_tasks WHERE account_id=? ORDER BY id',accountId).all<{id:string;title:string;completedAt:string|null}>()).results
  const outcomeChoices=(await stmt(db,"SELECT r.id,json_extract(r.document,'$.name') AS name FROM buoy_outcomes r JOIN buoy_outcome_accounts a ON a.report_id=r.id WHERE a.account_id=? AND a.cohort='enrolled' ORDER BY r.id",accountId).all<{id:string;name:string}>()).results
  const plans=projected.map(p=>({...p,taskIds:p.taskIds??[],milestones:p.milestones??[],linkedTasks:(p.taskIds??[]).map(id=>tasks.find(t=>t.id===id)).filter((t):t is typeof tasks[number]=>!!t),milestoneEvidence:(p.milestones??[]).map(m=>{const report=reports.find(r=>r.id===m.outcomeId),subject=report?.enrolled.find(a=>a.accountId===accountId);return {...m,status:subject?.status??'unavailable',kind:report?.kind??null,startedAt:report?.startedAt??null,deadline:report?.deadline??null,reachedAt:subject?.reachedAt??null,elapsedHours:subject?.elapsedHours??null,rate:report?.rate??null,comparisonRate:report?.comparisonRate??null,interpretation:report?.interpretation??'Outcome evidence unavailable'}})}))
- return {accountId,plans,readiness:goalReadiness(projected),tasks,outcomeChoices,fields:image.fields.filter(f=>!f.related&&f.kind!=='goal'&&(f.valueType===undefined||f.valueType==='number')),interpretation:'Current observed metric attainment can regress. Customer statements await authenticated customer confirmation. Internal drafts grant no customer access.'}
+ const segments=(await db.prepare("SELECT id,json_extract(document,'$.name') AS name FROM buoy_segments ORDER BY id").all<{id:string;name:string}>()).results
+ return {accountId,plans,segments,sharing:actor.role==='owner'?await sharingState(db,actor,accountId):null,readiness:goalReadiness(projected),tasks,outcomeChoices,fields:image.fields.filter(f=>!f.related&&f.kind!=='goal'&&(f.valueType===undefined||f.valueType==='number')),interpretation:'Current observed metric attainment can regress. Customer statements await authenticated customer confirmation. Internal drafts grant no customer access.'}
 }
 export async function savePlan(db:D1Database,actor:Actor,accountId:string,input:Record<string,unknown>){
  requirePerson(actor);keys(input,['id','revision','accountRevision','name','staffOwnerId','customerOwnerId','objectives','milestones','taskIds'])

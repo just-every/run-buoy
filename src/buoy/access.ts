@@ -19,6 +19,7 @@ export async function actorFor(request: Request, original: Bindings): Promise<Ac
  const session = await operatorAuth(env).getSession(request)
  insist(session, 'Sign in to continue.', 401)
  if (!['GET','HEAD'].includes(request.method)) insist(request.headers.get('origin') === env.AUTH_ORIGIN && request.headers.get('sec-fetch-site') !== 'cross-site', 'Invalid request origin.', 403)
+ insist(url.pathname.startsWith('/api/buoy/portal/') || !await stmt(env.DB,'SELECT 1 FROM buoy_portal_recipients WHERE operator_id=? OR email=?',session.operator.id,session.operator.email).first(), 'Customer sessions cannot open internal work.',403)
  return {...session.operator, kind: 'person'}
 }
 export async function jsonBody(request: Request) {
