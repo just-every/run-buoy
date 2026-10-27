@@ -1,4 +1,4 @@
-import {trustJourney} from './trust-journey.mjs'
+import {trustJourney,trustPrivacyJourney,trustUndoJourney} from './trust-journey.mjs'
 import {integrationJourney} from './integration-journey.mjs'
 import {reviewJourney} from './review-journey.mjs'
 import {dashboardJourney} from './dashboard-journey.mjs'
@@ -643,3 +643,5 @@ test('API-001 scoped account integration with atomic replay and bounded authorit
 test('AGENT-008 plain-language signal drafts, historical evidence and approval',async()=>{const {configurationJourney}=await import('./configuration-journey.mjs');await configurationJourney()})
 test('AGENT-008 native configuration kinds and retained scorecard back-testing',async()=>{const {configurationKindsJourney}=await import('./configuration-journey.mjs');await configurationKindsJourney()})
 test('AGENT-007 evidence review, admin-only correction and immediate health refresh',trustJourney)
+test('AGENT-007 person evidence export, reviewed redaction, holds and erasure',trustPrivacyJourney)
+test('AGENT-007 import undo preserves dependent trust work on either account',trustUndoJourney)

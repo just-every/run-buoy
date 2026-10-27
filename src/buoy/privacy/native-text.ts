@@ -7,6 +7,8 @@ import type {Match} from './discovery'
 interface Store {kind:string;table:string;columns:string[];jsonColumn:string|null;fields:string[];accountColumn?:string}
 const evidenceFields=['renewalEvidence','billing.reference','support.reference']
 const stores:Store[]=[
+ {kind:'trust-evidence',table:'buoy_trust_proposals',columns:['evidence'],jsonColumn:'evidence',fields:['evidence.preview.person.name','evidence.reference']},
+ {kind:'trust-review',table:'buoy_trust_proposals',columns:['reason'],jsonColumn:null,fields:[]},
  {kind:'proposal',table:'buoy_proposals',columns:['payload'],jsonColumn:'payload',fields:['title','reason','evidence']},
  {kind:'task',table:'buoy_tasks',columns:['title','outcome','evidence'],jsonColumn:null,fields:[]},
  {kind:'decision',table:'buoy_decisions',columns:['reason','evidence'],jsonColumn:null,fields:[]},
@@ -18,7 +20,10 @@ const stores:Store[]=[
 const held=`EXISTS(SELECT 1 FROM buoy_customer_memberships m WHERE m.account_id=t.account_id AND
  (EXISTS(SELECT 1 FROM buoy_privacy_holds h WHERE h.person_id=m.person_id)
  OR EXISTS(SELECT 1 FROM buoy_review_hold_dependencies h WHERE h.person_id=m.person_id)))`
-export const NATIVE_TEXT_SQL=`SELECT json_object(${stores.map(s=>`'${s.kind}',json((SELECT json_group_array(json_object('id',t.id,'accountId',t.${s.accountColumn??'account_id'},'held',${held.replaceAll('t.account_id','t.'+(s.accountColumn??'account_id'))},'values',json_object(${s.columns.map(c=>`'${c}',t.${c}`).join(',')}))) FROM (SELECT * FROM ${s.table} ORDER BY id) t))`).join(',')})`
+const trustHeld=`(${held} OR ${held.replaceAll('t.account_id','t.related_account_id')} OR
+ EXISTS(SELECT 1 FROM buoy_customer_people p WHERE p.id IN(json_extract(t.evidence,'$.evidence.claim.personId'),json_extract(t.evidence,'$.evidence.preview.person.id'),json_extract(t.evidence,'$.evidence.preview.previous.person_id')) AND
+ (EXISTS(SELECT 1 FROM buoy_privacy_holds h WHERE h.person_id=p.id) OR EXISTS(SELECT 1 FROM buoy_review_hold_dependencies h WHERE h.person_id=p.id))))`
+export const NATIVE_TEXT_SQL=`SELECT json_object(${stores.map(s=>`'${s.kind}',json((SELECT json_group_array(json_object('id',t.id,'accountId',t.${s.accountColumn??'account_id'},'held',${s.table==='buoy_trust_proposals'?trustHeld:held.replaceAll('t.account_id','t.'+(s.accountColumn??'account_id'))},'values',json_object(${s.columns.map(c=>`'${c}',t.${c}`).join(',')}))) FROM (SELECT * FROM ${s.table} ORDER BY id) t))`).join(',')})`
 interface Row {id:string;accountId:string;held:number;values:Record<string,string|null>}
 export async function nativeText(db:D1Database,key:CryptoKey,redact:(value:string)=>string){
  const image=await db.prepare(NATIVE_TEXT_SQL+' AS snapshot').first<{snapshot:string}>()
