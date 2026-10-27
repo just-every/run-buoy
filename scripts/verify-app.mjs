@@ -19,7 +19,7 @@ const suites={
  'adoption-aggregates':['test:adoption-aggregates'],
  browser:['test:style','test:notifications','test:teams','test:segments','test:outcomes'],
  'accessibility-browser':['test:runway-keyboard','test:a11y'],
- 'settings-browser':['test:integration-browser','test:governance-browser','test:fields-browser','test:connections-browser'],
+ 'settings-browser':['test:integration-browser','test:trust-browser','test:governance-browser','test:fields-browser','test:connections-browser'],
  'intake-browser':['test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
  archive:['test:portable'],
 }

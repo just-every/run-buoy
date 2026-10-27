@@ -35,7 +35,7 @@ export async function previewMapping(db:D1Database,actor:Actor,input:Record<stri
  const image=await mappingImage(db,input)
  return {...image,fingerprint:await digest(JSON.stringify(image)),notice:'Only this exact source/user/group claim is reviewed. No other identity, membership or claim is merged.'}
 }
-export async function approveMapping(db:D1Database,actor:Actor,input:Record<string,unknown>){
+export async function approveMapping(db:D1Database,actor:Actor,input:Record<string,unknown>,reviewWrites:D1PreparedStatement[]=[]){
  requirePerson(actor)
  const image=await mappingImage(db,input)
  insist(typeof input.fingerprint==='string'&&input.fingerprint===await digest(JSON.stringify(image)),'Mapping evidence changed. Preview and review again.',409)
@@ -46,7 +46,7 @@ export async function approveMapping(db:D1Database,actor:Actor,input:Record<stri
  statements.push(stmt(db,`INSERT INTO buoy_usage_mappings(source_id,claim_key,user_id,group_id,account_id,person_id,revision,reviewed_by,reviewed_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(source_id,claim_key) DO UPDATE SET account_id=excluded.account_id,person_id=excluded.person_id,revision=excluded.revision,reviewed_by=excluded.reviewed_by,reviewed_at=excluded.reviewed_at`,sourceId,key,userId,groupId,accountId,personId,id(),actor.id,stamp),
   stmt(db,'UPDATE buoy_accounts SET revision=? WHERE id=?',id(),accountId),...accountAudit(db,actor,accountId,'usage.mapping-reviewed'),auditRecord(db,actor,'usage.mapping-reviewed',`usage-source:${sourceId}`),stmt(db,'DELETE FROM buoy_assertions'))
  if(image.previous&&image.previous.account_id!==accountId)statements.splice(-1,0,stmt(db,'UPDATE buoy_accounts SET revision=? WHERE id=?',id(),image.previous.account_id))
- await db.batch(statements)
+ await db.batch([...reviewWrites,...statements])
  return {sourceId,userId,groupId,accountId,personId,reviewedBy:actor.id,reviewedAt:stamp}
 }
 /** Account evidence is visible through the same session read authority as accounts. */
