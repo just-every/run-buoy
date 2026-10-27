@@ -2,6 +2,7 @@ import {billingSource} from './billing-journey.mjs'
 import {billingFixtureKey} from './billing-fixture.mjs'
 import {seedBillingPortability,billingPortabilityImage,assertBillingArchiveRows,assertBillingPortability,assertBillingAwareAccounts,assertBillingAwareRevenue,assertBillingAwareScorecardHistory,billingAwareRecordImage,billingAwareAccountCatalog} from './billing-portability.mjs'
 import {seedRecordPortability,recordPortabilityImage,assertRecordPortability} from './record-portability.mjs'
+import {portableConfigurationCard,seedConfigurationPortability,assertConfigurationBacktest,assertConfigurationArchive} from './configuration-portability.mjs'
 import { importClient } from './import-door-client.mjs'
 // A real D1 installation, public HTTP writes, and public rer export/import.
 // Source and destination run sequentially; only Stripe/mail network edges use synthetic provider records.
@@ -30,14 +31,15 @@ async function command(cwd,args,expected=0){
  const safe=output.replace(/RER_OPEN[^\n]*/g,'RER_OPEN [private]').replace(/token=[^\s"&<>]+/g,'token=[private]')
  if(expected===0)assert.equal(code,0,safe.slice(-3000));else assert.notEqual(code,0,'Restore should refuse this destination or archive')
 }
-let running
+const configurationNow=Date.now()
+let running,configurationClock=configurationNow
 const stripe=billingSource()
 const aiSelection=[{kind:'task',line:2},{kind:'risk',line:4},{kind:'expansion',line:6}]
 const providerFetch=async request=>{
  if(new URL(request.url).hostname==='api.stripe.com')return stripe.fetch(request)
  assert.equal(request.url,'https://api.anthropic.com/v1/messages')
  const body=await request.json(),payload=JSON.parse(body.messages[0].content.slice(body.messages[0].content.indexOf('{')))
- if(payload.instructions.startsWith('Translate'))return Response.json({content:[{text:JSON.stringify({name:'Portable approved configuration',weeklyDropPercent:30,urgentTickets:1})}],usage:{input_tokens:100,output_tokens:100}})
+ if(payload.instructions.startsWith('Translate'))return Response.json({content:[{text:JSON.stringify(payload.records.kind==='scorecard'?portableConfigurationCard:{name:'Portable approved configuration',weeklyDropPercent:30,urgentTickets:1})}],usage:{input_tokens:100,output_tokens:100}})
  assert.ok(payload.instructions.startsWith('Identify'))
  return Response.json({content:[{text:JSON.stringify({proposals:aiSelection})}],usage:{input_tokens:100,output_tokens:100}})
 }
@@ -46,7 +48,7 @@ const providerFetch=async request=>{
 const intake=(path,body,secret)=>running.dispatch(new Request(running.origin+path,{method:'POST',headers:{authorization:'Bearer '+secret,'content-type':'application/json'},body:JSON.stringify(body)}))
 try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
- running=await startWorker({root:source,secure:true,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
+ running=await startWorker({root:source,secure:true,clock:()=>configurationClock,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
  const allAudit=async()=>{const entries=[];let offset=0;do{const page=await call('/audit?offset='+offset);entries.push(...page.entries);offset=page.nextOffset}while(offset!==null);return entries}
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
@@ -146,6 +148,7 @@ try{
  const webhookIntake=()=>intake('/api/buoy/playbooks/intake/'+webhookBook.id,{accountId,operationKey:'synthetic-buoy-1760'},webhookKey.secret);
  assert.equal((await webhookIntake()).status,202);
  const portableCard=await call('/scorecards/publish','POST',{revision:recordIds.card.revision,config:{name:'Portable recorded health',measures:[{key:'billing',name:'Recorded allocation',field:'billing.allocatedMinor',min:0,max:100000,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[{segmentId:inappSegment.id,weights:{billing:2}}]}});
+ const configurationHistory=await seedConfigurationPortability(call,value=>{configurationClock=value??configurationNow},configurationNow)
  const planChampion=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-1940',accountIds:[accountId],source:'synthetic-buoy-1941'});
  const successPlan=await call('/accounts/'+accountId+'/plans','POST',{accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,name:'Portable internal success plan',staffOwnerId:(await call('/state')).operator.id,customerOwnerId:planChampion.id,objectives:[{id:'usage',title:'Observed product use',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'customer',title:'Actual customer confirmation required',kind:'customer-statement',dueOn:'2027-03-01'}]});
  const successPlansBefore=await call('/accounts/'+accountId+'/plans');
@@ -185,6 +188,7 @@ try{
  await call('/ai/configuration/'+configurationDraft.id+'/approve','POST',{approve:true,fingerprint:configurationDraft.fingerprint})
  const pendingConfiguration=await call('/ai/configuration','POST',{description:'Flag a weekly activity drop with an urgent ticket',consent:true})
  const configurationSignalsBefore=(await call('/ai/configuration')).signals
+ const configurationBacktestBefore=await assertConfigurationBacktest(call,configurationHistory)
  const recordImage=await recordPortabilityImage(call,recordIds);
  const billingImage=await billingPortabilityImage(call,billingIds);
  // Later fixture writes can legitimately add held account revisions. Compare
@@ -210,6 +214,7 @@ try{
  // would also satisfy. No generated installation key is logged on failure.
  const archiveText=await readFile(archive,'utf8')
  const archiveRows=archiveText.trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assertConfigurationArchive(archiveRows,configurationHistory)
  assert.ok(!archiveRows.some(item=>['buoy_configuration_drafts','buoy_configuration_accounts'].includes(item.table)),'Unpublished drafts and approval authority never enter an archive')
  assert.ok(archiveRows.some(item=>item.table==='buoy_configuration_signals'&&JSON.parse(item.row.document).name==='Portable approved configuration'),'Approved deterministic definitions are retained')
  const supportHistoryBefore=archiveRows.filter(item=>item.table==='buoy_support_history').map(item=>item.row)
@@ -248,7 +253,7 @@ try{
  const bytes=await readFile(archive);bytes[Math.floor(bytes.length/2)]^=1
  const damaged=join(parent,'damaged.rer');await writeFile(damaged,bytes)
  await command(broken,['import','--input',damaged,'--yes'],1)
- running=await startWorker({root:destination,secure:true,providerFetch:stripe.fetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
+ running=await startWorker({root:destination,secure:true,clock:()=>configurationNow,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
  assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
  assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective source values and awaiting-confirmation state restore exactly');
@@ -330,9 +335,13 @@ try{
  const restoredBillingBeforeSchedule=await call('/billing');await running.scheduled();const restoredBillingAfterSchedule=await call('/billing');
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'The restored scheduled Worker makes no next Stripe source call');
  assert.deepEqual(restoredBillingAfterSchedule,restoredBillingBeforeSchedule,'No restored source observation or billing run advances until the new owner reconnects');
+ const restoredAi=(await call('/ai')).settings
+ await call('/ai/settings','PUT',{...restoredAi,enabled:true,classes:[],budgetMinor:100,requestMinor:100,noTraining:true,termsReference:'synthetic-buoy-8524'})
+ assert.deepEqual(await assertConfigurationBacktest(call,configurationHistory),configurationBacktestBefore,'A fresh scorecard draft selects the same latest historical result and exact missing history after real restoration')
  await running.close();running=null
  const restoredArchive=join(parent,'restored.rer');await command(destination,['export','--output',restoredArchive])
  const restoredRows=(await readFile(restoredArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assertConfigurationArchive(restoredRows,configurationHistory)
  assert.deepEqual(restoredRows.filter(item=>item.table==='buoy_support_history').map(item=>item.row).sort((a,b)=>a.id-b.id),supportHistoryBefore.toSorted((a,b)=>a.id-b.id),'Dated support observations survive public archive restoration exactly')
  const restoredScoreRows=new Map(restoredRows.filter(item=>item.table==='buoy_scorecard_history').map(item=>[item.row.id,item.row]))
  for(const {row}of archiveRows.filter(item=>item.table==='buoy_scorecard_history'))assert.equal(restoredScoreRows.get(row.id).observed_seq,row.observed_seq,'Retained calculation ordering survives restoration')
