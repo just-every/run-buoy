@@ -1,3 +1,4 @@
+import {churnzeroJourney} from './churnzero-journey.mjs'
 import assert from 'node:assert/strict'
 import {totangoApiJourney,apiBrowserBundle,totangoReferenceJourney,referenceFiles} from './totango-api-journey.mjs'
 import {test} from 'node:test'
@@ -200,6 +201,7 @@ test('MIGRATE-005 CSV mapping rejects bad rows and preserves exact money and sou
   assert.equal(large.counts.input,2000);assert.equal(large.counts.mapped,3);assert.equal(large.counts.rejected,1997)
   assert.deepEqual(await state(app),before,'A 2000-row preview changes no native records')
   await door.json('undo',{planId:large.planId})
+  await churnzeroJourney({app,scratch,client,state,target})
  } finally {await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
