@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "cf032d3fa984606cd2f0702e939721182dced2b62a4a172b9a6c3cca7aad94e5",
+      "sha256": "25d10d646f2d64b329eb710c08b0ed4beaa3da5495a7aced8b4112a545c1c779",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "b0c07ab451dfc21a6850d979babcc04dfa82c2811ed6d76d6e0be5f67524e4ed",
+      "sha256": "4386bfa4d9fa1f52363f63264629a760a217a5f00adf20c9f254527aa47599c3",
       "executable": false
     },
     "DEMO.md": {
@@ -220,7 +220,7 @@
       "executable": false
     },
     "docs/reviews.md": {
-      "sha256": "13822d1872ae6a9dbafcee2e4b1c2abd6bf2f98a2a4109fc4533ee039e3e04a0",
+      "sha256": "36b70ee35920bab0eed984cac687c314bbeb26477b9131e400b9b4e73f61efa4",
       "executable": false
     },
     "docs/roles.md": {
@@ -244,7 +244,7 @@
       "executable": false
     },
     "docs/success-plans.md": {
-      "sha256": "821a884c4f108feb103455647b6951342b3d598d347956c63f8c918732f7ba28",
+      "sha256": "cb31d58db648c2b955db4f5b6bbb4a0b4ec3e9eb806de210ef2069280de01dae",
       "executable": false
     },
     "docs/usage.md": {
@@ -1740,7 +1740,7 @@
       "executable": false
     },
     "src/buoy/ui/actions.ts": {
-      "sha256": "a8d7437c09eacdf44fbcd3ef2e6f0c4a04c9d81a26176ca8f420144ad3ae05f5",
+      "sha256": "b86fae7291e063c6c33e191123264169543aff86f1d1e2dcb9079b3fab59943f",
       "executable": false
     },
     "src/buoy/ui/adoption-consumers.ts": {
@@ -1840,7 +1840,7 @@
       "executable": false
     },
     "src/buoy/ui/plans.ts": {
-      "sha256": "a9bc39c49342d6632964dbe0da5297ce1511124d7d1f5571dfd389fb862a2d56",
+      "sha256": "b4a58a33f3f4e15578f97e45855c1c654392132977dbaa09918616ec56d14a3d",
       "executable": false
     },
     "src/buoy/ui/playbooks.ts": {
@@ -4108,7 +4108,7 @@
       "executable": false
     },
     "tests/plan-browser.mjs": {
-      "sha256": "5f2ff5604c8b60ba180c7a5c7c2172c1fc4759254f48b8a9d67d471cf5cebb6e",
+      "sha256": "1856676413cd4d737dd7244a7707cd093a9b16354ea898851a81bb7f8444e32c",
       "executable": false
     },
     "tests/plan-fixture.mjs": {
