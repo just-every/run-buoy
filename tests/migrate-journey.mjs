@@ -250,12 +250,24 @@ test('MIGRATE-002 paused journey drafts retain every definition element without 
   await app.scheduled('0 * * * *',Date.parse('2027-03-01T12:00:00Z'))
   assert.deepEqual(await automation(),inert,'Mapped task templates and customer achievements confer no operational or external authority')
   await door.undo(structured);assert.deepEqual(await state(app),before)
+  const incomplete=structuredClone(structureDefinition)
+  delete incomplete.ExpectedDuration;delete incomplete.Milestones[0].ProgressBottom
+  delete incomplete.Milestones[0].Tasks[0].IsOptional
+  const incompletePlan=await door.plan(journeyBundle(input,[incomplete],structureMapping));await door.apply(incompletePlan)
+  const unavailable=(await state(app)).find(row=>row.id===current.id).migrationJourneys[0].structure
+  assert.equal(unavailable.expectedDays,null);assert.equal(unavailable.milestones[0].progress.behindAfterDays,null);assert.equal(unavailable.milestones[0].tasks[0].optional,null,'Missing source configuration is unavailable, never an invented number or false flag')
+  await door.undo(incompletePlan);assert.deepEqual(await state(app),before)
+  const noMilestones={...structureDefinition,Milestones:[]}
+  const noMilestonePlan=await door.plan(journeyBundle(input,[noMilestones],structureMapping));await door.apply(noMilestonePlan)
+  assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationJourneys[0].structure,{...expectedStructure,milestones:[]},'A supplied empty milestone collection preserves an empty definition without inventing a step')
+  await door.undo(noMilestonePlan);assert.deepEqual(await state(app),before)
   const wrongJourney=structuredClone(structureDefinition);wrongJourney.Milestones[0].JourneyId=999
   const wrongMilestone=structuredClone(structureDefinition);wrongMilestone.Milestones[0].Tasks[0].JourneyMilestoneId=999
   const duplicateStep=structuredClone(structureDefinition);duplicateStep.Milestones[0].Tasks.push(duplicateStep.Milestones[0].Tasks[0])
   const missingChildren=structuredClone(structureDefinition);delete missingChildren.Milestones[0].Achievements
   const invalidFlag=structuredClone(structureDefinition);invalidFlag.Milestones[0].Tasks[0].IsOptional='false'
-  for(const definition of [wrongJourney,wrongMilestone,duplicateStep,missingChildren,invalidFlag]){
+  const invalidDuration={...structureDefinition,ExpectedDuration:-1}
+  for(const definition of [wrongJourney,wrongMilestone,duplicateStep,missingChildren,invalidFlag,invalidDuration]){
    const refused=await door.plan(journeyBundle(input,[definition],structureMapping))
    assert.equal(refused.counts.mapped,0);assert.equal(refused.counts.rejected,20,'Invalid relationships, missing entity collections and ambiguous flags refuse the account')
    await door.json('undo',{planId:refused.planId})
@@ -268,15 +280,16 @@ test('MIGRATE-002 paused journey drafts retain every definition element without 
   const empty=await door.plan(journeyBundle(input,[]));await door.apply(empty)
   assert.deepEqual((await state(app)).map(row=>row.migrationJourneys),Array.from({length:20},()=>[]),'Explicitly absent definitions remain absent')
   await door.undo(empty)
-  const editedPlan=await door.plan(input);await door.apply(editedPlan)
+  const editedPlan=await door.plan(structureBundle(input));await door.apply(editedPlan)
+  const semanticDrafts=structuredAccounts.find(row=>row.id===current.id).migrationJourneys
   const editable=(await state(app)).find(row=>row.id===current.id)
   assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:app.cookie,body:{...body,name:'Synthetic journey owner edit',revision:editable.revision}})).status,200)
-  assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationJourneys,current.migrationJourneys,'Ordinary edits retain draft custody')
+  assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationJourneys,semanticDrafts,'Ordinary edits retain draft custody')
   const credentialResponse=await app.request('/api/buoy/v1/tokens',{method:'POST',cookie:app.cookie,body:{scopes:['accounts.read','accounts.write'],accountIds:[current.id],requestsPerMinute:30,expiresDays:1}})
   assert.equal(credentialResponse.status,201);const credential=await credentialResponse.json()
   const integrationUpdate=new Request(app.origin+'/api/buoy/v1/accounts/'+current.id,{method:'PUT',headers:{'content-type':'application/json',authorization:'Bearer '+credential.token,'idempotency-key':'synthetic-buoy-journey-edit'},body:JSON.stringify({...body,name:'Synthetic journey integration edit',revision:(await state(app)).find(row=>row.id===current.id).revision})})
   assert.equal((await app.dispatch(integrationUpdate)).status,200)
-  assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationJourneys,current.migrationJourneys,'Integration edits retain exact paused draft custody')
+  assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationJourneys,semanticDrafts,'Integration edits retain exact paused draft custody')
   assert.equal((await door.send('undo',{planId:editedPlan.planId})).status,409,'Strict undo protects later owner work')
   assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'DELETE',cookie:app.cookie,body:{confirmation:'Synthetic journey integration edit'}})).status,200)
   assert.equal((await door.send('reconcile',{planId:editedPlan.planId})).status,410)

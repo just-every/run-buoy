@@ -41,7 +41,7 @@ export function churnzeroJourneys(row:Record<string,unknown>,value:unknown,accou
   const semantic=mapping.schema?churnzeroStructure(definition):undefined
   if(seen.has(sourceId))throw Error('Duplicate journey identity; no definition may be discarded.')
   seen.add(sourceId)
-  if(!Array.isArray(steps)||steps.length<1||steps.length>100)throw Error('Each journey needs 1 to 100 supplied steps; a label cannot establish steps.')
+  if(!Array.isArray(steps)||(!mapping.schema&&steps.length<1)||steps.length>100)throw Error('Supply at most 100 milestones; an unstructured journey needs at least one supplied step. A label cannot establish steps.')
   const stepIds=new Set<string>(),nativeSteps=steps.map((raw,position)=>{
    const definition=object(raw),sourceId=sourceIdentity(definition[mapping.stepId])
    if(stepIds.has(sourceId))throw Error('Duplicate journey step identity; no step may be discarded.')

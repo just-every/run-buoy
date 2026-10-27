@@ -1396,7 +1396,7 @@
       "executable": false
     },
     "src/buoy/migrate/churnzero-journeys.ts": {
-      "sha256": "180715cdd6befb4ed3a02154a43469c92138f3ca3db33aa23c5d15649db4311f",
+      "sha256": "35d7c23e62b5b67a022a974281e88474e4dc9485283a85d2a39c555893835088",
       "executable": false
     },
     "src/buoy/migrate/churnzero-structure.ts": {
@@ -4168,7 +4168,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "843d1639bc02a41d92c2880490151d6000b069f6ce9f3ccda92e68d0d962ec0d",
+      "sha256": "4c5cb6c72aef423444e1f6bc92f9145591e54b42e234c255422d1ad9c243ab45",
       "executable": false
     },
     "tests/notifications.mjs": {
