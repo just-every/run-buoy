@@ -90,7 +90,7 @@ export async function configurationJourney(){
   assert.notEqual(control.id,approved.id)
   assert.equal((await api('/notifications')).items.filter(i=>i.title==='Active pause control').length,2)
   f.setConfiguration(draft.config)
-  await api('/ai/configuration/signals/'+approved.id+'/pause','POST',{});await api('/ai/configuration/signals/'+approved.id+'/pause','POST',{});assert.equal((await api('/ai/configuration')).signals[0].enabled,0)
+  await api('/ai/configuration/signals/'+approved.id+'/pause','POST',{});await api('/ai/configuration/signals/'+approved.id+'/pause','POST',{});assert.equal((await api('/ai/configuration')).signals.find(signal=>signal.id===approved.id).enabled,0)
   assert.equal((await api('/audit?action=configuration.signal-paused')).entries.length,1)
   f.setClock(Date.parse('2026-10-26T12:00:00Z'))
   const freshAccount=(await api('/state')).accounts.find(a=>a.id==='synthetic-buoy-8413')
