@@ -38,7 +38,7 @@ if(csvSource&&!columns) {
  try {
   console.log('Available source headers: '+JSON.stringify(header))
   console.log('Enter exact source header names. Required fields cannot be left blank; optional invoice and support fields may be skipped.')
-  for(const field of ['id','name','renewalDate','noticeDays','renewalEvidence','invoiceTotal','invoiceCurrency','invoiceObservedAt','invoiceDueDate','supportObservedAt','supportReference','openTickets','urgentTickets']) {
+  for(const field of ['id','name','renewalDate','noticeDays','renewalEvidence','invoiceTotal','invoiceCurrency','invoiceObservedAt','invoiceDueDate','supportObservedAt','supportReference','openTickets','urgentTickets',...(source==='churnzero'?['churnScore','churnScoreFactors']:[])]) {
    const answer=(await terminal.question(`${field}: `)).trim()
    if(answer)columns[field]=answer
    else if(['id','name','renewalDate','noticeDays','renewalEvidence'].includes(field))throw new Error(`A source header is required for ${field}.`)

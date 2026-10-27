@@ -111,6 +111,7 @@ async function write(db:D1Database,t:Token,request:Request,accountId?:string){
  if(accountId){
   insist(typeof body.revision==='string','An update requires the current revision.')
   const prior=await account(db,accountId);insist(prior.revision===body.revision,'Account changed. Reload before saving.',409)
+  if(prior.migrationHealth)value.migrationHealth=prior.migrationHealth
   statements.push(guard(db,'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)',accountId,body.revision),stmt(db,'UPDATE buoy_accounts SET document=?,revision=? WHERE id=?',canonicalJson(value),revision,accountId))
  }else{
   const erased=notErasedSql(value.id)

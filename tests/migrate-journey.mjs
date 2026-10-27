@@ -15,6 +15,7 @@ const account=(id,extra={})=>({id,name:'Synthetic account '+id,renewalDate:'2027
 const client=(app,source)=>importClient((path,options)=>app.request(path,{...options,headers:{...options.headers,'x-buoy-import-source':source}}),app.cookie)
 const state=async app=>(await (await app.request('/api/buoy/state',{cookie:app.cookie})).json()).accounts
 const bundle=csv=>({format:'buoy-migration-v1',source:'csv',dateOrder:'day-first',csv,originalSha256:createHash('sha256').update(csv).digest('hex'),columns:{id:'Customer',name:'Company',renewalDate:'Renewal',noticeDays:'Notice',renewalEvidence:'Evidence',invoiceTotal:'Amount',invoiceCurrency:'Currency',invoiceObservedAt:'Observed',invoiceDueDate:'Due'}})
+const churnzeroHealthColumns={churnScore:'ChurnScore',churnScoreFactors:'ChurnScore Factors'}
 const churnzeroColumns={id:'Account External ID',name:'Account Name',renewalDate:'Renewal Date',noticeDays:'Notice Days',renewalEvidence:'Contract Reference',invoiceTotal:'Invoice Amount',invoiceCurrency:'Currency',invoiceObservedAt:'Invoice Observed',invoiceDueDate:'Invoice Due'}
 const header='Customer,Company,Renewal,Notice,Evidence,Amount,Currency,Observed,Due,Other\r\n'
 const csvRow=(id,date='31/03/2027',currency='USD',amount='12.34')=>`${id},"Synthetic, ${id}",${date},30,synthetic-buoy-1,${amount},${currency},01/01/2026,31/01/2026,unmapped\r\n`
@@ -74,12 +75,12 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   }
   const outbound=app.outbound.length
   const original='fixtures/move-in/churnzero/accounts.csv',prepared=join(scratch,'bundle.json')
-  execFileSync(process.execPath,['src/buoy/migrate/cli.mjs','--source','churnzero','--input',original,'--output',prepared,'--columns',JSON.stringify(churnzeroColumns)])
+  execFileSync(process.execPath,['src/buoy/migrate/cli.mjs','--source','churnzero','--input',original,'--output',prepared,'--columns',JSON.stringify({...churnzeroColumns,...churnzeroHealthColumns})])
   const input=JSON.parse(await readFile(prepared,'utf8')),bytes=await readFile(original)
   assert.equal(input.csv,bytes.toString('utf8'));assert.equal(input.originalSha256,createHash('sha256').update(bytes).digest('hex'))
   const plan=await door.plan(input)
   assert.equal(plan.counts.input,20);assert.equal(plan.counts.mapped,20);assert.equal(plan.counts.rejected,0)
-  assert.deepEqual(plan.diagnostics.map(d=>d.field).sort(),Array.from({length:20},()=>['ChurnScore','ChurnScore Factors','Journey','Contact']).flat().sort())
+  assert.deepEqual(plan.diagnostics.map(d=>d.field).sort(),Array.from({length:20},()=>['Journey','Contact']).flat().sort())
   assert.deepEqual(await state(app),before,'Review creates no native records')
   for(const cookie of otherCookies)for(const action of ['uploads','apply','undo','reconcile','status'])assert.equal((await door.send(action,{planId:plan.planId,reviewedFingerprint:plan.fingerprint},{cookie})).status,401,'Only the owner manages ChurnZero imports')
   assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:'0'.repeat(64)})).status,403)
@@ -91,6 +92,8 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   for(let n=1;n<=20;n++){
    const actual=native.find(row=>row.id===target('churnzero','synthetic-buoy-'+n));assert.ok(actual)
    assert.equal(actual.name,'Synthetic ChurnZero '+n);assert.equal(actual.renewalDate,'2027-03-31');assert.equal(actual.noticeDays,n);assert.equal(actual.renewalEvidence,'synthetic-buoy-contract-'+n)
+   assert.deepEqual(actual.migrationHealth,{source:'churnzero',sourceId:'synthetic-buoy-'+n,score:n*4,factors:{usage:n,engagement:20-n},fields:{score:'ChurnScore',factors:'ChurnScore Factors'}})
+   assert.equal(actual.health.scorecard,undefined,'Source observations never activate a native scoring rule')
    assert.deepEqual(actual.billing,{observedAt:'2026-01-01',reference:'churnzero account synthetic-buoy-'+n,currency:'USD',totalMinor:n*100+25,creditsMinor:0,allocatedMinor:0,dueDate:'2026-01-31'});assert.equal(actual.support,null)
   }
   assert.equal((await door.json('reconcile',{planId:plan.planId})).ok,true)
@@ -103,10 +106,20 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   assert.equal(malformed.counts.mapped,0);assert.match(malformed.rejected[0].reason,/digest/);await door.json('undo',{planId:malformed.planId})
   const mixed=await door.plan({...input,data:{accounts:[]}})
   assert.equal(mixed.counts.mapped,0);assert.match(mixed.rejected[0].reason,/second export representation/);await door.json('undo',{planId:mixed.planId})
+  for(const replacement of ['{"usage":1,"usage":2}','{"usage":"1"}','[]','{}','{"usage":1e400}']){
+   const [csvHeader,...csvRows]=input.csv.split('\r\n'),cells=csvRows[0].replace(/"\{.*?\}"/, '"'+replacement.replaceAll('"','""')+'"')
+   const invalidCsv=[csvHeader,cells,...csvRows.slice(1)].join('\r\n')
+   const invalid=await door.plan({...input,csv:invalidCsv,originalSha256:createHash('sha256').update(invalidCsv).digest('hex')})
+   assert.equal(invalid.counts.mapped,19);assert.equal(invalid.counts.rejected,1,'Invalid factors cannot be silently dropped')
+   await door.json('undo',{planId:invalid.planId})
+  }
+  const halfMapped=await door.plan({...input,columns:{...churnzeroColumns,churnScore:'ChurnScore'}})
+  assert.equal(halfMapped.counts.mapped,0);assert.equal(halfMapped.counts.rejected,20);await door.json('undo',{planId:halfMapped.planId})
   const editedPlan=await door.plan(input);await door.apply(editedPlan)
   const current=(await state(app)).find(row=>row.id===target('churnzero','synthetic-buoy-1'))
   const edited={id:current.id,name:'Synthetic owner edit',renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,billing:current.billing,support:current.support,revision:current.revision}
   assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:app.cookie,body:edited})).status,200)
+  assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationHealth,current.migrationHealth,'Native edits preserve the read-only incumbent observation')
   assert.equal((await door.send('undo',{planId:editedPlan.planId})).status,409,'Undo preserves later native edits')
   assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'DELETE',cookie:app.cookie,body:{confirmation:edited.name}})).status,200)
   assert.equal((await door.send('reconcile',{planId:editedPlan.planId})).status,410)
@@ -205,7 +218,7 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
     const raw={...bundle(header+csvRow('synthetic-buoy-'+width)+csvRow('synthetic-buoy-invalid','31/02/2027')),source}
     const churnzeroCsv=source==='churnzero'?(await readFile('fixtures/move-in/churnzero/accounts.csv','utf8')).split('\r\n').slice(0,2).join('\r\n')+'\r\n':undefined
     const badChurnzero=churnzeroCsv?.split('\r\n')[1].replace('synthetic-buoy-1,','synthetic-buoy-invalid,').replace('2027-03-31','2027-02-31')+'\r\n'
-    const input=source==='totango-api'?apiBrowserBundle(raw):source==='churnzero'?{format:'buoy-migration-v1',source,dateOrder:'iso',columns:churnzeroColumns,csv:churnzeroCsv+badChurnzero,originalSha256:createHash('sha256').update(churnzeroCsv+badChurnzero).digest('hex')}:raw
+    const input=source==='totango-api'?apiBrowserBundle(raw):source==='churnzero'?{format:'buoy-migration-v1',source,dateOrder:'iso',columns:{...churnzeroColumns,...churnzeroHealthColumns},csv:churnzeroCsv+badChurnzero,originalSha256:createHash('sha256').update(churnzeroCsv+badChurnzero).digest('hex')}:raw
     await page.setInputFiles('#import-bundle',{name:'synthetic-buoy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))})
     await page.getByRole('button',{name:'Upload and review',exact:true}).click()
     await page.locator('#import-review').waitFor({state:'visible'})
@@ -215,12 +228,21 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
     const proof=async stage=>{assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Import remains within viewport');await scan(page,`Migration ${source} ${stage} ${width}`);await page.screenshot({path:join(evidence,`migration-${source}-${stage}-${width}.png`),fullPage:true})}
     // This screen uses text-labelled controls throughout; any future symbolic control must supply a tooltip.
     assert.deepEqual(await page.locator('#work button, #work a').evaluateAll(nodes=>nodes.filter(n=>!n.textContent.trim()&&!n.querySelector('img[alt]')).map(n=>n.outerHTML)),[])
-    if(source==='churnzero')for(const field of ['ChurnScore','ChurnScore Factors','Journey','Contact'])assert.ok((await page.locator('#import-diagnostics').innerText()).includes(field))
+    if(source==='churnzero')for(const field of ['Journey','Contact'])assert.ok((await page.locator('#import-diagnostics').innerText()).includes(field))
     await proof('review')
     await page.getByLabel('I reviewed this plan and approve the changes for this fingerprint.',{exact:true}).check()
     await page.getByRole('button',{name:'Apply reviewed import',exact:true}).click()
     const ready=async title=>page.waitForFunction(expected=>document.getElementById('import-result-title').textContent===expected&&!document.getElementById('import-status').disabled,title)
     await ready('Import completed');assert.equal((await state(app)).length,before.length+1)
+    if(source==='churnzero'){
+     const accountId=target(source,'synthetic-buoy-1')
+     const detail=await context.newPage();await detail.goto(app.origin+'/app/accounts/'+accountId,{waitUntil:'networkidle'})
+     await detail.locator('[data-open="account-source-details"]').click()
+     const retained=JSON.parse(await detail.locator('#account-source-details pre').innerText())
+     assert.deepEqual(retained.migrationHealth,{source:'churnzero',sourceId:'synthetic-buoy-1',score:4,factors:{usage:1,engagement:19},fields:{score:'ChurnScore',factors:'ChurnScore Factors'}})
+     assert.equal(await detail.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true)
+     await detail.screenshot({path:join(evidence,`migration-churnzero-health-${width}.png`),fullPage:true});await detail.close()
+    }
     await proof('completed')
     await page.reload({waitUntil:'networkidle'});await ready('Import completed')
     if(source==='churnzero'){
