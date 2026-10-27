@@ -52,3 +52,62 @@ export function apiBrowserBundle(input){
  const text=JSON.stringify({response:{stats:{total_hits:hits.length},accounts:{hits}}})
  return {format:input.format,source:'totango',dateOrder:input.dateOrder,columns:{...input.columns,id:'name',name:'display_name'},api:{region:'us',query:{terms:[],fields:labels.map(attribute=>({type:'string_attribute',attribute,field_display_name:attribute})),count:1000},retrievedAt:'2026-10-25T12:00:00Z',pages:[{offset:0,text,sha256:createHash('sha256').update(text).digest('hex')}]}}
 }
+
+// Deliberately synthetic opaque documents, never a purported vendor definition schema.
+export function referenceFiles(){
+ const documents=[
+  {name:'definitions.json',kind:'successplay-definitions',document:{id:'synthetic-buoy-9100',version:3,trigger:{kind:'event',conditions:[]},actions:[{id:'synthetic-buoy-9101',kind:'task',timing:{days:2},assignment:'synthetic-buoy-9102'},{id:'synthetic-buoy-9103',kind:'unsupported',configuration:{'a / b~c':true}}],successFlowId:'synthetic-buoy-9104'}},
+  {name:'categories.json',kind:'successflow-categories',document:{id:'synthetic-buoy-9104',label:'Synthetic category',associations:['synthetic-buoy-9100']}},
+ ]
+ return documents.map(({document,...reference})=>{const text='\uFEFF'+JSON.stringify(document,null,2).replaceAll('\n','\r\n')+'\r\n';return {...reference,text,sha256:createHash('sha256').update(text).digest('hex')}})
+}
+const referenceFields=[
+ 'definitions.json#','definitions.json#/id','definitions.json#/version','definitions.json#/trigger','definitions.json#/trigger/kind','definitions.json#/trigger/conditions',
+ 'definitions.json#/actions','definitions.json#/actions/0','definitions.json#/actions/0/id','definitions.json#/actions/0/kind','definitions.json#/actions/0/timing','definitions.json#/actions/0/timing/days','definitions.json#/actions/0/assignment',
+ 'definitions.json#/actions/1','definitions.json#/actions/1/id','definitions.json#/actions/1/kind','definitions.json#/actions/1/configuration','definitions.json#/actions/1/configuration/a ~1 b~0c','definitions.json#/successFlowId',
+ 'categories.json#','categories.json#/id','categories.json#/label','categories.json#/associations','categories.json#/associations/0',
+]
+export async function totangoReferenceJourney({app,scratch,input,door,state,before}){
+ const references=referenceFiles(),manifest=join(scratch,'references.json'),output=join(scratch,'with-references.json')
+ for(const reference of references)await writeFile(join(scratch,reference.name),reference.text)
+ await writeFile(manifest,JSON.stringify(references.map(({name,kind})=>({name,kind,path:name}))))
+ const args=['src/buoy/migrate/cli.mjs','--source','totango','--input','fixtures/move-in/totango/accounts.csv','--columns',JSON.stringify(input.columns),'--references',manifest,'--output',output]
+ execFileSync(process.execPath,args)
+ const bundle=JSON.parse(await readFile(output,'utf8'));assert.deepEqual(bundle.references,references)
+ assert.equal(bundle.csv,input.csv);assert.equal(bundle.originalSha256,input.originalSha256)
+ const plan=await door.plan(bundle)
+ assert.equal(plan.counts.mapped,20);assert.equal(plan.counts.rejected,0)
+ const diagnostics=plan.diagnostics.filter(d=>['definitions.json','categories.json'].includes(d.sourceId))
+ assert.deepEqual(diagnostics.map(d=>d.field).sort(),[...referenceFields].sort(),'Every supplied source element, including containers and empty arrays, is explicitly unmapped')
+ for(const diagnostic of diagnostics){assert.match(diagnostic.message,/no playbook or automation is created/);assert.match(diagnostic.location.pointer,/^\/references\/[01]\/text$/)}
+ assert.deepEqual(await state(app),before,'Reference review writes no native accounts')
+ const automation=async()=>{
+  const books=await (await app.request('/api/buoy/playbooks',{cookie:app.cookie})).json()
+  const snapshot=await (await app.request('/api/buoy/state',{cookie:app.cookie})).json()
+  return {definitions:books.definitions,runs:books.runs,tasks:snapshot.tasks,outbound:app.outbound.length}
+ }
+ const inert=await automation()
+ assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:'0'.repeat(64)})).status,403)
+ const job=await door.apply(plan);assert.equal((await door.apply(plan)).id,job.id)
+ assert.equal((await state(app)).length,before.length+20)
+ assert.equal((await door.json('status',{planId:plan.planId})).job.id,job.id)
+ assert.equal((await door.json('reconcile',{planId:plan.planId})).ok,true)
+ await app.scheduled();assert.deepEqual(await automation(),inert,'Source task and trigger descriptions never become executable configuration')
+ await door.undo(plan);assert.deepEqual(await state(app),before);assert.deepEqual(await automation(),inert)
+ for(const alter of [
+  refs=>{refs[0].text+=' '},
+  refs=>{refs.push({...refs[0]})},
+  refs=>{refs[0].kind='unknown'},
+  refs=>{refs[0].text='{"id":1,"id":2}';refs[0].sha256=createHash('sha256').update(refs[0].text).digest('hex')},
+ ]){
+  const changed=structuredClone(bundle);alter(changed.references)
+  const refused=await door.plan(changed);assert.equal(refused.counts.mapped,0);assert.equal(refused.counts.rejected,1)
+  assert.deepEqual(await state(app),before);await door.json('undo',{planId:refused.planId})
+ }
+ // Source credentials must be refused before a preparer creates a durable bundle.
+ await writeFile(join(scratch,'definitions.json'),JSON.stringify({headers:{Authorization:'synthetic-buoy-9199'}}))
+ const denied=spawnSync(process.execPath,args.map(value=>value===output?join(scratch,'credential-reference.json'):value),{encoding:'utf8'})
+ assert.notEqual(denied.status,0);assert.doesNotMatch(denied.stdout+denied.stderr,/synthetic-buoy-9199/)
+ await assert.rejects(readFile(join(scratch,'credential-reference.json')),{code:'ENOENT'})
+ assert.deepEqual(await automation(),inert)
+}

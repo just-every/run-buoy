@@ -64,3 +64,35 @@ node src/buoy/migrate/cli.mjs --source totango --api-query account-query.json --
 The bundle retains the token-free query, region, retrieval time, exact UTF-8 response text and digest for every page. Upload it in the same owner-only Imports screen, review the fingerprint and unmapped fields, then explicitly apply. No native write occurs during acquisition. Native reconciliation and undo use the same Totango source identity as CSV imports. This closes account API intake only; it does not map users or automate a complete migration.
 
 Totango's documented [flows](https://support.totango.com/hc/en-us/articles/212116426-Understand-flows) are activity categories. Its [flow lookup](https://support.totango.com/hc/en-us/articles/115000597266-Touchpoints-API) supplies category metadata without ordered steps. These must not be invented as ordered playbooks. SuccessPlay definition migration, its paused native representation and per-step mapping remain unbuilt; an account or task's flow name never activates automation.
+
+## Totango definition source files for review
+
+Keep supplied SuccessPlay definitions, SuccessFlow categories and definition schemas alongside the account source while preparing a migration. Add `--references reference-files.json` to either Totango preparation command above. The manifest is a Buoy preparation format, not a Totango export schema:
+
+```json
+[
+  {"name":"successplay.json","kind":"successplay-definitions","path":"original-successplay.json"},
+  {"name":"categories.json","kind":"successflow-categories","path":"original-categories.json"},
+  {"name":"schema.json","kind":"definition-schema","path":"original-schema.json"}
+]
+```
+
+Paths resolve relative to the manifest. Supply only files you actually have; a category file cannot substitute for a definition. Names must be unique, begin with a letter or digit and contain only letters, digits, dots, underscores or dashes, up to 100 characters. Each original must be a UTF-8 JSON object or array. Preparation preserves its exact text, byte-order mark and line endings with a digest, and refuses credentials before writing the bundle. The existing 2 MB bundle bound includes these files. At most ten files and 1,000 total JSON elements, including containers, fit one review, with nesting up to 32 levels. Duplicate object keys and duplicate file names are refused rather than silently losing source elements.
+
+The existing Imports screen lists every reference element as unmapped with its file name, escaped JSON pointer and reason. Inspect the original private files before approving the bundle's fingerprint. A modified reference digest refuses the entire plan, including its account rows. Approval imports the reviewed accounts only. References create no playbook definitions, operational tasks, schedules, sends or execution authority. Replay, status, reconciliation and strict undo remain the existing account-import operations; reconciliation does not claim native definition parity.
+
+Source files are custody inputs only. Their shapes are not certified vendor schemas, and supplied schema files are not automatically trusted or fetched. A genuine SuccessPlay definition with documented semantics and its available SuccessFlow associations is still required before native paused-definition mapping can ship. Every supplied property and container remains explicitly unmapped in this increment; no trigger, ordering, assignment, action or missing behavior is inferred. Native definition mapping, paused-state restoration and the other MIGRATE-003 inputs remain incomplete.
+
+## ChurnZero account CSV foundation
+
+Prepare an owner-supplied selected-column account CSV with `--source churnzero`. Map exact header names explicitly; no fixed provider export schema is assumed:
+
+```sh
+node src/buoy/migrate/cli.mjs --source churnzero --input accounts.csv --output reviewed.json --columns '{"id":"Account External Id","name":"Account Name","renewalDate":"Next Renewal Date","noticeDays":"Contract Notice Days","renewalEvidence":"Contract Reference"}'
+```
+
+Account External Id and Next Renewal Date are named in [ChurnZero's account data audit guide](https://churnzero.com/blog/7-point-audit-checklist-for-customer-success-software/). Include your actual contract notice and evidence columns; Buoy cannot infer missing terms. The synthetic example in `./fixtures/move-in/churnzero/accounts.csv` is an unverified selected-column fixture, not a live export or a vendor schema certification.
+
+The existing owner-only Imports screen preserves exact CSV text and its digest, previews without native writes and binds approval to the reviewed fingerprint. ChurnZero source identities and history remain separate from Totango and generic CSV. Replay writes once, reconciliation reads native accounts, and strict undo refuses later native edits or dependent work. All CSV date, money, unsupported-field and installation-limit rules above still apply.
+
+ChurnScores and their factors remain explicitly unmapped; they never become native health from a label or numeric column. This is partial MIGRATE-002 account work only. Native contacts, ChurnScore configuration and factors, tasks, plays, success plans, paused journeys, events, NPS, all provider API acquisition and the original full sample-export acceptance remain unproved. No automation, journey execution or provider requests are enabled.
