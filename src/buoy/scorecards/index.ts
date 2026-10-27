@@ -43,7 +43,7 @@ export async function previewScorecard(db:D1Database,actor:Actor,input:{config?:
  const accounts=retained?[calculate(config,retained.inputs,{accountId:retained.accountId,accountRevision:retained.accountRevision,configRevision:revision,versionId,calculatedAt:retained.calculatedAt})]:image.accounts.map(account=>calculate(config,account.inputs,{accountId:account.accountId,accountRevision:account.accountRevision,configRevision:revision,versionId,calculatedAt:at.toISOString()}))
  return {versionId,config,accounts,historical:!!retained}
 }
-export async function publishScorecard(db:D1Database,actor:Actor,input:{revision:unknown;config:unknown}){
+export async function publishScorecard(db:D1Database,actor:Actor,input:{revision:unknown;config:unknown},effects?:(key:string)=>D1PreparedStatement[]){
  requirePerson(actor);await reader(db,actor)
  const raw=object(input);insist(Object.keys(raw).every(key=>['revision','config'].includes(key)),'Unsupported scorecard publication property.')
  const [stored,image]=await Promise.all([storage(db),inputImage(db,new Date())])
@@ -55,7 +55,7 @@ export async function publishScorecard(db:D1Database,actor:Actor,input:{revision
  await db.batch([authority(db,actor,true),assignmentFence(db,assignments.raw),revisionFence(db,stored.revision),guard(db,`(${RESULTS_SQL})=?`,stored.rawResults),...image.fences.map(source=>fence(db,source)),
   stmt(db,'INSERT INTO buoy_scorecard_versions(id,revision,document,published_by,published_at) VALUES(?,?,?,?,?)',versionId,revision,JSON.stringify({config,dependencies:version.dependencies}),version.publishedBy,stamp),
   stmt(db,'INSERT INTO buoy_scorecard_current(singleton,revision,version_id) VALUES(1,?,?) ON CONFLICT(singleton) DO UPDATE SET revision=excluded.revision,version_id=excluded.version_id',revision,versionId),
-  ...writes.statements,auditRecord(db,actor,'health.scorecard-published',`scorecard:${versionId}`),stmt(db,'DELETE FROM buoy_assertions')])
+  ...(effects?effects(versionId):[]),...writes.statements,auditRecord(db,actor,'health.scorecard-published',`scorecard:${versionId}`),stmt(db,'DELETE FROM buoy_assertions')])
  return {revision,versionId,config,accounts:writes.accounts}
 }
 export async function recalculateScorecards(db:D1Database,at=new Date()){

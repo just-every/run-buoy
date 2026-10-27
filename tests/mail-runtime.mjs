@@ -1,6 +1,5 @@
 // The emitted application, with a fake only at the paid mail-provider edge.
 import assert from 'node:assert/strict'
-import { createServer } from 'node:net'
 import { createRequire } from 'node:module'
 import { realpath, readFile, readdir, mkdtemp, rm } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -13,8 +12,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
  const { Miniflare, convertV4MiniflareOptions } = require('miniflare')
  const { unstable_splitSqlQuery: splitSql } = require('wrangler')
  const config = JSON.parse(await readFile(join(root, 'dist/server/wrangler.json'), 'utf8'))
- const socket=createServer(); await new Promise(resolve=>socket.listen(0,'127.0.0.1',resolve)); const port=socket.address().port; await new Promise(resolve=>socket.close(resolve))
- const origin = `${secure?'https':'http'}://127.0.0.1:${port}`, directory = persistenceDirectory??await mkdtemp(join(tmpdir(), 'buoy-mail-'))
+ const directory = persistenceDirectory??await mkdtemp(join(tmpdir(), 'buoy-mail-'))
  const dbConfig=config.d1_databases.find(row=>row.binding==='DB')
  assert.ok(dbConfig,'Built Worker declares its real DB binding')
  const databaseId=dbConfig.preview_database_id??dbConfig.database_id??dbConfig.binding
@@ -22,18 +20,43 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
  // archive proxy take its v3 directory. Use the actual declared database ID.
  if(persistenceDirectory)execFileSync(process.execPath,[join(root,'node_modules/wrangler/bin/wrangler.js'),'d1','migrations','apply','DB','--local','--persist-to',directory,'--config',join(root,'dist/server/wrangler.json')],{cwd:root,stdio:'pipe',maxBuffer:16*1024*1024,env:{...process.env,CI:'true',WRANGLER_SEND_METRICS:'false'}})
  const secret = () => randomBytes(32).toString('base64url'), mails = [], outbound = []
- const vars = { AUTH_LOCAL: secure ? 'false' : 'true', AUTH_ORIGIN: origin, OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
- Object.assign(vars, bindings(origin))
+ const vars = { AUTH_LOCAL: secure ? 'false' : 'true', OWNER_EMAIL: 'owner@example.test', SESSION_SECRET: secret(), SETUP_TOKEN: secret(), MAIL_PROVIDER: 'resend', MAIL_FROM: 'auth@example.test', MAIL_API_KEY: 'test-only-provider-key' }
+ let runtimeBindings
  const responses=new Set()
  let mailStatus = 200
  const clockValue=()=>Number(typeof clock==='function'?clock():clock)
+ // Resolve origin-dependent bindings after workerd owns its ephemeral port.
+ // A private service supplies them before the first application handler runs,
+ // without restarting workerd and releasing that port again.
+ const wrapper = `import worker from './${config.main}';
+ let bindings;
+ async function environment(env) {
+  bindings ??= env.__BUOY_TEST_BINDINGS.fetch('http://bindings.test').then(response => response.json());
+  return {...env, ...await bindings};
+ }
+ ${clock===undefined?'':`const NativeDate=Date; let instant=${clockValue()}; globalThis.Date=class extends NativeDate {constructor(...args){super(...(args.length?args:[instant]));} static now(){return instant}};`}
+ export default {
+  ...worker,
+  async fetch(request, env, ctx) {
+   ${clock===undefined?'':"const value=request.headers.get('x-buoy-test-time');if(value)instant=Number(value);"}
+   if(new URL(request.url).pathname==='/__buoy-test-scheduled'&&request.method==='POST'){const event=await request.json();await worker.scheduled(event,await environment(env),ctx);return Response.json({scheduled:true})}
+   return worker.fetch(request, await environment(env), ctx);
+  },
+  async scheduled(controller, env, ctx) {
+   return worker.scheduled(controller, await environment(env), ctx);
+  }
+ };`
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
-  host:'127.0.0.1', port, https:secure,
+  host:'127.0.0.1', port:0, https:secure,
   modulesRoot: join(root, 'dist/server'),
-  modules: [{type:'ESModule',path:join(root,'dist/server/test-clock.mjs'),contents:`import worker from './${config.main}'; ${clock===undefined?'':`const NativeDate=Date; let instant=${clockValue()}; globalThis.Date=class extends NativeDate {constructor(...args){super(...(args.length?args:[instant]));} static now(){return instant}};`} export default {...worker,async fetch(request,env,ctx){${clock===undefined?'':"const value=request.headers.get('x-buoy-test-time');if(value)instant=Number(value);"} if(new URL(request.url).pathname==='/__buoy-test-scheduled'&&request.method==='POST'){const event=await request.json();await worker.scheduled(event,env,ctx);return Response.json({scheduled:true})}return worker.fetch(request,env,ctx)}};`},...[config.main, ...(await readdir(join(root, 'dist/server/assets'))).filter(file => file.endsWith('.js')).map(file => `assets/${file}`)].map(file => ({type:'ESModule',path:join(root,'dist/server',file)}))],
+  modules: [{type:'ESModule',path:join(root,'dist/server/test-runtime.mjs'),contents:wrapper},...[config.main, ...(await readdir(join(root, 'dist/server/assets'))).filter(file => file.endsWith('.js')).map(file => `assets/${file}`)].map(file => ({type:'ESModule',path:join(root,'dist/server',file)}))],
   compatibilityDate: config.compatibility_date, compatibilityFlags: config.compatibility_flags,
   assets: {directory:join(root,'dist/client'),routerConfig:{has_user_worker:true}},
   d1Databases: {DB:databaseId}, bindings:vars,
+  serviceBindings: {__BUOY_TEST_BINDINGS: () => {
+   assert.ok(runtimeBindings, 'Runtime bindings are resolved before application requests')
+   return Response.json(runtimeBindings)
+  }},
   outboundService: async request => {
    outbound.push(request.url)
    if(providerFetch&&['api.stripe.com','api.anthropic.com','api.openai.com'].includes(new URL(request.url).hostname))return providerFetch(request)
@@ -43,7 +66,9 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   },
  }), resourcePersistencePath:join(directory,persistenceDirectory?'v3':'state') })
  try {
-  await mf.ready
+  const origin = (await mf.ready).origin
+  runtimeBindings = {AUTH_ORIGIN:origin, ...bindings(origin)}
+  Object.assign(vars, runtimeBindings)
   // Persistent fixtures already applied migrations through Wrangler above.
   // Do not open an unused second D1 proxy against that database.
   const db=persistenceDirectory?null:await mf.getD1Database('DB')
