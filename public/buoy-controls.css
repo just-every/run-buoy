@@ -19,3 +19,6 @@ html.rer-themed .buoy-app .rw-lane.is-open .rw-open { opacity: 1; }
 @media (max-width: 760px) {
  .rw-open::after { top: calc(100% + 4px); bottom: auto; }
 }
+
+/* Keep plan task and milestone choices usable by touch. */
+html.rer-themed .buoy-app #success-plans input[type=checkbox] { width: 24px; height: 24px; min-width: 24px; min-height: 24px; }
