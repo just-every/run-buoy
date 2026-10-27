@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "0bd629fddd30a629f10247250a04092d63f3653d4088c43e619e5c8ff23596a6",
+      "sha256": "ee8e592e5ca369d5ca36999a9b11c9b1afe00b07351d011acf258009d97c7245",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "69005ee0b43c8c9ca962d04c832671942317eb45211d51b0663f7437fc0362f9",
+      "sha256": "ae2498ecfcad3a180f6eba92f5e055f7d530817d800284a8dc12da3e4b5b1819",
       "executable": false
     },
     "DEMO.md": {
@@ -184,7 +184,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "dc533821c5c2b4e0792e6d6bf44c05fe315c6bfe927c2d814db251fb063f7873",
+      "sha256": "31718f480a0915763782b4318926514ffe38d4652e7f95a262d26454c5e814f4",
       "executable": false
     },
     "docs/move-in.md": {
@@ -268,7 +268,7 @@
       "executable": false
     },
     "fixtures/move-in/churnzero/README.md": {
-      "sha256": "3c2cf234c6c1d6720f666f68c953a22ceb0bd5cf23dab430ceda9327d0a90fd6",
+      "sha256": "4a47b370c4ca4e070db9f19bdf37600a22792987fc21cd59c53e25d2356a5637",
       "executable": false
     },
     "fixtures/move-in/README.md": {
@@ -1372,7 +1372,11 @@
       "executable": false
     },
     "src/buoy/migrate/churnzero-journeys.ts": {
-      "sha256": "a12177178555e18a8b5af55d36dd5068eb6b08b76681927ce10f27481d7adcc6",
+      "sha256": "180715cdd6befb4ed3a02154a43469c92138f3ca3db33aa23c5d15649db4311f",
+      "executable": false
+    },
+    "src/buoy/migrate/churnzero-structure.ts": {
+      "sha256": "cd9bb028842303f1f049d62d14593d2be203a118b7325c96de14157b286add45",
       "executable": false
     },
     "src/buoy/migrate/cli.mjs": {
@@ -3992,11 +3996,11 @@
       "executable": false
     },
     "tests/churnzero-journey-fixture.mjs": {
-      "sha256": "b5d944c547bccc7dc901ab65ff594b5f0f11f7c7856e46d24cab4f3ebe67ad04",
+      "sha256": "192ac6c70967e46ddb561b8e24ed7293bdd9b604aac682cbe414d2f49b801a65",
       "executable": false
     },
     "tests/churnzero-portability.mjs": {
-      "sha256": "d82f4b8bca56a11c03c4396b995c1f19a439e1f7b3c4290572bf27bd86654efb",
+      "sha256": "af0b42582fb38e4a6516051786d833c198fbce6307c542fc6c8dfbfd77419386",
       "executable": false
     },
     "tests/communication-browser.mjs": {
@@ -4124,7 +4128,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "e29223044e147fae69abb633913a7279d1abf37d3d528992528a176f42be2114",
+      "sha256": "843d1639bc02a41d92c2880490151d6000b069f6ce9f3ccda92e68d0d962ec0d",
       "executable": false
     },
     "tests/notifications.mjs": {

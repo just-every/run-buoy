@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os'
 import {createHash} from 'node:crypto'
 import {startWorker} from './worker.mjs'
 import {importClient} from './import-door-client.mjs'
-import {journeyBundle,journeyDefinition} from './churnzero-journey-fixture.mjs'
+import {structureBundle,structureDefinition,expectedStructure} from './churnzero-journey-fixture.mjs'
 
 // Called by the archive Verify journey. A separate installation keeps unrelated
 // native field edits from intentionally invalidating the reviewed import revision.
@@ -30,11 +30,11 @@ export async function churnzeroPortability(){
   const state=async()=>{const response=await app.request('/api/buoy/state',{cookie:app.cookie});assert.equal(response.status,200);return response.json()}
   const books=async()=>{const response=await app.request('/api/buoy/playbooks',{cookie:app.cookie});assert.equal(response.status,200);return response.json()}
   const csv=(await readFile('fixtures/move-in/churnzero/accounts.csv','utf8')).split('\r\n').slice(0,2).join('\r\n')+'\r\n'
-  const input=journeyBundle({format:'buoy-migration-v1',source:'churnzero',dateOrder:'iso',columns:{id:'Account External ID',name:'Account Name',renewalDate:'Renewal Date',noticeDays:'Notice Days',renewalEvidence:'Contract Reference'},csv})
+  const input=structureBundle({format:'buoy-migration-v1',source:'churnzero',dateOrder:'iso',columns:{id:'Account External ID',name:'Account Name',renewalDate:'Renewal Date',noticeDays:'Notice Days',renewalEvidence:'Contract Reference'},csv})
   console.log('MIGRATE-002 archive: review and apply')
   const plan=await door().plan(input),job=await door().apply(plan),accountId='migration_'+createHash('sha256').update(JSON.stringify(['churnzero','synthetic-buoy-1'])).digest('hex').slice(0,40)
   const before=(await state()).accounts.find(row=>row.id===accountId).migrationJourneys
-  assert.equal(before.length,1);assert.equal(before[0].state,'paused');assert.deepEqual(before[0].definition,journeyDefinition)
+  assert.equal(before.length,1);assert.equal(before[0].state,'paused');assert.deepEqual(before[0].definition,structureDefinition);assert.deepEqual(before[0].structure,expectedStructure)
   assert.equal((await door().json('reconcile',{planId:plan.planId})).ok,true,'Source native draft reconciles before export')
   console.log('MIGRATE-002 archive: close source')
   await app.close();app=null

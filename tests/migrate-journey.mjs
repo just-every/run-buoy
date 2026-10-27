@@ -1,4 +1,4 @@
-import {journeyBundle,journeyDefinition,journeyPointers} from './churnzero-journey-fixture.mjs'
+import {journeyBundle,journeyDefinition,journeyPointers,structureBundle,structureDefinition,structureMapping,expectedStructure} from './churnzero-journey-fixture.mjs'
 import assert from 'node:assert/strict'
 import {csvRows} from '../src/buoy/migrate/csv.ts'
 import {totangoApiJourney,apiBrowserBundle,totangoReferenceJourney,referenceFiles} from './totango-api-journey.mjs'
@@ -233,6 +233,33 @@ test('MIGRATE-002 paused journey drafts retain every definition element without 
   const body={id:current.id,name:current.name,renewalDate:current.renewalDate,noticeDays:current.noticeDays,renewalEvidence:current.renewalEvidence,billing:current.billing,support:current.support,revision:current.revision}
   assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:app.cookie,body:{...body,migrationJourneys:[]}})).status,400,'Native writes cannot forge or enable imported drafts')
   await door.undo(plan);assert.deepEqual(await state(app),before)
+  const structured=await door.plan(structureBundle(input))
+  assert.equal(structured.counts.mapped,20);assert.equal(structured.counts.rejected,0)
+  assert.deepEqual(await state(app),before,'Structured review remains a no-write plan')
+  await door.apply(structured);assert.equal((await door.apply(structured)).state,'completed')
+  const structuredAccounts=(await state(app)).filter(row=>!before.some(old=>old.id===row.id))
+  assert.equal(structuredAccounts.length,20)
+  for(const row of structuredAccounts){
+   const draft=row.migrationJourneys[0]
+   assert.equal(draft.state,'paused');assert.equal(draft.sourceId,'101')
+   assert.deepEqual(draft.definition,structureDefinition)
+   assert.deepEqual(draft.structure,expectedStructure,'Native milestones distinguish team tasks from customer achievements, preserving durations, progress and each flag')
+   assert.deepEqual(draft.unmapped.map(row=>row.pointer),['','/IsActive','/IsSharedExternally','/Status','/Milestones/0/Achievements/0/Condition','/Milestones/0/Achievements/0/Condition/source'],'Source authority and unsupported criteria remain explicit, never inferred')
+  }
+  assert.equal((await door.json('reconcile',{planId:structured.planId})).ok,true)
+  await app.scheduled('0 * * * *',Date.parse('2027-03-01T12:00:00Z'))
+  assert.deepEqual(await automation(),inert,'Mapped task templates and customer achievements confer no operational or external authority')
+  await door.undo(structured);assert.deepEqual(await state(app),before)
+  const wrongJourney=structuredClone(structureDefinition);wrongJourney.Milestones[0].JourneyId=999
+  const wrongMilestone=structuredClone(structureDefinition);wrongMilestone.Milestones[0].Tasks[0].JourneyMilestoneId=999
+  const duplicateStep=structuredClone(structureDefinition);duplicateStep.Milestones[0].Tasks.push(duplicateStep.Milestones[0].Tasks[0])
+  const missingChildren=structuredClone(structureDefinition);delete missingChildren.Milestones[0].Achievements
+  const invalidFlag=structuredClone(structureDefinition);invalidFlag.Milestones[0].Tasks[0].IsOptional='false'
+  for(const definition of [wrongJourney,wrongMilestone,duplicateStep,missingChildren,invalidFlag]){
+   const refused=await door.plan(journeyBundle(input,[definition],structureMapping))
+   assert.equal(refused.counts.mapped,0);assert.equal(refused.counts.rejected,20,'Invalid relationships, missing entity collections and ambiguous flags refuse the account')
+   await door.json('undo',{planId:refused.planId})
+  }
   for(const definitions of [['Journey label'],[{...journeyDefinition,steps:[]}],[{...journeyDefinition,steps:[journeyDefinition.steps[0],journeyDefinition.steps[0]]}],[journeyDefinition,journeyDefinition]]){
    const refused=await door.plan(journeyBundle(input,definitions))
    assert.equal(refused.counts.mapped,0);assert.equal(refused.counts.rejected,20,'Invalid definitions reject their accounts without silent source loss')
@@ -345,7 +372,7 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
     const badChurnzero=churnzeroCsv?.split('\r\n')[1].replace('synthetic-buoy-1,','synthetic-buoy-invalid,').replace('2027-03-31','2027-02-31')+'\r\n'
     const input=source==='totango-api'?apiBrowserBundle(raw):source==='churnzero'?{format:'buoy-migration-v1',source,dateOrder:'iso',columns:{...churnzeroColumns,...churnzeroHealthColumns},csv:churnzeroCsv+badChurnzero,originalSha256:createHash('sha256').update(churnzeroCsv+badChurnzero).digest('hex')}:raw
     if(source==='totango'||source==='totango-api')input.references=referenceFiles()
-    if(source==='churnzero')Object.assign(input,journeyBundle(input))
+    if(source==='churnzero')Object.assign(input,structureBundle(input))
     await page.setInputFiles('#import-bundle',{name:'synthetic-buoy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(input))})
     await page.getByRole('button',{name:'Upload and review',exact:true}).click()
     await page.locator('#import-review').waitFor({state:'visible'})
@@ -370,7 +397,7 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
      await detail.locator('[data-open="account-source-details"]').click()
      const retained=JSON.parse(await detail.locator('#account-source-details pre').innerText())
      assert.deepEqual(retained.migrationHealth,{source:'churnzero',sourceId:'synthetic-buoy-1',score:4,factors:{usage:1,engagement:19},fields:{score:'ChurnScore',factors:'ChurnScore Factors'}})
-     assert.equal(retained.migrationJourneys.length,1);assert.equal(retained.migrationJourneys[0].state,'paused');assert.deepEqual(retained.migrationJourneys[0].definition,journeyDefinition)
+     assert.equal(retained.migrationJourneys.length,1);assert.equal(retained.migrationJourneys[0].state,'paused');assert.deepEqual(retained.migrationJourneys[0].definition,structureDefinition);assert.deepEqual(retained.migrationJourneys[0].structure,expectedStructure)
      await scan(detail,`ChurnZero retained health ${width}`)
      assert.deepEqual(await detail.locator('#work button, #work a').evaluateAll(nodes=>nodes.filter(n=>!n.textContent.trim()&&!n.querySelector('img[alt]')).map(n=>n.outerHTML)),[])
      assert.equal(await detail.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true)
