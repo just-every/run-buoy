@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "dc4fea7171cfa28e4ee945226da69c851365b8d9a0779e81c31359a71df7b8c9",
+      "sha256": "63b714e81b3c382fe0905669819c1bc2c5a3fc886c457dc521695eda41b4fa21",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "54141057dc84aa83800cd16c372544c80a7859298481ee8d6c42e5b219d8fcd4",
+      "sha256": "f61bd8acdf42cd44b561cf1c843fd548c3e0ffbec9c49f288e06fbb1e5ab08e1",
       "executable": false
     },
     "DEMO.md": {
@@ -188,7 +188,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "df6a3927a246afc11d6c3a359db6f2a7822743175260c8d3d868d34a462704ad",
+      "sha256": "fd7bf931b7a16b90fb1be4c9abfcaf50e7899ab2ffb0e6353ed64b66846cee96",
       "executable": false
     },
     "docs/move-in.md": {
@@ -273,6 +273,10 @@
     },
     "fixtures/move-in/churnzero/README.md": {
       "sha256": "2c22de45b4e25cccc97312ebcec8a3582defd9cfc94964686e3d27a9d23ee214",
+      "executable": false
+    },
+    "fixtures/move-in/churnzero/selected-columns.csv": {
+      "sha256": "e7830d34390495c1b3e729cd3c254aa202543bafe2fe9d27844e95410b24a0b6",
       "executable": false
     },
     "fixtures/move-in/README.md": {
@@ -4192,7 +4196,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "d3e0d891e3bb89a0881790579a8312b9f3fa135296ca6cb4116b4c903afbf327",
+      "sha256": "cd01970d639fb28a3dd368b01e93097f984067238978036b2e778ab5839f2a0b",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
@@ -4340,7 +4344,7 @@
       "executable": false
     },
     "tests/totango-api-journey.mjs": {
-      "sha256": "009bbe6c36dce32d8c47d8d4b3fbfaddc1eef06937efb788e2a216b0ed2a21bf",
+      "sha256": "54477f5a8875a3c167bbe02ef5aa6187a3bb6cb405eb7ec8a7309aed59f25d49",
       "executable": false
     },
     "tests/usage-browser.mjs": {
