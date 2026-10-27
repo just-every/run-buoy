@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import {randomUUID} from 'node:crypto'
+import {importClient} from './import-door-client.mjs'
 import {startWorker} from './worker.mjs'
 import {billingSource,billingFixtureKey} from './billing-journey.mjs'
 import {BuoyUsage} from '../sdk/usage.mjs'
@@ -20,7 +22,7 @@ export async function trustFixture(){
   const claim={sourceId:usage.id,userId:'synthetic-buoy-7516',groupId:'synthetic-buoy-7510',accountId:first,personId:person.id},preview=await api('/usage/mappings/preview','POST',claim)
   await api('/usage/mappings','POST',{...claim,fingerprint:preview.fingerprint},201)
   const card=await api('/scorecards');await api('/scorecards/publish','POST',{revision:card.revision,config:{name:'Attribution health',measures:[{key:'usage',name:'Recorded events',field:'adoption.current.eventCount',min:0,max:1,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}},201)
-  return {app,api,call,first,second,target,claim,source,sdk,correction:{...claim,accountId:target,reason:'synthetic-buoy-7511: source owner confirms this exact group belongs to the target company'}}
+  return {app,api,call,first,second,target,person,claim,source,sdk,correction:{...claim,accountId:target,reason:'synthetic-buoy-7511: source owner confirms this exact group belongs to the target company'}}
  }catch(error){await app.close();throw error}
 }
 export async function trustJourney(){
@@ -96,4 +98,88 @@ export async function trustJourney(){
   await api('/accounts/'+target,'DELETE',{confirmation:'Synthetic correct company'})
   assert.equal((await api('/trust')).proposals.filter(row=>row.kind==='mapping').length,0)
  }finally{await app.close()}
+}
+
+export async function trustPrivacyJourney(){
+ const f=await trustFixture(),{app,api,call,correction}=f,person=(await api('/customer-people')).records.find(p=>p.id===f.person.id)
+ try{
+  const proposal=await api('/trust/mappings','POST',{...correction,reason:'Reviewed with '+person.name},201)
+  const url='/customer-people/'+person.id+'/privacy/',request={verificationMethod:'verified-offline',receivedDate:'2026-10-27',requesterReference:randomUUID()}
+  const current=async()=>(await api('/customer-people')).records.find(p=>p.id===person.id)
+  let body={revision:(await current()).revision,confirmation:person.name,request}
+  const exported=await api(url+'export','POST',body)
+  assert.deepEqual(exported.records.trustProposals?.map(p=>p.id)??[],[proposal.id],'Person export includes the exact linked trust proposal')
+  const preview=await api(url+'preview','POST',{revision:body.revision})
+  assert.equal(preview.counts.trustProposals,1)
+  const matches=preview.matches.filter(m=>m.recordId===proposal.id)
+  assert.ok(matches.some(m=>m.path==='evidence.preview.person.name'&&m.before===person.name),'Privacy preview offers copied native identity for review')
+  assert.ok(matches.some(m=>m.path==='evidence.reference'&&m.before==='Reviewed with '+person.name))
+  // Whole-customer holds retain the copied evidence and disclose it on export.
+  await api(url+'hold','POST',{revision:body.revision,confirmation:person.name,operation:'set',reason:'legal-obligation'})
+  body.revision=(await current()).revision
+  const held=await api(url+'preview','POST',{revision:body.revision})
+  assert.ok(held.matches.filter(m=>m.recordId===proposal.id).every(m=>m.held))
+  assert.equal((await call(url+'erase','POST',{...body,fingerprint:held.fingerprint,redactions:[held.matches.find(m=>m.recordId===proposal.id).id]})).status,409)
+  const retained=await api(url+'erase','POST',{...body,fingerprint:held.fingerprint})
+  assert.equal(retained.receipt.outcome,'held');assert.equal(retained.receipt.retained.trustProposals,1)
+  await api('/trust/'+proposal.id+'/review','POST',{decision:'reject',reason:'Reviewed with '+person.name})
+  const heldExport=await api(url+'export','POST',{...body,revision:(await current()).revision})
+  assert.ok(heldExport.records.heldVersions.some(v=>v.record_kind==='buoy_trust_proposals'&&v.document.includes(person.name)),'Hold captures changed trust evidence versions')
+  await api(url+'hold','POST',{revision:(await current()).revision,confirmation:person.name,operation:'release',reason:'review-completed'})
+  body.revision=(await current()).revision
+  // An unlinked narrative still belongs in reviewed redaction, not structural identity rewriting.
+  const createdOther=await api('/customer-people','POST',{kind:'contact',name:'Synthetic narrative owner',accountIds:[f.target],source:'synthetic-buoy-7530'},201),other=(await api('/customer-people')).records.find(p=>p.id===createdOther.id)
+  const neighbor=await api('/customer-people','POST',{kind:'contact',name:'Synthetic held neighbor',accountIds:[f.first],source:'synthetic-buoy-7534'},201)
+  let neighborRecord=(await api('/customer-people')).records.find(p=>p.id===neighbor.id)
+  const neighborUrl='/customer-people/'+neighbor.id+'/privacy/'
+  await api(neighborUrl+'hold','POST',{revision:neighborRecord.revision,confirmation:neighborRecord.name,operation:'set',reason:'legal-obligation'})
+  const second=await api('/trust/mappings','POST',{...correction,reason:'Source reviewed by '+other.name},201)
+  const otherUrl='/customer-people/'+other.id+'/privacy/',heldOtherPreview=await api(otherUrl+'preview','POST',{revision:other.revision})
+  const heldMatch=heldOtherPreview.matches.find(m=>m.recordId===second.id)
+  assert.equal(heldMatch.held,true,'A hold on the related account protects retained trust narratives')
+  assert.equal((await call(otherUrl+'erase','POST',{revision:other.revision,confirmation:other.name,request,fingerprint:heldOtherPreview.fingerprint,redactions:[heldMatch.id]})).status,400)
+  neighborRecord=(await api('/customer-people')).records.find(p=>p.id===neighbor.id)
+  await api(neighborUrl+'hold','POST',{revision:neighborRecord.revision,confirmation:neighborRecord.name,operation:'release',reason:'review-completed'})
+  const otherPreview=await api(otherUrl+'preview','POST',{revision:other.revision})
+  const selected=otherPreview.matches.filter(m=>m.recordId===second.id)
+  assert.equal(selected.length,1)
+  await api(otherUrl+'erase','POST',{revision:other.revision,confirmation:other.name,request,fingerprint:otherPreview.fingerprint,redactions:selected.map(m=>m.id)})
+  const redacted=(await api('/trust')).proposals.find(p=>p.id===second.id)
+  assert.equal(redacted.evidence.reference,'Source reviewed by [redacted]');assert.equal(redacted.evidence.claim.personId,person.id)
+  const alternate=await api('/customer-people','POST',{kind:'user',name:'Synthetic alternate product user',accountIds:[f.first,f.target],source:'synthetic-buoy-7533'},201)
+  const replacement=await api('/trust/mappings','POST',{...correction,personId:alternate.id,reason:'Reviewed replacement identity'},201)
+  const linked=await api(url+'export','POST',body)
+  assert.deepEqual(linked.records.trustProposals.map(p=>p.id).sort(),[proposal.id,second.id,replacement.id].sort(),'Previous native identity copies are included as well as the proposed person')
+  const latest=await api(url+'preview','POST',{revision:body.revision})
+  assert.equal((await call(url+'erase','POST',{...body,fingerprint:preview.fingerprint})).status,409,'Changed trust work invalidates the earlier privacy preview')
+  const erased=await api(url+'erase','POST',{...body,fingerprint:latest.fingerprint})
+  assert.equal(erased.receipt.outcome,'erased')
+  const trust=await api('/trust')
+  assert.equal(trust.proposals.filter(p=>p.kind==='mapping').length,0,'Person erasure removes every linked trust identity copy')
+  for(const value of [person.name,person.id,f.claim.userId])assert.ok(!JSON.stringify(trust).includes(value),'Trust response contains no erased identity '+value)
+  assert.equal((await call('/trust/'+replacement.id+'/review','POST',{decision:'approve',reason:'Old erased evidence'})).status,404)
+  assert.ok((await api('/customer-people')).records.some(p=>p.id===alternate.id),'Erasure preserves the unrelated proposed person')
+  assert.equal((await api('/usage')).mappings.length,0)
+  assert.ok(!(await api('/customer-people')).records.some(p=>p.id===person.id))
+ }finally{await app.close()}
+}
+export async function trustUndoJourney(){
+ const results=[]
+ for(const side of ['primary','related']){
+  const app=await startWorker({clock:()=>Date.parse('2026-10-27T12:00:10Z')}),door=importClient(app.request,app.cookie)
+  const api=async(path,method='GET',body,status=200)=>{const r=await app.request('/api/buoy'+path,{cookie:app.cookie,method,body});assert.equal(r.status,status,await r.clone().text());return r.json()}
+  try{
+   const account={id:'synthetic-buoy-900-duplicate',name:'Synthetic duplicate',renewalDate:'2027-12-31',noticeDays:30,renewalEvidence:'synthetic-buoy-7531',billing:null,support:null}
+   await api('/accounts','POST',account,201)
+   const id='synthetic-buoy-000-undo-'+side
+   const plan=await door.plan({accounts:[{...account,id,name:side==='related'?account.name:'Synthetic imported trust',billing:side==='primary'?{observedAt:'2020-01-01',reference:'synthetic-buoy-7532',currency:'USD',totalMinor:0,creditsMinor:0,allocatedMinor:0,dueDate:'2026-10-27'}:null}]})
+   await door.apply(plan)
+   await api('/trust/scan','POST',{},201)
+   const proposal=(await api('/trust')).proposals.find(p=>side==='primary'?p.accountId===id:p.relatedAccountId===id)
+   assert.ok(proposal,'Prepared trust work on '+side+' account')
+   const response=await door.send('undo',{planId:plan.planId})
+   results.push([side,response.status,(await api('/state')).accounts.some(a=>a.id===id),(await api('/trust')).proposals.find(p=>p.id===proposal.id)?.status??null])
+  }finally{await app.close()}
+ }
+ assert.deepEqual(results,[['primary',409,true,'prepared'],['related',409,true,'prepared']],'Import undo refuses both trust dependencies and preserves the account and pending work')
 }
