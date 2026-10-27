@@ -108,63 +108,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Packed from run 40537814863. Each suite keeps its commands and widths;
+        # common build/typecheck and hosted checks now run once per candidate.
         include:
-          - suite: plans
-            browser: true
-            hosted: true
-          - suite: permissions
-            browser: true
-            hosted: false
-          - suite: http
-            browser: true
-            hosted: false
-          - suite: volume
-            browser: false
-            hosted: false
-          - suite: records
-            browser: false
-            hosted: false
-          - suite: reporting-browser
-            browser: true
-            hosted: false
-          - suite: records-browser
-            browser: true
-            hosted: false
-          - suite: workspace-browser
-            browser: true
-            hosted: false
-          - suite: hierarchy-browser
-            browser: true
-            hosted: false
-          - suite: adoption
-            browser: false
-            hosted: false
           - suite: adoption-consumers
             browser: false
             hosted: false
           - suite: adoption-aggregates
             browser: false
             hosted: false
-          - suite: health
-            browser: true
-            hosted: false
-          - suite: browser
-            browser: true
-            hosted: false
-          - suite: accessibility-browser
-            browser: true
-            hosted: false
-          - suite: settings-browser
-            browser: true
-            hosted: false
-          - suite: intake-browser
-            browser: true
-            hosted: false
-          - suite: ai-browser
-            browser: true
-            hosted: false
           - suite: archive
             browser: false
+            hosted: false
+          - suite: records,volume,adoption
+            browser: false
+            hosted: false
+          - suite: records-browser,accessibility-browser,reporting-browser
+            browser: true
+            hosted: false
+          - suite: intake-browser,browser,hierarchy-browser
+            browser: true
+            hosted: false
+          - suite: http,health,plans
+            browser: true
+            hosted: true
+          - suite: ai-browser,permissions,workspace-browser,settings-browser
+            browser: true
             hosted: false
     env:
       BUOY_VERIFY_SUITE: ${{ matrix.suite }}

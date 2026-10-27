@@ -2,7 +2,7 @@ import {spawnSync} from 'node:child_process'
 import {accessSync} from 'node:fs'
 
 // The default CLI door still runs the complete wall. Verify's parallel jobs
-// partition these same tests so archive restore has its full execution window.
+// partition these same tests and share the production build in CI.
 const suites={
  plans:['test:plans','test:plans-browser'],
  permissions:['test:roles','test:roles-browser','test:billing'],
@@ -25,8 +25,9 @@ const suites={
  archive:['test:portable'],
 }
 const selected=process.env.BUOY_VERIFY_SUITE??'all'
-if(selected!=='all'&&!Object.hasOwn(suites,selected))throw new Error('Unknown Buoy verification suite.')
-const tests=selected==='all'?Object.values(suites).flat():suites[selected]
+const names=selected==='all'?Object.keys(suites):selected.split(',')
+if(names.some(name=>!Object.hasOwn(suites,name))||new Set(names).size!==names.length)throw new Error('Unknown or duplicate Buoy verification suite.')
+const tests=names.flatMap(name=>suites[name])
 const prebuilt=process.env.BUOY_VERIFY_PREBUILT==='true'
 if(prebuilt){
  if(process.env.CI!=='true')throw new Error('Prebuilt verification is only available in CI.')
