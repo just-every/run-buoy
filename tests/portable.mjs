@@ -159,7 +159,7 @@ try{
  adoptionBefore=await call('/adoption');
  consumersBefore=await call('/adoption/consumers');
 
- const aiConfiguration=(await call('/ai')).settings;await call('/ai/settings','PUT',{...aiConfiguration,enabled:true,classes:['transcripts'],budgetMinor:100,requestMinor:100,noTraining:true,termsReference:'synthetic-buoy-8050'});
+ const aiConfiguration=(await call('/ai')).settings;await call('/ai/settings','PUT',{...aiConfiguration,enabled:true,classes:['transcripts'],budgetMinor:100,requestMinor:100,requestsPerMinute:100,noTraining:true,termsReference:'synthetic-buoy-8050'});
  await call('/ai/schedules','POST',{name:'synthetic-buoy-8150',feature:'questions',accountId,question:'Prepare a meeting brief',hourUtc:12,authorize:true,policyRevision:(await call('/ai')).settings.revision});assert.equal((await call('/ai/schedules')).schedules.length,1);
  const prepareTranscript=async(target,base)=>{
   const lines=Array.from({length:7},(_,index)=>'synthetic-buoy-'+(base+index)),transcript=lines.join('\n')
@@ -348,7 +348,7 @@ try{
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'The restored scheduled Worker makes no next Stripe source call');
  assert.deepEqual(restoredBillingAfterSchedule,restoredBillingBeforeSchedule,'No restored source observation or billing run advances until the new owner reconnects');
  const restoredAi=(await call('/ai')).settings
- await call('/ai/settings','PUT',{...restoredAi,enabled:true,noTraining:true,termsReference:'synthetic-buoy-8533 fresh owner review',budgetMinor:10000})
+ await call('/ai/settings','PUT',{...restoredAi,enabled:true,noTraining:true,termsReference:'synthetic-buoy-8533 fresh owner review',budgetMinor:10000,requestsPerMinute:100})
  const afterTieDraft=(await call('/ai/configuration','POST',tiePayload)).backtest.observations.filter(r=>r.accountId===tieAccountId)
  assert.deepEqual(afterTieDraft.map(r=>({on:r.on,score:r.score,matched:r.matched})),[{on:tieDate,score:100,matched:false}],'Real archive restoration preserves selection of the later equal-timestamp calculation')
  await running.close();running=null
