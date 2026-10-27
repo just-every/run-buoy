@@ -1,0 +1,21 @@
+﻿Account External ID,Account Name,Renewal Date,Notice Days,Contract Reference,Invoice Amount,Currency,Invoice Observed,Invoice Due,ChurnScore,ChurnScore Factors,Journey,Contact
+synthetic-buoy-1,Synthetic ChurnZero 1,2027-03-31,1,synthetic-buoy-contract-1,1.25,USD,2026-01-01,2026-01-31,4,"{""usage"":1,""engagement"":19}",synthetic-buoy-journey-1,synthetic-buoy-contact-1
+synthetic-buoy-2,Synthetic ChurnZero 2,2027-03-31,2,synthetic-buoy-contract-2,2.25,USD,2026-01-01,2026-01-31,8,"{""usage"":2,""engagement"":18}",synthetic-buoy-journey-2,synthetic-buoy-contact-2
+synthetic-buoy-3,Synthetic ChurnZero 3,2027-03-31,3,synthetic-buoy-contract-3,3.25,USD,2026-01-01,2026-01-31,12,"{""usage"":3,""engagement"":17}",synthetic-buoy-journey-3,synthetic-buoy-contact-3
+synthetic-buoy-4,Synthetic ChurnZero 4,2027-03-31,4,synthetic-buoy-contract-4,4.25,USD,2026-01-01,2026-01-31,16,"{""usage"":4,""engagement"":16}",synthetic-buoy-journey-4,synthetic-buoy-contact-4
+synthetic-buoy-5,Synthetic ChurnZero 5,2027-03-31,5,synthetic-buoy-contract-5,5.25,USD,2026-01-01,2026-01-31,20,"{""usage"":5,""engagement"":15}",synthetic-buoy-journey-5,synthetic-buoy-contact-5
+synthetic-buoy-6,Synthetic ChurnZero 6,2027-03-31,6,synthetic-buoy-contract-6,6.25,USD,2026-01-01,2026-01-31,24,"{""usage"":6,""engagement"":14}",synthetic-buoy-journey-6,synthetic-buoy-contact-6
+synthetic-buoy-7,Synthetic ChurnZero 7,2027-03-31,7,synthetic-buoy-contract-7,7.25,USD,2026-01-01,2026-01-31,28,"{""usage"":7,""engagement"":13}",synthetic-buoy-journey-7,synthetic-buoy-contact-7
+synthetic-buoy-8,Synthetic ChurnZero 8,2027-03-31,8,synthetic-buoy-contract-8,8.25,USD,2026-01-01,2026-01-31,32,"{""usage"":8,""engagement"":12}",synthetic-buoy-journey-8,synthetic-buoy-contact-8
+synthetic-buoy-9,Synthetic ChurnZero 9,2027-03-31,9,synthetic-buoy-contract-9,9.25,USD,2026-01-01,2026-01-31,36,"{""usage"":9,""engagement"":11}",synthetic-buoy-journey-9,synthetic-buoy-contact-9
+synthetic-buoy-10,Synthetic ChurnZero 10,2027-03-31,10,synthetic-buoy-contract-10,10.25,USD,2026-01-01,2026-01-31,40,"{""usage"":10,""engagement"":10}",synthetic-buoy-journey-10,synthetic-buoy-contact-10
+synthetic-buoy-11,Synthetic ChurnZero 11,2027-03-31,11,synthetic-buoy-contract-11,11.25,USD,2026-01-01,2026-01-31,44,"{""usage"":11,""engagement"":9}",synthetic-buoy-journey-11,synthetic-buoy-contact-11
+synthetic-buoy-12,Synthetic ChurnZero 12,2027-03-31,12,synthetic-buoy-contract-12,12.25,USD,2026-01-01,2026-01-31,48,"{""usage"":12,""engagement"":8}",synthetic-buoy-journey-12,synthetic-buoy-contact-12
+synthetic-buoy-13,Synthetic ChurnZero 13,2027-03-31,13,synthetic-buoy-contract-13,13.25,USD,2026-01-01,2026-01-31,52,"{""usage"":13,""engagement"":7}",synthetic-buoy-journey-13,synthetic-buoy-contact-13
+synthetic-buoy-14,Synthetic ChurnZero 14,2027-03-31,14,synthetic-buoy-contract-14,14.25,USD,2026-01-01,2026-01-31,56,"{""usage"":14,""engagement"":6}",synthetic-buoy-journey-14,synthetic-buoy-contact-14
+synthetic-buoy-15,Synthetic ChurnZero 15,2027-03-31,15,synthetic-buoy-contract-15,15.25,USD,2026-01-01,2026-01-31,60,"{""usage"":15,""engagement"":5}",synthetic-buoy-journey-15,synthetic-buoy-contact-15
+synthetic-buoy-16,Synthetic ChurnZero 16,2027-03-31,16,synthetic-buoy-contract-16,16.25,USD,2026-01-01,2026-01-31,64,"{""usage"":16,""engagement"":4}",synthetic-buoy-journey-16,synthetic-buoy-contact-16
+synthetic-buoy-17,Synthetic ChurnZero 17,2027-03-31,17,synthetic-buoy-contract-17,17.25,USD,2026-01-01,2026-01-31,68,"{""usage"":17,""engagement"":3}",synthetic-buoy-journey-17,synthetic-buoy-contact-17
+synthetic-buoy-18,Synthetic ChurnZero 18,2027-03-31,18,synthetic-buoy-contract-18,18.25,USD,2026-01-01,2026-01-31,72,"{""usage"":18,""engagement"":2}",synthetic-buoy-journey-18,synthetic-buoy-contact-18
+synthetic-buoy-19,Synthetic ChurnZero 19,2027-03-31,19,synthetic-buoy-contract-19,19.25,USD,2026-01-01,2026-01-31,76,"{""usage"":19,""engagement"":1}",synthetic-buoy-journey-19,synthetic-buoy-contact-19
+synthetic-buoy-20,Synthetic ChurnZero 20,2027-03-31,20,synthetic-buoy-contract-20,20.25,USD,2026-01-01,2026-01-31,80,"{""usage"":20,""engagement"":0}",synthetic-buoy-journey-20,synthetic-buoy-contact-20

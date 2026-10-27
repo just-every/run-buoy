@@ -29,9 +29,9 @@ export async function roleAccountEditJourney(){
   let current=await raw(own)
   for(const key of ['name','renewalDate','noticeDays','renewalEvidence'])assert.equal(current[key],update[key])
   assert.deepEqual(current.billing,baseline.billing);assert.deepEqual(current.support,baseline.support)
-  assert.doesNotMatch(JSON.stringify(saved),/98765432|2591|2592|totalMinor|allocatedMinor/,'The PATCH response does not expose retained snapshots')
+  assert.deepEqual(Object.keys(saved).sort(),['id','revision'],'The PATCH response exposes only opaque identity and revision, never retained snapshots')
   const updatedAudit=await api('/audit?action=account.updated&actor='+csm.id)
-  assert.equal(updatedAudit.entries.length,beforeAudit+1);assert.equal(updatedAudit.entries[0].actor,'person:'+csm.id);assert.ok(updatedAudit.entries[0].subject);assert.doesNotMatch(JSON.stringify(updatedAudit.entries),/renamed|2590|2591|2514|example.test/,'The update audit contains opaque identities rather than field/source contents')
+  assert.equal(updatedAudit.entries.length,beforeAudit+1);assert.equal(updatedAudit.entries[0].actor,'person:'+csm.id);assert.ok(updatedAudit.entries[0].subject);assert.doesNotMatch(JSON.stringify(updatedAudit.entries),/renamed|synthetic-buoy-2590|synthetic-buoy-2591|synthetic-buoy-2514|example\.test/,'The update audit contains opaque identities rather than field or source contents')
   assert.equal((await patch(csm,own,{revision:baseline.revision,name:'synthetic-buoy-2515 stale overwrite'})).status,409)
   const refusalRevision=current.revision
   for(const extra of [{billing:null},{support:null},{arrMinor:1},{contract:{amountMinor:1}},{ownerId:csm.id},{id:'synthetic-buoy-2516'}]){

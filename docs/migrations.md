@@ -64,3 +64,17 @@ node src/buoy/migrate/cli.mjs --source totango --api-query account-query.json --
 The bundle retains the token-free query, region, retrieval time, exact UTF-8 response text and digest for every page. Upload it in the same owner-only Imports screen, review the fingerprint and unmapped fields, then explicitly apply. No native write occurs during acquisition. Native reconciliation and undo use the same Totango source identity as CSV imports. This closes account API intake only; it does not map users or automate a complete migration.
 
 Totango's documented [flows](https://support.totango.com/hc/en-us/articles/212116426-Understand-flows) are activity categories. Its [flow lookup](https://support.totango.com/hc/en-us/articles/115000597266-Touchpoints-API) supplies category metadata without ordered steps. These must not be invented as ordered playbooks. SuccessPlay definition migration, its paused native representation and per-step mapping remain unbuilt; an account or task's flow name never activates automation.
+
+## ChurnZero account CSV
+
+ChurnZero documents [Live Exports](https://support.churnzero.com/hc/en-us/articles/16422781859341-Work-With-Live-Exports) as reports driven by segments in Google Sheets or Excel 365. Save the chosen account report locally as CSV, then prepare it with the same explicit-header mapper. Buoy does not access the spreadsheet or connect to ChurnZero during preparation:
+
+```sh
+node src/buoy/migrate/cli.mjs --source churnzero --input accounts.csv --output reviewed.json --columns '{"id":"Account External ID","name":"Account Name","renewalDate":"Renewal Date","noticeDays":"Notice Days","renewalEvidence":"Contract Reference","invoiceTotal":"Invoice Amount","invoiceCurrency":"Currency","invoiceObservedAt":"Invoice Observed","invoiceDueDate":"Invoice Due"}'
+```
+
+These headers document the supported synthetic example in `./fixtures/move-in/churnzero/accounts.csv`; they are not a certified vendor schema. No genuine ChurnZero export or versioned schema has been verified. Supply exact headers from the source artifact, or omit `--columns` to use the terminal guide. Account external identity and contract evidence must be present; missing dates and terms are never inferred. The documented destination fields and validation above apply unchanged.
+
+ChurnZero has its own source namespace and deterministic account identities, separate from generic CSV and every other incumbent. The bundle retains exact original UTF-8 bytes and their digest. The existing owner Imports screen reviews it without writing, names each unsupported column, applies only the reviewed fingerprint, survives reload, reconciles native accounts and supports strict undo. A later native edit or dependent work refuses undo. Source erasure withdraws custody and prevents replay.
+
+This is account mapping only. ChurnScores, factors, contacts and journey columns are retained and explicitly unmapped; no score, factor, contact, task, play, plan, event, NPS response or native journey is created. Retaining a journey label does not make a paused Buoy journey. Definition mapping and paused inertness, native health-factor reconciliation, the remaining original inputs and ChurnZero API intake remain MIGRATE-002 gaps. Preparation makes no provider request and creates no execution or sending authority.

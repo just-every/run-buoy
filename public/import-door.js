@@ -5,7 +5,7 @@ const storageKey = 'buoy:import:plan'
 let plan, busy = false, settingsLoaded = false
 let migrationSource = ''
 try { migrationSource = sessionStorage.getItem(storageKey + ':source') || '' } catch {}
-const sourceForNamespace = namespace => /^buoy-migrate-(vitally|velaris|csv|totango)-v1$/.exec(namespace)?.[1] || ''
+const sourceForNamespace = namespace => /^buoy-migrate-(vitally|velaris|csv|totango|churnzero)-v1$/.exec(namespace)?.[1] || ''
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('')
 function remember(id) { try { if (id) {sessionStorage.setItem(storageKey, id); sessionStorage.setItem(storageKey + ':source',migrationSource)} else sessionStorage.removeItem(storageKey) } catch {} }
 function remembered() { try { return sessionStorage.getItem(storageKey) } catch { return null } }
@@ -73,6 +73,7 @@ async function history() {
     section.className = 'import-history-entry'
     title.textContent = label(entry.state.replaceAll('_', ' '))
     caption.textContent = `${entry.reviewer === entry.approvalRecordId ? 'Approved via Business by' : 'Approved by'} ${entry.owner} · ${new Date(entry.approvedAt).toLocaleString()}${entry.failureCode ? ' · ' + failureMessage(entry.failureCode) : ''}`
+    open.dataset.importPlan = entry.planId
     open.type = 'button'; open.className = 'secondary'; open.textContent = 'Open import'
     open.addEventListener('click', () => { void run(async () => {
       migrationSource = sourceForNamespace(entry.namespace)
@@ -164,7 +165,7 @@ element('upload').addEventListener('submit', event => {
     const bytes = new Uint8Array(await file.arrayBuffer())
     const envelope = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))
     migrationSource = envelope?.format === 'buoy-migration-v1' ? envelope.source : ''
-    if (migrationSource && !['csv','vitally','velaris','totango'].includes(migrationSource)) throw new Error('Unknown migration source.')
+    if (migrationSource && !['csv','vitally','velaris','totango','churnzero'].includes(migrationSource)) throw new Error('Unknown migration source.')
     const bundleSha256 = await hash(bytes), totalChunks = Math.ceil(bytes.length / 65536)
     if (!totalChunks) throw new Error('Choose a nonempty account snapshot JSON file.')
     let uploadId
