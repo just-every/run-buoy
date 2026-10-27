@@ -22,9 +22,33 @@ async function findings(db:D1Database,actor:Actor):Promise<Finding[]>{
   if(stale.length)result.push({kind:'stale',accountId:row.id,relatedAccountId:null,title:'Stale health sources',fix:'Refresh the named sources and review health again.',evidence:{accountId:row.id,revision:row.revision,sources:stale,observations:{billing:row.billing,support:row.support},evaluatedOn:row.health.evaluatedOn}})
  }
  for(const row of revenue.reconciliation.filter(row=>row.status==='pending'))result.push({kind:'arr',accountId:row.accountId,relatedAccountId:null,title:'Contract and Stripe ARR disagree',fix:'Review both source references; correct the authoritative source outside this task. Neither amount is overwritten.',evidence:{...row}})
+ result.push(...await segmentFindings(db,actor))
  return result
 }
 const fingerprint=(finding:Finding)=>digest(JSON.stringify(finding))
+async function segmentFindings(db:D1Database,actor:Actor):Promise<Finding[]>{
+ // A source claim is a review hint, never identity authority. Only the newest
+ // stored group observation can propose a correction to an existing mapping.
+ const rows=(await db.prepare(`WITH claims AS (
+  SELECT e.*,row_number() OVER(PARTITION BY source_id,user_id,group_id ORDER BY observed_at DESC,received_at DESC,id DESC) AS ordinal
+  FROM buoy_usage_events e WHERE type='group'
+ ) SELECT e.id,e.message_id,e.source_id,e.user_id,e.group_id,e.source_reference,e.observed_at,e.payload,
+  json_extract(e.payload,'$.traits.buoyAccountId') AS target_id,m.person_id
+ FROM claims e JOIN buoy_usage_sources s ON s.id=e.source_id AND s.kind='segment'
+ JOIN buoy_usage_mappings m ON m.source_id=e.source_id AND m.user_id IS e.user_id AND m.group_id IS e.group_id
+ JOIN buoy_accounts a ON a.id=json_extract(e.payload,'$.traits.buoyAccountId')
+ WHERE e.ordinal=1 AND e.group_id IS NOT NULL AND json_type(e.payload,'$.traits.buoyAccountId')='text'
+ AND NOT EXISTS(SELECT 1 FROM buoy_usage_mappings other WHERE other.source_id=e.source_id AND other.claim_key<>m.claim_key AND ((e.user_id IS NOT NULL AND other.user_id=e.user_id AND other.person_id IS NOT m.person_id) OR (other.group_id=e.group_id AND other.account_id<>a.id)))
+ AND m.account_id<>a.id AND (e.user_id IS NULL OR EXISTS(SELECT 1 FROM buoy_customer_memberships WHERE account_id=a.id AND person_id=m.person_id))
+ ORDER BY e.source_id,e.user_id,e.group_id`).all<Record<string,string|null>>()).results
+ const result:Finding[]=[]
+ for(const row of rows){
+  const claim={sourceId:row.source_id,userId:row.user_id,groupId:row.group_id,accountId:row.target_id,personId:row.person_id}
+  const preview=await previewMapping(db,actor,claim)
+  result.push({kind:'mapping',accountId:String(row.target_id),relatedAccountId:String(preview.previous!.account_id),title:'Segment group correction',fix:'Verify the source claim before approving this exact correction. No identity is inferred.',evidence:{claim,preview,reference:`Unverified Segment claim ${row.message_id}: ${row.source_reference}`,sourceClaim:{id:row.id,messageId:row.message_id,observedAt:row.observed_at,payload:JSON.parse(String(row.payload))}}})
+ }
+ return result
+}
 export async function trustState(db:D1Database,actor:Actor):Promise<TrustPage>{
  requirePerson(actor)
  const rows=await db.batch<Record<string,unknown>>([authority(db,actor,true),db.prepare('SELECT * FROM buoy_trust_proposals ORDER BY prepared_at DESC,id'),stmt(db,'DELETE FROM buoy_assertions')])
@@ -69,6 +93,7 @@ export async function reviewTrust(db:D1Database,actor:Actor,proposalId:string,in
  if(input.decision==='reject'){await db.batch([...writes,stmt(db,'DELETE FROM buoy_assertions')]);return {id:proposalId,status}}
  if(finding.kind==='mapping'){
   const {claim,preview}=finding.evidence as {claim:Record<string,unknown>;preview:{fingerprint:string}}
+  if(finding.evidence.sourceClaim)insist((await segmentFindings(db,actor)).some(current=>JSON.stringify(current)===JSON.stringify(finding)),'Segment source claim changed. Scan and review again.',409)
   const fresh=await previewMapping(db,actor,claim)
   insist(fresh.fingerprint===preview.fingerprint,'Mapping evidence changed. Prepare a new correction.',409)
   await approveMapping(db,actor,{...claim,fingerprint:preview.fingerprint},writes)

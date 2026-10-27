@@ -105,3 +105,34 @@ Outside-scope or invalidated assignments receive no account notice or reminder.
 Aggregate digests remain excluded for assigned profiles until ported. This mail
 projection does not give an agent a send scope or change its command/data-class
 grant. See [providers and data flows](providers.md) and [staff profiles](roles.md).
+
+
+## Data trust review
+
+An owner or administrator opens **Audit**, then **Data trust review**. Preparing
+findings checks exact normalized company names, current confirmed and reviewed
+Stripe ARR, and stale health evidence. Preparation changes no account or mapping.
+The evidence distinguishes a possible duplicate from a confirmed identity.
+
+A stored Segment group observation may carry a `buoyAccountId` trait containing
+the proposed native company ID. A review scan compares the newest group claim
+with its existing mapping and proposes a correction when they disagree and the
+target and any reviewed user membership exist. The source claim remains labelled
+unverified. It never links an identity or changes attribution by itself.
+
+To propose a correction without that hint, enter the exact source, group and optional user,
+the reviewed customer person for a user claim, the correct account, and the
+source owner's reference and explanation. Review the old and proposed account
+and observation count before approving. Approval applies only that exact mapping;
+changed evidence requires a new proposal. Both accounts recalculate health and
+show the correction receipt. Private review explanations stay in the admin review.
+
+Approving a duplicate, ARR or stale-source finding creates an owned fix task with
+the due date the reviewer chooses. It preserves both companies and both revenue
+values. Complete an actual source correction through its existing reviewed door;
+a task approval does not merge records or select a revenue authority. Rejecting
+requires a reason and creates no task. Repeating a decision creates no extra work.
+
+These are explicit native reviews. Agent credentials grant no access to them.
+There is no scheduled watch or model request, and no customer message is sent.
+Merge, source-authority and general autonomous-diagnosis work remains unimplemented.
