@@ -414,6 +414,12 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
      await scan(detail,`ChurnZero retained health ${width}`)
      assert.deepEqual(await detail.locator('#work button, #work a').evaluateAll(nodes=>nodes.filter(n=>!n.textContent.trim()&&!n.querySelector('img[alt]')).map(n=>n.outerHTML)),[])
      assert.equal(await detail.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true)
+     // Frame the normalized journey in the existing source-details dialog.
+     await detail.locator('#account-source-details pre').evaluate(pre=>{
+      const text=pre.firstChild,offset=text.textContent.indexOf('"structure"'),range=document.createRange()
+      range.setStart(text,offset);range.setEnd(text,offset+11)
+      const dialog=pre.closest('dialog');dialog.scrollTop+=range.getBoundingClientRect().top-dialog.getBoundingClientRect().top-80
+     })
      await detail.screenshot({path:join(evidence,`migration-churnzero-health-${width}.png`),fullPage:true})
      await detail.goto(app.origin+'/app',{waitUntil:'networkidle'})
      await detail.locator('#scorecard-configure > summary').click()

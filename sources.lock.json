@@ -4168,7 +4168,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "4c5cb6c72aef423444e1f6bc92f9145591e54b42e234c255422d1ad9c243ab45",
+      "sha256": "7b2b1bc3c7300fe87e663a74f21df34e04d5ae7a81d0570b2e0fabb15859eed0",
       "executable": false
     },
     "tests/notifications.mjs": {
