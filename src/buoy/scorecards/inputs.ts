@@ -90,6 +90,9 @@ export async function inputImage(db:D1Database,at:Date){
   values['goals.attainmentPercent']=goals.value
   sources['goals.attainmentPercent']=[{kind:'goal',label:'Current internal success plan objectives',freshness:goals.value===null?'missing':'current',observedAt:goals.plans.map(p=>p.updatedAt).sort().at(-1)??null,reference:null,details:{planRevisions:goals.plans.map(p=>({id:p.id,revision:p.revision})),objectiveCount:goals.plans.reduce((n,p)=>n+p.objectives.length,0)}}]
   const sourceAccountIds=new Set<string>([account.account.id,...customSources.filter(s=>s.accountId===account.account.id).flatMap(s=>s.sourceAccountId?[s.sourceAccountId]:[])])
+  // The retained field catalog includes names supplied by other accounts.
+  // Fence every contributor so erasure also withdraws those historical names.
+  for(const row of image.accounts)if(JSON.parse(row.document).migrationHealth)sourceAccountIds.add(row.id)
   const hierarchyAccounts=new Set([account.account.id,...(hierarchySources||hierarchyPeople?descendantIds(image.custom,account.account.id):[])])
   if(hierarchySources||hierarchyPeople)hierarchyAccounts.forEach(id=>sourceAccountIds.add(id))
   if(portfolioSources)image.accounts.forEach(a=>sourceAccountIds.add(a.id))

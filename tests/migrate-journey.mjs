@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import Ajv2020 from 'ajv/dist/2020.js'
 import {csvRows} from '../src/buoy/migrate/csv.ts'
 import {totangoApiJourney,apiBrowserBundle} from './totango-api-journey.mjs'
 import {test} from 'node:test'
@@ -160,10 +161,25 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationHealth,current.migrationHealth,'Native edits preserve the read-only incumbent observation')
   const tokenResponse=await app.request('/api/buoy/v1/tokens',{method:'POST',cookie:app.cookie,body:{scopes:['accounts.read','accounts.write'],accountIds:[current.id],requestsPerMinute:30,expiresDays:1}})
   assert.equal(tokenResponse.status,201);const credential=await tokenResponse.json()
+  const serverRead=path=>app.dispatch(new Request(app.origin+'/api/buoy/v1'+path,{headers:{authorization:'Bearer '+credential.token}}))
+  const specification=await (await app.request('/api/buoy/v1/openapi.json',{cookie:app.cookie})).json()
+  const validator=new Ajv2020({strict:false,validateFormats:false})
+  for(const [path,operation]of [['/accounts/'+current.id,'/accounts/{id}'],['/accounts','/accounts']]){
+   const response=await serverRead(path);assert.equal(response.status,200)
+   const body=await response.json(),schema=specification.paths[operation].get.responses['200'].content['application/json'].schema
+   const validate=validator.compile(schema)
+   assert.equal(validate(body),true,'Migrated account reads match the published schema: '+JSON.stringify(validate.errors))
+   const value=operation==='/accounts'?body.items[0]:body
+   assert.deepEqual(value.migrationHealth,current.migrationHealth)
+   const invalid=structuredClone(body),observation=operation==='/accounts'?invalid.items[0].migrationHealth:invalid.migrationHealth
+   observation.factors.usage='forged'
+   assert.equal(validate(invalid),false,'The response schema checks numeric source observations')
+  }
   const integrationUpdate=new Request(app.origin+'/api/buoy/v1/accounts/'+current.id,{method:'PUT',headers:{'content-type':'application/json',authorization:'Bearer '+credential.token,'idempotency-key':'synthetic-buoy-health-edit'},body:JSON.stringify({...edited,name:'Synthetic integration edit',revision:(await state(app)).find(row=>row.id===current.id).revision})})
   assert.equal((await app.dispatch(integrationUpdate)).status,200)
   assert.deepEqual((await state(app)).find(row=>row.id===current.id).migrationHealth,current.migrationHealth,'Integration edits preserve the read-only incumbent observation')
   assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'PUT',cookie:app.cookie,body:{...edited,migrationHealth:{score:0}}})).status,400,'Ordinary account writes cannot forge source observations')
+  assert.equal((await app.dispatch(new Request(app.origin+'/api/buoy/v1/accounts/'+current.id,{method:'PUT',headers:{'content-type':'application/json',authorization:'Bearer '+credential.token,'idempotency-key':'synthetic-buoy-forged-observation'},body:JSON.stringify({...edited,migrationHealth:{score:0}})}))).status,400,'Integration writes cannot forge source observations')
   assert.equal((await door.send('undo',{planId:editedPlan.planId})).status,409,'Undo preserves later native edits')
   assert.equal((await app.request('/api/buoy/accounts/'+current.id,{method:'DELETE',cookie:app.cookie,body:{confirmation:'Synthetic integration edit'}})).status,200)
   assert.equal((await door.send('reconcile',{planId:editedPlan.planId})).status,410)
@@ -184,6 +200,25 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   assert.ok(retainedHistory)
   assert.equal((await app.request('/api/buoy/accounts/'+dependentId,{method:'DELETE',cookie:app.cookie,body:{confirmation:scored.name}})).status,200)
   assert.equal((await app.request('/api/buoy/scorecards/preview',{method:'POST',cookie:app.cookie,body:{historyId:retainedHistory.id}})).status,404,'Erasure withdraws derived imported-health history')
+  // Distinct account-specific names must not survive in another retained input.
+  const privacyRows=[['synthetic-buoy-private-a','synthetic-buoy-private-factor-a'],['synthetic-buoy-private-b','synthetic-buoy-private-factor-b']]
+  const privacyCsv='Account External ID,Account Name,Renewal Date,Notice Days,Contract Reference,ChurnScore,ChurnScore Factors\r\n'+privacyRows.map(([id,factor])=>`${id},${id},2027-03-31,30,synthetic-buoy-1,50,"{""${factor}"":10}"`).join('\r\n')+'\r\n'
+  const privacyPlan=await door.plan({format:'buoy-migration-v1',source:'churnzero',dateOrder:'iso',csv:privacyCsv,originalSha256:createHash('sha256').update(privacyCsv).digest('hex'),columns:{...Object.fromEntries(Object.entries(churnzeroColumns).filter(([key])=>!key.startsWith('invoice'))),...churnzeroHealthColumns}})
+  assert.equal(privacyPlan.counts.mapped,2);await door.apply(privacyPlan)
+  const billingCard={...churnzeroScorecard,name:'Synthetic billing only',measures:[{key:'billing',name:'Recorded billing',field:'billing.totalMinor',min:0,max:100,weight:1,direction:'higher',missing:'unknown'}]}
+  const privacyState=await (await app.request('/api/buoy/scorecards',{cookie:app.cookie})).json()
+  assert.equal((await app.request('/api/buoy/scorecards/publish',{method:'POST',cookie:app.cookie,body:{revision:privacyState.revision,config:billingCard}})).status,201)
+  const privacyHistory=(await (await app.request('/api/buoy/scorecards',{cookie:app.cookie})).json()).history.find(row=>row.accountId===target('churnzero',privacyRows[1][0]))
+  assert.ok(privacyHistory)
+  const retained=await app.request('/api/buoy/scorecards/preview',{method:'POST',cookie:app.cookie,body:{historyId:privacyHistory.id}})
+  assert.equal(retained.status,200);assert.ok(JSON.stringify(await retained.json()).includes(privacyRows[1][1]))
+  assert.equal((await app.request('/api/buoy/accounts/'+target('churnzero',privacyRows[0][0]),{method:'DELETE',cookie:app.cookie,body:{confirmation:privacyRows[0][0]}})).status,200)
+  const withdrawn=await app.request('/api/buoy/scorecards/preview',{method:'POST',cookie:app.cookie,body:{historyId:privacyHistory.id}})
+  assert.equal(withdrawn.status,404,'Erasure withdraws other-account histories retaining a source-derived field catalog')
+  const fresh=await (await app.request('/api/buoy/scorecards/preview',{method:'POST',cookie:app.cookie,body:{config:billingCard}})).json()
+  const surviving=fresh.accounts.find(row=>row.accountId===target('churnzero',privacyRows[1][0]))
+  assert.ok(surviving);assert.ok(!JSON.stringify(surviving.inputs).includes(privacyRows[0][1]))
+  assert.ok(JSON.stringify(surviving.inputs).includes(privacyRows[1][1]))
   const afterErasure=await (await app.request('/api/buoy/scorecards',{cookie:app.cookie})).json()
   assert.equal(afterErasure.accounts.some(row=>row.accountId===dependentId),false)
   assert.equal((await door.send('reconcile',{planId:dependencyPlan.planId})).status,410)

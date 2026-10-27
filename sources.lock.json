@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "b8d0012d136e095644daf8b7cc3419ea13aac46cb51c5a663e5ae8ef9f829baf",
+      "sha256": "071b793d8f0f5b09bc9b7a60db06917260c38af99988b69c669007284becb50d",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8327f5c18d8a38e7b4c6340a5ad7f3f3ce88ae1a4f313585697615646c0618fc",
+      "sha256": "2f512e0f1c9fb4fe81a70175af8b01be9b697582f6eee1718f08601e74ec30d1",
       "executable": false
     },
     "DEMO.md": {
@@ -180,7 +180,7 @@
       "executable": false
     },
     "docs/integration-api.md": {
-      "sha256": "f441147db4a6e45455f2f090578ef38e0c9525ca158e368f37e6690d8737dc87",
+      "sha256": "f5ac5bc503aade1a0038d18956a73c67a3c8fd9d8012dfa066b5842fde01995f",
       "executable": false
     },
     "docs/migrations.md": {
@@ -292,7 +292,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "5491dd8c6fa847a93d8df5d780bfafc614d977daf36257f0ef7e26c0d964933b",
+      "sha256": "364ed036f220579401163b39379a4b3e794a4aa8f4d788c96693a8ca1beb96b3",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -612,7 +612,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "0e51a3d4886cc7099ee6bb28dae1c5972155c9d385bf4ba149cbfeb5279cfa91",
+      "sha256": "bb9244164ea0628b77b85a5a9572700dd3b4ddfed11d8f26206cf1065a8ce724",
       "executable": false
     },
     "packaging.json": {
@@ -620,7 +620,7 @@
       "executable": false
     },
     "pnpm-lock.yaml": {
-      "sha256": "44b2e3a9e7b3fcc8ad0fdefed9cc3ca35d7a4cac0f1dc13967830a84d63a071a",
+      "sha256": "72adf7b0514fa7f7d5b37bc174c3941c8424b5c8906bed75c4ccbbff439b61d9",
       "executable": false
     },
     "public/apple-touch-icon.png": {
@@ -1364,7 +1364,7 @@
       "executable": false
     },
     "src/buoy/integration/openapi.ts": {
-      "sha256": "b06650fae263641d69e428f8dc6aef6304017b622a42c65140b4b68859274491",
+      "sha256": "067c094037030066a374bd9c733978076ec0b09fe7e1052c62ba6ec5a4c1ecd5",
       "executable": false
     },
     "src/buoy/migrate/churnzero-health.ts": {
@@ -1664,7 +1664,7 @@
       "executable": false
     },
     "src/buoy/scorecards/inputs.ts": {
-      "sha256": "d93e293badc4ff69321c6aef370de329c9453ee51ff1956c1fd6e541d7759101",
+      "sha256": "1bc2afce46dc449509b1cd0a9c4863b61fbc4f7b891a1a2bb28989cc1f7efa5b",
       "executable": false
     },
     "src/buoy/scorecards/related.ts": {
@@ -4108,7 +4108,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "9141f6fc18f1797c21f1f820cd3137b7a45b7ea0de4f18cdbcd1a372c8600e3e",
+      "sha256": "cb5dfb2fdec541cfabed4f8cffb438cf655dca9987cca6cd0dd744432c5be9ba",
       "executable": false
     },
     "tests/notifications.mjs": {

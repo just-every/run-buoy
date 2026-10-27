@@ -74,3 +74,5 @@ issuance remains the interim; admin authority bounded by current record and
 commercial-field rules, the native credential screen, event attribution, the
 remaining record kinds and outbound webhooks are unfinished. Webhook transport
 requires its own CT ruling before shipping. API-001 remains PARTIAL.
+
+Migrated account reads can include `migrationHealth`, a read-only incumbent observation described by the response schema. Account write bodies use the separate `AccountWrite` schema: omit `migrationHealth` when editing a returned account. Writes preserve existing source custody and reject attempts to supply or replace it.

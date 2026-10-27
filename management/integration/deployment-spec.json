@@ -456,6 +456,18 @@
       "name": "0074_buoy_integration_erasure.sql",
       "sha256": "0935ced33eace2057c8cb18e38ab15dc44a1f5d873d08952ffcd936fcdbaadce",
       "sql": "-- Removing an account also withdraws integration grants that name it. Keep\n-- only the opaque revoked credential identity; never retain the erased ID.\nCREATE TRIGGER buoy_integration_account_removed BEFORE DELETE ON buoy_accounts\nBEGIN\n UPDATE buoy_integration_tokens\n SET revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER)*1000),\n     account_ids=(SELECT json_group_array(value) FROM json_each(account_ids) WHERE value<>OLD.id)\n WHERE EXISTS(SELECT 1 FROM json_each(account_ids) WHERE value=OLD.id);\nEND;\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0075_buoy_integration_account_scope.sql",
+      "sha256": "605d38a8ee9f0c25c708923e52e64af5eae58f69d69ac0ebcbd2493fb960f25c",
+      "sql": "-- Existing grants retain their explicit IDs. All-account authority is opt-in.\nALTER TABLE buoy_integration_tokens ADD COLUMN account_scope TEXT NOT NULL DEFAULT 'explicit' CHECK(account_scope IN ('explicit','all'));\n-- Earlier issuance instants are unknown; never invent historical metadata.\nALTER TABLE buoy_integration_tokens ADD COLUMN label TEXT NOT NULL DEFAULT 'Integration credential';\nALTER TABLE buoy_integration_tokens ADD COLUMN created_at TEXT;\nALTER TABLE buoy_integration_tokens ADD COLUMN revoked_reason TEXT CHECK(revoked_reason IN ('revocation','account_erasure'));\nDROP TRIGGER buoy_integration_account_removed;\nCREATE TRIGGER buoy_integration_account_removed BEFORE DELETE ON buoy_accounts\nBEGIN\n UPDATE buoy_integration_tokens\n SET revoked_reason=CASE WHEN revoked_at IS NULL THEN 'account_erasure' ELSE revoked_reason END,\n     revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER)*1000),\n     account_ids=(SELECT json_group_array(value) FROM json_each(account_ids) WHERE value<>OLD.id)\n WHERE EXISTS(SELECT 1 FROM json_each(account_ids) WHERE value=OLD.id);\nEND;\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0076_buoy_migration_scorecard_custody.sql",
+      "sha256": "bf774cb91e44c2310354de32594cab579a2581f326fe6e093f86080bf2ad4807",
+      "sql": "-- Older calculations copied imported factor names without their source accounts.\n-- Withdraw those derived snapshots; native accounts and published rules remain.\nDELETE FROM buoy_scorecard_history WHERE EXISTS (\n SELECT 1 FROM json_each(buoy_scorecard_history.document,'$.inputs.fields')\n WHERE json_extract(value,'$.kind')='migration'\n);\nDELETE FROM buoy_scorecard_results WHERE EXISTS (\n SELECT 1 FROM json_each(buoy_scorecard_results.document,'$.inputs.fields')\n WHERE json_extract(value,'$.kind')='migration'\n);\n"
     }
   ],
   "compatibilityDate": "2026-09-08",
