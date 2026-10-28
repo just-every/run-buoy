@@ -8,6 +8,7 @@ export interface SupportSnapshot {
   observedAt: string; reference: string; openTickets: number; urgentTickets: number
 }
 export interface ImportedAccount {
+  migrationJourneys?:import('../migrate/churnzero-journeys').PausedJourneyDraft[];
   migrationHealth?:import('../migrate/churnzero-health').MigrationHealth;
   id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string
   billing: BillingSnapshot | null; support: SupportSnapshot | null

@@ -1,3 +1,4 @@
+import {churnzeroPortability} from './churnzero-portability.mjs'
 import {playConfig} from './play-fixture.mjs'
 import {billingSource} from './billing-journey.mjs'
 import {billingFixtureKey} from './billing-fixture.mjs'
@@ -370,5 +371,7 @@ try{
  await command(totangoDestination,['import','--input',totangoArchive,'--yes'])
  running=await startWorker({root:totangoDestination,secure:true,persistenceDirectory:join(totangoDestination,'.wrangler/state'),keepPersistence:true})
  await assertTotangoRestored(running,totangoImage)
+ await running.close();running=null
+ await churnzeroPortability()
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
 }finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}

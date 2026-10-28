@@ -10,6 +10,7 @@ import { DEFAULT_STALENESS, type Staleness } from './settings'
 // Only payments allocated to this invoice reduce the evidence balance.
 export const HEALTH_INTERPRETATION = 'Health describes recorded evidence; it is not a churn prediction or proof of causation.'
 export interface Account {
+ migrationJourneys?:import('./migrate/churnzero-journeys').PausedJourneyDraft[];
  migrationHealth?:import('./migrate/churnzero-health').MigrationHealth;
  id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string;
  billing: null | {observedAt: string; reference: string; currency: string; totalMinor: number; creditsMinor: number; allocatedMinor: number; dueDate: string};

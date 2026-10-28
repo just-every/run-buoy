@@ -104,3 +104,40 @@ The native account retains a read-only `migrationHealth` observation with the so
 Contacts and journey labels remain explicitly unmapped. No contact, operational task, play, success plan, event, NPS response or native journey is created. Retaining a journey label does not make a paused Buoy journey. Vendor scorecard-definition mapping, journey definition mapping and paused inertness, the remaining original inputs and ChurnZero API intake remain MIGRATE-002 gaps. Preparation makes no provider request and creates no execution or sending authority.
 
 The alternate synthetic selected-column example in `fixtures/move-in/churnzero/selected-columns.csv` uses `Account External Id` and `Next Renewal Date`, attributes named in [ChurnZero’s account data audit guide](https://churnzero.com/blog/7-point-audit-checklist-for-customer-success-software/). Its explicit customer-supplied notice and contract reference columns are required; terms are never inferred. This is another unverified fixture, not a certified source schema. `tests/churnzero-journey.mjs` checks its exact bytes, twenty native accounts, unknown health, replay and undo separately from the fuller invoice and dependency fixture.
+
+## ChurnZero paused journey review drafts
+
+When the account report supplies complete journey definitions as a JSON array in a column, explicitly select that column and its identity, name, ordered steps and step identity fields. Add this object to `--columns` alongside the required account mappings:
+
+```json
+{"journeyDefinitions":{"column":"Journey Definitions","id":"journey_id","name":"label","steps":"steps","stepId":"step_id"}}
+```
+
+This is Buoy's explicit preparation mapping, not a certified ChurnZero definition schema. The synthetic example in `tests/churnzero-journey-fixture.mjs` documents the supported shape. A label or empty step list is refused. Use an explicit empty array only when the source supplies no definitions. Up to 32 definitions per account and 100 steps per definition fit a review, subject to the existing bundle bound; duplicate definition and step identities, duplicate JSON keys, excessive nesting and overlarge source element sets are refused instead of silently discarding data.
+
+The native account stores read-only `migrationJourneys` review drafts. Each draft has a deterministic identity scoped to its source account, the exact supplied definition and step objects, source identities, array positions and explicit `paused` state. All supplied configuration, including triggers, timing, dependencies, assignments, destinations, source versions and even a source enabled flag, remains retained and explicitly unmapped by JSON pointer. Nothing is inferred from a label. Review the diagnostics in Imports and inspect the resulting draft through **Account source details**. These drafts have no enrollment, activation or execution door: source task and webhook steps are review data only, even when source configuration says enabled. Import approval grants data migration only.
+
+The original bytes and chosen mapping bind the reviewed fingerprint. Apply and replay use the same account import custody; reconciliation compares the complete native draft, and undo removes it with its account while refusing later edits or dependent work. Native and integration account edits preserve the drafts and cannot forge them. Account erasure withdraws their source custody and refuses replay. The real installation archive retains the exact paused drafts and import journal; restoration grants no execution authority. No separate unreviewed source reader, outbound transport or journey runtime is introduced.
+
+This closes native paused-draft review and inert custody only. MIGRATE-002 remains partial: an authentic documented ChurnZero schema, semantic step mapping into a complete native journey model, contacts, vendor scorecard definitions, tasks, plays, success plans, events, NPS and API intake remain. A native review draft whose execution semantics are all unmapped is not proof of a complete migrated journey.
+
+
+### Documented ChurnZero journey structure
+
+The public [ChurnZero REST API reference](https://app.churnzero.net/developers) was inspected on 27 October 2026. Its Journey, JourneyMilestone, JourneyMilestoneTask and JourneyMilestoneAchievement entities document definitions; JourneyInstance and the progress entities document account enrollment and progress. These are distinct objects. ChurnZero's [journey guide](https://info.churnzero.com/hubfs/Best%20Practices/CZ_JOURNEYS.pdf) also distinguishes internal tasks from customer achievements. Neither source certifies a customer's export or supplies missing conditions.
+
+For reviewed definition structure, prepare one JSON array per account in an explicitly selected CSV column. Join the original Journey records to JourneyMilestone by JourneyId, and join the task and achievement definition records by JourneyMilestoneId. Retain original fields. Place milestones in a Milestones array on each Journey, and task and achievement definitions in explicit Tasks and Achievements arrays on each milestone. These three arrays are Buoy's preparation envelope, not claimed vendor export fields. Empty arrays mean the source supplied no such definitions; a missing array is refused. Never substitute JourneyInstance, JourneyProgress or step-progress records for definitions. Preserve those records separately until their migration is supported.
+
+Select this mapping in the existing preparation command's --columns JSON:
+
+```json
+{"journeyDefinitions":{"column":"Journey Definitions","id":"Id","name":"Name","steps":"Milestones","stepId":"Id","schema":"churnzero-journey-v1"}}
+```
+
+Include the existing required account mappings in that same JSON object. The synthetic preparation example and independently written expected native structure are in `tests/churnzero-journey-fixture.mjs`.
+
+The paused native review structure maps journey and milestone descriptions, ExpectedDuration in days, ProgressBottom as the threshold after which progress is behind and ProgressTop as the threshold after which progress is stuck. It preserves milestone identity and parent links, distinguishes Tasks (Subject) from Achievements (Name), and preserves IsConditional, IsOptional and IsExternallyVisible as source configuration. Missing optional values remain null, never invented zero or false. Exact nonnegative integer IDs, valid relationships, unique identities, numeric durations and boolean flags are required. Array order is retained for review and establishes no sequencing or dependency: milestones may run in parallel.
+
+The complete source definition remains available alongside the normalized structure in the account's existing source details. Every unsupported supplied element remains in import diagnostics with its source pointer. In particular, IsActive, Status and IsSharedExternally never enable execution or customer visibility. A conditional flag does not provide its predicate: supplied condition data remains explicitly unmapped. Trigger predicates, automatic completion, assignment, timing beyond the exposed durations, progress instances and any other unavailable semantics remain gaps. No task template creates an operational task; no achievement is evaluated; no source status enables a journey. Approval, replay, schedule evaluation and restoration keep the review draft paused and inert.
+
+This documents a supported structural mapping, not full migration completion. The fixture is synthetic, a customer's authentic source still needs reconciliation, and the remaining MIGRATE-002 inputs and API acquisition remain unbuilt. The conservative journey-review default still awaits ct approval.

@@ -10,7 +10,15 @@ const migrationHealthSchema={type:'object',readOnly:true,additionalProperties:fa
  factors:{type:'object',minProperties:1,maxProperties:200,additionalProperties:observationNumber},
  fields:{type:'object',additionalProperties:false,required:['score','factors'],properties:{score:{type:'string'},factors:{oneOf:[{type:'string'},{type:'object',additionalProperties:{type:'string'}}]}}}
 }}
-const accountReadSchema={...accountSchema,properties:{...accountSchema.properties,migrationHealth:migrationHealthSchema}}
+const migrationJourneysSchema={type:'array',readOnly:true,maxItems:32,items:{type:'object',additionalProperties:false,
+ required:['id','source','sourceAccountId','sourceId','name','state','sourceColumn','mapping','definition','steps','unmapped'],properties:{
+  id:{type:'string'},source:{const:'churnzero'},sourceAccountId:{type:'string'},sourceId:{type:'string'},name:{type:'string'},state:{const:'paused'},
+  sourceColumn:{type:'string'},mapping:{type:'object'},definition:{type:'object'},
+  steps:{type:'array',items:{type:'object',required:['sourceId','position','definition'],properties:{sourceId:{type:'string'},position:{type:'integer',minimum:0},definition:{type:'object'}}}},
+  unmapped:{type:'array',items:{type:'object',required:['pointer','reason'],properties:{pointer:{type:'string'},reason:{type:'string'}}}},
+  structure:{type:'object',required:['schema','description','expectedDays','progress','milestones'],properties:{schema:{const:'churnzero-journey-v1'},description:{type:['string','null']},expectedDays:{type:['integer','null']},progress:{type:'object'},milestones:{type:'array',items:{type:'object'}}}}
+ }}}
+const accountReadSchema={...accountSchema,properties:{...accountSchema.properties,migrationHealth:migrationHealthSchema,migrationJourneys:migrationJourneysSchema}}
 const json=(schema:unknown)=>({'application/json':{schema}})
 const error={description:'Request refused; JSON error explains the required repair.',content:json({type:'object',required:['error'],properties:{error:{type:'string'}}})}
 const errors={'400':error,'401':error,'403':error,'404':error,'409':error,'413':error,'415':error,'429':{...error,headers:{'Retry-After':{description:'Whole seconds until the next UTC minute.',schema:{type:'integer',minimum:1}}}}}

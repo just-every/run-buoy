@@ -1,3 +1,4 @@
+import {churnzeroJourneys,journeyColumns} from './churnzero-journeys'
 import {churnzeroHealth,healthFields} from './churnzero-health'
 import { csvRows } from './csv'
 import {totangoApiRows} from './totango-api'
@@ -62,10 +63,11 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
    for (const [key,column] of Object.entries(columns)) {
     const factorColumns=source==='churnzero'&&key==='churnScoreFactors'&&column&&typeof column==='object'&&!Array.isArray(column)
-    const selected=factorColumns?Object.values(column):[column]
-    if((!(fields as readonly string[]).includes(key)&&!(source==='churnzero'&&(healthFields as readonly string[]).includes(key)))||!selected.length||selected.some(value=>typeof value!=='string'||!header.includes(value)))throw new Error('Column mapping names an unsupported field or missing header.')
+    const journeyColumn=source==='churnzero'&&key==='journeyDefinitions'
+    const selected=journeyColumn?[journeyColumns(column).column]:factorColumns?Object.values(column):[column]
+    if((!(fields as readonly string[]).includes(key)&&!(source==='churnzero'&&([...healthFields,'journeyDefinitions'] as readonly string[]).includes(key)))||!selected.length||selected.some(value=>typeof value!=='string'||!header.includes(value)))throw new Error('Column mapping names an unsupported field or missing header.')
    }
-   const selected = Object.values(columns).flatMap(value=>value&&typeof value==='object'?Object.values(value):[value])
+   const selected = Object.entries(columns).flatMap(([key,value])=>key==='journeyDefinitions'?[journeyColumns(value).column]:value&&typeof value==='object'?Object.values(value):[value])
    if (new Set(selected).size !== selected.length) throw new Error('Each selected column maps to only one destination field.')
    rows = data.map(row => row.length === header.length ? Object.fromEntries(header.map((key,i)=>[key,row[i]])) : {__invalidRow:true})
    pointers = data.map((_,i)=>['','csv','rows',i+2].join('/'))
@@ -103,8 +105,9 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
     const account = parseAccount({id:migrationTarget(source,id),name:get('name'),renewalDate:realDate(get('renewalDate'),bundle.dateOrder),noticeDays:Number(notice),renewalEvidence:get('renewalEvidence'),support,
      billing:hasInvoice ? {observedAt:realDate(get('invoiceObservedAt'),bundle.dateOrder),reference:`${source} account ${id}`,currency,totalMinor:money(get('invoiceTotal'),currency),creditsMinor:0,allocatedMinor:0,dueDate:realDate(get('invoiceDueDate'),bundle.dateOrder)} : null})
     const migrationHealth=source==='churnzero'?churnzeroHealth(row,columns,id):undefined
-    const nativeAccount={...account,...(migrationHealth?{migrationHealth}:{})}
-    const used = new Set(Object.values(columns).flatMap(value=>value&&typeof value==='object'?Object.values(value):[value]).map(String)), unmapped = Object.keys(row).filter(key=>!used.has(key))
+    const migrationJourneys=source==='churnzero'?churnzeroJourneys(row,columns.journeyDefinitions,id):undefined
+    const nativeAccount={...account,...(migrationHealth?{migrationHealth}:{}),...(migrationJourneys?{migrationJourneys}:{})}
+    const used = new Set(Object.entries(columns).flatMap(([key,value])=>key==='journeyDefinitions'?[journeyColumns(value).column]:value&&typeof value==='object'?Object.values(value):[value]).map(String)), unmapped = Object.keys(row).filter(key=>!used.has(key))
     return {kind:KIND,sourceId:id,payload:{account:nativeAccount as unknown as Json,unmapped},pointer}
    } catch (error) { return rejection(`row-${i+1}`,error instanceof Error ? error.message : 'Invalid migration row.',pointer) }
   })
@@ -124,5 +127,5 @@ export const migrationMapping: ImportMapping = {version:'migration-v1',map(recor
  if (record.kind === 'migration-unmapped') return {effects:[],unmapped:[{field:String(payload.collection),reason:`${payload.count} source records: ${payload.reason}`}]}
  if (record.kind !== KIND) return {effects:[],rejection:'Unsupported migration record.'}
  return {effects:[{targetKind:KIND,targetId:String(object(payload.account).id),value:payload.account as Json}],
-  unmapped:(payload.unmapped as string[]).map(field=>({field,reason:'Source field retained in import custody; no native field mapping.'}))}
+  unmapped:[...(payload.unmapped as string[]).map(field=>({field,reason:'Source field retained in import custody; no native field mapping.'})),...((object(payload.account).migrationJourneys??[]) as import('./churnzero-journeys').PausedJourneyDraft[]).flatMap(journey=>journey.unmapped.map(item=>({field:journey.sourceColumn+'#'+journey.sourceId+item.pointer,reason:item.reason})))]}
 }}
