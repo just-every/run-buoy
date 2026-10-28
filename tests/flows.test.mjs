@@ -22,6 +22,7 @@ import {customerPeopleJourney} from './customer-people-journey.mjs'
 import {usageJourney} from './usage-journey.mjs'
 import {fieldJourney} from './field-journey.mjs'
 import { importClient } from './import-door-client.mjs'
+import { accountErasureJourney } from './import-door-journey.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { outcomeJourney } from './outcome-journey.mjs'
@@ -111,18 +112,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok(!(await json(await call('/state'))).accounts.some(a=>a.id==='move-one'))
   })
   await t.test('IMPORT-001 ERASE-001 door undo preserves dependent work and owner erasure withdraws door custody',async()=>{
-   const upload={accounts:[account('move-two')]}, plan=await door.plan(upload)
-   const job=await door.apply(plan)
-   await json(await call('/proposals','POST',{accountId:'move-two',kind:'playbook',payload:{title:'Escalate support',dueDate:'2027-01-31'}}),201)
-   assert.equal((await door.send('undo',{planId:plan.planId})).status,409)
-   assert.equal((await call('/accounts/move-two','DELETE',{confirmation:'Harbour Software'},{cookie:member})).status,403)
-   await json(await call('/accounts/move-two','DELETE',{confirmation:'Harbour Software'}))
-   const state=await json(await call('/state'));assert.ok(!state.accounts.some(a=>a.id==='move-two'));assert.ok(!state.proposals.some(p=>p.accountId==='move-two'))
-   const history=await json(await call('/imports'));assert.ok(history.erasures.length)
-   const retained=JSON.stringify(await json(await call(`/imports/${job.id}`)))
-   assert.ok(!retained.includes('Harbour Software'));assert.ok(!retained.includes('INV-1042'))
-   assert.equal((await call('/accounts','POST',account('move-two'))).status,409)
-   const withdrawn=await door.send('reconcile',{planId:plan.planId});assert.equal(withdrawn.status,410)
+   await accountErasureJourney({request,cookie,member,account})
   })
   await t.test('server-rendered work screens and unknown paths',async()=>{
    for(const path of ['/app','/app/accounts/harbour','/app/imports','/app/backups']){
