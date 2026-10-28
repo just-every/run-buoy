@@ -13,8 +13,9 @@ export async function choose(page, select, value) {
  const index = values.indexOf(value)
  assert.ok(index >= 0, 'The requested select choice is available')
  await focused(page, select, 'Select keyboard focus')
- await page.keyboard.press('Home')
- for (let step = 0; step < index; step++) await page.keyboard.press('ArrowDown')
+ const current = values.indexOf(await select.inputValue())
+ assert.ok(current >= 0, 'The current select choice is available')
+ for (let step = 0; step < Math.abs(index - current); step++) await page.keyboard.press(index > current ? 'ArrowDown' : 'ArrowUp')
  await page.keyboard.press('Tab')
  assert.equal(await select.inputValue(), value, 'Keyboard selection retains the chosen value')
 }

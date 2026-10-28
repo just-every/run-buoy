@@ -4288,7 +4288,7 @@
       "executable": false
     },
     "tests/native-keyboard.mjs": {
-      "sha256": "580496f50299ebf0f777fa1c045ad0254397580ffa31300f5f4d0f5585717cdd",
+      "sha256": "b45262b2805d27363459f09044afc1cf921b0c41063d56b259a49875d3a5cf9c",
       "executable": false
     },
     "tests/notifications.mjs": {
