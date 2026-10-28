@@ -4380,7 +4380,7 @@
       "executable": false
     },
     "tests/portal-sso.mjs": {
-      "sha256": "c52c4b3fa70547805afed3d7653945d78b1f297fcec0e321b682d26c35cd2036",
+      "sha256": "37699a8c81a05b59c26a68330cea7f026b14c9e3720c3b235db78f70d589e5c0",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
