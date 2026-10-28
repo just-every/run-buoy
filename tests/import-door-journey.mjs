@@ -4,6 +4,91 @@ import { startWorker } from './worker.mjs'
 import { importClient, importChunks } from './import-door-client.mjs'
 import { importAuthority } from './import-door-authority.mjs'
 import { importErasure } from './import-door-erasure.mjs'
+
+// One public-door journey covers the destructive path and complete retained reads.
+export async function accountErasureJourney({request,cookie,member,account}) {
+ const call=(path,method='GET',body,extra={})=>request('/api/buoy'+path,{method,body,cookie,...extra})
+ const json=async(response,status=200)=>{assert.equal(response.status,status,await response.clone().text());return response.json()}
+ const door=importClient(request,cookie)
+ const erased={...account('synthetic-buoy-918001'),name:'synthetic-buoy-918002',renewalEvidence:'synthetic-buoy-918003',
+  billing:{...account().billing,reference:'synthetic-buoy-918004'},support:{...account().support,reference:'synthetic-buoy-918005'}}
+ const kept={...account('synthetic-buoy-918011'),name:'synthetic-buoy-918012',renewalEvidence:'synthetic-buoy-918013',
+  billing:{...account().billing,reference:'synthetic-buoy-918014'},support:{...account().support,reference:'synthetic-buoy-918015'}}
+ const sourceMarkers=[erased.id,erased.name,erased.renewalEvidence,erased.billing.reference,erased.support.reference]
+ const workMarkers=['synthetic-buoy-918006','synthetic-buoy-918007','synthetic-buoy-918008','synthetic-buoy-918009','synthetic-buoy-918010']
+ const plan=await door.plan({accounts:[erased,kept]}), job=await door.apply(plan)
+ assert.equal((await door.json('reconcile',{planId:plan.planId})).counts.present,2)
+ const audit=async()=>{
+  const pages=[];let offset=0
+  do {const page=await json(await call('/audit?offset='+offset));pages.push(page);offset=page.nextOffset} while(offset!==null)
+  return pages
+ }
+ const work=async(accountId,title,reason,evidence,outcome,completionEvidence)=>{
+  const proposal=await json(await call('/proposals','POST',{accountId,kind:'playbook',payload:{title,dueDate:'2027-01-31'}}),201)
+  await json(await call(`/proposals/${proposal.id}/approve`,'POST',{}))
+  const task=(await json(await call('/state'))).tasks.find(row=>row.proposalId===proposal.id)
+  await json(await call(`/tasks/${task.id}/complete`,'POST',{outcome,evidence:completionEvidence}))
+  const decision=await json(await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'renewed',reason,evidence}}),201)
+  await json(await call(`/proposals/${decision.id}/approve`,'POST',{}))
+ }
+ await work(kept.id,'synthetic-buoy-918016','synthetic-buoy-918017','synthetic-buoy-918018','synthetic-buoy-918019','synthetic-buoy-918020')
+ const priorAuditIds=new Set((await audit()).flatMap(page=>page.entries).map(entry=>entry.id))
+ await work(erased.id,...workMarkers)
+ const read=async()=>({
+  state:await json(await call('/state')),
+  job:await json(await call(`/imports/${job.id}`)),
+  journal:await json(await call('/imports')),
+  history:await json(await request('/api/operator/import-history',{cookie})),
+  status:await door.json('status',{planId:plan.planId}),
+  audit:await audit(),
+ })
+ const before=await read()
+ for(const marker of sourceMarkers){
+  assert.ok(JSON.stringify(before.state).includes(marker),`Seeded state contains ${marker}`)
+ }
+ assert.equal(before.job.id,job.id);assert.equal(before.job.total,2);assert.equal(before.job.erasedRecords,0)
+ for(const marker of workMarkers)assert.ok(JSON.stringify(before.state).includes(marker),`Seeded work contains ${marker}`)
+ for(const key of ['proposals','tasks','decisions'])assert.ok(before.state[key].some(row=>row.accountId===erased.id),`${key} is populated before erasure`)
+ assert.ok(before.history.history.some(row=>row.jobId===job.id),'The inspected history contains the imported job')
+ const evidence=before.audit.flatMap(page=>page.entries).filter(entry=>!priorAuditIds.has(entry.id))
+ assert.deepEqual(evidence.map(entry=>entry.action).sort(),['playbook.approved','playbook.completed','playbook.prepared','renewal.approved','renewal.prepared'])
+ const subject=evidence[0].subject
+ for(const entry of evidence){assert.equal(entry.subject,subject);assert.match(entry.subject,/^[0-9a-f]{32}$/);assert.match(entry.actor,/^person:[0-9a-f-]+$/);assert.ok(Number.isFinite(Date.parse(entry.occurredAt)))}
+ assert.equal((await door.send('undo',{planId:plan.planId})).status,409,'Dependent work refuses undo')
+ const refused=await read()
+ assert.deepEqual(refused.state,before.state,'Refused undo preserves every native record and work item')
+ assert.deepEqual(refused.audit,before.audit,'Refused undo adds no product effect')
+ assert.equal((await call('/accounts/'+erased.id,'DELETE',{confirmation:erased.name},{cookie:member})).status,403)
+ assert.deepEqual(await read(),refused,'Member erasure changes no data or custody')
+ assert.equal((await call('/accounts/'+erased.id,'DELETE',{confirmation:kept.name})).status,400)
+ assert.deepEqual(await read(),refused,'A wrong name confirmation changes nothing')
+ const receipt=await json(await call('/accounts/'+erased.id,'DELETE',{confirmation:erased.name}))
+ assert.equal(receipt.state,'erased');assert.ok(receipt.erasedRecords>0)
+ const after=await read()
+ for(const [doorName,body] of Object.entries(after))for(const marker of [...sourceMarkers,...workMarkers]){
+  assert.ok(!JSON.stringify(body).includes(marker),`${doorName} retains no ${marker}`)
+ }
+ for(const key of ['accounts','proposals','tasks','decisions']){
+  assert.deepEqual(after.state[key],before.state[key].filter(row=>(key==='accounts'?row.id:row.accountId)!==erased.id),`Erasure preserves every unrelated ${key} row`)
+ }
+ assert.equal(after.job.id,job.id)
+ assert.equal(after.job.total,2);assert.equal(after.job.erasedRecords,1,'The populated two-record job tombstones only the erased account')
+ const journal=after.journal.erasures.find(entry=>entry.receiptId===receipt.id)
+ assert.ok(journal,'The complete journal retains the opaque receipt')
+ assert.ok(journal.stores.some(store=>store.store==='ik_door_plan_chunks'),'The journal inventories withdrawn door custody')
+ const retained=after.audit.flatMap(page=>page.entries)
+ for(const entry of evidence)assert.deepEqual(retained.find(row=>row.id===entry.id),entry,'Earlier opaque work evidence survives')
+ const erasedAudit=retained.filter(entry=>entry.action==='account.erased'&&entry.subject===subject)
+ assert.equal(erasedAudit.length,1);assert.equal(erasedAudit[0].actor,`person:${before.state.operator.id}`)
+ assert.equal((await call('/accounts','POST',erased)).status,409,'A permanent target tombstone refuses recreation')
+ const withdrawn=await door.send('reconcile',{planId:plan.planId});assert.equal(withdrawn.status,410)
+ assert.ok(!JSON.stringify(await withdrawn.json()).includes(erased.name))
+ const replay=await door.json('apply',{planId:plan.planId,reviewedFingerprint:plan.fingerprint})
+ assert.equal(replay.job.id,job.id,'Replay returns its original job without restoring an erased record')
+ assert.equal(replay.job.state,after.job.state,'A refused reversal cannot resume forward application')
+ assert.deepEqual(await read(),after,'Recreation refusal, withdrawn reconciliation and replay preserve the erased state')
+}
+
 export async function importDoorJourney() {
  const keys=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify'])
  const jwk=await crypto.subtle.exportKey('jwk',keys.publicKey), issuer='https://business.example.test', installationId='buoy-test-installation'

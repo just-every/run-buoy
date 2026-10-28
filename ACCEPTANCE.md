@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 24 | 43 | 38 | 105 |
+| Core | 26 | 41 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 24 | 43 | 47 | 114 |
+| Full target | 26 | 41 | 47 | 114 |
 
-Judged from the code and tests at commit `e89d4a74a47b5368483be8dc56a5ed6caa524db7` (28 October 2026). IMPORT-001 proof is at `18d87e4bd5433b97d01db3684e7fa0b6342cf18a`; the submitted candidate is Git commit `HEAD`, reported with its exact Verify SHA. Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `e89d4a74a47b5368483be8dc56a5ed6caa524db7` (28 October 2026). IMPORT-001 proof is at `18d87e4bd5433b97d01db3684e7fa0b6342cf18a`; the submitted candidate is Git commit `HEAD`, reported with its exact Verify SHA. SEGMENT-001 completion is judged from the replayed code and assertions at commit `fe205ed93d622ae73722ce23b3b5b9a61144fe55` (28 October 2026); all other current main judgments are retained. Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -78,15 +78,15 @@ Core · published · **done** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-ACCES
 
 #### ERASE-001 — Owner erasure with tombstones
 
-Core · published · **partial** · Cites BASE-DATA-003, BASE-DATA-006
+Core · published · **done** · Cites BASE-DATA-003, BASE-DATA-006
 
 **Requirement.** Owner erasure, confirmed by typing the account name, atomically removes the account, its work, decisions and native and import custody; permanent target and source tombstones prevent replay into that installation. Copies held by connected systems are listed on the erasure receipt for the owner to action (ERASE-002); Buoy does not claim to delete them.
 
 **Acceptance.**
 1. As a member, attempt erasure and receive 403; as the owner, erase an imported account with work, then read state, the import journal and history; nothing names the account, and re-creating the same ID returns 409.
 
-**Evidence.** `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs`; `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Full state, import journal and history contain nothing naming the erased account; a subset/job read is insufficient. Asserted: Member erasure is refused; Native account is removed; Dependent proposal is removed; Retained import job omits account name and invoice; Same target cannot be recreated.
+**Evidence.** `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs` — IMPORT-001 ERASE-001 door undo preserves dependent work and owner erasure withdraws door custody; `tests/import-door-journey.mjs` — accountErasureJourney (complete state, job, journal, history, status and paginated audit reads; unrelated records and opaque evidence; refused member erasure and confirmation; tombstone and inert replay); `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs`
+**Gap.** None.
 
 #### RESTORE-001 — Portable installation archives
 
@@ -567,7 +567,7 @@ Core · target · **partial**
 
 #### SEGMENT-001 — Segments, tiers and lifecycle stages
 
-Core · target · **partial**
+Core · target · **done**
 
 **Requirement.** Dynamic segments defined by rules over any field, metric or relationship update automatically and record entry and exit times; static lists are also available. Accounts carry an owner/admin-defined service tier (seeded with, for example, high-touch, scaled and digital) and a lifecycle stage (onboarding, adoption, expansion, renewal or churned) set by rule or by hand. Segments drive scorecard weights, playbooks, journeys, permissions and reports. Today's complete boundary is the existing account, renewal, native billing/support snapshot, health band/evidence, sentiment, CSM, territory and task-count fields, ACCOUNT-004 custom/calculated fields on accounts and USAGE-001 customer contacts/users, static lists, segment-filtered account reports and CSV, and TEAM-001 assignment rules. Related customer fields use people.contact and people.user paths with their existing typed representation; all conditions for one related kind must be satisfied by the same person, including currency and amount, while any-rules need one matching related condition. Customer value or explicit membership changes reevaluate these rules before a successful write returns. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#segment-001).
 
@@ -577,8 +577,8 @@ Core · target · **partial**
 3. Define a custom service tier, use it in rules and manual classification, refuse removal while used and refuse a member tier-list edit.
 4. Exercise static lists, typed all/any/missing rules, manual and rule tier/stage with precedence and clearing, imports, sentiment/expiry and TEAM-001 segment allocation, member reads and mutation refusal, erasure, and the real management/approval/report forms at 1440 and 390.
 
-**Evidence.** `src/buoy/segments/rules.ts`; `src/buoy/segments/snapshot.ts`; `src/buoy/segments/index.ts`; `src/buoy/ui/segments.ts`; `src/buoy/team-plan.ts`; `src/buoy/work.ts`; `migrations/core/0025_buoy_segments.sql`; `migrations/core/0027_buoy_tiers.sql`; `docs/segments.md`; `tests/segment-journey.mjs`; `tests/flows.test.mjs`; `tests/segments.mjs`; `src/buoy/people/model.ts`; `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`
-**Gap.** Not asserted by the cited baseline evidence: CSV membership and count reconcile across every row; the cited assertions match one account name rather than the complete result. Asserted: Initial entry has timestamp and correct account; Exactly one approved task is created; Inclusive threshold exits and is timestamped; Different currencies do not mix; Reentry has a new distinct proposal; Report has exact selected account and risk count; CSV includes selected account; Reads and Cron do not duplicate entries; Stale account revision refuses approval; Stale configuration refuses approval; Exited-entry approval is refused after exit; Used custom tier cannot be removed; Member cannot edit tier list; Custom tier is returned after manual classification; Static-list membership; Typed any rules; Missing rules; Manual tier/stage clearing; Import membership refresh; Sentiment expiry membership; Team allocation from segment; Erasure removes membership; Member mutation is refused; Native form end states at 1440; Native form end states at 390.
+**Evidence.** `src/buoy/segments/rules.ts`; `src/buoy/segments/snapshot.ts`; `src/buoy/segments/index.ts`; `src/buoy/ui/segments.ts`; `src/buoy/team-plan.ts`; `src/buoy/work.ts`; `migrations/core/0025_buoy_segments.sql`; `migrations/core/0027_buoy_tiers.sql`; `docs/segments.md`; `tests/segment-journey.mjs`; `tests/flows.test.mjs`; `tests/segments.mjs`; `src/buoy/people/model.ts`; `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`; Acceptance 1–4: `tests/flows.test.mjs` — SEGMENT-001 rules, classification, intervals, proposals, reports and erasure, invoking segmentJourney in `tests/segment-journey.mjs` (complete report and CSV rows, timestamps, entry approval, replay, tier policy, imports and erasure). Acceptance 4 native forms: `tests/segments.mjs` — real create, edit, classification, entry approval, team forms and report end states at 1440 and 390. Related typed inputs: `tests/flows.test.mjs` — USAGE-001 ACCOUNT-004 SEGMENT-001 complete contact and user carrier, invoking `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`.
+**Gap.** None.
 
 ### Lifecycle work
 
