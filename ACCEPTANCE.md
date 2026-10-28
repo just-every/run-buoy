@@ -8,10 +8,10 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 20 | 47 | 38 | 105 |
+| Core | 21 | 46 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 20 | 47 | 47 | 114 |
+| Full target | 21 | 46 | 47 | 114 |
 
 Judged from the code and tests at commit `c50a1f192da9e1f0443499110f1455a273a1afa4` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -1337,7 +1337,7 @@ Core · push-further · **done** · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-A
 
 #### AGENT-003 — Evidence-backed renewal readiness
 
-Core · push-further · **partial** · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-007 · Rules D-3
+Core · push-further · **done** · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-007 · Rules D-3
 
 **Requirement.** From 120 days before each renewal the agent reads terms, notice dates, billing, success-plan goals, stakeholder engagement and open risks; identifies missing renewal authority (no economic buyer contact, champion departed), unresolved obligations and unconfirmed goals; prepares a joint timeline with the customer; and after the company’s money and commitment policy permits commercial steps verifies that they reached the CRM and billing system. Terms, amounts and negotiation positions carry commitment and money, which the company’s policy decides; direct payment processing remains outside Buoy’s scope.
 
@@ -1345,7 +1345,7 @@ Core · push-further · **partial** · Cites BASE-AGENT-002, BASE-AGENT-006, BAS
 1. Seed renewals with a departed champion, an unconfirmed goal and an uplift not yet in Stripe; the agent flags each with citations, prepares the timeline carrying standard, with commercial changes carrying money and commitment under the company’s policy and reports the Stripe mismatch until the subscription matches the approved terms.
 
 **Evidence.** `tests/renewal-readiness-journey.mjs` renewalReadinessJourney; `tests/renewal-browser.mjs` renewalBrowser; `tests/renewal-readiness-sandbox.mjs` AGENT-003 Stripe test uplift
-**Gap.** Final 1440 and 390 source-citation journey after current main integration and exact-SHA Verify remain pending. Native cited readiness, reviewed standard timelines, money and commitment declarations and live Stripe uplift mismatch then match are implemented.
+**Gap.** None.
 
 #### AGENT-004 — Portfolio-wide causes of risk
 
