@@ -8,6 +8,7 @@ import {DEFAULT_ROLES,projectState,readableIds,roleAccess,roleFence,scopeFence,s
 import {snapshot,evaluated} from '../segments/snapshot'
 import {segmentFields} from '../segments'
 import {SAFE_FIELDS,calculateReport,reportCsv,reportInput,requiredFields,type Catalog,type ReportSpec,type ReportRow} from './model'
+import {dashboardPresets,presetReport} from './presets'
 export interface SavedReport {id:string;revision:string;spec:ReportSpec}
 export interface Dashboard {id:string;revision:string;name:string;sharedRoles:string[];reportIds:string[]}
 export const reportInterpretation='Current account evidence, not a historical reconstruction or guaranteed prediction. Saved definitions grant no record or commercial authority. Filters and current segment membership apply before grouping, formulas, charts and CSV. Native money is grouped separately by currency; missing inputs make the group value unavailable. Calculated columns show their formula and inputs. Only owner/admin authors publish and explicitly share definitions today.'
@@ -42,7 +43,7 @@ export async function savedReports(db:D1Database,actor:Actor){
  const links=(await db.prepare('SELECT dashboard_id,report_id FROM buoy_dashboard_reports ORDER BY position,report_id').all<{dashboard_id:string;report_id:string}>()).results
  const dashboards=(await db.prepare('SELECT id,revision,document FROM buoy_dashboards ORDER BY created_at,id').all<{id:string;revision:string;document:string}>()).results.map(({document,...r})=>({...r,...JSON.parse(document) as {name:string;sharedRoles:string[]},sharedRoles:dashboardShares.filter(s=>s.dashboard_id===r.id).map(s=>s.role_id),reportIds:links.filter(l=>l.dashboard_id===r.id).map(l=>l.report_id).filter(id=>reports.some(r=>r.id===id))})).filter(d=>mayRead(ctx,d.sharedRoles))
  await db.batch([roleFence(db,actor,ctx.access),scopeFence(db,ctx.scope),guard(db,`(${source.source.sql})=?`,source.source.raw),stmt(db,'DELETE FROM buoy_assertions')])
- return {reports,dashboards,catalog:source.catalog,roles:ctx.manage?ctx.roles:[],segments:source.segments.map(({accountIds:_,...s})=>s),canManage:ctx.manage,interpretation:reportInterpretation}
+ return {reports,dashboards,catalog:source.catalog,roles:ctx.manage?ctx.roles:[],presets:ctx.manage?dashboardPresets:[],segments:source.segments.map(({accountIds:_,...s})=>s),canManage:ctx.manage,interpretation:reportInterpretation}
 }
 export async function runReport(db:D1Database,actor:Actor,key:string){
  const src=await reportSource(db,actor),row=await stmt(db,'SELECT revision,document FROM buoy_reports WHERE id=?',key).first<{revision:string;document:string}>();insist(row,'Report unavailable.',404)
@@ -64,6 +65,7 @@ export async function saveReport(db:D1Database,actor:Actor,input:Record<string,u
  return {id:key}
 }
 export async function saveDashboard(db:D1Database,actor:Actor,input:Record<string,unknown>){
+ if(Object.hasOwn(input,'presetId'))return savePresetDashboard(db,actor,input)
  requirePerson(actor);insist(Object.keys(input).every(k=>['id','revision','name','sharedRoles','reportIds'].includes(k)),'Unsupported dashboard property.')
  const ctx=await context(db,actor),name=text(input.name,'Dashboard name',100),key=input.id===undefined?id():text(input.id,'Dashboard ID',100)
  insist(Array.isArray(input.sharedRoles)&&input.sharedRoles.length<=50&&input.sharedRoles.every(r=>ctx.roles.includes(String(r))),'Choose current viewer roles.')
@@ -71,6 +73,20 @@ export async function saveDashboard(db:D1Database,actor:Actor,input:Record<strin
  const all=(await savedReports(db,actor)).reports;insist(input.reportIds.every(k=>all.some(r=>r.id===k)),'A selected report is unavailable.',409)
  const prior=await stmt(db,'SELECT revision FROM buoy_dashboards WHERE id=?',key).first<{revision:string}>();insist(input.id===undefined?!prior&&input.revision===undefined:prior&&prior.revision===input.revision,'Dashboard changed. Reload.',409)
  await db.batch([roleFence(db,actor,ctx.access),guard(db,'(SELECT revision FROM buoy_dashboards WHERE id=?) IS ?',key,prior?.revision??null),stmt(db,'INSERT INTO buoy_dashboards VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',key,JSON.stringify({name,sharedRoles:[]}),id(),actor.id,now()),stmt(db,'DELETE FROM buoy_dashboard_shares WHERE dashboard_id=?',key),...[...new Set(input.sharedRoles.map(String))].map(role=>stmt(db,'INSERT INTO buoy_dashboard_shares VALUES(?,?)',key,role)),stmt(db,'DELETE FROM buoy_dashboard_reports WHERE dashboard_id=?',key),...input.reportIds.map((r,i)=>stmt(db,'INSERT INTO buoy_dashboard_reports VALUES(?,?,?)',key,r,i)),auditRecord(db,actor,'dashboard.saved','dashboard:'+key),stmt(db,'DELETE FROM buoy_assertions')]);return {id:key}
+}
+async function savePresetDashboard(db:D1Database,actor:Actor,input:Record<string,unknown>){
+ requirePerson(actor)
+ insist(Object.keys(input).every(k=>['presetId','segmentId'].includes(k)),'Starter dashboards accept only a starter and current segment. Shares and schedules require separate actions.')
+ const ctx=await context(db,actor);insist(ctx.manage,'Only current owners and administrators can create starter dashboards.',403)
+ const spec=presetReport(input.presetId,input.segmentId),key=id()
+ // The report and its private dashboard are one fenced transaction. There is
+ // no stored result, new authority or delivery configuration to restore.
+ const report=await saveReport(db,actor,{spec},reportId=>[
+  stmt(db,'INSERT INTO buoy_dashboards VALUES(?,?,?,?,?)',key,JSON.stringify({name:spec.name,sharedRoles:[]}),id(),actor.id,now()),
+  stmt(db,'INSERT INTO buoy_dashboard_reports VALUES(?,?,?)',key,reportId,0),
+  auditRecord(db,actor,'dashboard.saved','dashboard:'+key),
+ ])
+ return {id:key,reportId:report.id}
 }
 export const reportsApi=new Hono<{Bindings:Bindings;Variables:{actor:Actor}}>()
 reportsApi.get('/api/buoy/reports',async c=>c.json(await savedReports(c.env.DB,c.get('actor'))))
