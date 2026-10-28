@@ -38,7 +38,7 @@ async function command(cwd,args,expected=0){
  const safe=output.replace(/RER_OPEN[^\n]*/g,'RER_OPEN [private]').replace(/token=[^\s"&<>]+/g,'token=[private]')
  if(expected===0)assert.equal(code,0,safe.slice(-3000));else assert.notEqual(code,0,'Restore should refuse this destination or archive')
 }
-const configurationNow=Date.now()
+const wallNow=Date.now.bind(Date),configurationNow=Date.now()
 mock.timers.enable({apis:['Date'],now:configurationNow})
 let running,browser,configurationClock=configurationNow
 const stripe=billingSource()
@@ -256,6 +256,7 @@ try{
  assert.doesNotMatch(JSON.stringify(beforeAudit),/Retired account|erase-before-backup|example\.test|Ana Lyst|Harbour CS owner/,'AUDIT-001 erased account and people stay unnamed')
  browser=await chromium.launch({headless:true,...(existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
  await reconcileAuditScreen(browser,running,beforeAudit,{screens:process.env.BUOY_AUDIT_SHOTS??join(root,'test-results/audit')})
+ console.log('AUDIT-001 reconciled '+beforeAudit.length+' complete source tuples across every API and rendered page.')
  await running.close();running=null
  // Each export snapshots first, then records its own action for the next archive.
  const firstArchive=join(parent,'first.rer')
@@ -318,8 +319,9 @@ try{
  const bytes=await readFile(archive);bytes[Math.floor(bytes.length/2)]^=1
  const damaged=join(parent,'damaged.rer');await writeFile(damaged,bytes)
  await command(broken,['import','--input',damaged,'--yes'],1)
+ const bootstrapStarted=wallNow()
  running=await startWorker({root:destination,secure:true,clock:()=>configurationNow,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
- const after=await call('/state')
+ const bootstrapFinished=wallNow(),after=await call('/state')
  assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
  assert.deepEqual((await call('/reviews?id='+capturedPlanReview.id)).selected,capturedPlanReviewBefore,'Captured plan review and source facts restore exactly');
  const restoredPlans=await call('/accounts/'+accountId+'/plans');assert.deepEqual({...restoredPlans,sharing:null},{...successPlansBefore,sharing:null},'PLAN-001 definitions, customer confirmation, task links and milestone evidence restore exactly');
@@ -339,7 +341,10 @@ try{
  const restored=await allAudit(),archiveIds=new Set(secondAudit.map(entry=>entry.id)),added=restored.filter(entry=>!archiveIds.has(entry.id))
  assert.deepEqual(restored.filter(entry=>archiveIds.has(entry.id)),secondAudit,'Every exported audit tuple returns unchanged through all restored API pages')
  assert.equal(added.length,1,'The destination adds only its own bootstrap sign-in, never the second export action')
- assert.deepEqual(added,[{id:added[0].id,actor:'person:'+after.operator.id,action:'auth.signed-in',subject:'person:'+after.operator.id,detail:'native session issued',occurredAt:new Date(configurationNow).toISOString()}])
+ const {occurredAt:bootstrapTime,...bootstrap}=added[0]
+ assert.deepEqual(bootstrap,{id:added[0].id,actor:'person:'+after.operator.id,action:'auth.signed-in',subject:'person:'+after.operator.id,detail:'native session issued'})
+ // Native sign-in triggers use SQLite's clock, independently of the JS fixture clock.
+ assert.ok(Date.parse(bootstrapTime)>=bootstrapStarted&&Date.parse(bootstrapTime)<=bootstrapFinished,'The destination bootstrap records its actual sign-in instant')
  await reconcileAuditScreen(browser,running,restored)
  console.log('AUDIT-001 reconciled '+beforeAudit.length+' complete source tuples, both export snapshots and '+restored.length+' restored tuples across every API and rendered page.')
  assert.match(await (await running.request('/app/audit?action=data.exported',{cookie:running.cookie})).text(),/portability:direct/)
