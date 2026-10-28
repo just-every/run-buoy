@@ -40,10 +40,16 @@ try{
    let state=await json(await call('/state'));assert.equal(state.accounts.filter(a=>a.ownerId).length,3)
    const fromId=[maya,owen].find(id=>state.accounts.filter(a=>a.ownerId===id).length===2),toId=[maya,owen].find(id=>id!==fromId),first=state.accounts.find(a=>a.ownerId===fromId)
    const task=await json(await call('/proposals','POST',{accountId:first.id,kind:'playbook',payload:{title:'Review adoption goals with the champion',dueDate:today}}),201);await json(await call(`/proposals/${task.id}/approve`,'POST',{}))
+   const taskId=(await json(await call('/state'))).tasks.find(t=>t.proposalId===task.id).id
+   const segment=await json(await call('/segments','POST',{name:'Commercial rollout cohort',mode:'static',rules:{match:'all',conditions:[]},accountIds:state.accounts.map(a=>a.id),tier:null,stage:null,playbook:null}),201)
+   const outcome=await json(await call('/outcomes','POST',{name:'Reviewed rollout milestone',segmentId:segment.id,kind:'healthy',windowDays:30,taskIds:[taskId],operationKey:'synthetic-buoy-2403'}),201)
+   const milestones=[{id:'rollout',title:'Reach healthy rollout evidence',objectiveId:'usage',outcomeId:outcome.id}]
    const drafts=[]
-   for(const account of state.accounts.filter(a=>a.ownerId===fromId))drafts.push(await teamPlan({call,json},account.id,fromId,{name:account.name+' rollout plan'}))
+   for(const account of state.accounts.filter(a=>a.ownerId===fromId))drafts.push(await teamPlan({call,json},account.id,fromId,{name:account.name+' rollout plan',...(account.id===first.id?{taskIds:[taskId],milestones}:{})}))
    await teamPlan({call,json},first.id,toId,{name:'Executive adoption plan',customerOwnerId:drafts.find(p=>p.accountId===first.id).row.customerOwnerId})
    const planAccounts=drafts.map(p=>p.accountId),beforePlans=await teamPlanRows({call,json},planAccounts)
+   assert.deepEqual(beforePlans.find(p=>p.accountId===first.id&&p.staffOwnerId===fromId).milestones,milestones)
+   assert.deepEqual(beforePlans.find(p=>p.accountId===first.id&&p.staffOwnerId===fromId).taskIds,[taskId])
    await page.goto(app.origin+'/app/team')
    await page.locator('#team-preview-handover select[name=fromId]').selectOption(fromId);await page.locator('#team-preview-handover select[name=toId]').selectOption(toId);await page.locator('#team-preview-handover textarea[name=note]').fill('New CSM: confirm the rollout workshop and review the adoption risks with the champion.')
    await Promise.all([page.waitForLoadState('networkidle'),page.locator('#team-preview-handover button').click()])
