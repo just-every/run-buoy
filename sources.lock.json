@@ -4247,12 +4247,20 @@
       "sha256": "296954086ce286b78db6425c283eac3850e1ccecda2072d999c07eccbf8142c7",
       "executable": false
     },
+    "tests/import-door-authority.mjs": {
+      "sha256": "0095872213849b94ff49195251c21b75b73ccf75ea379efa017b72e261d2531e",
+      "executable": false
+    },
     "tests/import-door-client.mjs": {
-      "sha256": "5685d59c001a77ed6fe27b8234b4a74201ae3192123e78e898438abe46b0bf5e",
+      "sha256": "ae91dd3fae37b19e051dd40e5f8617565180d7e023bd8fdd048feb42873f71e6",
+      "executable": false
+    },
+    "tests/import-door-erasure.mjs": {
+      "sha256": "6bb180ea5b78399da425227f446146fae1da0016060888e84dded7b87e742c1b",
       "executable": false
     },
     "tests/import-door-journey.mjs": {
-      "sha256": "de5bc38055a962b98c7d841413986de2ddd6a47188c4f2eef9cf9478e8f74842",
+      "sha256": "962bc4a9484dc4153ec140c94669cacbdaad15dfc5cb25a057777a70ece2e8ac",
       "executable": false
     },
     "tests/inapp-browser.mjs": {
