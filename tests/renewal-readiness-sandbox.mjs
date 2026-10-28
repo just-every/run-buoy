@@ -51,6 +51,7 @@ try{
  assert.equal(initial.expectedArrMinor,120000)
  assert.ok(initial.sourceSubscriptionId===subscription.id,'Renewal cites the exact fixture subscription')
  const proposal=await api('/proposals','POST',{accountId:account.id,kind:'renewal',payload:{renewalId:initial.id,outcome:'renewed-with-expansion',resultArrMinor:144000,reason:'customer-confirmed',evidence:'Approved synthetic twenty percent uplift'}})
+ assert.deepEqual(proposal.classification,['money','commitment'])
  assert.equal((await current()).outcome,null,'Preparation does not approve commercial terms')
  await api('/proposals/'+proposal.id+'/approve','POST',{})
  assert.equal((await current()).billingReconciliation,'pending-provider-sync')

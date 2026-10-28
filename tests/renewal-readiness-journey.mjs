@@ -77,6 +77,7 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   assert.equal((await command('renewal.readiness',{renewalId:renewal.id})).status,401)
   const sourceVersion=(await api('/renewals')).records.find(r=>r.id===renewal.id).sourceVersionId
   const proposal=await api('/proposals','POST',{accountId,kind:'renewal',payload:{renewalId:renewal.id,outcome:'renewed-with-expansion',resultArrMinor:144000,reason:'customer-confirmed',evidence:'Signed Cascade uplift U-20'}})
+  assert.deepEqual(proposal.classification,['money','commitment'])
   assert.equal((await request('/proposals/'+proposal.id+'/approve','POST',{}, {cookie:member})).status,403)
   assert.equal((await api('/renewals')).records.find(r=>r.id===renewal.id).outcome,null)
   await api('/proposals/'+proposal.id+'/approve','POST',{})

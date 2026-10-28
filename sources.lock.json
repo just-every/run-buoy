@@ -2152,7 +2152,7 @@
       "executable": false
     },
     "src/buoy/work.ts": {
-      "sha256": "6c57be3ca9432555eab681c313e1222345e36a84f1c4962e9aebac3cc9127558",
+      "sha256": "d754906eac3562eef43f4266b6a16286ca5096d9a4b2a37142c57f906212c6d8",
       "executable": false
     },
     "src/buoy/workspace.ts": {
@@ -4380,11 +4380,11 @@
       "executable": false
     },
     "tests/renewal-readiness-journey.mjs": {
-      "sha256": "6a052fc8e787705fda9cfd2ad01d5edb528f2aa338639aed48bba7efa0e1dac9",
+      "sha256": "d179b71afc219ff1d9603b96e5d87709af933e45d72427186f42bc3c96672fa6",
       "executable": false
     },
     "tests/renewal-readiness-sandbox.mjs": {
-      "sha256": "70712cbac1b6602131f02290802007b608caca989dfeee19d851c50ff4806211",
+      "sha256": "10aef948e6416f6e9359af241eae250ae670f3a3927915f96fc518cc9b48117b",
       "executable": false
     },
     "tests/renewal-sandbox.mjs": {

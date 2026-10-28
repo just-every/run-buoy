@@ -41,7 +41,7 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
   ...(image?[fence(db,image)]:[]),hierarchyApprovalFence(db,hierarchy),
   guard(db, 'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)', accountId, current.revision),
   stmt(db, "INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,?,?,?,?,'prepared',?,?)", proposalId, accountId, kind, current.revision, JSON.stringify({...current,...(connectedBilling?{connectedBilling}: {})}), JSON.stringify(normalized), `${actor.kind}:${actor.id}:${actor.displayName}`, at)])
- return {id: proposalId, accountId, kind, payload: normalized, status: 'prepared'}
+ return {id: proposalId, accountId, kind, payload: normalized, status: 'prepared',classification:kind==='renewal'?['money','commitment']:['standard']}
 }
 export async function approve(db: D1Database, actor: Actor, proposalId: string) {
  requirePerson(actor)
