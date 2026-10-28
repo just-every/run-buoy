@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 22 | 45 | 38 | 105 |
+| Core | 23 | 44 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 22 | 45 | 47 | 114 |
+| Full target | 23 | 44 | 47 | 114 |
 
-Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `2af7b0d6aa804bd4dfae5f493e6937a15068012a` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -620,7 +620,7 @@ Core · target · **partial** · Cites BASE-ROLE-001, BASE-MAIL-001, BASE-OPS-00
 
 #### PLAY-004 — Outcome tracking for playbooks
 
-Core · target · **partial**
+Core · target · **done**
 
 **Requirement.** Each playbook records which enrolled accounts reached its intended outcome (health recovered, milestone reached, renewal closed) within a window, with completion rates, time to outcome and comparison to unenrolled accounts in the same segment. The outcome must be unsatisfied at baseline; accounts must currently belong to the chosen segment. This single start operation freezes both the enrolled accounts and the other unsatisfied members of the same segment as the comparison group. Later segment changes do not rewrite either cohort. The window starts at tracking creation and includes its deadline; an outcome is the first satisfied evidence observed on a request, after a source/action change or on the hourly run, not an inferred transition time. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#play-004).
 
@@ -629,8 +629,8 @@ Core · target · **partial**
 2. Assert unsatisfied baseline, approval/role boundaries, exact UTC window, idempotent start, frozen cohorts after segment edits, unchanged first evidence after repeated observation, the new-approved-renewal outcome, window-missed and late-recovery refusal, no invented completion, and erasure.
 3. Use the real setup form and read its rate, timing, evidence, comparison and CSV end states at 1440 and 390.
 
-**Evidence.** `src/buoy/outcomes/index.ts`; `src/buoy/outcomes/observe.ts`; `src/buoy/outcomes/report.ts`; `src/buoy/ui/outcomes.ts`; `migrations/core/0026_buoy_outcomes.sql`; `docs/outcomes.md`; `tests/outcome-journey.mjs`; `tests/flows.test.mjs`; `tests/outcomes.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Native report timing equals the independently calculated elapsed time at 1440 and 390; a nonnegative API mean does not assert displayed timing; The browser CSV end state reconciles every cohort, rate and timing field rather than matching one account name. Asserted: Enrolled and control cohorts each contain forty accounts; Correct enrolled list; Correct control list; Recovery rates are fifty and twelve-and-a-half percent; First-observed elapsed times match timestamps; Mean elapsed time equals independent mean; CSV has eighty records and twenty-five reached outcomes; Already-satisfied baseline is refused; Member outcome start is refused; Window is exactly two days; Replay returns same outcome window; Segment edit preserves frozen cohorts; Repeated observation preserves first evidence; Renewal outcome uses approved decision evidence; At-deadline observation counts; Window-missed outcomes are read back; Late recovery does not count; Reports never complete tasks; Erasure removes enrolled evidence; Rate/timing and comparison form end states at 1440; Evidence is shown at 1440; CSV read-back at 1440; Rate/timing and comparison form end states at 390; Evidence is shown at 390; CSV read-back at 390.
+**Evidence.** `tests/outcome-journey.mjs` (outcomeJourney: forty approved playbooks and forty controls, independent elapsed times and both means, complete CSV, baseline, authority, UTC window, replay, frozen cohorts, first evidence, approved renewal, deadline, late refusal, no invented completion and erasure); `tests/outcomes.mjs` (native setup, deterministic source observations, rendered rates and rounded timing, evidence and complete browser-downloaded CSV at 1440 and 390)
+**Gap.** None.
 
 #### ONBOARD-001 — Onboarding projects
 
