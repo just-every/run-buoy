@@ -96,7 +96,7 @@
       "executable": false
     },
     "CHANGELOG.md": {
-      "sha256": "e7a77a96126b1b0f3d125d9eb5a94e8900e10909cd3c83b304c5f4b432399bc1",
+      "sha256": "6b9aab04b595ab32038b1a1bf9c123bd849f9d6df3bc5b17e7bbb095f83d29c1",
       "executable": false
     },
     "COMMANDS.md": {
@@ -164,7 +164,7 @@
       "executable": false
     },
     "docs/contract/COVERAGE.json": {
-      "sha256": "0159b7ba7dd091b2c3af48fd2b3c08e7ee06ef08518bbedb2953de2bec15ff40",
+      "sha256": "0d664696564931bd642e082e4606370b059720470a3d1822f172549866cb624a",
       "executable": false
     },
     "docs/contract/domain-rules.md": {
@@ -276,7 +276,7 @@
       "executable": false
     },
     "docs/verify.md": {
-      "sha256": "e1f0ec972f7f09c22a7746e8b531ac17902360297505449b5fbc65cac0be9dc2",
+      "sha256": "f8c932ec5894b7d7d6319772f397e207f7c4118047ab29b083e2351a5c31c0b5",
       "executable": false
     },
     "edition.json": {
