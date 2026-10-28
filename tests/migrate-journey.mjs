@@ -453,6 +453,9 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
     if(source==='churnzero'){
      const accountId=target(source,'synthetic-buoy-1')
      const detail=await context.newPage();await detail.goto(app.origin+'/app/accounts/'+accountId,{waitUntil:'networkidle'})
+     assert.equal(await detail.locator('#imported-health [data-imported-score]').innerText(),'4')
+     assert.equal(await detail.locator('#imported-health [data-imported-factor="usage"]').innerText(),'1')
+     assert.equal(await detail.locator('#imported-health [data-imported-factor="engagement"]').innerText(),'19')
      const journeys=detail.locator('#imported-journeys')
      await journeys.waitFor({state:'visible'})
      for(const text of ['Paused imported journeys','Synthetic onboarding','Paused','Requirements','Configuration','Synthetic welcome call','Synthetic first login'])assert.ok((await journeys.innerText()).includes(text),'The imported journey shows '+text)

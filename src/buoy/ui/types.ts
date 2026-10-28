@@ -6,6 +6,7 @@ export interface Billing {
 export interface Support { observedAt: string; reference: string; openTickets: number; urgentTickets: number }
 export interface Account {
   migrationJourneys?:import('../migrate/churnzero-journeys').PausedJourneyDraft[];
+  migrationHealth?:import('../migrate/churnzero-health').MigrationHealth;
   stripeBilling?:import('../billing-evidence').StripeEvidence|null;
   id: string; name: string; renewalDate: string; noticeDays: number; renewalEvidence: string;
   billing: Billing | null; support: Support | null; revision: string; noticeDate: string; ownerId: string | null;

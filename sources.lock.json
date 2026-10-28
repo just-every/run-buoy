@@ -208,7 +208,7 @@
       "executable": false
     },
     "docs/migrations.md": {
-      "sha256": "49228ca95ff26e9767e6c63b80191e20b35ac3a28739eecea000d215075f41c3",
+      "sha256": "095db20d1b9f4d61fe1c003db56874567384a913bf0f744da898f3165208a4f7",
       "executable": false
     },
     "docs/move-in.md": {
@@ -296,7 +296,7 @@
       "executable": false
     },
     "fixtures/move-in/churnzero/README.md": {
-      "sha256": "4a47b370c4ca4e070db9f19bdf37600a22792987fc21cd59c53e25d2356a5637",
+      "sha256": "ead2fef37ced286b54fb9858a6d9d06de7f5a54e315e6065bfa251b5e1b49b99",
       "executable": false
     },
     "fixtures/move-in/churnzero/selected-columns.csv": {
@@ -1848,7 +1848,7 @@
       "executable": false
     },
     "src/buoy/ui/account.ts": {
-      "sha256": "7a8a1ec34485004c7ad6e68e380cebc833dca4067f57a7a975a15bab0eaf0ebf",
+      "sha256": "748319ff6e6f0e2ec6d7d4d085cf245bedcf22d61027f8dcef20727c5f53b93b",
       "executable": false
     },
     "src/buoy/ui/actions.ts": {
@@ -1933,6 +1933,10 @@
     },
     "src/buoy/ui/html.ts": {
       "sha256": "122d130cc65d81bc429a542103dbe5585fe9acf01d421c8ed79baf3a014d9410",
+      "executable": false
+    },
+    "src/buoy/ui/imported-health.ts": {
+      "sha256": "bdecec82392a63701046e89358608e803a235bbcccda561e578fabf44bd6b050",
       "executable": false
     },
     "src/buoy/ui/imported-journeys.ts": {
@@ -2064,7 +2068,7 @@
       "executable": false
     },
     "src/buoy/ui/types.ts": {
-      "sha256": "b8746bfa1eeb16c9a8b6167e86c6e7d0a7185028b90c4424e0552a68dd966fbd",
+      "sha256": "5efa493713a50aefac73b5ef2f21f80083fd895ab67e23e5b44c8717047b955c",
       "executable": false
     },
     "src/buoy/ui/usage-actions.ts": {
@@ -4252,7 +4256,7 @@
       "executable": false
     },
     "tests/migrate-journey.mjs": {
-      "sha256": "40d87e3fb0c8a5e983adaee65b7f1e8b1777b6ef760d10dd75c5bda056f692d6",
+      "sha256": "19e8f89a9214764e2c12375187ebbd44fb02fd82be565811fbe2318247270ad3",
       "executable": false
     },
     "tests/notifications.mjs": {
