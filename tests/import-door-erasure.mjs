@@ -61,4 +61,5 @@ export async function importErasure({request,cookie,door,businessClient,value,au
  assert.equal((await businessClient.send('uploads',{uploadId:fresh})).status,404)
  assert.equal((await request('/api/buoy/accounts',{method:'POST',cookie,body:account})).status,409,'Direct native creation cannot bypass the import tombstone')
  assert.deepEqual(await authority.snapshot(first,firstJob),before,'Every replay refusal preserves native state, retained jobs, journal, history and reconciliation')
+ assert.equal((await door.json('undo',{planId:pending.planId})).state,'cancelled','The owner can cancel a withdrawn pending preparation and continue with unrelated imports')
 }

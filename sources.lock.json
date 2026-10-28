@@ -4256,7 +4256,7 @@
       "executable": false
     },
     "tests/import-door-erasure.mjs": {
-      "sha256": "14487db5fa474c73b696763e3f1f0f60a0bf7aa9df816480e35aea2116aa14dd",
+      "sha256": "f1a11de1422bd126ade2d23283c142b83f11e2e0e46b2ee3c03846e2507913f7",
       "executable": false
     },
     "tests/import-door-journey.mjs": {
