@@ -6,30 +6,19 @@ import {authority,guard,id,insist,now,Problem,requirePerson,stmt,text,type Actor
 import {PLAN_SQL,planProjection,type PlanRow} from '../plans/model'
 import {inputImage} from '../scorecards/inputs'
 import {recalculateScorecards} from '../scorecards'
+import {LIVE,FROM,portalGrant as grant} from './authority'
+import {portalFiles,portalFilesApi} from './files'
 
 // Every read and atomic write uses the same live authority predicate.
-const LIVE=`g.revoked_at IS NULL AND g.expires_at>? AND p.revision=g.plan_revision
- AND p.customer_owner_id=g.person_id AND c.kind='contact'
- AND EXISTS(SELECT 1 FROM buoy_customer_memberships m WHERE m.person_id=g.person_id AND m.account_id=g.account_id)
- AND o.status='active' AND o.role='member' AND o.version=g.operator_version AND o.email=r.email
- AND NOT EXISTS(SELECT 1 FROM buoy_role_assignments a WHERE a.person_id=o.id)
- AND w.status='active' AND w.role='owner' AND w.version=g.owner_version`
-const FROM=`buoy_portal_grants g JOIN buoy_success_plans p ON p.id=g.plan_id JOIN buoy_customer_people c ON c.id=g.person_id JOIN oa_operators o ON o.id=g.operator_id JOIN buoy_portal_recipients r ON r.operator_id=o.id JOIN oa_operators w ON w.id=g.owner_id`
-async function grant(db:D1Database,actor:Actor,grantId:string){
- insist(actor.kind==='person'&&actor.role==='member','Customer access is required.',403)
- const sql=`SELECT g.* FROM ${FROM} WHERE g.id=? AND g.operator_id=? AND ${LIVE}`
- const row=await stmt(db,sql,grantId,actor.id,Date.now()).first<{id:string;account_id:string;plan_id:string;plan_revision:string;person_id:string;revision:string;task_ids:string}>()
- insist(row,'This shared plan is unavailable or access has stopped.',403)
- return {row,fence:()=>guard(db,`EXISTS(${sql})`,grantId,actor.id,Date.now())}
-}
 export async function portalState(db:D1Database,actor:Actor,grantId:string){
  const {row,fence}=await grant(db,actor,grantId)
  const snapshot=JSON.parse((await db.prepare(PLAN_SQL).first<{snapshot:string}>())!.snapshot) as PlanRow[],plan=snapshot.find(p=>p.id===row.plan_id)!
  const image=await inputImage(db,new Date()),values=image.accounts.find(a=>a.accountId===row.account_id)!.inputs.values,projected=planProjection(plan,values)
  const tasks=(await stmt(db,'SELECT id,title,completed_at AS completedAt FROM buoy_tasks WHERE account_id=? AND id IN (SELECT value FROM json_each(?)) ORDER BY id',row.account_id,row.task_ids).all<{id:string;title:string;completedAt:string|null}>()).results
  const comments=(await stmt(db,"SELECT id,body,recorded_at AS recordedAt FROM buoy_portal_events WHERE plan_id=? AND kind='comment' ORDER BY recorded_at,id",row.plan_id).all<{id:string;body:string;recordedAt:string}>()).results
+ const files=await portalFiles(db,row.plan_id,row.person_id,row.plan_revision)
  await db.batch([fence(),stmt(db,'DELETE FROM buoy_assertions')])
- return {id:row.id,revision:row.revision,accountId:row.account_id,planId:row.plan_id,planRevision:row.plan_revision,name:projected.name,objectives:projected.objectives.map(o=>({id:o.id,title:o.title,kind:o.kind,dueOn:o.dueOn,status:o.status})),milestones:(projected.milestones??[]).map(m=>({id:m.id,title:m.title,objectiveId:m.objectiveId})),tasks,comments}
+ return {id:row.id,revision:row.revision,accountId:row.account_id,planId:row.plan_id,planRevision:row.plan_revision,name:projected.name,objectives:projected.objectives.map(o=>({id:o.id,title:o.title,kind:o.kind,dueOn:o.dueOn,status:o.status})),milestones:(projected.milestones??[]).map(m=>({id:m.id,title:m.title,objectiveId:m.objectiveId})),tasks,comments,files}
 }
 export async function sharingState(db:D1Database,actor:Actor,accountId:string){
  requirePerson(actor,true)
@@ -68,6 +57,7 @@ portalApi.post('/api/buoy/portal-invitations',async c=>{
  return c.json({invited:true},202)
 })
 portalApi.use('/api/buoy/portal/*' ,async(c,next)=>{c.header('cache-control','no-store');c.header('referrer-policy','no-referrer');c.header('x-content-type-options','nosniff');c.set('actor',await actorFor(c.req.raw,c.env));await next()})
+portalApi.route('/',portalFilesApi)
 portalApi.get('/api/buoy/portal/home',async c=>{const actor=c.get('actor');insist(actor.kind==='person'&&actor.role==='member','Customer access is required.',403);return c.json({plans:(await stmt(c.env.DB,`SELECT g.id,json_extract(p.document,'$.name') AS name FROM ${FROM} WHERE g.operator_id=? AND ${LIVE} ORDER BY g.id`,actor.id,Date.now()).all<{id:string;name:string}>()).results})})
 portalApi.get('/api/buoy/portal/:id',async c=>c.json(await portalState(c.env.DB,c.get('actor'),c.req.param('id'))))
 portalApi.post('/api/buoy/portal/:id/action',async c=>{

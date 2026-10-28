@@ -6,6 +6,7 @@ import {commit,date,guard,id,insist,now,object,requirePerson,stmt,text,type Acto
 import {outcomeState} from '../outcomes/report'
 import {inputImage} from '../scorecards/inputs'
 import {PLAN_SQL,planProjection,goalReadiness,type Milestone,type PlanDocument,type PlanRow,type Objective} from './model'
+import type {PortalFile} from '../portal/files'
 const keys=(value:Record<string,unknown>,allowed:string[])=>insist(Object.keys(value).every(k=>allowed.includes(k)),'Unsupported success plan property.')
 export async function plansState(db:D1Database,actor:Actor,accountId:string){
  requirePerson(actor)
@@ -13,11 +14,12 @@ export async function plansState(db:D1Database,actor:Actor,accountId:string){
  const image=await inputImage(db,new Date()),values=image.accounts.find(a=>a.accountId===accountId)!.inputs.values
  const rows=JSON.parse((await db.prepare(PLAN_SQL).first<{snapshot:string}>())!.snapshot) as PlanRow[]
  const projected=rows.filter(p=>p.accountId===accountId).map(p=>planProjection(p,values)),reports=projected.some(p=>p.milestones?.length)?(await outcomeState(db)).reports:[]
+ const files=actor.role==='owner'?(await stmt(db,'SELECT id,plan_id AS planId,filename,media_type AS mediaType,size,created_at AS createdAt FROM buoy_portal_files WHERE account_id=? ORDER BY created_at,id',accountId).all<PortalFile&{planId:string}>()).results:[]
  const tasks=(await stmt(db,'SELECT id,title,completed_at AS completedAt FROM buoy_tasks WHERE account_id=? ORDER BY id',accountId).all<{id:string;title:string;completedAt:string|null}>()).results
  const outcomeChoices=(await stmt(db,"SELECT r.id,json_extract(r.document,'$.name') AS name FROM buoy_outcomes r JOIN buoy_outcome_accounts a ON a.report_id=r.id WHERE a.account_id=? AND a.cohort='enrolled' ORDER BY r.id",accountId).all<{id:string;name:string}>()).results
  const plans=projected.map(p=>({...p,taskIds:p.taskIds??[],milestones:p.milestones??[],linkedTasks:(p.taskIds??[]).map(id=>tasks.find(t=>t.id===id)).filter((t):t is typeof tasks[number]=>!!t),milestoneEvidence:(p.milestones??[]).map(m=>{const report=reports.find(r=>r.id===m.outcomeId),subject=report?.enrolled.find(a=>a.accountId===accountId);return {...m,status:subject?.status??'unavailable',kind:report?.kind??null,startedAt:report?.startedAt??null,deadline:report?.deadline??null,reachedAt:subject?.reachedAt??null,elapsedHours:subject?.elapsedHours??null,rate:report?.rate??null,comparisonRate:report?.comparisonRate??null,interpretation:report?.interpretation??'Outcome evidence unavailable'}})}))
  const segments=(await db.prepare("SELECT id,json_extract(document,'$.name') AS name FROM buoy_segments ORDER BY id").all<{id:string;name:string}>()).results
- return {accountId,plans,segments,sharing:actor.role==='owner'?await sharingState(db,actor,accountId):null,readiness:goalReadiness(projected),tasks,outcomeChoices,fields:image.fields.filter(f=>!f.related&&f.kind!=='goal'&&(f.valueType===undefined||f.valueType==='number')),interpretation:'Current observed metric attainment can regress. Customer statements await authenticated customer confirmation. Internal drafts grant no customer access.'}
+ return {accountId,plans,files,segments,sharing:actor.role==='owner'?await sharingState(db,actor,accountId):null,readiness:goalReadiness(projected),tasks,outcomeChoices,fields:image.fields.filter(f=>!f.related&&f.kind!=='goal'&&(f.valueType===undefined||f.valueType==='number')),interpretation:'Current observed metric attainment can regress. Customer statements await authenticated customer confirmation. Internal drafts grant no customer access.'}
 }
 export async function savePlan(db:D1Database,actor:Actor,accountId:string,input:Record<string,unknown>){
  requirePerson(actor);keys(input,['id','revision','accountRevision','name','staffOwnerId','customerOwnerId','objectives','milestones','taskIds'])

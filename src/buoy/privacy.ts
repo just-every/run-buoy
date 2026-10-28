@@ -20,6 +20,7 @@ const stores=[
  ['reviewMeetings','buoy_review_meetings','review_id IN(SELECT review_id FROM buoy_review_people WHERE person_id=?)'],
  ['surveyResponses','buoy_survey_responses','person_id=?'],
  ['portalEvents','buoy_portal_events','person_id=?'],
+ ['portalFiles','buoy_portal_files','person_id=?'],
  ['planOutcomeSubjects','buoy_outcome_accounts','plan_customer_id=?'],
  ['planConfirmations','buoy_plan_confirmations','person_id=?'],
  ['successPlans','buoy_success_plans','customer_owner_id=?'],

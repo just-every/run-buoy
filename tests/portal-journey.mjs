@@ -20,6 +20,11 @@ export async function portalFixture(options={}){
  const action=async body=>request('/action','POST',{revision:(await read()).revision,...body})
  return {...f,dep,plan,recipient,outsider,otherShared,shareBody,shared,request,read,action}
 }
+export async function uploadPortalFile(f,{cookie=f.recipient.cookie,grantId=f.shared.id,revision=f.shared.revision,type='text/plain',name='setup-evidence.txt',contents='Customer rollout completed.'}={}){
+ if(revision===undefined)revision=(await f.read()).revision
+ const body=new FormData();body.set('revision',revision);body.set('file',new File([contents],name,{type}))
+ return f.app.dispatch(new Request(f.app.origin+'/api/buoy/portal/'+grantId+'/files',{method:'POST',headers:{origin:f.app.origin,cookie},body}))
+}
 export async function portalJourney(){
  const f=await portalFixture(),{app,api,accountId,other,plan,shared,recipient,outsider,request,read,action}=f
  try{
@@ -53,6 +58,16 @@ export async function portalJourney(){
   await api('/scorecards/publish','POST',{revision:null,config:{name:'Confirmed plan goal measure',measures:[{key:'goals',name:'Plan attainment',field:'goals.attainmentPercent',min:0,max:100,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}})
   assert.equal((await api('/scorecards')).accounts.find(a=>a.accountId===accountId).score,100)
   const timeline=await api('/accounts/'+accountId+'/activity?source=customer-portal');assert.deepEqual(timeline.records.map(r=>r.kind).sort(),['customer-comment','customer-confirmation','customer-task-completed']);assert.ok(timeline.records.some(r=>r.reference==='Customer reviewed the agreed plan.'))
+  const uploaded=await uploadPortalFile(f);assert.equal(uploaded.status,201,await uploaded.clone().text());const file=await uploaded.json(),filePath='/files/'+file.id,staffPath='/api/buoy/accounts/'+accountId+'/portal-files/'+file.id
+  assert.deepEqual((await read()).files.map(value=>[value.id,value.filename]),[[file.id,'setup-evidence.txt']])
+  const download=await request(filePath);assert.equal(download.status,200);assert.equal(await download.text(),'Customer rollout completed.');assert.match(download.headers.get('content-disposition'),/^attachment;/);assert.equal(download.headers.get('x-content-type-options'),'nosniff')
+  assert.equal((await request(filePath,'GET',undefined,outsider.cookie)).status,403)
+  assert.equal((await app.request(staffPath,{cookie:recipient.cookie})).status,403)
+  assert.equal(await (await app.request(staffPath,{cookie:app.cookie})).text(),'Customer rollout completed.')
+  assert.equal((await app.request('/api/buoy/accounts/'+other+'/portal-files/'+file.id,{cookie:app.cookie})).status,404)
+  assert.equal((await uploadPortalFile(f,{type:'text/html',name:'unsafe.html',contents:'<script>unsafe</script>'})).status,400)
+  assert.equal((await uploadPortalFile(f,{cookie:outsider.cookie})).status,403)
+  assert.ok((await api('/accounts/'+accountId+'/activity?source=customer-portal')).records.some(record=>record.kind==='customer-file-uploaded'&&record.reference==='setup-evidence.txt'))
   assert.equal((await api('/audit?action=portal.confirmation')).entries.length,1)
   const sharePath='/api/buoy/accounts/'+accountId+'/portal-sharing'
   for(const days of [0,366])assert.equal((await app.request(sharePath,{cookie:app.cookie,method:'POST',body:{...f.shareBody(),days}})).status,400)
@@ -61,11 +76,15 @@ export async function portalJourney(){
   // Any edit withdraws the reviewed revision and its old confirmation.
   await f.save({id:plan.id,revision:plan.revision,name:'Revised business objectives'})
   assert.equal((await request()).status,403);assert.equal((await f.plans()).plans[0].objectives[1].status,'awaiting-customer-confirmation')
+  assert.equal((await request(filePath)).status,403,'Old file links follow withdrawn reviewed access')
   const current=(await f.plans()).plans[0],again=await api('/accounts/'+accountId+'/portal-sharing','POST',{...f.shareBody(),planRevision:current.revision,taskIds:[]})
   const access=(await api('/accounts/'+accountId+'/portal-sharing')).grants.find(g=>g.id===again.id)
   await api('/accounts/'+accountId+'/portal-sharing/'+again.id,'DELETE',{revision:access.revision})
   assert.equal((await app.request('/api/buoy/portal/'+again.id,{cookie:recipient.cookie})).status,403)
   assert.equal((await app.request('/api/buoy/state',{cookie:recipient.cookie})).status,403,'Revocation never converts a customer back to internal staff')
+  await api('/accounts/'+accountId,'DELETE',{confirmation:f.customer(accountId).name})
+  assert.equal((await app.request(staffPath,{cookie:app.cookie})).status,404,'Account erasure removes the file payload')
+  assert.equal((await uploadPortalFile(f,{revision:view.revision})).status,403,'A captured upload cannot recreate erased account data')
   console.log('PLAN-001 portal sharing, exact recipient boundaries, customer-only identity, customer task and comment timeline, revision-bound confirmation, goal health, revocation and inert outbound passed.')
  }finally{await app.close()}
 }

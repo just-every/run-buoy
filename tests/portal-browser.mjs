@@ -27,6 +27,13 @@ export async function portalBrowser(browser,evidence){
    await page.goto(app.origin+'/portal/'+current.id,{waitUntil:'networkidle'})
    if(width===1440){assert.match(await page.locator('main').innerText(),/Achieved from data/);assert.match(await page.locator('main').innerText(),/Awaiting your confirmation/);assert.equal(await page.locator('nav').innerText(),'Your plans')}
    await scan(page,'PLAN-001 customer plan '+width);await page.screenshot({path:join(evidence,'portal-plan-'+width+'.png'),fullPage:true})
+   const upload=page.locator('#portal-upload')
+   await upload.getByLabel('File for the account owner').setInputFiles({name:'rollout-checklist.txt',mimeType:'text/plain',buffer:Buffer.from('The champion completed the rollout checklist.')})
+   await submit(page,upload.getByRole('button',{name:'Upload file',exact:true}))
+   const fileLink=page.getByRole('link',{name:'rollout-checklist.txt',exact:true})
+   assert.equal(await fileLink.count(),1)
+   const download=await Promise.all([page.waitForEvent('download'),fileLink.click()]);assert.equal(download[0].suggestedFilename(),'rollout-checklist.txt')
+   await scan(page,'PORTAL-001 customer file '+width);await page.screenshot({path:join(evidence,'portal-file-'+width+'.png'),fullPage:true})
    const task=page.locator('#task-'+f.dep.taskId);await task.getByLabel('Completion evidence').fill('Customer completed the agreed setup.');await submit(page,task.getByRole('button',{name:'Complete customer task',exact:true}))
    const comment=page.locator('#portal-comment');await comment.getByLabel('Comment',{exact:true}).fill('Reviewed together with the champion.');await submit(page,comment.getByRole('button',{name:'Post comment',exact:true}))
    const confirm=page.locator('#confirm-statement');await confirm.getByLabel('Your confirmation statement').fill('The agreed result has been reached.');await submit(page,confirm.getByRole('button',{name:'Confirm outcome',exact:true}))
