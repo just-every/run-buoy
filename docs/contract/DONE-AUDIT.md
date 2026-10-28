@@ -19,7 +19,9 @@ ONTO: `697ed0c63a956fe7640d7a024ce2f45c14cc7a39`. Old reference: `fab68ffc3066c5
 | `DATA-001` | 1 | Negative money is rejected | `tests/flows.test.mjs:160` | asserted |
 | `DATA-001` | 1 | Impossible observation date is rejected | `tests/flows.test.mjs:160` | asserted |
 | `DATA-001` | 1 | Unsupported observation field is rejected | `tests/flows.test.mjs:160` | asserted |
-| `DATA-001` | 1 | Missing evidence is shown as unknown | `tests/flows.test.mjs:58` | asserted |
+| `DATA-001` | 1 | Missing evidence yields unknown health status; this does not assert the named reasons | `tests/flows.test.mjs:58` | asserted |
+| `DATA-001` | 1 | Missing billing evidence is named on the account | none | none |
+| `DATA-001` | 1 | Missing support evidence is named on the account | none | none |
 | `DATA-001` | 1 | Billing and support staleness is named | `tests/flows.test.mjs:173` | asserted |
 | `DATA-001` | 1 | Old preparation retains its exact prior input | `tests/flows.test.mjs:186` | asserted |
 | `DATA-001` | 2 | Billing threshold changes stale evidence | `tests/flows.test.mjs:180` | asserted |

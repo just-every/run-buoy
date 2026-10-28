@@ -546,3 +546,7 @@ The 25 October 2026 paused-playbook source clarification and definition-migratio
 ## 28 October 2026 — Restored contract riders
 
 This preserves the generative work separated from AI-001 by ct on 25 October 2026. The API account-foundation approval remains recorded in RL-5; it changes no completion status. API-001 splits into API-001 record/event/webhook work and API-002 scoped credentials. Totango definition acceptance, the role-matrix vocabulary and AI-006 owner authorization with auditable revocation are restored without status promotion.
+
+## 28 October 2026 — Missing-evidence proof correction
+
+DATA-001 is partial: its baseline asserts unknown health, but does not read back the named missing billing and support reasons. The acceptance text is unchanged; generated publication, tier and homepage-claim counts carry the demotion.

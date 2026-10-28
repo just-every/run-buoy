@@ -8,10 +8,10 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 20 | 47 | 39 | 106 |
+| Core | 19 | 48 | 39 | 106 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 20 | 47 | 48 | 115 |
+| Full target | 19 | 48 | 48 | 115 |
 
 Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -36,7 +36,7 @@ Core · published · **partial** · Cites BASE-ACCESS-002, BASE-ROLE-001, BASE-A
 
 #### DATA-001 — Provenanced, validated observations
 
-Core · published · **done** · Cites BASE-INPUT-001
+Core · published · **partial** · Cites BASE-INPUT-001
 
 **Requirement.** Every account observation (billing, support, usage, CRM, survey or manual) carries its source system, source reference and observed time. Money is integer minor units of a stated ISO 4217 currency (USD unless BILLING-004 applies) that cannot go negative, dates are real calendar dates, and unsupported fields are refused. Missing and stale evidence stays visible beside the value it qualifies, with a staleness threshold set per source (30 days for manual snapshots by default). No observation is silently overwritten: a refresh creates a new account revision. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#data-001).
 
@@ -45,7 +45,7 @@ Core · published · **done** · Cites BASE-INPUT-001
 2. Change a source kind's threshold and the stale evidence it names follows.
 
 **Evidence.** `src/buoy/health.ts`; `src/buoy/settings.ts`; `src/buoy/currencies.ts`; `src/buoy/imports/validation.ts`; `migrations/core/0018_buoy_settings.sql`; `src/buoy/ui/account.ts`; `tests/flows.test.mjs`
-**Gap.** None.
+**Gap.** Not asserted by the cited baseline evidence: missing billing and support evidence is named on the account; the cited test asserts only the unknown health status. Asserted: invalid money, dates and fields are refused; billing and support staleness and threshold changes are named; earlier work retains its prior observation revision.
 
 #### APPROVAL-001 — Revision-bound human approval
 
