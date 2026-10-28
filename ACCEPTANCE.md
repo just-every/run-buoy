@@ -13,7 +13,7 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 | Later | 0 | 0 | 0 | 0 |
 | Full target | 20 | 48 | 46 | 114 |
 
-Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `ef2adc28684633e5f23363dd31f3810db0123bcf` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -668,8 +668,8 @@ Core · target · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-AC
 **Acceptance.**
 1. Invite a champion, complete a customer task and comment from the portal, then attempt to reach another account's portal URL and an internal note; the task and comment appear on the internal timeline and both cross-boundary reads are refused.
 
-**Evidence.** `tests/portal-journey.mjs` (portalJourney and portalWithdrawalJourney); `tests/portal-browser.mjs` (portalBrowser through the plans browser suite); `tests/portable.mjs`
-**Gap.** Owner-issued email invitations, recipient-only reviewed plan access, selected tasks, comments and customer confirmation are implemented. File uploads, company SSO, onboarding-project tasks and general customer plan editing remain unbuilt. Native invitation proof substitutes the mail-provider edge; live received-message proof and approval of the candidate’s conservative sharing default remain pending.
+**Evidence.** `tests/portal-journey.mjs` portalJourney and portalWithdrawalJourney; `tests/portal-sso.mjs` portalSsoJourney; `tests/portal-browser.mjs` portalBrowser through the plans browser suite; `tests/portal-mail-live.mjs` received invitation and isolated collaboration; `tests/portable.mjs` real archive export and restore
+**Gap.** Native reviewed sharing, onboarding-project tasks, comments, authenticated confirmations, file uploads, customer plan edits and company SSO protocol behavior are implemented. Received SendGrid invitation proof is present. RL-108 approves sharing authority. Remaining proof: the fresh native browser journey after merging current scoped plan work, and exact-candidate Verify. Real identity-provider tenant interoperability remains ROLE-002 field proof.
 
 #### REVIEW-001 — Business review preparation and decks
 

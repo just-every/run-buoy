@@ -3,10 +3,14 @@ import {planFixture,planDependencies} from './plan-fixture.mjs'
 import {privacyCommand} from './erase-journey.mjs'
 import {portalSsoJourney} from './portal-sso.mjs'
 export async function portalFixture(options={}){
- const f=await planFixture(options),dep=await planDependencies(f)
+ options.trace?.('native account and contact fixture')
+ const f=await planFixture(options)
+ options.trace?.('approved task dependencies')
+ const dep=await planDependencies(f)
  await f.api('/fields','POST',{key:'portal_goal',label:'Agreed measure',type:'number'})
  await f.api('/accounts/'+f.accountId+'/fields','PUT',{revision:(await f.api('/state')).accounts.find(a=>a.id===f.accountId).revision,values:{portal_goal:1},source:'synthetic-buoy-1960'})
  const plan=await f.save({objectives:[{...f.objectives[0],field:'custom.portal_goal'},f.objectives[1]],taskIds:[dep.taskId],milestones:dep.milestones})
+ options.trace?.('customer invitations and native confirmation')
  const onboarding=options.onboarding===false?null:await f.api('/accounts/'+f.accountId+'/onboarding-projects','POST',{planId:plan.id,planRevision:plan.revision,name:'Champion rollout',taskIds:[dep.taskId]})
  const beforeInvitation=f.app.mails.length
  await f.api('/portal-invitations','POST',{email:'plan-champion@example.test',displayName:'Customer champion'})
@@ -18,6 +22,7 @@ export async function portalFixture(options={}){
  const otherShared=await f.api('/accounts/'+f.other+'/portal-sharing','POST',{planId:otherPlan.id,planRevision:otherPlan.revision,email:'plan-outsider@example.test',days:30,taskIds:[]})
  const shareBody=()=>({planId:plan.id,planRevision:plan.revision,email:'plan-champion@example.test',days:30,taskIds:[dep.taskId]})
  const shared=await f.api('/accounts/'+f.accountId+'/portal-sharing','POST',shareBody())
+ options.trace?.('reviewed share ready')
  const request=(suffix='',method='GET',body,cookie=recipient.cookie,headers={})=>f.app.request('/api/buoy/portal/'+shared.id+suffix,{cookie,method,body,headers})
  const read=async()=>{const response=await request();assert.equal(response.status,200,await response.clone().text());return response.json()}
  const action=async body=>request('/action','POST',{revision:(await read()).revision,...body})

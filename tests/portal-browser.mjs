@@ -4,13 +4,14 @@ import {portalFixture} from './portal-journey.mjs'
 import {scan,submit,failures} from './a11y-checks.mjs'
 export async function portalBrowser(browser,evidence){
  for(const width of [1440,390]){
-  const f=await portalFixture({onboarding:false}),{app,api,accountId,recipient}=f
+  const f=await portalFixture({onboarding:false,trace:step=>console.log('Portal browser '+width+': '+step)}),{app,api,accountId,recipient}=f
   const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
   const capture=async(page,name,target=page)=>{await scan(page,'PORTAL-001 '+name+' '+width);await target.screenshot({path:join(evidence,'portal-'+name+'-'+width+'.png'),...(target===page?{fullPage:true}:{})})}
   const cookies=cookie=>cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}})
   try{
    await context.addCookies(cookies(app.cookie));const page=await context.newPage()
    await page.goto(app.origin+'/app/accounts/'+accountId+'#success-plans',{waitUntil:'networkidle'})
+   console.log('Portal browser '+width+': native project form')
    await page.locator('#onboarding-project-'+f.plan.id+' > summary').click()
    const projectForm=page.locator('#onboarding-start-'+f.plan.id)
    await projectForm.getByLabel('Project name').fill('Champion rollout');await projectForm.getByLabel('Agreed plan follow-up').check()
@@ -80,7 +81,8 @@ export async function portalBrowser(browser,evidence){
    await page.goto(app.origin+'/portal/'+republished.id,{waitUntil:'networkidle'})
    assert.match(await page.locator('main').innerText(),/Champion updated rollout/);assert.equal(await page.getByRole('link',{name:'rollout-checklist.txt',exact:true}).count(),0)
    await scan(page,'PORTAL-001 reviewed customer edit '+width);await page.screenshot({path:join(evidence,'portal-edit-reviewed-'+width+'.png'),fullPage:true})
-  }finally{await context.close();await app.close()}
+  }catch(error){console.error('Portal browser '+width+' failed: '+error.message);throw error}
+  finally{await context.close();await app.close()}
  }
  assert.deepEqual(failures,[],'Customer portal keeps native accessibility')
  console.log('PORTAL-001 native sharing, home, customer completion, comment, authenticated confirmation, staff timeline, refused private reads and revoked access at 1440 and 390.')
