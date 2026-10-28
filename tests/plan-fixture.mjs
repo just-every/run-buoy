@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {playFixture,playConfig} from './play-fixture.mjs'
-export async function planFixture(){
- const f=await playFixture(),{api,create,ownerId}=f,accountId=await create('synthetic-buoy-1900'),other=await create('synthetic-buoy-1901')
+export async function planFixture(options={}){
+ const f=await playFixture(options),{api,create,ownerId}=f,accountId=await create('synthetic-buoy-1900'),other=await create('synthetic-buoy-1901')
  const champion=await api('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-1902',accountIds:[accountId],source:'synthetic-buoy-1903'})
  const objectives=[{id:'usage',title:'Use the agreed feature',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'statement',title:'Customer confirms the business result',kind:'customer-statement',dueOn:'2027-03-01'}]
  const body=async(extra={})=>({accountRevision:(await api('/state')).accounts.find(a=>a.id===accountId).revision,name:'Customer success draft',staffOwnerId:ownerId,customerOwnerId:champion.id,objectives,...extra})

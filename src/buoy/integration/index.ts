@@ -140,7 +140,7 @@ async function respond(c:Context<{Bindings:Bindings;Variables:{token:Token}}>,ac
  // effect and mail reservations remain idempotent. Provider failures never retry.
  for(let attempt=0;;attempt++){
   try{await refreshAccountConsumers(env,ownerActor(t));break}
-  catch(error){if(attempt>=4||!(error instanceof Error)||!/constraint|SQLITE_CONSTRAINT/i.test(error.message))throw error}
+  catch(error){if(attempt>=4||!(error instanceof Error)||!/constraint|SQLITE_CONSTRAINT/i.test(error.message))throw error;await env.DB.batch([fence(env.DB,t),stmt(env.DB,'DELETE FROM buoy_assertions')])}
  }
  return c.json({id:result.account_id,revision:result.revision},result.status as 200)
 }

@@ -1,3 +1,4 @@
+import {startPlanOutcome} from '../plans/outcomes'
 import { auditRecord } from '../audit-records'
 import { authority, guard, id, insist, now, requirePerson, stmt, text, type Actor } from '../core'
 import { evaluated } from '../segments'
@@ -7,6 +8,7 @@ import type { Definition, Decision } from './types'
 
 export async function startOutcome(db:D1Database,actor:Actor,input:Record<string,unknown>) {
  requirePerson(actor)
+ if(input.planIds!==undefined)return startPlanOutcome(db,actor,input)
  insist(Object.keys(input).every(k=>['name','segmentId','kind','windowDays','taskIds','runIds','operationKey'].includes(k)),'Unsupported outcome field.')
  const operationKey=text(input.operationKey,'Operation key',200),prior=await stmt(db,'SELECT id FROM buoy_outcomes WHERE operation_key=?',operationKey).first<{id:string}>()
  if(prior)return {id:prior.id}

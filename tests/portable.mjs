@@ -163,9 +163,19 @@ try{
  const configurationHistory=await seedConfigurationPortability(call,value=>{configurationClock=value??configurationNow},configurationNow)
  const planChampion=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-1940',accountIds:[accountId],source:'synthetic-buoy-1941'});
  const successPlan=await call('/accounts/'+accountId+'/plans','POST',{accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,name:'Portable internal success plan',taskIds:[planTask.id],milestones:[{id:'renewed',title:'Approved renewal evidence',objectiveId:'usage',outcomeId:planOutcome.id}],staffOwnerId:(await call('/state')).operator.id,customerOwnerId:planChampion.id,objectives:[{id:'usage',title:'Observed product use',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'customer',title:'Actual customer confirmation required',kind:'customer-statement',dueOn:'2027-03-01'}]});
+ await call('/portal-invitations','POST',{email:'portable-champion@example.test',displayName:'Portable champion'});
+ const portalCookie=await running.signIn('portable-champion@example.test');
+ const portableGrant=await call('/accounts/'+accountId+'/portal-sharing','POST',{planId:successPlan.id,planRevision:successPlan.revision,email:'portable-champion@example.test',days:30,taskIds:[planTask.id]});
+ const portalRead=await running.request('/api/buoy/portal/'+portableGrant.id,{cookie:portalCookie});assert.equal(portalRead.status,200);
+ const portalRevision=(await portalRead.json()).revision;
+ const portalConfirmed=await running.request('/api/buoy/portal/'+portableGrant.id+'/action',{cookie:portalCookie,method:'POST',body:{action:'confirm',revision:portalRevision,objectiveId:'customer',statement:'synthetic-buoy-1965'}});assert.equal(portalConfirmed.status,201);
  const successPlansBefore=await call('/accounts/'+accountId+'/plans');
+ assert.equal(successPlansBefore.plans[0].objectives[1].status,'achieved');
  assert.equal(successPlansBefore.plans.find(p=>p.id===successPlan.id).objectives[0].status,'achieved');
  assert.deepEqual(successPlansBefore.plans[0].linkedTasks.map(t=>t.id),[planTask.id]);assert.equal(successPlansBefore.plans[0].milestoneEvidence[0].status,'reached');assert.equal(successPlansBefore.plans[0].milestoneEvidence[0].kind,'renewed');
+ const capturedPlanReview=await call('/reviews','POST',{accountId,name:'Confirmed plan review',kind:'QBR'});
+ const capturedPlanReviewBefore=(await call('/reviews?id='+capturedPlanReview.id)).selected;
+ assert.ok(capturedPlanReviewBefore.document.slides.find(s=>s.title==='Success plans and goal evidence').facts.some(f=>f.label.endsWith('Actual customer confirmation required')&&f.value==='achieved'));
  const scorecardBefore=await call('/scorecards');
  const revenueBefore=await call('/revenue');
  const surveysBefore=await call('/surveys');
@@ -251,6 +261,8 @@ try{
  for(const transcript of [retainedTranscript,discardedTranscript,erasedTranscript])for(const line of transcript.lines)assert.ok(!JSON.stringify(archivedAudit).includes(line),'AI-002 audit custody contains no transcript source text')
  assert.ok(!archiveRows.some(item=>['buoy_report_shares','buoy_dashboard_shares','buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
  assert.ok(!archiveRows.some(item=>['buoy_integration_tokens','buoy_integration_minutes','buoy_integration_receipts'].includes(item.table)),'API-001 integration authority and replay state are excluded from the actual archive');
+ assert.ok(!archiveRows.some(item=>['buoy_portal_grants','buoy_portal_recipients'].includes(item.table)),'Customer access never enters the real archive');
+ assert.ok(archiveRows.some(item=>item.table==='buoy_plan_confirmations'&&item.row.plan_id===successPlan.id),'Authenticated customer evidence survives without restoring authority');
  assertBillingArchiveRows(archiveRows,billingImage);
  assert.ok(archiveRows.some(item=>item.table==='buoy_success_plans'&&item.row.id===successPlan.id),'The real archive contains the persisted success plan');
  assert.ok(archiveRows.some(item=>item.table==='buoy_success_plan_history'&&item.row.plan_id===successPlan.id),'The real archive contains success plan version history');
@@ -269,7 +281,10 @@ try{
  running=await startWorker({root:destination,secure:true,clock:()=>configurationNow,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
  const after=await call('/state')
  assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
- assert.deepEqual(await call('/accounts/'+accountId+'/plans'),successPlansBefore,'PLAN-001 definitions, owners, objective values, task links, retained milestone evidence and awaiting-confirmation state restore exactly');
+ assert.deepEqual((await call('/reviews?id='+capturedPlanReview.id)).selected,capturedPlanReviewBefore,'Captured plan review and source facts restore exactly');
+ const restoredPlans=await call('/accounts/'+accountId+'/plans');assert.deepEqual({...restoredPlans,sharing:null},{...successPlansBefore,sharing:null},'PLAN-001 definitions, customer confirmation, task links and milestone evidence restore exactly');
+ assert.deepEqual(restoredPlans.sharing.grants,[],'Restoration never restores portal authority');
+ assert.equal((await running.request('/api/buoy/portal/'+portableGrant.id,{cookie:portalCookie})).status,401,'A former portal session cannot read a restored installation');
  await assertBillingPortability(call,running.request,running.cookie,billingImage)
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'Restored native reads and rejected source/webhook attempts never call Stripe without fresh authority')
  await assertRecordPortability(call,(path,options)=>running.request(path,{...options,cookie:running.cookie}),recordIds,billingAwareRecordImage(recordImage,before.accounts,after.accounts,billingImage))

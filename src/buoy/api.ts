@@ -1,5 +1,6 @@
 import {configurationApi} from './ai/configuration'
 import {trustApi} from './data-trust'
+import {portalApi,sharingState,sharePlan} from './portal'
 import {integrationApi} from './integration'
 import {aiApi} from './ai'
 import {communicationApi} from './ai/communications'
@@ -49,7 +50,7 @@ import { outcomeState, outcomeReport, outcomeCsv } from './outcomes/report'
 import { Hono } from 'hono'
 import type { Bindings } from '../auth.server'
 import { actorFor, jsonBody, mintAgent } from './access'
-import { Problem, insist, text, date, object, requirePerson, stmt, type Actor } from './core'
+import { guard, Problem, insist, text, date, object, requirePerson, stmt, type Actor } from './core'
 import { saveAccount, account, state } from './accounts'
 import { prepare, approve, completeTask } from './work'
 import { recordSentiment, healthOn, today } from './sentiment'
@@ -68,6 +69,7 @@ import { agentState, setAgentSettings } from './agent-policy/owner'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
 buoyApi.use('/api/buoy/billing/:id/webhook',async(c,next)=>{await next();if(c.res.ok)await refreshBillingConsumers(c.env)})
+buoyApi.route('/',portalApi)
 buoyApi.route('/',integrationApi)
 buoyApi.route('/',billingIngest)
 buoyApi.route('/',playIngest)
@@ -139,6 +141,9 @@ buoyApi.route('/',communicationApi)
 buoyApi.route('/',scheduleApi)
 buoyApi.route('/',experimentsApi)
 buoyApi.route('/',plansApi)
+buoyApi.get('/api/buoy/accounts/:id/portal-sharing',async c=>c.json(await sharingState(c.env.DB,c.get('actor'),c.req.param('id'))))
+buoyApi.post('/api/buoy/accounts/:id/portal-sharing',async c=>c.json(await sharePlan(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))
+buoyApi.delete('/api/buoy/accounts/:id/portal-sharing/:grant',async c=>{const actor=c.get('actor');requirePerson(actor,true);const input=await jsonBody(c.req.raw);await c.env.DB.batch([guard(c.env.DB,"EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND role='owner' AND status='active')",actor.id),c.env.DB.prepare('UPDATE buoy_portal_grants SET revoked_at=? WHERE id=? AND account_id=? AND revision=? AND revoked_at IS NULL').bind(new Date().toISOString(),c.req.param('grant'),c.req.param('id'),input.revision),auditIfChanged(c.env.DB,actor,'portal.revoked','portal:'+c.req.param('grant'))]);return c.json({revoked:true})})
 buoyApi.route('/',peopleApi)
 buoyApi.route('/',privacyApi)
 buoyApi.route('/',reviewsApi)
