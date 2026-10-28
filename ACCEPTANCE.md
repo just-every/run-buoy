@@ -387,7 +387,7 @@ Core · target · **missing**
 
 Core · target · **missing**
 
-**Requirement.** Zendesk organizations, users, tickets, priorities, statuses, SLA breaches, satisfaction ratings and tags sync to accounts and contacts. Ticket volume, open urgent tickets, breached SLAs, CSAT and time to resolution become health measures and timeline entries; a CSM can open the ticket in Zendesk from Buoy. Buoy's account context flows back into Zendesk (SUPPORT-003). Support run inside Salesforce or HubSpot is SUPPORT-004, and Freshdesk and ServiceNow are SUPPORT-005. This future source kind inherits AI-002 cited proposals, exact selected-line custody, human review, discard and erasure before it ships.
+**Requirement.** Zendesk organizations, users, tickets, priorities, statuses, SLA breaches, satisfaction ratings and tags sync to accounts and contacts. Ticket volume, open urgent tickets, breached SLAs, CSAT and time to resolution become health measures and timeline entries; a CSM can open the ticket in Zendesk from Buoy. Buoy's account context flows back into Zendesk (SUPPORT-003). Support run inside Salesforce or HubSpot is SUPPORT-004, and Freshdesk and ServiceNow are SUPPORT-005. This future source kind inherits AI-002's cited proposals, exact selected-line custody, discard and erasure before it ships; its proposals carry AI-002's classes, which the company's policy decides.
 
 **Acceptance.**
 1. In a Zendesk sandbox, create urgent, breached and solved tickets with CSAT for two organizations; Buoy shows each on the right account timeline, the health measures update on the next run and the source link opens the ticket.
@@ -399,7 +399,7 @@ Core · target · **missing**
 
 Core · target · **missing**
 
-**Requirement.** Intercom companies, contacts, conversations, tickets and ratings, and HappyToHelp customers, conversations, outcomes and CSAT, sync with the same measures and timeline entries as SUPPORT-001. HappyToHelp also receives Buoy's account context (health, tier, CSM, renewal date) for its agents, and Intercom receives it as in SUPPORT-003. This future source kind inherits AI-002 cited proposals, exact selected-line custody, human review, discard and erasure before it ships.
+**Requirement.** Intercom companies, contacts, conversations, tickets and ratings, and HappyToHelp customers, conversations, outcomes and CSAT, sync with the same measures and timeline entries as SUPPORT-001. HappyToHelp also receives Buoy's account context (health, tier, CSM, renewal date) for its agents, and Intercom receives it as in SUPPORT-003. This future source kind inherits AI-002's cited proposals, exact selected-line custody, discard and erasure before it ships; its proposals carry AI-002's classes, which the company's policy decides.
 
 **Acceptance.**
 1. With an Intercom test workspace and a HappyToHelp installation, open and resolve conversations for two accounts; Buoy shows them with ratings and HappyToHelp shows the Buoy health and CSM on the customer.
@@ -411,7 +411,7 @@ Core · target · **missing**
 
 Core · target · **missing**
 
-**Requirement.** Support agents see Buoy's account context where they work. A Buoy app in the Zendesk Support ticket sidebar and a Buoy app in the Intercom inbox show, for the ticket's organization or company, the health color and score with its top reasons, tier, lifecycle stage, CSM, ARR band, renewal date, open risk signals and a link to the Buoy account. Buoy also writes the same facts to mapped Zendesk organization fields and Intercom company attributes, so views, triggers, SLAs and routing can use them. Both update within 15 minutes of a change in Buoy. A support agent sees what ROLE-001's read-only support profile allows: ARR only as a band, and no contract, discount or forecast field. This future source kind inherits AI-002 cited proposals, exact selected-line custody, human review, discard and erasure before it ships.
+**Requirement.** Support agents see Buoy's account context where they work. A Buoy app in the Zendesk Support ticket sidebar and a Buoy app in the Intercom inbox show, for the ticket's organization or company, the health color and score with its top reasons, tier, lifecycle stage, CSM, ARR band, renewal date, open risk signals and a link to the Buoy account. Buoy also writes the same facts to mapped Zendesk organization fields and Intercom company attributes, so views, triggers, SLAs and routing can use them. Both update within 15 minutes of a change in Buoy. A support agent sees what ROLE-001's read-only support profile allows: ARR only as a band, and no contract, discount or forecast field. This future source kind inherits AI-002's cited proposals, exact selected-line custody, discard and erasure before it ships; its proposals carry AI-002's classes, which the company's policy decides.
 
 **Acceptance.**
 1. In a Zendesk sandbox and an Intercom test workspace, open a ticket and a conversation from a red, high-ARR account renewing next month; the sidebar shows Buoy's health with its reasons, the CSM, ARR band and renewal date, and the mapped organization field holds the same health; change the account's score in Buoy and both update within 15 minutes; signed in as a support agent, the app shows no exact ARR, contract or discount field; and a Zendesk view filtered on the Buoy health field lists the account.
@@ -442,7 +442,7 @@ Core · target · **missing**
 
 Core · target · **missing**
 
-**Requirement.** Buoy syncs two more help desks. From Freshdesk: companies, contacts, tickets, priorities, statuses, SLA policies and breaches, and satisfaction ratings. From ServiceNow Customer Service Management: accounts, contacts, cases, priorities, states, SLA records and survey results. Both produce the same measures, signals, timeline entries and source links as SUPPORT-001. Buoy's account context goes back to mapped Freshdesk company fields and ServiceNow account fields, under SUPPORT-003's content and ROLE-001 limits. This future source kind inherits AI-002 cited proposals, exact selected-line custody, human review, discard and erasure before it ships.
+**Requirement.** Buoy syncs two more help desks. From Freshdesk: companies, contacts, tickets, priorities, statuses, SLA policies and breaches, and satisfaction ratings. From ServiceNow Customer Service Management: accounts, contacts, cases, priorities, states, SLA records and survey results. Both produce the same measures, signals, timeline entries and source links as SUPPORT-001. Buoy's account context goes back to mapped Freshdesk company fields and ServiceNow account fields, under SUPPORT-003's content and ROLE-001 limits. This future source kind inherits AI-002's cited proposals, exact selected-line custody, discard and erasure before it ships; its proposals carry AI-002's classes, which the company's policy decides.
 
 **Acceptance.**
 1. In a Freshdesk trial account and a ServiceNow personal developer instance, create urgent, breached and resolved tickets or cases with ratings for two companies.
@@ -690,7 +690,7 @@ Core · target · **partial** · Cites BASE-ROLE-001, BASE-DATA-003, BASE-DATA-0
 
 Core · target · **missing** · Rules D-3
 
-**Requirement.** CSMs connect their Google Workspace or Microsoft 365 mailbox. Emails with known contacts log to the account timeline (with per-user exclusion of private threads); CSMs send from Buoy through their own mailbox with templates and merge fields, and replies thread back. Shared team templates and snippets are versioned, and each sent message records the template version it used. Personal mailboxes carry one-to-one mail; one-to-many sends go through EMAIL-003. One-to-one sends from Buoy can carry open and click tracking, set by an admin per template and by each user. Opens and clicks are recorded on the contact and account timeline, and an admin can turn tracking off for chosen contacts or domains. Every email Buoy sends to a customer records an AUDIT-001 entry (actor kind and id, time, action, opaque subject) before this clause ships. This future source kind inherits AI-002 cited proposals, exact selected-line custody, human review, discard and erasure before it ships.
+**Requirement.** CSMs connect their Google Workspace or Microsoft 365 mailbox. Emails with known contacts log to the account timeline (with per-user exclusion of private threads); CSMs send from Buoy through their own mailbox with templates and merge fields, and replies thread back. Shared team templates and snippets are versioned, and each sent message records the template version it used. Personal mailboxes carry one-to-one mail; one-to-many sends go through EMAIL-003. One-to-one sends from Buoy can carry open and click tracking, set by an admin per template and by each user. Opens and clicks are recorded on the contact and account timeline, and an admin can turn tracking off for chosen contacts or domains. Every email Buoy sends to a customer records an AUDIT-001 entry (actor kind and id, time, action, opaque subject) before this clause ships. This future source kind inherits AI-002's cited proposals, exact selected-line custody, discard and erasure before it ships; its proposals carry AI-002's classes, which the company's policy decides.
 
 **Acceptance.**
 1. Connect a Google Workspace and a Microsoft 365 test mailbox, send a templated, tracked email from Buoy, open it and click its link as the customer, reply from the customer address and send a private personal email.
@@ -782,7 +782,7 @@ Core · target · **missing**
 
 Core · target · **missing**
 
-**Requirement.** Recordings and transcripts from Gong, Zoom, Google Meet and Microsoft Teams attach to the meeting on the timeline, and calls placed through Aircall or RingCentral log to the account and contact timeline with their recording, with consent status recorded; summaries, proposed tasks and risk or expansion mentions follow AI-002. This future source kind inherits AI-002 cited proposals, exact selected-line custody, human review, discard and erasure before it ships.
+**Requirement.** Recordings and transcripts from Gong, Zoom, Google Meet and Microsoft Teams attach to the meeting on the timeline, and calls placed through Aircall or RingCentral log to the account and contact timeline with their recording, with consent status recorded; summaries, proposed tasks and risk or expansion mentions follow AI-002. This future source kind inherits AI-002's cited proposals, exact selected-line custody, discard and erasure before it ships; its proposals carry AI-002's classes, which the company's policy decides.
 
 **Acceptance.**
 1. Import a Zoom transcript, a Google Meet transcript, a Microsoft Teams transcript and a Gong call for one account, and place an Aircall call to one of its contacts; each attaches to the right meeting or contact, the call logs with its recording, and the summaries cite transcript lines.
@@ -794,7 +794,7 @@ Core · target · **missing**
 
 Core · target · **missing**
 
-**Requirement.** Signals, approvals, overdue tasks and daily digests post to chosen Slack, Teams or Nook channels or direct messages; recipients can acknowledge, snooze, complete a task or approve from the message where their role permits; a command looks up an account's health, owner and renewal. Messages in shared customer channels (Slack Connect) can log to the timeline when an admin enables it. This future source kind inherits AI-002 cited proposals, exact selected-line custody, human review, discard and erasure before it ships.
+**Requirement.** Signals, approvals, overdue tasks and daily digests post to chosen Slack, Teams or Nook channels or direct messages; recipients can acknowledge, snooze, complete a task or approve from the message where their role permits; a command looks up an account's health, owner and renewal. Messages in shared customer channels (Slack Connect) can log to the timeline when an admin enables it. This future source kind inherits AI-002's cited proposals, exact selected-line custody, discard and erasure before it ships; its proposals carry AI-002's classes, which the company's policy decides.
 
 **Acceptance.**
 1. Connect a Slack workspace and a Teams tenant, fire a signal and an approval, approve from Slack as an admin and attempt the same as a member, approve a second item from Teams, post the signal to a Nook channel and acknowledge it there, and run the account lookup; each approval records once with the approver's identity, the member is refused, the Nook acknowledgment appears on the signal and the lookup returns current health.
@@ -1389,10 +1389,10 @@ Core · push-further · **missing** · Cites BASE-AGENT-002, BASE-AGENT-006, BAS
 
 Core · push-further · **missing** · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-007
 
-**Requirement.** For digital and scaled accounts the agent monitors health, usage and lifecycle events, sends approved-template outreach within EMAIL-002 policy, answers customer replies that match approved knowledge, books meetings through Dial links when a human is needed, and escalates to a named CSM with a cited summary when risk, a commercial question or an unknown arises.
+**Requirement.** For digital and scaled accounts the agent monitors health, usage and lifecycle events, sends template outreach carrying external under EMAIL-002 and the company’s policy, answers customer replies that match approved knowledge, and books meetings through Dial links when the company’s policy calls for a person. A reply on price, terms or cancellation carries money and commitment, with external for the reply, which the company’s policy decides; under the held company policy, risk, a commercial question or an unknown escalates to the named CSM with a cited summary.
 
 **Acceptance.**
-1. Run the agent over 300 scaled accounts for a simulated month with replies of each kind; in-policy outreach is sent, a pricing question and a cancellation threat escalate with summaries, no reply invents a commitment, and every message is in the ledger.
+1. Under the held company policy, run the agent over 300 scaled accounts for a simulated month with replies of each kind; in-policy outreach is sent, a pricing question and a cancellation threat escalate with summaries, no reply invents a commitment, and every message is in the ledger.
 
 **Evidence.** None.
 **Gap.** No scaled-tier agent.
