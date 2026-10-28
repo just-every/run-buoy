@@ -1916,7 +1916,7 @@
       "executable": false
     },
     "src/buoy/ui/audit.ts": {
-      "sha256": "6d8862842ce3b18bc53c75c8b452f91a11305bb459d1e011c4db6d1c455c46bf",
+      "sha256": "37e8f313e8af3369cb6fa52b20926450750f9849acd117130fa13a47b3310a94",
       "executable": false
     },
     "src/buoy/ui/band.ts": {
@@ -4115,6 +4115,10 @@
       "sha256": "cb1c6dd14e070f04554f55b344df181c8440ba25590238fcc1ed0b98625130ef",
       "executable": false
     },
+    "tests/audit-view.mjs": {
+      "sha256": "a1891f0faa64e6889598db4f129ecb5ee304894b2911b6ac8969562670e132c4",
+      "executable": false
+    },
     "tests/billing-browser.mjs": {
       "sha256": "68a21133a26aad92abff75776e21a788f810a13ca8de37a89a2f9694a49d0b27",
       "executable": false
@@ -4240,7 +4244,7 @@
       "executable": false
     },
     "tests/flows.test.mjs": {
-      "sha256": "ad50dc2e5f2d3a9f970e509b74b71d57a50f4616bb743969a481ea23d3a2e204",
+      "sha256": "3b54fc9ab800742e49c12522f6c29124cb7d6af669533b8cdb937fcafc588bce",
       "executable": false
     },
     "tests/forecast-journey.mjs": {
@@ -4364,7 +4368,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "ab2435c371926e2a6e5b3c9ad2674752a57337c19d41f7c19219b3835da528e8",
+      "sha256": "c89d549c39f9d3c4b14b11898aa617fc4e50de40e34fe9ac1ecc47dbcfb03c0a",
       "executable": false
     },
     "tests/portal-browser.mjs": {
