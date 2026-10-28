@@ -28,6 +28,9 @@ export async function portalJourney(){
   assert.equal((await app.request('/api/buoy/portal/'+f.otherShared.id,{cookie:recipient.cookie})).status,403)
   const otherView=await app.request('/api/buoy/portal/'+f.otherShared.id,{cookie:outsider.cookie});assert.equal(otherView.status,200);assert.equal((await otherView.json()).name,'Other private plan')
   assert.equal((await request('', 'GET',undefined,app.cookie)).status,403)
+  const agent=await api('/agent-tokens','POST',{label:'synthetic-buoy-1995'}),attempts=(await api('/audit?action=agent.refused')).entries.length
+  assert.equal((await app.request('/api/buoy/portal/'+shared.id,{token:agent.token})).status,403)
+  assert.equal((await api('/audit?action=agent.refused')).entries.length,attempts+1,'Refused portal attempts retain the standard agent audit')
   assert.equal((await request('', 'GET',undefined,null)).status,401)
   const memberInternal=await app.request('/api/buoy/state',{cookie:recipient.cookie});assert.equal(memberInternal.status,403)
   for(const path of ['/api/buoy/accounts/'+other+'/plans','/api/buoy/accounts/'+accountId+'/activity','/api/buoy/tasks','/api/buoy/accounts/'+accountId+'/health','/api/buoy/reports','/api/buoy/search?q=plan'])assert.equal((await app.request(path,{cookie:recipient.cookie})).status,403,path)
@@ -101,6 +104,12 @@ export async function portalWithdrawalJourney(){
   app.cookie=await app.signIn('owner'+'@'+'example.test')
 
   grant=await send((await f.plans()).plans[0].revision)
+  const subject=(await api('/customer-people')).records.find(p=>p.id===f.champion.id),privacyPath='/customer-people/'+subject.id+'/privacy/'
+  const preview=await api(privacyPath+'preview','POST',{revision:subject.revision,emails:[]})
+  await api(privacyPath+'erase','POST',{revision:subject.revision,confirmation:subject.name,fingerprint:preview.fingerprint,emails:[],redactions:[],request:{verificationMethod:'verified-offline',receivedDate:new Date(instant).toISOString().slice(0,10),requesterReference:crypto.randomUUID()}})
+  assert.equal((await app.request('/api/buoy/portal/'+grant.id,{cookie:recipient.cookie})).status,403,'Customer erasure ends every linked plan grant')
+  assert.deepEqual((await f.plans()).plans,[],'Erased customer plan text and confirmations are unavailable')
+  assert.equal((await f.post(await f.body())).status,409,'An old plan capture cannot recreate erased customer ownership')
   await api('/accounts/'+accountId,'DELETE',{confirmation:f.customer(accountId).name})
   assert.equal((await app.request('/api/buoy/portal/'+grant.id,{cookie:recipient.cookie})).status,403,'Account erasure withdraws the complete portal projection')
   const native=(await (await app.request('/auth/operators',{cookie:app.cookie})).json()).find(p=>p.email==='plan-outsider'+'@'+'example.test')

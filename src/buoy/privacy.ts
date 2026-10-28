@@ -135,7 +135,7 @@ export async function privacyRequest(db:D1Database,actor:Actor,personId:string,i
  if(action==='erased'&&!held){
   const identities=[...new Map(current.data.usageMappings.filter(m=>m.user_id).map(m=>[JSON.stringify([m.source_id,m.user_id]),m])).values()]
   for(const m of identities)statements.push(stmt(db,'INSERT OR IGNORE INTO buoy_erased_usage_identities(source_id,identity_hash) VALUES(?,?)',m.source_id,await erasedIdentity(replay.key,String(m.source_id),String(m.user_id))))
-  statements.push(stmt(db,'UPDATE buoy_accounts SET revision=lower(hex(randomblob(16))) WHERE id IN(SELECT account_id FROM buoy_customer_memberships WHERE person_id=?)',personId),stmt(db,'DELETE FROM buoy_customer_people WHERE id=?',personId))
+  statements.push(stmt(db,'UPDATE buoy_accounts SET revision=lower(hex(randomblob(16))) WHERE id IN(SELECT account_id FROM buoy_customer_memberships WHERE person_id=?)',personId),stmt(db,'DELETE FROM buoy_success_plans WHERE customer_owner_id=?',personId),stmt(db,'DELETE FROM buoy_customer_people WHERE id=?',personId))
  }
  statements.push(stmt(db,'INSERT INTO buoy_privacy_receipts(id,subject,action,actor,recorded_at,document) VALUES(?,?,?,?,?,?)',receipt.id,receipt.subject,action,receipt.actor,stamp,JSON.stringify(receipt)),
   stmt(db,'INSERT INTO buoy_privacy_requests(id,subject,verification_method,received_date,requester_reference) VALUES(?,?,?,?,?)',receipt.id,receipt.subject,verified.verificationMethod,verified.receivedDate,verified.requesterReference),

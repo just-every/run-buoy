@@ -28,6 +28,13 @@ export async function planOutcomeJourney({browser,evidence}={}){
   const revision=(await f.plans()).plans[0].revision
   const latestSegment=(await api('/segments')).segments.find(s=>s.id===segment.id);await api('/segments','POST',{...segmentBody,id:segment.id,revision:latestSegment.revision})
   const rejected=await f.app.request('/api/buoy/outcomes',{cookie:f.app.cookie,method:'POST',body:{...body,operationKey:'synthetic-buoy-1973'}});assert.equal(rejected.status,400,'Satisfied baselines are refused')
+  const otherCurrent=(await api('/accounts/'+other+'/plans')).plans.find(p=>p.id===control.id)
+  await api('/accounts/'+other+'/plans','POST',{id:control.id,revision:otherCurrent.revision,accountRevision:(await api('/state')).accounts.find(a=>a.id===other).revision,name:'Reviewed next goal window',staffOwnerId:f.ownerId,customerOwnerId:champion.id,objectives:[{...metric,target:10},f.objectives[1]]})
+  const deadlineSegment=await api('/segments','POST',{...segmentBody,name:'Fresh reviewed goal deadline',accountIds:[other]})
+  const deadlineReport=await api('/outcomes','POST',{...body,name:'Inclusive plan deadline',segmentId:deadlineSegment.id,planIds:[control.id],operationKey:'synthetic-buoy-1985'}),deadlineBaseline=await api('/outcomes/'+deadlineReport.id+'/report')
+  instant=Date.parse(deadlineBaseline.deadline);await put(other,10)
+  const atDeadline=await api('/outcomes/'+deadlineReport.id+'/report');assert.equal(atDeadline.enrolled[0].reachedAt,deadlineBaseline.deadline);assert.equal(atDeadline.enrolled[0].elapsedHours,24);assert.equal(atDeadline.rate,1,'The exact UTC deadline remains inclusive for a new reviewed goal')
+  assert.equal((await api('/outcomes/'+report.id+'/report')).comparison[0].reachedAt,null,'A later goal definition never rewrites the missed original window')
   await planCohort(f,()=>instant,value=>{instant=value},objectives)
   if(browser){
    const context=await browser.newContext({viewport:{width:1440,height:1000},ignoreHTTPSErrors:true})
@@ -37,7 +44,9 @@ export async function planOutcomeJourney({browser,evidence}={}){
     const reportView=page.getByRole('heading',{name:'Metric milestone',exact:true}).locator('..')
     assert.match(await reportView.innerText(),/6 hours/);assert.match(await reportView.innerText(),/1 of 1 · 100%/);assert.match(await reportView.innerText(),/0 of 1 · 0%/);assert.match(await reportView.innerText(),/Missed/)
     const csvLink=reportView.getByRole('link',{name:'Download outcome report (CSV)'})
-    const response=await page.request.get(await csvLink.getAttribute('href'));assert.equal(response.status(),200);assert.equal(await response.text(),text,'Browser download returns the complete independently checked report')
+    const response=await page.request.get(new URL(await csvLink.getAttribute('href'),page.url()).href);assert.equal(response.status(),200)
+    const {csvRows}=await import('../src/buoy/migrate/csv.ts'),[columns,...downloaded]=csvRows(await response.text()),cell=(row,name)=>row[columns.indexOf(name)]
+    assert.deepEqual(downloaded.map(row=>['Cohort','Account id','Status','First observed UTC','Elapsed hours'].map(name=>cell(row,name))),[['enrolled',accountId,'reached',new Date(Date.parse(data.startedAt)+6*3600000).toISOString(),'6'],['comparison',other,'missed','','']],'Browser CSV reconciles both cohorts and independently timed first evidence')
     for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await reportView.scrollIntoViewIfNeeded();await scan(page,'PLAN-001 milestone report '+width);await reportView.screenshot({path:join(evidence,'plan-outcome-report-'+width+'.png')})}
    }finally{await context.close()}
   }
