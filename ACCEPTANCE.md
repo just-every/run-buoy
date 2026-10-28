@@ -13,7 +13,7 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 | Later | 0 | 0 | 0 | 0 |
 | Full target | 20 | 47 | 47 | 114 |
 
-Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `c50a1f192da9e1f0443499110f1455a273a1afa4` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -1344,8 +1344,8 @@ Core · push-further · **partial** · Cites BASE-AGENT-002, BASE-AGENT-006, BAS
 **Acceptance.**
 1. Seed renewals with a departed champion, an unconfirmed goal and an uplift not yet in Stripe; the agent flags each with citations, prepares the timeline carrying standard, with commercial changes carrying money and commitment under the company’s policy and reports the Stripe mismatch until the subscription matches the approved terms.
 
-**Evidence.** `src/buoy/health.ts`; `src/buoy/work.ts`; `tests/flows.test.mjs`
-**Gap.** Readiness checks, joint timelines and CRM and billing verification are absent.
+**Evidence.** `tests/renewal-readiness-journey.mjs` renewalReadinessJourney; `tests/renewal-browser.mjs` renewalBrowser; `tests/renewal-readiness-sandbox.mjs` AGENT-003 Stripe test uplift
+**Gap.** Final 1440 and 390 source-citation journey after current main integration and exact-SHA Verify remain pending. Native cited readiness, reviewed standard timelines, money and commitment declarations and live Stripe uplift mismatch then match are implemented.
 
 #### AGENT-004 — Portfolio-wide causes of risk
 

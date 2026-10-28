@@ -1445,7 +1445,7 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 
 ## Status
 
-Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026).
+Judged from the code and tests at commit `c50a1f192da9e1f0443499110f1455a273a1afa4` (28 October 2026).
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
@@ -1554,7 +1554,7 @@ Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c
 | `GOVERN-001` | Agent authority and action ledger | push-further | partial | `src/buoy/access.ts`; `src/buoy/core.ts`; `src/buoy/api.ts`; `src/buoy/agent-policy/`; `src/buoy/ui/agents.ts`; `migrations/core/0031_buoy_agent_policy.sql`; `tests/governance.mjs`; `tests/governance-browser.mjs` | Not asserted by the cited baseline evidence: A send-within-policy grant executes a permitted email; A send-within-policy grant refuses an out-of-policy email; Provider notification fees are excluded from the metered-operation ledger, rather than inferred from zero spend; Budget/ledger label. Asserted: Prepare-only grant can prepare; Held-policy person-approval is refused; Held-policy discount is refused; Pause stops both grants; Metered agent spend is zero; Ledger redaction and outcome distinction; Preparation mail has single internal recipient; Expiry bounds are asserted; Invalid policy inputs are refused; Excluded classes do not leak through derived fields; Missing preparation classes are refused; Concurrent minute cap is enforced; Retry-After reaches next UTC minute; Pause creates no work; Revoked credential is refused; One-time token is shown at 1440; Actual form-selected grant is returned at 1440; Reload hides token at 1440; Pause stops token at 1440; Resume restores grant at 1440; Revoke invalidates token at 1440; One-time token is shown at 390; Actual form-selected grant is returned at 390; Reload hides token at 390; Pause stops token at 390; Resume restores grant at 390; Revoke invalidates token at 390. |
 | `AGENT-001` | Verified risk resolution | push-further | partial | `src/buoy/work.ts`; `tests/flows.test.mjs` | Cross-source verification, multi-owner remedies and customer-confirmed outcomes are absent. |
 | `AGENT-002` | Retention interventions measured against comparable accounts | push-further | done | `src/buoy/experiments/index.ts`; `migrations/core/0066_buoy_experiments.sql`; `docs/experiments.md`; `tests/flows.test.mjs`; `tests/outcome-journey.mjs` |  |
-| `AGENT-003` | Evidence-backed renewal readiness | push-further | partial | `src/buoy/health.ts`; `src/buoy/work.ts`; `tests/flows.test.mjs` | Readiness checks, joint timelines and CRM and billing verification are absent. |
+| `AGENT-003` | Evidence-backed renewal readiness | push-further | partial | `tests/renewal-readiness-journey.mjs` renewalReadinessJourney; `tests/renewal-browser.mjs` renewalBrowser; `tests/renewal-readiness-sandbox.mjs` AGENT-003 Stripe test uplift | Final 1440 and 390 source-citation journey after current main integration and exact-SHA Verify remain pending. Native cited readiness, reviewed standard timelines, money and commitment declarations and live Stripe uplift mismatch then match are implemented. |
 | `AGENT-004` | Portfolio-wide causes of risk | push-further | missing |  | No portfolio clustering. |
 | `AGENT-005` | Scaled-tier digital CSM | push-further | missing |  | No scaled-tier agent. |
 | `AGENT-006` | Onboarding follow-through | push-further | missing |  | No onboarding follow-through agent. |
