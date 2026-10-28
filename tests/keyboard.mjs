@@ -18,7 +18,10 @@ async function tabTo(page, target) {
 export async function focused(page, target, label) {
  assert.equal(await target.count(), 1, 'Keyboard target is unique')
  if (await target.evaluate(element => element === document.activeElement)) await page.keyboard.press('Tab')
- const restingShadow = await target.evaluate(element => getComputedStyle(element).boxShadow)
+ const restingShadow = await target.evaluate(async element => {
+  await Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {})))
+  return getComputedStyle(element).boxShadow
+ })
  await tabTo(page, target)
  // Inspect painted keyboard focus after the browser has applied its native scroll.
  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
@@ -32,7 +35,7 @@ export async function focused(page, target, label) {
     visible: rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < innerHeight,
     obscured: !top || !(element === top || element.contains(top) || top.contains(element)) }
   }, restingShadow)
-  assert.ok(state.keyboardFocus && state.ring, 'Focused control has a visible outline or shadow')
+  assert.ok(state.keyboardFocus && state.ring, 'Focused control has a visible outline or shadow: ' + JSON.stringify(state))
   assert.ok(state.visible && !state.obscured, 'Focused control is visible and unobscured: ' + JSON.stringify(state))
  })
 }
