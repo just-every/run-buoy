@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "67e1dc8c7d8cabcf50934d30f8e5c308295301fa9cd3c39379a2c1c4f0069cd1",
+      "sha256": "efdc5d902f02bc5a0160727eae9d727c7c11059689fc00730b421bb2d4e7f5da",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "50401bf56cde6ba21dce4526fbec44992f2c3db30add5b5ec10fc0f819720089",
+      "sha256": "4e3d579705f3afb0f35dee12ac1cdbb0aa3ad3717a5a728af483d24eab7e291c",
       "executable": false
     },
     "DEMO.md": {
@@ -244,7 +244,7 @@
       "executable": false
     },
     "docs/reviews.md": {
-      "sha256": "36b70ee35920bab0eed984cac687c314bbeb26477b9131e400b9b4e73f61efa4",
+      "sha256": "826f0fb48fc6798c683fee8004c94c771bfc1ad1145f87bee0eff16edb82b1f7",
       "executable": false
     },
     "docs/roles.md": {
@@ -668,7 +668,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "3df14685cb530cfece8fa0ea3cf4b9658a44e9df3900cd177f1a6cd615bda453",
+      "sha256": "7c9e11c08a22f87a1330d7457db064366ce69b7bf4194e982f5e440e4213ae59",
       "executable": false
     },
     "packaging.json": {
@@ -676,7 +676,7 @@
       "executable": false
     },
     "pnpm-lock.yaml": {
-      "sha256": "72adf7b0514fa7f7d5b37bc174c3941c8424b5c8906bed75c4ccbbff439b61d9",
+      "sha256": "c86a1b0ee599cd08b7ed2bc3cbffb45da43ebadb0d9acce40680a6789e29cd09",
       "executable": false
     },
     "public/apple-touch-icon.png": {
@@ -1684,7 +1684,19 @@
       "executable": false
     },
     "src/buoy/reviews/export.ts": {
-      "sha256": "9ce2ef2a8627cb62b8177e9283547bb50729cd1838339c62d76dbfc238b186a8",
+      "sha256": "ffe7cff5cfe0dc6e159763d114bd52388b351882806261d180b93b231fac4f90",
+      "executable": false
+    },
+    "src/buoy/reviews/fonts/DejaVuSans.ttf": {
+      "sha256": "57f73e11f51999432bf7ab22ce55b6f945d5eca1bf824404cfa9ec2e3718c84e",
+      "executable": false
+    },
+    "src/buoy/reviews/fonts/inline.d.ts": {
+      "sha256": "1533580243aba530bfbb15c42d75525a72aaa2b1c3d9ac0cbd7d2c4716dab7d2",
+      "executable": false
+    },
+    "src/buoy/reviews/fonts/LICENSE.txt": {
+      "sha256": "bd45849288570b1bd82b52d97621666d889ef399f0a7b6373b4f60863194a6fe",
       "executable": false
     },
     "src/buoy/reviews/index.ts": {
@@ -4420,7 +4432,7 @@
       "executable": false
     },
     "tests/review-journey.mjs": {
-      "sha256": "1282cfe8eaffac451f28abc6e672257424b5cb6e55ff97f028c09501cb557702",
+      "sha256": "d664d790712c03f256e2546b5f9411deedaf7d0ae0d90765c07caa8c6b7f81cd",
       "executable": false
     },
     "tests/roles-account-edit.mjs": {
