@@ -1,3 +1,5 @@
+import {planAccess} from '../plans/access'
+import {commercialFor,readableIds,scopeImage,scopeFence} from '../roles/access'
 import {plansState} from '../plans'
 import {adoptionState} from '../adoption'
 import {exportPdf,exportPowerPoint} from './export'
@@ -17,10 +19,10 @@ const interpretation='Recorded account evidence, not a guaranteed prediction or 
 const keys=(input:Record<string,unknown>,allowed:string[])=>insist(Object.keys(input).every(k=>allowed.includes(k)),'Unsupported business-review property.')
 async function access(db:D1Database,actor:Actor){requirePerson(actor);return roleAccess(db,actor)}
 export async function reviewState(db:D1Database,actor:Actor,key?:string){
- const role=await access(db,actor),rows=(await db.prepare('SELECT id,account_id AS accountId,revision,reviewed_revision AS reviewedRevision,reviewed_by AS reviewedBy,reviewed_at AS reviewedAt,document,created_at AS createdAt FROM buoy_reviews ORDER BY created_at DESC,id').all<Omit<Review,'document'>&{document:string}>()).results.map(({document,...r})=>({...r,document:JSON.parse(document) as ReviewDocument}))
- const selected=key?rows.find(r=>r.id===key):null;insist(!key||selected,'Business review unavailable.',404)
+ const role=await roleAccess(db,actor);insist(role.restricted||['owner','admin'].includes(actor.role),'A permitted staff profile is required.',403);const image=await scopeImage(db),visible=new Set(readableIds(image.value,actor,role).filter(id=>commercialFor(role,actor,image.value.accounts.find(a=>a.id===id)!.ownerId)==='full')),rows=(await db.prepare('SELECT id,account_id AS accountId,revision,reviewed_revision AS reviewedRevision,reviewed_by AS reviewedBy,reviewed_at AS reviewedAt,document,created_at AS createdAt FROM buoy_reviews ORDER BY created_at DESC,id').all<Omit<Review,'document'>&{document:string}>()).results.map(({document,...r})=>({...r,document:JSON.parse(document) as ReviewDocument}))
+ const permitted=rows.filter(r=>visible.has(r.accountId));const selected=key?permitted.find(r=>r.id===key):null;insist(!key||selected,'Business review unavailable.',404)
  const meetings=selected?(await stmt(db,'SELECT id,receipt,recorded_at AS recordedAt FROM buoy_review_meetings WHERE review_id=? ORDER BY recorded_at,id',selected.id).all<{id:string;receipt:string;recordedAt:string}>()).results.map(({receipt,...r})=>({...r,...JSON.parse(receipt)})):[]
- await db.batch([roleFence(db,actor,role),stmt(db,'DELETE FROM buoy_assertions')]);return {reviews:rows,selected:selected??null,meetings,interpretation}
+ await db.batch([roleFence(db,actor,role),scopeFence(db,image),stmt(db,'DELETE FROM buoy_assertions')]);return {reviews:permitted,selected:selected??null,meetings,interpretation}
 }
 export async function generateReview(db:D1Database,actor:Actor,input:Record<string,unknown>){
  const role=await access(db,actor);keys(input,['accountId','name','kind','start','end']);const accountId=text(input.accountId,'Account',100),a=await account(db,accountId),end=date(input.end??now().slice(0,10),'Review end'),start=date(input.start??new Date(Date.parse(end)-89*86400000).toISOString().slice(0,10),'Review start')
@@ -52,9 +54,9 @@ export async function generateReview(db:D1Database,actor:Actor,input:Record<stri
  const key=id();await db.batch([roleFence(db,actor,role),guard(db,'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)',accountId,a.revision),guard(db,`(${src.sql})=?`,src.raw),stmt(db,'INSERT INTO buoy_reviews VALUES(?,?,?,?,NULL,NULL,NULL,?,?)',key,accountId,JSON.stringify(doc),id(),actor.id,now()),stmt(db,'INSERT INTO buoy_review_people(review_id,person_id) SELECT ?,person_id FROM buoy_customer_memberships WHERE account_id=?',key,accountId),...accountAudit(db,actor,accountId,'business-review.generated'),stmt(db,'DELETE FROM buoy_assertions')]);return {id:key}
 }
 export async function editReview(db:D1Database,actor:Actor,key:string,input:Record<string,unknown>){
- const role=await access(db,actor);keys(input,['revision','slides']);const current=(await reviewState(db,actor,key)).selected!;insist(current.revision===input.revision,'Deck changed. Reload before editing.',409);insist(Array.isArray(input.slides)&&input.slides.length===current.document.slides.length,'Edit every existing slide title and commentary; source facts remain attached.')
+ keys(input,['revision','slides']);const current=(await reviewState(db,actor,key)).selected!,permission=await planAccess(db,actor,current.accountId,true);insist(current.revision===input.revision,'Deck changed. Reload before editing.',409);insist(Array.isArray(input.slides)&&input.slides.length===current.document.slides.length,'Edit every existing slide title and commentary; source facts remain attached.')
  const slides=current.document.slides.map((slide,index)=>{const row=object((input.slides as unknown[])[index]);keys(row,['title','commentary']);insist(typeof row.commentary==='string'&&row.commentary.length<=3000,'Slide commentary is bounded text.');return {...slide,title:text(row.title,'Slide title',200),commentary:row.commentary}})
- await db.batch([roleFence(db,actor,role),guard(db,'EXISTS(SELECT 1 FROM buoy_reviews WHERE id=? AND revision=?)',key,current.revision),stmt(db,'UPDATE buoy_reviews SET document=?,revision=?,reviewed_revision=NULL,reviewed_by=NULL,reviewed_at=NULL WHERE id=?',JSON.stringify({...current.document,slides}),id(),key),...accountAudit(db,actor,current.accountId,'business-review.edited'),stmt(db,'DELETE FROM buoy_assertions')]);return {id:key}
+ await db.batch([...permission.fences(),guard(db,'EXISTS(SELECT 1 FROM buoy_reviews WHERE id=? AND revision=?)',key,current.revision),stmt(db,'UPDATE buoy_reviews SET document=?,revision=?,reviewed_revision=NULL,reviewed_by=NULL,reviewed_at=NULL WHERE id=?',JSON.stringify({...current.document,slides}),id(),key),...accountAudit(db,actor,current.accountId,'business-review.edited'),stmt(db,'DELETE FROM buoy_assertions')]);return {id:key}
 }
 export async function approveReview(db:D1Database,actor:Actor,key:string,input:Record<string,unknown>){
  const role=await access(db,actor);keys(input,['revision','confirmation']);insist(input.confirmation==='reviewed','Explicit review of this deck revision is required.');const current=(await reviewState(db,actor,key)).selected!;insist(current.revision===input.revision,'Deck changed. Review the current slides.',409)

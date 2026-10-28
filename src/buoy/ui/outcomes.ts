@@ -19,7 +19,7 @@ interface OutcomeReport {
   name: string;
   segmentId: string;
   segmentName: string;
-  kind: 'healthy' | 'renewed';
+  kind: 'healthy' | 'renewed' | 'plan-objective';
   windowDays: number;
   startedAt: string;
   deadline: string;
@@ -69,7 +69,7 @@ function cohort(title: string, accounts: OutcomeAccount[], rate: number, meanHou
 }
 
 function reportView(report: OutcomeReport, index: number): string {
-  const definition = report.kind === 'healthy'
+  const definition = report.kind === 'plan-objective' ? 'Plan objective: the frozen metric target or authenticated customer statement is achieved within the UTC window. A changed objective or customer owner cannot satisfy the original definition.' : report.kind === 'healthy'
     ? 'Healthy: current account evidence is healthy. Task completion alone does not satisfy this outcome.'
     : 'Renewed: a new approved renewal decision records “renewed” during the tracking window. Task completion alone does not satisfy this outcome.';
   return section(report.name, `<p>${escape(definition)}</p>`

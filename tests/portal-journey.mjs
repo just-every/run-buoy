@@ -1,0 +1,111 @@
+import assert from 'node:assert/strict'
+import {planFixture,planDependencies} from './plan-fixture.mjs'
+export async function portalFixture(options={}){
+ const f=await planFixture(options),dep=await planDependencies(f)
+ await f.api('/fields','POST',{key:'portal_goal',label:'Agreed measure',type:'number'})
+ await f.api('/accounts/'+f.accountId+'/fields','PUT',{revision:(await f.api('/state')).accounts.find(a=>a.id===f.accountId).revision,values:{portal_goal:1},source:'synthetic-buoy-1960'})
+ const plan=await f.save({objectives:[{...f.objectives[0],field:'custom.portal_goal'},f.objectives[1]],taskIds:[dep.taskId],milestones:dep.milestones})
+ const beforeInvitation=f.app.mails.length
+ await f.api('/portal-invitations','POST',{email:'plan-champion'+'@'+'example.test',displayName:'Customer champion'})
+ assert.equal(f.app.mails.length,beforeInvitation+1,'An explicit customer invitation produces one native sign-in message')
+ assert.equal((await f.app.request('/api/buoy/accounts/'+f.accountId+'/portal-sharing',{cookie:f.app.cookie,method:'POST',body:{planId:plan.id,planRevision:plan.revision,email:'plan-champion'+'@'+'example.test',days:30,taskIds:[]}})).status,409,'Unconfirmed invitations cannot receive plan access')
+ const recipient={cookie:await f.app.signIn('plan-champion'+'@'+'example.test')},outsider=await f.invited('plan-outsider'+'@'+'example.test','Other customer')
+ const otherChampion=await f.api('/customer-people','POST',{kind:'contact',name:'Other champion',accountIds:[f.other],source:'synthetic-buoy-1967'})
+ const otherPlan=await f.api('/accounts/'+f.other+'/plans','POST',{accountRevision:(await f.api('/state')).accounts.find(a=>a.id===f.other).revision,name:'Other private plan',staffOwnerId:f.ownerId,customerOwnerId:otherChampion.id,objectives:[f.objectives[1]]})
+ const otherShared=await f.api('/accounts/'+f.other+'/portal-sharing','POST',{planId:otherPlan.id,planRevision:otherPlan.revision,email:'plan-outsider'+'@'+'example.test',days:30,taskIds:[]})
+ const shareBody=()=>({planId:plan.id,planRevision:plan.revision,email:'plan-champion'+'@'+'example.test',days:30,taskIds:[dep.taskId]})
+ const shared=await f.api('/accounts/'+f.accountId+'/portal-sharing','POST',shareBody())
+ const request=(suffix='',method='GET',body,cookie=recipient.cookie,headers={})=>f.app.request('/api/buoy/portal/'+shared.id+suffix,{cookie,method,body,headers})
+ const read=async()=>{const response=await request();assert.equal(response.status,200,await response.clone().text());return response.json()}
+ const action=async body=>request('/action','POST',{revision:(await read()).revision,...body})
+ return {...f,dep,plan,recipient,outsider,otherShared,shareBody,shared,request,read,action}
+}
+export async function portalJourney(){
+ const f=await portalFixture(),{app,api,accountId,other,plan,shared,recipient,outsider,request,read,action}=f
+ try{
+  let view=await read();assert.deepEqual(view.objectives.map(o=>[o.id,o.status]),[['usage','achieved'],['statement','awaiting-customer-confirmation']]);assert.deepEqual(view.tasks.map(t=>t.id),[f.dep.taskId]);assert.deepEqual(view.milestones.map(m=>m.id),['recovery'])
+  assert.equal((await request('', 'GET',undefined,outsider.cookie)).status,403)
+  assert.equal((await app.request('/api/buoy/portal/'+f.otherShared.id,{cookie:recipient.cookie})).status,403)
+  const otherView=await app.request('/api/buoy/portal/'+f.otherShared.id,{cookie:outsider.cookie});assert.equal(otherView.status,200);assert.equal((await otherView.json()).name,'Other private plan')
+  assert.equal((await request('', 'GET',undefined,app.cookie)).status,403)
+  assert.equal((await request('', 'GET',undefined,null)).status,401)
+  const memberInternal=await app.request('/api/buoy/state',{cookie:recipient.cookie});assert.equal(memberInternal.status,403)
+  for(const path of ['/api/buoy/accounts/'+other+'/plans','/api/buoy/accounts/'+accountId+'/activity','/api/buoy/tasks','/api/buoy/accounts/'+accountId+'/health','/api/buoy/reports','/api/buoy/search?q=plan'])assert.equal((await app.request(path,{cookie:recipient.cookie})).status,403,path)
+  assert.equal((await app.request('/portal/'+crypto.randomUUID(),{cookie:recipient.cookie})).status,403)
+  assert.doesNotMatch(JSON.stringify(view),/"(?:billing|support|health|staffOwnerId)"|custom\.portal_goal|owner.+example|synthetic-buoy-1901/i)
+  const home=await app.request('/api/buoy/portal/home',{cookie:recipient.cookie});assert.deepEqual((await home.json()).plans.map(p=>p.id),[shared.id])
+  assert.equal((await request('/action','POST',{revision:view.revision,action:'confirm',objectiveId:'statement',statement:'synthetic-buoy-1961'},app.cookie)).status,403)
+  assert.equal((await request('/action','POST',{revision:view.revision,action:'confirm',objectiveId:'statement',statement:'synthetic-buoy-1961'},recipient.cookie,{origin:'https://outside.invalid'})).status,403)
+  assert.equal((await action({action:'confirm',objectiveId:'usage',statement:'Invented metric success'})).status,400)
+  assert.equal((await action({action:'complete-task',taskId:f.dep.foreignTaskId,evidence:'Wrong account'})).status,403)
+  assert.equal((await action({action:'confirm',objectiveId:'statement',statement:''})).status,400)
+  const statementReport=await api('/outcomes','POST',{name:'Customer-confirmed milestone',kind:'plan-objective',planIds:[plan.id],objectiveId:'statement',segmentId:f.dep.segment.id,windowDays:2,operationKey:'synthetic-buoy-1975'})
+  const beforeOutbound=app.outbound.length
+  assert.equal((await action({action:'comment',comment:'Customer reviewed the agreed plan.'})).status,201)
+  assert.equal((await action({action:'complete-task',taskId:f.dep.taskId,evidence:'Customer finished the requested setup.'})).status,201)
+  assert.equal((await action({action:'complete-task',taskId:f.dep.taskId,evidence:'Duplicate.'})).status,409)
+  assert.equal((await action({action:'confirm',objectiveId:'statement',statement:'The agreed business outcome is achieved.'})).status,201)
+  assert.equal((await action({action:'confirm',objectiveId:'statement',statement:'Duplicate.'})).status,409)
+  assert.equal(app.outbound.length,beforeOutbound,'Customer actions cause no provider request')
+  view=await read();assert.deepEqual(view.objectives.map(o=>o.status),['achieved','achieved']);assert.equal(view.comments.length,1);assert.equal(view.comments[0].body,'Customer reviewed the agreed plan.');assert.ok(view.tasks[0].completedAt)
+  const observed=await api('/outcomes/'+statementReport.id+'/report');assert.equal(observed.rate,1);assert.equal(observed.comparisonRate,0);assert.deepEqual(observed.enrolled.map(a=>a.accountId),[accountId]);assert.deepEqual(observed.comparison.map(a=>a.accountId),[other]);assert.match(observed.enrolled[0].evidence,/Plan objective statement achieved/)
+  const staff=(await f.plans());assert.equal(staff.readiness.achieved,2);assert.equal(staff.readiness.awaitingConfirmation,0)
+  await api('/scorecards/publish','POST',{revision:null,config:{name:'Confirmed plan goal measure',measures:[{key:'goals',name:'Plan attainment',field:'goals.attainmentPercent',min:0,max:100,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}})
+  assert.equal((await api('/scorecards')).accounts.find(a=>a.accountId===accountId).score,100)
+  const timeline=await api('/accounts/'+accountId+'/activity?source=customer-portal');assert.deepEqual(timeline.records.map(r=>r.kind).sort(),['customer-comment','customer-confirmation','customer-task-completed']);assert.ok(timeline.records.some(r=>r.reference==='Customer reviewed the agreed plan.'))
+  assert.equal((await api('/audit?action=portal.confirmation')).entries.length,1)
+  const sharePath='/api/buoy/accounts/'+accountId+'/portal-sharing'
+  for(const days of [0,366])assert.equal((await app.request(sharePath,{cookie:app.cookie,method:'POST',body:{...f.shareBody(),days}})).status,400)
+  assert.equal((await app.request(sharePath,{cookie:outsider.cookie,method:'POST',body:f.shareBody()})).status,403)
+  assert.equal((await app.request(sharePath,{cookie:app.cookie,method:'POST',body:{...f.shareBody(),taskIds:[f.dep.foreignTaskId]}})).status,400)
+  // Any edit withdraws the reviewed revision and its old confirmation.
+  await f.save({id:plan.id,revision:plan.revision,name:'Revised business objectives'})
+  assert.equal((await request()).status,403);assert.equal((await f.plans()).plans[0].objectives[1].status,'awaiting-customer-confirmation')
+  const current=(await f.plans()).plans[0],again=await api('/accounts/'+accountId+'/portal-sharing','POST',{...f.shareBody(),planRevision:current.revision,taskIds:[]})
+  const access=(await api('/accounts/'+accountId+'/portal-sharing')).grants.find(g=>g.id===again.id)
+  await api('/accounts/'+accountId+'/portal-sharing/'+again.id,'DELETE',{revision:access.revision})
+  assert.equal((await app.request('/api/buoy/portal/'+again.id,{cookie:recipient.cookie})).status,403)
+  assert.equal((await app.request('/api/buoy/state',{cookie:recipient.cookie})).status,403,'Revocation never converts a customer back to internal staff')
+  console.log('PLAN-001 portal sharing, exact recipient boundaries, customer-only identity, customer task and comment timeline, revision-bound confirmation, goal health, revocation and inert outbound passed.')
+ }finally{await app.close()}
+}
+
+export async function portalWithdrawalJourney(){
+ let instant=Date.UTC(2026,9,27,12)
+ const f=await portalFixture({clock:()=>instant}),{app,api,accountId,recipient}=f
+ try{
+  const send=async(planRevision=f.plan.revision,days=30)=>api('/accounts/'+accountId+'/portal-sharing','POST',{...f.shareBody(),planRevision,days,taskIds:[]})
+  let grant=await send(undefined,1)
+  instant+=2*86400000;recipient.cookie=await app.signIn('plan-champion'+'@'+'example.test');app.cookie=await app.signIn('owner'+'@'+'example.test')
+  assert.equal((await app.request('/api/buoy/portal/'+grant.id,{cookie:recipient.cookie})).status,403,'Expired grants are refused even with a fresh customer session')
+  assert.equal((await api('/accounts/'+accountId+'/portal-sharing')).grants.find(g=>g.id===grant.id).status,'Expired')
+  grant=await send()
+  const person=(await api('/customer-people')).records.find(p=>p.id===f.champion.id)
+  await api('/customer-people/'+person.id,'PUT',{kind:'contact',name:person.name,accountIds:[f.other],revision:person.revision,source:'synthetic-buoy-1968'})
+  assert.equal((await app.request('/api/buoy/portal/'+grant.id,{cookie:recipient.cookie})).status,403,'Withdrawn customer membership stops access')
+  const reloaded=(await api('/customer-people')).records.find(p=>p.id===person.id)
+  await api('/customer-people/'+person.id,'PUT',{kind:'contact',name:person.name,accountIds:[accountId],revision:reloaded.revision,source:'synthetic-buoy-1969'})
+  const current=(await f.plans()).plans[0];await f.save({id:current.id,revision:current.revision,customerOwnerId:person.id})
+  const stepped=await app.request('/auth/step-up',{method:'POST',cookie:app.cookie,body:{action:'owner:transfer'}});assert.equal(stepped.status,202)
+  const proof=app.mails.findLast(mail=>mail.to.includes('owner'+'@'+'example.test')),proofUrl=new URL(proof.html.match(/href="([^"]*\/auth\/confirm\?token=[^"]+)"/)[1].replaceAll('&amp;','&'))
+  assert.equal((await app.request(proofUrl.pathname+proofUrl.search,{cookie:app.cookie})).status,200)
+  assert.equal((await app.request('/auth/confirm',{method:'POST',cookie:app.cookie,body:{token:proofUrl.searchParams.get('token')}})).status,303)
+  assert.equal((await app.request('/auth/invite',{method:'POST',cookie:app.cookie,body:{email:'portal-second-owner'+'@'+'example.test',displayName:'Second portal owner',role:'owner'}})).status,202)
+  const secondOwner=await app.signIn('portal-second-owner'+'@'+'example.test')
+  const stoppedGrant=await send((await f.plans()).plans[0].revision)
+  for(const status of ['inactive','active']){
+   assert.equal((await app.request('/auth/operator/status',{method:'POST',cookie:secondOwner,body:{operatorId:f.ownerId,status}})).status,200)
+   assert.equal((await app.request('/api/buoy/portal/'+stoppedGrant.id,{cookie:recipient.cookie})).status,403,'An issuing-owner change stops access even after reactivation')
+   const inventory=await app.request('/api/buoy/accounts/'+accountId+'/portal-sharing',{cookie:secondOwner});assert.equal((await inventory.json()).grants.find(g=>g.id===stoppedGrant.id).status,'Authority changed')
+  }
+  app.cookie=await app.signIn('owner'+'@'+'example.test')
+
+  grant=await send((await f.plans()).plans[0].revision)
+  await api('/accounts/'+accountId,'DELETE',{confirmation:f.customer(accountId).name})
+  assert.equal((await app.request('/api/buoy/portal/'+grant.id,{cookie:recipient.cookie})).status,403,'Account erasure withdraws the complete portal projection')
+  const native=(await (await app.request('/auth/operators',{cookie:app.cookie})).json()).find(p=>p.email==='plan-outsider'+'@'+'example.test')
+  assert.equal((await app.request('/auth/operator/status',{cookie:app.cookie,method:'POST',body:{operatorId:native.id,status:'inactive'}})).status,200)
+  assert.equal((await app.request('/api/buoy/portal/'+f.otherShared.id,{cookie:f.outsider.cookie})).status,401,'Deactivation withdraws customer identity at the native session door')
+  console.log('PLAN-001 controlled-clock expiry, membership withdrawal, account erasure and customer deactivation passed.')
+ }finally{await app.close()}
+}

@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "6e1fba58f8e721d6eb827c6afae3f3740206feba27c6d2ec94db8c7821bfd284",
+      "sha256": "4968c750e0f35a7afe462c2a2635661d53e7bba05155b20aa2e70f75df097a20",
       "executable": false
     },
     "DEMO.md": {
@@ -268,7 +268,7 @@
       "executable": false
     },
     "docs/success-plans.md": {
-      "sha256": "cb31d58db648c2b955db4f5b6bbb4a0b4ec3e9eb806de210ef2069280de01dae",
+      "sha256": "f5139853e3cea92c1cbe598320f21c48ca568a2f4c3a2a44400691793b93aab8",
       "executable": false
     },
     "docs/usage.md": {
@@ -324,7 +324,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "ab1fa8363aa730b5fa7e7fa60b5944a610a4307477a61a5b97e26a9660f41ea5",
+      "sha256": "21d70caa28afcf82f13d5b036668609412d4d80f1da838c75e404855d54f8564",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -643,8 +643,16 @@
       "sha256": "bf774cb91e44c2310354de32594cab579a2581f326fe6e093f86080bf2ad4807",
       "executable": false
     },
+    "migrations/core/0076_buoy_plan_portal.sql": {
+      "sha256": "a58944c6e88e6b185aeff36367101883e66ffd546670b4fb071cd9c3e82a6a1e",
+      "executable": false
+    },
     "migrations/core/0076_buoy_trust_privacy.sql": {
       "sha256": "94af9239f8fd9d0c25041f684b0a187799bd87c6e1e4defa1fe5bd99689b5359",
+      "executable": false
+    },
+    "migrations/core/0077_buoy_plan_outcomes.sql": {
+      "sha256": "59bb35bdb647b1088384e5d4a52d807ba17cc9f10c962c41fde1791bafac9230",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -988,7 +996,7 @@
       "executable": false
     },
     "scripts/installer/local.mjs": {
-      "sha256": "2ca575b195b22172c3f288a7a8db510181e4f55bc7a4442ea8f1414179048d60",
+      "sha256": "be425b0777473f22c5ed29dd1c4179c584edc43b02d1ca860d40526940f1e31a",
       "executable": false
     },
     "scripts/installer/seed.mjs": {
@@ -1148,7 +1156,7 @@
       "executable": false
     },
     "src/buoy/access.ts": {
-      "sha256": "a94480b2a0929dbf8604b02e1b19dbcea31f7d99370b15dba238955c6dff1ee0",
+      "sha256": "0219dcfc5b190df263c3b61b0adb39a67f81a9cda1333bf0929c6877b54bc37b",
       "executable": false
     },
     "src/buoy/account-consumers.ts": {
@@ -1160,7 +1168,7 @@
       "executable": false
     },
     "src/buoy/activity.ts": {
-      "sha256": "2856ca236d07133f21d9d1a3cfe75c16ee20e4399d99afae13e9f2508abe9cd7",
+      "sha256": "4910e7e601c1abe345a49fa8b0c463bbffe66282095b6b1935a3e54d4b977b07",
       "executable": false
     },
     "src/buoy/adoption/consumers-alerts.ts": {
@@ -1272,7 +1280,7 @@
       "executable": false
     },
     "src/buoy/api.ts": {
-      "sha256": "85de911f0b00c802daeccbb12733d135c4cda2502cd2c403da1caff62464a1e0",
+      "sha256": "1fa52b96cd6f7eb880b31d75ab5e22033b3220940c52e981fe85458646393777",
       "executable": false
     },
     "src/buoy/audit-records.ts": {
@@ -1476,11 +1484,11 @@
       "executable": false
     },
     "src/buoy/outcomes/index.ts": {
-      "sha256": "21695590c81217d3b7e42335f4c9211cbc362402f81fe95e17ed68e04a911b06",
+      "sha256": "f3685895a1d6f8afbc6a070c18f0ee485d341ad781ff463f8c8c11e74a620e7c",
       "executable": false
     },
     "src/buoy/outcomes/observe.ts": {
-      "sha256": "01895af6cb0e702380cc86fb0a8f36b4dd4d4da9d9ca16281c965f87fa46a5b3",
+      "sha256": "ca40eaff87808a93c6172b85ff1ffb74db6ed0fcd34a8333639ffc7125b8e4f5",
       "executable": false
     },
     "src/buoy/outcomes/report.ts": {
@@ -1488,7 +1496,7 @@
       "executable": false
     },
     "src/buoy/outcomes/types.ts": {
-      "sha256": "28c490e689e62875bb77f8985970894b71dfb5fd2176cc2b794d41c7054c5fa2",
+      "sha256": "eb6e3e9b36b077cf57302836256cff9c1b82a68cca79e48a8f40cbb4bc6a684d",
       "executable": false
     },
     "src/buoy/people/fields.ts": {
@@ -1516,11 +1524,15 @@
       "executable": false
     },
     "src/buoy/plans/index.ts": {
-      "sha256": "b5660e299becea1c9d085e8777f55456eeb12ca358979bd1184766ba44346a0b",
+      "sha256": "931fde4dcf7a54409f811d71364e2bd691e2b26ca6935cf3d502490c809c1983",
       "executable": false
     },
     "src/buoy/plans/model.ts": {
-      "sha256": "c5e8dbab2a89c18fd7d35338f5cc8e4d888da38ea0e65b3f77a909c4da83b534",
+      "sha256": "8dfbe9724359422389f9772e37cc9c1a41a087196b1533462972513cdcfa5742",
+      "executable": false
+    },
+    "src/buoy/plans/outcomes.ts": {
+      "sha256": "5d8a8a071ca6757edd7945ace5a5910963d9b6755e81599155ec3d2b14012ddd",
       "executable": false
     },
     "src/buoy/play/approval.ts": {
@@ -1547,8 +1559,12 @@
       "sha256": "1e103aecced90b46046f9e28043024fc9561ba036fa25689d9b46b600d0c4e28",
       "executable": false
     },
+    "src/buoy/portal/index.ts": {
+      "sha256": "d1a43e1238fcaaa3604bee6cb7aa899e1d4d649fef21268db1210ba5abe26771",
+      "executable": false
+    },
     "src/buoy/privacy.ts": {
-      "sha256": "68210412120d544e7e3552f1bfe48800a3205f71755bbd920625e61ad1b24568",
+      "sha256": "7e0de7b7c6cff268280a47da4299b574f80d980c20c693ac44efdb44ee00c10f",
       "executable": false
     },
     "src/buoy/privacy/discovery.ts": {
@@ -1648,7 +1664,7 @@
       "executable": false
     },
     "src/buoy/reviews/index.ts": {
-      "sha256": "edbac27fcbbe66f1ce5f3ed23eb415f6dd85513833e85c47056fd66df7ccfded",
+      "sha256": "5cdf8e2e9737ed3a5a53296b9058416004001573524d9996d0a0a1e6a9ade4eb",
       "executable": false
     },
     "src/buoy/roles/access.ts": {
@@ -1840,7 +1856,7 @@
       "executable": false
     },
     "src/buoy/ui/actions.ts": {
-      "sha256": "7b467003a07e82d68b6113224152ae3c59a49622ca9dc663889609034530f173",
+      "sha256": "8139a247ab7567ef3b2855256f0bb6708fbee77a77e3b01c5baba8190a1cc27e",
       "executable": false
     },
     "src/buoy/ui/adoption-consumers.ts": {
@@ -1932,7 +1948,7 @@
       "executable": false
     },
     "src/buoy/ui/index.ts": {
-      "sha256": "d4999543e9bf84b69f377578ce1ae326051b06132a80d4114eebf2d08cecd857",
+      "sha256": "f5ec7b2dd256dd24c3a8996bb7d2de281794e0f6fa2d05e4850dbd891f6287dc",
       "executable": false
     },
     "src/buoy/ui/monthly-revenue.ts": {
@@ -1944,15 +1960,19 @@
       "executable": false
     },
     "src/buoy/ui/outcomes.ts": {
-      "sha256": "c0c5d0ea989803556eb963dd6730cf0c76433fc75f24a505c819ee9491a75446",
+      "sha256": "6a00fc573fe817900e3291a2a40d0fa026a937e4a55667cb0632490665a3d9a7",
       "executable": false
     },
     "src/buoy/ui/plans.ts": {
-      "sha256": "b4a58a33f3f4e15578f97e45855c1c654392132977dbaa09918616ec56d14a3d",
+      "sha256": "47e78589e12c896f780c73f6603ed8cbafeb51c2e85ef1037ea6fc260f9255a2",
       "executable": false
     },
     "src/buoy/ui/playbooks.ts": {
       "sha256": "f59b69973450ccf77854b45d5793e79da375537bc2af01afa7d0cc37425daa4b",
+      "executable": false
+    },
+    "src/buoy/ui/portal.ts": {
+      "sha256": "9398193e017200228ea630355868b00395744d800f9c160ce4df4e5cbc367e4f",
       "executable": false
     },
     "src/buoy/ui/privacy.ts": {
@@ -2012,7 +2032,7 @@
       "executable": false
     },
     "src/buoy/ui/scoped.ts": {
-      "sha256": "27607dfcf88589298167b95b835a02a688adecdd177a8223b1561fe2112a246f",
+      "sha256": "3db790f733bc64c77681db9da74d22947eb18bed0b8280dd0c6b3aaf5c92c448",
       "executable": false
     },
     "src/buoy/ui/scorecards.ts": {
@@ -2028,7 +2048,7 @@
       "executable": false
     },
     "src/buoy/ui/shell.ts": {
-      "sha256": "dcd295855e08f92ee4b649fbf241fb8b5265457b4b6a1951a71995f67c8633ba",
+      "sha256": "c974487c80d715793dbff303295bb471505e626e0d9403c041b0135ad8fd42bd",
       "executable": false
     },
     "src/buoy/ui/signal-dismissal.ts": {
@@ -4148,7 +4168,7 @@
       "executable": false
     },
     "tests/flows.test.mjs": {
-      "sha256": "71e2fd224e01ba7dfbb04b33003a66adb797b070f4de6974c952e6f6e5247ba5",
+      "sha256": "91939d8cf01917c1d395f56c6f5e2d6893236fddd997daa3ded8272d555873e4",
       "executable": false
     },
     "tests/forecast-journey.mjs": {
@@ -4232,15 +4252,19 @@
       "executable": false
     },
     "tests/plan-browser.mjs": {
-      "sha256": "1856676413cd4d737dd7244a7707cd093a9b16354ea898851a81bb7f8444e32c",
+      "sha256": "94c73918a47e7b88627cfd93bed3890272c3ef81ef8f329a294ffb16d017f151",
       "executable": false
     },
     "tests/plan-fixture.mjs": {
-      "sha256": "d87fbca01626f529ac6a1c02847a2c9b01a6442b0f4b657d661c47d12b95efbf",
+      "sha256": "280c4f675ad17e4891d6d547d486f0fdca23c39838d619891dce2396b8a2f029",
       "executable": false
     },
     "tests/plan-journey.mjs": {
       "sha256": "5a6b6e7a79b761cf8acabc889b1aaa42315c82d500529e918b57dc1304277230",
+      "executable": false
+    },
+    "tests/plan-outcome-journey.mjs": {
+      "sha256": "ab745f6cc73cd3293807aad068ee8da44886abf2c2a9faaf15790233b4388784",
       "executable": false
     },
     "tests/play-browser.mjs": {
@@ -4248,7 +4272,7 @@
       "executable": false
     },
     "tests/play-fixture.mjs": {
-      "sha256": "9f2322baf42fca630f99bd9c1fcff8f710092bd7343ce575ac332f21e38f2cba",
+      "sha256": "9bc96c064b6a2995edfa38eacf25c10c5be18926d36edb20aaf0071c3c549e23",
       "executable": false
     },
     "tests/play-journey.mjs": {
@@ -4256,7 +4280,15 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "85340d25ec8577315950cee3e970372e41d8d2c048d704908fb9865ec5d1b7d8",
+      "sha256": "6208544dc914c8e9522476e89fd1e678742dad1ea8266d7608d3889e173873af",
+      "executable": false
+    },
+    "tests/portal-browser.mjs": {
+      "sha256": "8adba5d537979c8d2a6db3d14e4fcf34d54073482c07ee0d6bcdbb933da5c184",
+      "executable": false
+    },
+    "tests/portal-journey.mjs": {
+      "sha256": "41bfd23430be162efa12bb59f7dde392a7173e03cfce3ac769db49b9eb3a4c0f",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
@@ -4272,7 +4304,7 @@
       "executable": false
     },
     "tests/record-browser.mjs": {
-      "sha256": "657a0f085c8d959337b12070c8237db0312032d22c90823ea68bf1f61efecba7",
+      "sha256": "ed068efb670da9b5fd61e214dd846dcd4308216872259f48487df4186054774a",
       "executable": false
     },
     "tests/record-portability.mjs": {
