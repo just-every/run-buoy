@@ -46,7 +46,7 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   await api(record+'/stakeholder-status','PUT',{revision:(await readiness()).revision,personId:champion.id,status:'departed',observedOn:'2026-10-27',source:'Customer departure confirmation C-17'})
   ready=await readiness()
   console.log('Renewal readiness: cited stakeholder and plan evidence')
-  assert.ok(ready.flags.some(f=>f.kind==='departed-champion'&&f.title.includes('Morgan Hale')&&f.reference.includes('C-17')&&f.href.includes(accountId)))
+  assert.ok(ready.flags.some(f=>f.kind==='departed-champion'&&f.title.includes('Morgan Hale')&&f.reference.includes('C-17')&&f.href.includes(renewal.id)&&f.href.endsWith('#stakeholder-evidence-'+champion.id)))
   assert.ok(ready.flags.some(f=>f.kind==='unconfirmed-goal'&&f.title.includes('reporting time saved')&&f.reference.includes('synthetic-buoy-9811')&&f.href.endsWith('#success-plans')))
   assert.ok(ready.flags.some(f=>f.kind==='missing-authority'));assert.ok(ready.flags.some(f=>f.kind==='health-risk'))
   const email=['synthetic-buoy-9820','example.test'].join('@')
@@ -127,6 +127,12 @@ async function readinessScreens({browser,evidence,app,renewalId,api,readiness,ti
    const panel=page.locator('#renewal-readiness')
    assert.match(await panel.innerText(),/Champion departed: Morgan Hale/);assert.match(await panel.innerText(),/Customer confirms reporting time saved/)
    assert.match(await panel.innerText(),/Stripe does not match/)
+   for(const kind of ['departed-champion','unconfirmed-goal','billing-mismatch']){
+    const citation=(await readiness()).flags.find(f=>f.kind===kind),target=new URL(citation.href,app.origin)
+    const response=await page.goto(target.href,{waitUntil:'networkidle'});assert.equal(response.status(),200)
+    assert.equal(await page.locator(target.hash).count(),1,'Citation resolves to its visible native source')
+   }
+   await page.goto(url,{waitUntil:'networkidle'})
    const disclosure=page.locator('#renewal-timeline-panel');await disclosure.locator('summary').click()
    const form=page.locator('#renewal-timeline');await form.getByLabel('Customer participant').selectOption(participant.id);await form.getByLabel('Timeline staff owner').selectOption(owner)
    await submit(page,form.getByRole('button',{name:'Prepare joint timeline',exact:true}));assert.equal(await page.locator('[role=alert]').count(),0)

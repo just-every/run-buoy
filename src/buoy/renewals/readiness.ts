@@ -32,7 +32,7 @@ export async function readinessImage(db:D1Database,renewalId:string){
  const plans=image.plans.map(p=>planProjection(p,values)),health=await accountHealth(db,image.account)
  const flags:ReadinessCitation[]=[],add=(kind:string,title:string,reference:string,fragment:string)=>flags.push({kind,title,reference,href:fragment.startsWith('/app/')?fragment:href+fragment})
  const champions=image.people.filter(p=>p.roles.includes('champion'))
- for(const p of champions.filter(p=>p.status==='departed'))add('departed-champion','Champion departed: '+p.name,p.source!+' · '+p.observedOn,'#account-hierarchy')
+ for(const p of champions.filter(p=>p.status==='departed'))add('departed-champion','Champion departed: '+p.name,p.source!+' · '+p.observedOn,'/app/renewals?renewal='+encodeURIComponent(renewalId)+'#stakeholder-evidence-'+encodeURIComponent(p.id))
  if(!champions.some(p=>p.status!=='departed'))add('missing-champion','No current champion is recorded.','Current stakeholder roles','#account-hierarchy')
  if(!image.people.some(p=>p.kind==='contact'&&p.roles.includes('economic-buyer')&&p.status!=='departed'))add('missing-authority','No current economic buyer contact is recorded.','Current stakeholder roles','#account-hierarchy')
  for(const p of plans)for(const goal of p.objectives)if(goal.status!=='achieved')add(goal.status==='awaiting-customer-confirmation'?'unconfirmed-goal':'unresolved-goal',goal.title+' — '+goal.status,p.name+' · revision '+p.revision+' · objective '+goal.id,'#success-plans')
