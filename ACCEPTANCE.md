@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 22 | 45 | 38 | 105 |
+| Core | 23 | 44 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 22 | 45 | 47 | 114 |
+| Full target | 23 | 44 | 47 | 114 |
 
-Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026). SEGMENT-001 completion is judged from the replayed code and assertions at commit `8997a64f879f3157ed5e911a84366c07ee5982b0` (28 October 2026); the other current main judgments are retained. Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -567,7 +567,7 @@ Core · target · **partial**
 
 #### SEGMENT-001 — Segments, tiers and lifecycle stages
 
-Core · target · **partial**
+Core · target · **done**
 
 **Requirement.** Dynamic segments defined by rules over any field, metric or relationship update automatically and record entry and exit times; static lists are also available. Accounts carry an owner/admin-defined service tier (seeded with, for example, high-touch, scaled and digital) and a lifecycle stage (onboarding, adoption, expansion, renewal or churned) set by rule or by hand. Segments drive scorecard weights, playbooks, journeys, permissions and reports. Today's complete boundary is the existing account, renewal, native billing/support snapshot, health band/evidence, sentiment, CSM, territory and task-count fields, ACCOUNT-004 custom/calculated fields on accounts and USAGE-001 customer contacts/users, static lists, segment-filtered account reports and CSV, and TEAM-001 assignment rules. Related customer fields use people.contact and people.user paths with their existing typed representation; all conditions for one related kind must be satisfied by the same person, including currency and amount, while any-rules need one matching related condition. Customer value or explicit membership changes reevaluate these rules before a successful write returns. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#segment-001).
 
@@ -577,8 +577,8 @@ Core · target · **partial**
 3. Define a custom service tier, use it in rules and manual classification, refuse removal while used and refuse a member tier-list edit.
 4. Exercise static lists, typed all/any/missing rules, manual and rule tier/stage with precedence and clearing, imports, sentiment/expiry and TEAM-001 segment allocation, member reads and mutation refusal, erasure, and the real management/approval/report forms at 1440 and 390.
 
-**Evidence.** `src/buoy/segments/rules.ts`; `src/buoy/segments/snapshot.ts`; `src/buoy/segments/index.ts`; `src/buoy/ui/segments.ts`; `src/buoy/team-plan.ts`; `src/buoy/work.ts`; `migrations/core/0025_buoy_segments.sql`; `migrations/core/0027_buoy_tiers.sql`; `docs/segments.md`; `tests/segment-journey.mjs`; `tests/flows.test.mjs`; `tests/segments.mjs`; `src/buoy/people/model.ts`; `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`
-**Gap.** Not asserted by the cited baseline evidence: CSV membership and count reconcile across every row; the cited assertions match one account name rather than the complete result. Asserted: Initial entry has timestamp and correct account; Exactly one approved task is created; Inclusive threshold exits and is timestamped; Different currencies do not mix; Reentry has a new distinct proposal; Report has exact selected account and risk count; CSV includes selected account; Reads and Cron do not duplicate entries; Stale account revision refuses approval; Stale configuration refuses approval; Exited-entry approval is refused after exit; Used custom tier cannot be removed; Member cannot edit tier list; Custom tier is returned after manual classification; Static-list membership; Typed any rules; Missing rules; Manual tier/stage clearing; Import membership refresh; Sentiment expiry membership; Team allocation from segment; Erasure removes membership; Member mutation is refused; Native form end states at 1440; Native form end states at 390.
+**Evidence.** `src/buoy/segments/rules.ts`; `src/buoy/segments/snapshot.ts`; `src/buoy/segments/index.ts`; `src/buoy/ui/segments.ts`; `src/buoy/team-plan.ts`; `src/buoy/work.ts`; `migrations/core/0025_buoy_segments.sql`; `migrations/core/0027_buoy_tiers.sql`; `docs/segments.md`; `tests/segment-journey.mjs`; `tests/flows.test.mjs`; `tests/segments.mjs`; `src/buoy/people/model.ts`; `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`; Acceptance 1–4: `tests/flows.test.mjs` — SEGMENT-001 rules, classification, intervals, proposals, reports and erasure, invoking segmentJourney in `tests/segment-journey.mjs` (complete report and CSV rows, timestamps, entry approval, replay, tier policy, imports and erasure). Acceptance 4 native forms: `tests/segments.mjs` — real create, edit, classification, entry approval, team forms and report end states at 1440 and 390. Related typed inputs: `tests/flows.test.mjs` — USAGE-001 ACCOUNT-004 SEGMENT-001 complete contact and user carrier, invoking `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`.
+**Gap.** None.
 
 ### Lifecycle work
 
