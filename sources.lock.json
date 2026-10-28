@@ -4324,7 +4324,7 @@
       "executable": false
     },
     "tests/play-browser.mjs": {
-      "sha256": "21b48a3849c90d711add0a36a8e692b77f2d9804fa0333bb8d66d09781a17105",
+      "sha256": "aa2ebbdb06fa6ec0617929ef96ba068fc29137bd607988eaa231ced6e926fb53",
       "executable": false
     },
     "tests/play-fixture.mjs": {
@@ -4384,7 +4384,7 @@
       "executable": false
     },
     "tests/report-builder-keyboard.mjs": {
-      "sha256": "efd917df22526e782a3f40a826786d7116a90a4df80cd0db9465b6acb2214199",
+      "sha256": "dc31f44c45087408dadfafe0f445588e767f00a62ca3d3311260f1c237e2dab9",
       "executable": false
     },
     "tests/reporting-browser.mjs": {
