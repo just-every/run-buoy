@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "dd59e42f056778611963fa7cc66bf709098a42aefeff2b0b19bbcc4e79ea923a",
+      "sha256": "03832408f385b55f05fa0332cfdc19ebb10627ea4e9920b17876de8fbe04a47a",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "135e40d886162d6e8ad86ee0086f759370d971252519477a33a03ce7aa3060e9",
+      "sha256": "d726dcf7b96678e4ca5f2782c7b3adeb28e932462b728b139036c97340ec611e",
       "executable": false
     },
     "DEMO.md": {
@@ -152,7 +152,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "751a0cb5a9c41f885b36c13f11012c88d3058b37e03ba83830159e3f3dc2a9f4",
+      "sha256": "d6d5f88188ab503fc36a69a2fdb19a4bfdf345b0dce0a98bfc8c75cda5f4450c",
       "executable": false
     },
     "docs/communication-sentiment.md": {
