@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import {planFixture,planDependencies} from './plan-fixture.mjs'
+import {privacyCommand} from './erase-journey.mjs'
+import {portalSsoJourney} from './portal-sso.mjs'
 export async function portalFixture(options={}){
  const f=await planFixture(options),dep=await planDependencies(f)
  await f.api('/fields','POST',{key:'portal_goal',label:'Agreed measure',type:'number'})
@@ -98,6 +100,17 @@ export async function portalJourney(){
   await api('/accounts/'+accountId+'/portal-sharing/'+again.id,'DELETE',{revision:access.revision})
   assert.equal((await app.request('/api/buoy/portal/'+again.id,{cookie:recipient.cookie})).status,403)
   assert.equal((await app.request('/api/buoy/state',{cookie:recipient.cookie})).status,403,'Revocation never converts a customer back to internal staff')
+  let person=(await api('/customer-people')).records.find(value=>value.id===f.champion.id)
+  const exported=await privacyCommand(api,person,'export');assert.equal(exported.records.portalFiles.length,1)
+  await api('/customer-people/'+person.id+'/privacy/hold','POST',{revision:person.revision,confirmation:person.name,operation:'set',reason:'legal-obligation'})
+  person=(await api('/customer-people')).records.find(value=>value.id===f.champion.id)
+  assert.equal((await privacyCommand(api,person,'erase')).receipt.outcome,'held')
+  assert.equal((await app.request(staffPath,{cookie:app.cookie})).status,200,'A preservation hold retains its linked file')
+  await api('/customer-people/'+person.id+'/privacy/hold','POST',{revision:person.revision,confirmation:person.name,operation:'release',reason:'review-completed'})
+  person=(await api('/customer-people')).records.find(value=>value.id===f.champion.id)
+  assert.equal((await privacyCommand(api,person,'erase')).receipt.counts.portalFiles,1)
+  assert.equal((await app.request(staffPath,{cookie:app.cookie})).status,404,'Person erasure removes linked file contents')
+  assert.equal((await uploadPortalFile(f,{revision:view.revision})).status,403,'An erased customer cannot replay an upload')
   await api('/accounts/'+accountId,'DELETE',{confirmation:f.customer(accountId).name})
   assert.equal((await app.request(staffPath,{cookie:app.cookie})).status,404,'Account erasure removes the file payload')
   assert.equal((await uploadPortalFile(f,{revision:view.revision})).status,403,'A captured upload cannot recreate erased account data')
@@ -156,4 +169,5 @@ export async function portalWithdrawalJourney(){
   assert.equal((await app.request('/api/buoy/portal/'+f.otherShared.id,{cookie:f.outsider.cookie})).status,401,'Deactivation withdraws customer identity at the native session door')
   console.log('PLAN-001 controlled-clock expiry, membership withdrawal, account erasure and customer deactivation passed.')
  }finally{await app.close()}
+ await portalSsoJourney()
 }

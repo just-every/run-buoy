@@ -4300,7 +4300,7 @@
       "executable": false
     },
     "tests/mail-runtime.mjs": {
-      "sha256": "69859bf11c70435d502de68bbb1a401dec6445de88f79673e785df3f935f398b",
+      "sha256": "2d9aadd25059e3ee1de49377feb6679848a81de247d74b5e97af08703731c30e",
       "executable": false
     },
     "tests/migrate-journey.mjs": {
@@ -4356,11 +4356,19 @@
       "executable": false
     },
     "tests/portal-journey.mjs": {
-      "sha256": "ab373e74ea1924c8157a395160b4128fae3bbedbee69273225ed1c2175b3c509",
+      "sha256": "ee87540d176db75b59ca3d2377195d97dc506ca1c071421f5ef2891d278a8005",
       "executable": false
     },
     "tests/portal-mail-live.mjs": {
       "sha256": "ff9be0b08e9dcfc8880e70604c7c45cd73106e5a6bc0c943e69180455e96cb15",
+      "executable": false
+    },
+    "tests/portal-sso-provider.mjs": {
+      "sha256": "fdc671425c3190a7296b4a7fbda0bdd85da432e0cb137b5400f8fff2a95df524",
+      "executable": false
+    },
+    "tests/portal-sso.mjs": {
+      "sha256": "bbccae68fca4968433e3f9b834f661648de9f7ccdc6895d7e438feb98f67184f",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
