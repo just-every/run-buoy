@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import { Marked } from 'marked'
-import run from './run.json'
+import { run } from './run'
+import { startLine } from '../base/run-site'
 import { siteHeader, siteFooter } from './chrome'
 import { siteHead } from './head'
 import chrome from './chrome.css?raw'
@@ -67,7 +68,11 @@ export function docsPages(): Array<{ path: string; html: string }> {
         },
       },
     })
-    const article = markdown.parse(guide.source, { async: false })
+    const source = guide.slug === 'getting-started'
+      ? guide.source.replace(/^curl -fsSL https:\/\/runeditrun\.com\/install\.sh \| sh -s -- dev \S+$/gm, startLine(run))
+        .replace(/npx -y @runeditrun\/rer dev [\w./-]+/g, run.clone)
+      : guide.source
+    const article = markdown.parse(source, { async: false })
     const navigation = guides.map(item => `<a href="${path(item.slug)}"${item.slug === guide.slug ? ' aria-current="page"' : ''}>${escape(item.title)}</a>`).join('')
     const toc = contents.map(item => `<a href="#${item.id}">${escape(item.title)}</a>`).join('')
     const previous = guides[index - 1], next = guides[index + 1]

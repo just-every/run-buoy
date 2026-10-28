@@ -744,7 +744,7 @@
       "executable": false
     },
     "public/fonts/fonts.css": {
-      "sha256": "73a68c79b18a81a149551f80063224c79f682f45cb06627e25c5e84057b83074",
+      "sha256": "0c7463bb0cdfc28d2fa500188f47b4d674550133dd8a07740098d902bd67e612",
       "executable": false
     },
     "public/fonts/inter/inter-latin-ext-opsz-normal.woff2": {
@@ -1499,6 +1499,10 @@
       "sha256": "d0e747277142e54d86acd1c01549ee8b76bf15c060366387bd074c57f77f7d2d",
       "executable": false
     },
+    "scripts/install-chromium-deps.py": {
+      "sha256": "d3027108ad8e08ceeddb0ed477d967b1207e40bb6bf5ae941854c534c2cf4004",
+      "executable": false
+    },
     "scripts/install.mjs": {
       "sha256": "ce9c6eb4f127e88b32d538655a3fb3a2dc9fc3e83e48782fd56ffd3377da16fd",
       "executable": false
@@ -1525,6 +1529,22 @@
     },
     "scripts/verify-app.mjs": {
       "sha256": "48c50c33005a132815c08cb7ceec074da64da2ed5bfb12455c6cad4eb36ef1d9",
+      "executable": false
+    },
+    "scripts/verify-ci.mjs": {
+      "sha256": "cf1ceb8773ed276f82245fb8fb4c4bdc95bff40ecc0e8ca8ac9e776978b17340",
+      "executable": false
+    },
+    "scripts/verify-evidence.mjs": {
+      "sha256": "9224f772d6a17f043448694eca3c149df83070417b995a2840497e36a9ad0100",
+      "executable": false
+    },
+    "scripts/verify-light.mjs": {
+      "sha256": "f9b126130837144e43a65d10d370d602b63daad2be7ff66c93178d461a7521d9",
+      "executable": false
+    },
+    "scripts/verify-plan.mjs": {
+      "sha256": "45fe2ab9c5cbc72d0186bf77fab32c985605caae6ecee50676dd618612c3e78f",
       "executable": false
     },
     "sdk/inapp.mjs": {

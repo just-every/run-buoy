@@ -10,7 +10,7 @@ You need macOS, Linux or Windows with WSL2. One line, the same as [Run Buoy](/ru
 curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-buoy
 ```
 
-Git is required; rer brings Node and pnpm. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` does the same. The line installs rer for you alone, with its own Node if you have no Node 22 or later, then gets Buoy into `run-buoy`, installs its locked dependencies, prepares local data, makes you the owner and prints a private link that opens Buoy signed in. If the installer prints a line that puts rer on your PATH, run that line too.
+git is required; rer brings Node and pnpm. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` does the same. The line installs rer for you alone, with its own Node if you have no Node 22 or later, then gets Buoy into `run-buoy`, installs its locked dependencies, prepares local data, makes you the owner and prints a private link that opens Buoy signed in. If the installer prints a line that puts rer on your PATH, run that line too.
 
 To start Buoy again later, run the same line from the same folder, or `cd run-buoy && rer dev`. A first launch can take several minutes. Progress and queue messages explain what is happening; if the shell stops waiting, run `rer dev` again to resume.
 
