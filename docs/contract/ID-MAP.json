@@ -1,0 +1,636 @@
+{
+  "schema": 1,
+  "old": "fab68ffc3066c5f4852bc4cf9c158e3fb9c8f8c3",
+  "ids": {
+    "HTTP-001": {
+      "how": "kept",
+      "to": [
+        "HTTP-001"
+      ]
+    },
+    "DATA-001": {
+      "how": "kept",
+      "to": [
+        "DATA-001"
+      ]
+    },
+    "APPROVAL-001": {
+      "how": "kept",
+      "to": [
+        "APPROVAL-001"
+      ]
+    },
+    "IMPORT-001": {
+      "how": "kept",
+      "to": [
+        "IMPORT-001"
+      ]
+    },
+    "ERASE-001": {
+      "how": "kept",
+      "to": [
+        "ERASE-001"
+      ]
+    },
+    "RESTORE-001": {
+      "how": "kept",
+      "to": [
+        "RESTORE-001"
+      ]
+    },
+    "SITE-001": {
+      "how": "kept",
+      "to": [
+        "SITE-001"
+      ]
+    },
+    "STYLE-001": {
+      "how": "kept",
+      "to": [
+        "STYLE-001"
+      ]
+    },
+    "ACCOUNT-001": {
+      "how": "kept",
+      "to": [
+        "ACCOUNT-001"
+      ]
+    },
+    "ACCOUNT-002": {
+      "how": "kept",
+      "to": [
+        "ACCOUNT-002"
+      ]
+    },
+    "ACCOUNT-003": {
+      "how": "kept",
+      "to": [
+        "ACCOUNT-003"
+      ]
+    },
+    "ACCOUNT-004": {
+      "how": "kept",
+      "to": [
+        "ACCOUNT-004"
+      ]
+    },
+    "ACCOUNT-005": {
+      "how": "kept",
+      "to": [
+        "ACCOUNT-005"
+      ]
+    },
+    "ACCOUNT-006": {
+      "how": "kept",
+      "to": [
+        "ACCOUNT-006"
+      ]
+    },
+    "CONNECT-001": {
+      "how": "kept",
+      "to": [
+        "CONNECT-001"
+      ]
+    },
+    "IDENTITY-001": {
+      "how": "kept",
+      "to": [
+        "IDENTITY-001"
+      ]
+    },
+    "CRM-001": {
+      "how": "kept",
+      "to": [
+        "CRM-001"
+      ]
+    },
+    "CRM-002": {
+      "how": "kept",
+      "to": [
+        "CRM-002"
+      ]
+    },
+    "CRM-003": {
+      "how": "kept",
+      "to": [
+        "CRM-003"
+      ]
+    },
+    "CRM-004": {
+      "how": "kept",
+      "to": [
+        "CRM-004"
+      ]
+    },
+    "BILLING-001": {
+      "how": "kept",
+      "to": [
+        "BILLING-001"
+      ]
+    },
+    "BILLING-002": {
+      "how": "kept",
+      "to": [
+        "BILLING-002"
+      ]
+    },
+    "BILLING-003": {
+      "how": "kept",
+      "to": [
+        "BILLING-003"
+      ]
+    },
+    "BILLING-004": {
+      "how": "kept",
+      "to": [
+        "BILLING-004"
+      ]
+    },
+    "BILLING-005": {
+      "how": "kept",
+      "to": [
+        "BILLING-005"
+      ]
+    },
+    "BILLING-006": {
+      "how": "kept",
+      "to": [
+        "BILLING-006"
+      ]
+    },
+    "BILLING-007": {
+      "how": "kept",
+      "to": [
+        "BILLING-007"
+      ]
+    },
+    "SUPPORT-001": {
+      "how": "kept",
+      "to": [
+        "SUPPORT-001"
+      ]
+    },
+    "SUPPORT-002": {
+      "how": "kept",
+      "to": [
+        "SUPPORT-002"
+      ]
+    },
+    "SUPPORT-003": {
+      "how": "kept",
+      "to": [
+        "SUPPORT-003"
+      ]
+    },
+    "SUPPORT-004": {
+      "how": "kept",
+      "to": [
+        "SUPPORT-004"
+      ]
+    },
+    "SUPPORT-005": {
+      "how": "kept",
+      "to": [
+        "SUPPORT-005"
+      ]
+    },
+    "USAGE-001": {
+      "how": "kept",
+      "to": [
+        "USAGE-001"
+      ]
+    },
+    "USAGE-002": {
+      "how": "kept",
+      "to": [
+        "USAGE-002"
+      ]
+    },
+    "USAGE-003": {
+      "how": "kept",
+      "to": [
+        "USAGE-003"
+      ]
+    },
+    "USAGE-004": {
+      "how": "kept",
+      "to": [
+        "USAGE-004"
+      ]
+    },
+    "ADOPT-001": {
+      "how": "kept",
+      "to": [
+        "ADOPT-001"
+      ]
+    },
+    "PRODUCT-001": {
+      "how": "kept",
+      "to": [
+        "PRODUCT-001"
+      ]
+    },
+    "HEALTH-001": {
+      "how": "kept",
+      "to": [
+        "HEALTH-001"
+      ]
+    },
+    "HEALTH-002": {
+      "how": "kept",
+      "to": [
+        "HEALTH-002"
+      ]
+    },
+    "SIGNAL-001": {
+      "how": "kept",
+      "to": [
+        "SIGNAL-001"
+      ]
+    },
+    "SEGMENT-001": {
+      "how": "kept",
+      "to": [
+        "SEGMENT-001"
+      ]
+    },
+    "PLAY-001": {
+      "how": "kept",
+      "to": [
+        "PLAY-001"
+      ]
+    },
+    "PLAY-002": {
+      "how": "kept",
+      "to": [
+        "PLAY-002"
+      ]
+    },
+    "PLAY-003": {
+      "how": "kept",
+      "to": [
+        "PLAY-003"
+      ]
+    },
+    "PLAY-004": {
+      "how": "kept",
+      "to": [
+        "PLAY-004"
+      ]
+    },
+    "ONBOARD-001": {
+      "how": "kept",
+      "to": [
+        "ONBOARD-001"
+      ]
+    },
+    "PLAN-001": {
+      "how": "kept",
+      "to": [
+        "PLAN-001"
+      ]
+    },
+    "PORTAL-001": {
+      "how": "kept",
+      "to": [
+        "PORTAL-001"
+      ]
+    },
+    "REVIEW-001": {
+      "how": "kept",
+      "to": [
+        "REVIEW-001"
+      ]
+    },
+    "EMAIL-001": {
+      "how": "kept",
+      "to": [
+        "EMAIL-001"
+      ]
+    },
+    "EMAIL-002": {
+      "how": "kept",
+      "to": [
+        "EMAIL-002"
+      ]
+    },
+    "EMAIL-003": {
+      "how": "kept",
+      "to": [
+        "EMAIL-003"
+      ]
+    },
+    "EMAIL-004": {
+      "how": "kept",
+      "to": [
+        "EMAIL-004"
+      ]
+    },
+    "JOURNEY-001": {
+      "how": "kept",
+      "to": [
+        "JOURNEY-001"
+      ]
+    },
+    "INAPP-001": {
+      "how": "kept",
+      "to": [
+        "INAPP-001"
+      ]
+    },
+    "MEET-001": {
+      "how": "kept",
+      "to": [
+        "MEET-001"
+      ]
+    },
+    "MEET-002": {
+      "how": "kept",
+      "to": [
+        "MEET-002"
+      ]
+    },
+    "CHAT-001": {
+      "how": "kept",
+      "to": [
+        "CHAT-001"
+      ]
+    },
+    "SURVEY-001": {
+      "how": "kept",
+      "to": [
+        "SURVEY-001"
+      ]
+    },
+    "NOTIFY-001": {
+      "how": "kept",
+      "to": [
+        "NOTIFY-001"
+      ]
+    },
+    "RENEW-001": {
+      "how": "kept",
+      "to": [
+        "RENEW-001"
+      ]
+    },
+    "RENEW-002": {
+      "how": "kept",
+      "to": [
+        "RENEW-002"
+      ]
+    },
+    "RENEW-003": {
+      "how": "kept",
+      "to": [
+        "RENEW-003"
+      ]
+    },
+    "RENEW-004": {
+      "how": "kept",
+      "to": [
+        "RENEW-004"
+      ]
+    },
+    "RENEW-005": {
+      "how": "kept",
+      "to": [
+        "RENEW-005"
+      ]
+    },
+    "REPORT-001": {
+      "how": "kept",
+      "to": [
+        "REPORT-001"
+      ]
+    },
+    "REPORT-002": {
+      "how": "kept",
+      "to": [
+        "REPORT-002"
+      ]
+    },
+    "ROLE-001": {
+      "how": "kept",
+      "to": [
+        "ROLE-001"
+      ]
+    },
+    "ROLE-002": {
+      "how": "kept",
+      "to": [
+        "ROLE-002"
+      ]
+    },
+    "TEAM-001": {
+      "how": "kept",
+      "to": [
+        "TEAM-001"
+      ]
+    },
+    "AUDIT-001": {
+      "how": "kept",
+      "to": [
+        "AUDIT-001"
+      ]
+    },
+    "SECURE-002": {
+      "how": "kept",
+      "to": [
+        "SECURE-002"
+      ]
+    },
+    "ERASE-002": {
+      "how": "kept",
+      "to": [
+        "ERASE-002"
+      ]
+    },
+    "API-001": {
+      "how": "kept",
+      "to": [
+        "API-001"
+      ]
+    },
+    "MIGRATE-001": {
+      "how": "kept",
+      "to": [
+        "MIGRATE-001"
+      ]
+    },
+    "MIGRATE-002": {
+      "how": "kept",
+      "to": [
+        "MIGRATE-002"
+      ]
+    },
+    "MIGRATE-003": {
+      "how": "kept",
+      "to": [
+        "MIGRATE-003"
+      ]
+    },
+    "MIGRATE-004": {
+      "how": "kept",
+      "to": [
+        "MIGRATE-004"
+      ]
+    },
+    "MIGRATE-005": {
+      "how": "kept",
+      "to": [
+        "MIGRATE-005"
+      ]
+    },
+    "MIGRATE-006": {
+      "how": "kept",
+      "to": [
+        "MIGRATE-006"
+      ]
+    },
+    "MIGRATE-007": {
+      "how": "kept",
+      "to": [
+        "MIGRATE-007"
+      ]
+    },
+    "MOBILE-001": {
+      "how": "kept",
+      "to": [
+        "MOBILE-001"
+      ]
+    },
+    "A11Y-001": {
+      "how": "kept",
+      "to": [
+        "A11Y-001"
+      ]
+    },
+    "SCALE-001": {
+      "how": "kept",
+      "to": [
+        "SCALE-001"
+      ]
+    },
+    "AI-001": {
+      "how": "kept",
+      "to": [
+        "AI-001"
+      ]
+    },
+    "AI-002": {
+      "how": "kept",
+      "to": [
+        "AI-002"
+      ]
+    },
+    "AI-003": {
+      "how": "kept",
+      "to": [
+        "AI-003"
+      ]
+    },
+    "AI-004": {
+      "how": "kept",
+      "to": [
+        "AI-004"
+      ]
+    },
+    "GOVERN-001": {
+      "how": "kept",
+      "to": [
+        "GOVERN-001"
+      ]
+    },
+    "AGENT-001": {
+      "how": "kept",
+      "to": [
+        "AGENT-001"
+      ]
+    },
+    "AGENT-002": {
+      "how": "kept",
+      "to": [
+        "AGENT-002"
+      ]
+    },
+    "AGENT-003": {
+      "how": "kept",
+      "to": [
+        "AGENT-003"
+      ]
+    },
+    "AGENT-004": {
+      "how": "kept",
+      "to": [
+        "AGENT-004"
+      ]
+    },
+    "AGENT-005": {
+      "how": "kept",
+      "to": [
+        "AGENT-005"
+      ]
+    },
+    "AGENT-006": {
+      "how": "kept",
+      "to": [
+        "AGENT-006"
+      ]
+    },
+    "AGENT-007": {
+      "how": "kept",
+      "to": [
+        "AGENT-007"
+      ]
+    },
+    "AGENT-008": {
+      "how": "kept",
+      "to": [
+        "AGENT-008"
+      ]
+    },
+    "BOUNDARY-001": {
+      "how": "kept",
+      "to": [
+        "BOUNDARY-001"
+      ]
+    },
+    "BOUNDARY-002": {
+      "how": "kept",
+      "to": [
+        "BOUNDARY-002"
+      ]
+    },
+    "BOUNDARY-003": {
+      "how": "kept",
+      "to": [
+        "BOUNDARY-003"
+      ]
+    },
+    "BOUNDARY-004": {
+      "how": "kept",
+      "to": [
+        "BOUNDARY-004"
+      ]
+    },
+    "BOUNDARY-005": {
+      "how": "kept",
+      "to": [
+        "BOUNDARY-005"
+      ]
+    },
+    "AI-005": {
+      "how": "kept",
+      "to": [
+        "AI-005"
+      ]
+    },
+    "AI-006": {
+      "how": "kept",
+      "to": [
+        "AI-006"
+      ]
+    }
+  }
+}
