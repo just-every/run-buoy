@@ -4196,7 +4196,7 @@
       "executable": false
     },
     "tests/dashboard-journey.mjs": {
-      "sha256": "aa28fc9e22c976964a92359c2d0df3e4d2dbb78f659dbcf12a2d30289bdad7fc",
+      "sha256": "edd5ce25799b3e050429e1cfbed5e5a111919ef465c2c012c423ace085cf9ca3",
       "executable": false
     },
     "tests/email-link.mjs": {

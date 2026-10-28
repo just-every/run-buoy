@@ -83,6 +83,11 @@ async function starterDashboards({app,api,request,browser,evidence,csm,peer,fina
   const download=page.waitForEvent('download');await result.getByRole('link',{name:'Export '+names[item.kind]+' to CSV',exact:true}).click()
   const artifact=await download;assert.equal(await artifact.failure(),null);verifyCsv(await readFile(await artifact.path(),'utf8'),names[item.kind],groups)
  }
+ const adminEmail='synthetic-buoy-9103'+'@'+'example.test'
+ assert.equal((await app.request('/auth/invite',{cookie:app.cookie,method:'POST',body:{email:adminEmail,displayName:'Starter administrator',role:'admin'}})).status,202)
+ const adminCookie=await app.signIn(adminEmail)
+ const all=await api('/dashboards','POST',{presetId:presets[0],segmentId:null},adminCookie)
+ await verifyRun({reportId:all.reportId,kind:0},[['at-risk','at-risk',1],['healthy','healthy',2],['unknown','unknown',6],['watch','watch',2]],['synthetic-buoy-9201','synthetic-buoy-9202','synthetic-buoy-9203','synthetic-buoy-9300','synthetic-buoy-9301',...ids],adminCookie)
  const before=await api('/reports'),outbound=app.outbound.length
  for(const body of [{presetId:'absent',segmentId:null},{presetId:presets[0],segmentId:'absent'},{presetId:presets[0],segmentId:null,sharedRoles:['finance']},{presetId:presets[0],segmentId:null,schedule:{channel:'slack'}}])assert.equal((await request('/dashboards','POST',body)).status,400)
  for(const [as,headers,status]of [[null,{},401],[finance.cookie,{},403],[app.cookie,{origin:'https://foreign.invalid'},403]])assert.equal((await request('/dashboards','POST',{presetId:presets[0],segmentId:segment.id},as,headers)).status,status)
