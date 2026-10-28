@@ -6,6 +6,7 @@ import {mayEditScopedAccount} from '../roles/account-edit'
 // Require the complete field class rather than attempting to redact free text.
 export async function planAccess(db:D1Database,actor:Actor,accountId:string,write=false){
  const role=await roleAccess(db,actor),image=await scopeImage(db)
+ insist(role.restricted||['owner','admin'].includes(actor.role),'A permitted staff profile is required.',403)
  const account=image.value.accounts.find(a=>a.id===accountId)
  insist(account,'Account not found.',404)
  insist(!role.stale&&readableIds(image.value,actor,role).includes(accountId)&&commercialFor(role,actor,account.ownerId)==='full','This plan is outside your current account or field authority.',403)

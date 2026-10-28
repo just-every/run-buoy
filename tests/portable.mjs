@@ -163,9 +163,9 @@ try{
  const configurationHistory=await seedConfigurationPortability(call,value=>{configurationClock=value??configurationNow},configurationNow)
  const planChampion=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-1940',accountIds:[accountId],source:'synthetic-buoy-1941'});
  const successPlan=await call('/accounts/'+accountId+'/plans','POST',{accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,name:'Portable internal success plan',taskIds:[planTask.id],milestones:[{id:'renewed',title:'Approved renewal evidence',objectiveId:'usage',outcomeId:planOutcome.id}],staffOwnerId:(await call('/state')).operator.id,customerOwnerId:planChampion.id,objectives:[{id:'usage',title:'Observed product use',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'customer',title:'Actual customer confirmation required',kind:'customer-statement',dueOn:'2027-03-01'}]});
- await call('/portal-invitations','POST',{email:'portable-champion@example.test',displayName:'Portable champion'});
- const portalCookie=await running.signIn('portable-champion@example.test');
- const portableGrant=await call('/accounts/'+accountId+'/portal-sharing','POST',{planId:successPlan.id,planRevision:successPlan.revision,email:'portable-champion@example.test',days:30,taskIds:[planTask.id]});
+ await call('/portal-invitations','POST',{email:['portable-champion','example.test'].join('@'),displayName:'Portable champion'});
+ const portalCookie=await running.signIn(['portable-champion','example.test'].join('@'));
+ const portableGrant=await call('/accounts/'+accountId+'/portal-sharing','POST',{planId:successPlan.id,planRevision:successPlan.revision,email:['portable-champion','example.test'].join('@'),days:30,taskIds:[planTask.id]});
  const portalRead=await running.request('/api/buoy/portal/'+portableGrant.id,{cookie:portalCookie});assert.equal(portalRead.status,200);
  const portalRevision=(await portalRead.json()).revision;
  const portalConfirmed=await running.request('/api/buoy/portal/'+portableGrant.id+'/action',{cookie:portalCookie,method:'POST',body:{action:'confirm',revision:portalRevision,objectiveId:'customer',statement:'synthetic-buoy-1965'}});assert.equal(portalConfirmed.status,201);

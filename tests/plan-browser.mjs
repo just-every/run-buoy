@@ -1,3 +1,4 @@
+import {planDelegatedJourney} from './plan-delegated-journey.mjs'
 import assert from 'node:assert/strict'
 import {join} from 'node:path'
 import {planFixture,planDependencies,planRenewal} from './plan-fixture.mjs'
@@ -15,6 +16,13 @@ export async function planBrowser(browser,evidence){
    await form.getByLabel('Objectives (JSON)',{exact:true}).fill('{invalid');await submit(page,form.getByRole('button',{name:'Save internal plan',exact:true}));assert.equal(await page.locator('[role=alert]').count(),1);assert.equal(await page.locator('#plan-edit-new textarea').inputValue(),'{invalid');await proof('invalid-objectives')
    form=page.locator('#plan-edit-new');await form.getByLabel('Objectives (JSON)',{exact:true}).fill(JSON.stringify(f.objectives));await form.getByLabel('Milestone title',{exact:true}).fill('Native health milestone');await form.getByLabel('Milestone objective',{exact:true}).selectOption('usage');await form.getByLabel('Outcome report',{exact:true}).selectOption(dep.outcomeId);await form.getByLabel('Agreed plan follow-up',{exact:true}).first().check();await submit(page,form.getByRole('button',{name:'Save internal plan',exact:true}));assert.equal(await page.locator('[role=alert]').count(),0)
    let plan=(await f.plans()).plans[0];assert.equal(plan.name,'Native success plan '+width);if(width===1440){assert.deepEqual(plan.taskIds,[dep.taskId]);assert.equal(plan.milestones[0].outcomeId,dep.outcomeId);assert.match(await page.locator('#success-plans').innerText(),/Native health milestone/);assert.match(await page.locator('#success-plans').innerText(),/Enrolled rate 0%/)};assert.match(await page.locator('#success-plans').innerText(),/Metric evidence unavailable/);assert.match(await page.locator('#success-plans').innerText(),/Awaiting customer confirmation/);await proof('recorded-draft')
+   if(width===1440){
+    const control=await api('/customer-people','POST',{kind:'contact',name:'Comparison champion',accountIds:[f.other],source:'synthetic-buoy-1994'})
+    await api('/accounts/'+f.other+'/plans','POST',{accountRevision:(await api('/state')).accounts.find(a=>a.id===f.other).revision,name:'Comparison customer plan',staffOwnerId:f.ownerId,customerOwnerId:control.id,objectives:f.objectives})
+    await page.locator('#plan-milestone-start-'+plan.id+' > summary').click();const tracking=page.locator('#plan-milestone-'+plan.id)
+    await tracking.getByLabel('Milestone report name').fill('Customer statement observation');await tracking.getByLabel('Objective to observe').selectOption('statement');await tracking.getByLabel('Comparison segment').selectOption(dep.segment.id);await tracking.getByLabel('UTC window days').fill('2');await submit(page,tracking.getByRole('button',{name:'Start objective observation'}));assert.equal(await page.locator('[role=alert]').count(),0)
+    const started=(await api('/outcomes')).reports.find(r=>r.name==='Customer statement observation');assert.ok(started);assert.equal(started.kind,'plan-objective');assert.deepEqual(started.enrolled.map(a=>a.accountId),[accountId]);assert.deepEqual(started.comparison.map(a=>a.accountId),[f.other]);assert.equal(Date.parse(started.deadline)-Date.parse(started.startedAt),2*86400000)
+   }
    // The API accepts arbitrary nonempty milestone IDs, including the former editor placeholder.
    await f.save({id:plan.id,revision:plan.revision,taskIds:plan.taskIds,milestones:plan.milestones.map(m=>({...m,id:'new'}))})
    await page.goto(url,{waitUntil:'networkidle'});plan=(await f.plans()).plans[0]
@@ -45,6 +53,7 @@ export async function planBrowser(browser,evidence){
    if(width===1440){const text=await page.locator('#renewal-record').innerText();assert.ok(text.includes('Success goal readiness: evidence-unavailable'));assert.ok(text.includes('0 of 2 achieved'));assert.ok(text.includes('1 awaiting customer confirmation'))}
    await scan(page,'PLAN-001 renewal readiness '+width);await page.screenshot({path:join(evidence,'plan-renewal-'+width+'.png'),fullPage:true})
 
+   if(width===1440)await planDelegatedJourney(f,browser,evidence)
   }finally{await context.close();await app.close()}
  }
  assert.deepEqual(failures,[],'Success plan refusal and recovery and recorded states retain inherited accessibility')

@@ -1,3 +1,4 @@
+import {planDelegatedJourney} from './plan-delegated-journey.mjs'
 import assert from 'node:assert/strict'
 import {planFixture,planDependencies,planRenewal} from './plan-fixture.mjs'
 export async function planAttainmentJourney(){
@@ -77,6 +78,7 @@ export async function planAuthorityJourney(){
   assert.equal((await app.request('/api/buoy/accounts/'+other+'/plans',{cookie:app.cookie})).status,200)
   assert.equal((await post(await body({id:before.id,revision:before.revision,customerOwnerId:foreign.id}))).status,409)
   assert.equal((await api('/audit?action=plan.saved')).entries.length,2,'Only the original and one winning edit have an audit entry')
+  await planDelegatedJourney(f)
   console.log('PLAN-001 active administrator authority, agent and member refusal, CSRF, invented confirmation or sharing, self-feedback, membership and concurrent stale edits passed.')
  }finally{await app.close()}
 }
