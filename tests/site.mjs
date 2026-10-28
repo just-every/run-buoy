@@ -32,6 +32,43 @@ function guideContent(source) {
   return content
 }
 
+async function checkRelayGuide(page) {
+  const relay = await page.locator('main article.docs-article').evaluate(article => {
+    const heading = [...article.querySelectorAll('h3')].find(node => node.textContent === 'In-app relay')
+    const fields = {}, links = []
+    for (let node = heading?.nextElementSibling; node && !/^H[23]$/.test(node.tagName); node = node.nextElementSibling) {
+      for (const item of node.querySelectorAll('li')) {
+        const label = item.querySelector('strong')?.textContent.replace(/:$/, '')
+        if (label) fields[label] = item.innerText.replace(/\s+/g, ' ').trim()
+      }
+      for (const link of node.querySelectorAll('a')) links.push(link.href)
+    }
+    return { fields, links }
+  })
+  const { When = '', Sends = '', Receives = '', Terms = '' } = relay.fields
+  assert.deepEqual(Object.keys(relay.fields).sort(), ['Receives', 'Sends', 'Terms', 'When'], 'Buyer-operated relay has its own four data-flow fields')
+  assert.match(When, /server authenticates the real product session and current account membership/, 'Relay authentication checks the product session and current membership')
+  assert.match(When, /separate server-only in-app credential/, 'Relay uses a distinct server-only credential')
+  assert.match(When, /browser holds no Buoy credential/, 'Browser receives no Buoy authority')
+  assert.match(When, /exact administrator-reviewed source.user.group mapping/, 'Targeting uses the exact reviewed identity combination')
+  assert.match(When, /existing customer person and current account membership.segment/, 'Targeting retains the native person, account and segment boundaries')
+  assert.match(When, /unknown or conflicting identities receive no targeted content/, 'Unreviewed identities receive no targeted content')
+  assert.match(Sends, /replacing browser-supplied identities/, 'Relay replaces untrusted identity claims')
+  assert.match(Sends, /campaign ID, delivery ID when mapped, exact message ID and view, completion or dismissal kind/, 'All three receipt kinds retain campaign and delivery attribution')
+  assert.match(Sends, /source provenance and instants.*only through the reviewed mapping.*account revision/, 'Receipt storage retains provenance and reviewed attribution')
+  assert.match(Sends, /Buoy makes no outbound call to the relay or a new third-party provider/, 'The buyer relay introduces no outbound Buoy provider call')
+  assert.match(Receives, /announcement, banner, checklist or walkthrough content.*plain-text title, body and steps.*campaign and delivery IDs/, 'Relay receives campaign content and delivery identity')
+  assert.match(Receives, /stored.accepted.duplicate counts or an error/, 'Receipt responses distinguish storage and replay counts')
+  assert.match(Receives, /reservation is not a view.*stored receipt is not proof of hosted delivery, provider verification or verified attention/, 'Stored observations claim no delivery or attention verification')
+  assert.match(Terms, /buyer-operated server, not a third-party provider with separate provider terms/, 'Relay has no invented third-party provider terms')
+  assert.match(Terms, /own hosting and product.source agreements apply/, 'Buyer hosting and source agreements still apply')
+  assert.match(Terms, /operate, authenticate and secure the relay and browser deployment, keep the credential server-side/, 'Buyer owns deployment security and server credential custody')
+  assert.match(Terms, /product, relay or source as external holders.*erasure in Buoy does not delete those copies/, 'Buyer and source copies remain external erasure responsibilities')
+  assert.match(Terms, /not legal acceptance or certification/, 'The guide claims no legal or deployment certification')
+  assert.ok(relay.links.length && relay.links.every(link => new URL(link).hostname === 'www.cloudflare.com'), 'Relay links only the existing deployment provider agreements')
+  console.log('Buyer-operated relay guide passed: authenticated mapping, campaign content, three receipt kinds and external custody')
+}
+
 async function checkGuides(origin, documents) {
   // Imports define the full owner-guide inventory, including the overview. A
   // dropped page must fail even if the remaining navigation still crawls cleanly.
@@ -66,6 +103,7 @@ async function checkGuides(origin, documents) {
       })
       assert.ok(actual.visible, `${guide.path} article content is visible`)
       for (const field of Object.keys(expected)) assert.deepEqual(actual[field], expected[field], `${guide.path} renders its own ${field} from Markdown`)
+      if (guide.path === '/docs/providers') await checkRelayGuide(page)
       if (process.env.BUOY_SITE_SCREEN_DIR) {
         await mkdir(process.env.BUOY_SITE_SCREEN_DIR, { recursive: true })
         await page.screenshot({ path: join(process.env.BUOY_SITE_SCREEN_DIR, `${guide.file.slice(0, -3)}-1440.png`), fullPage: true })
