@@ -1,4 +1,5 @@
 import { insist, object, text } from './core'
+import type {DraftHandover} from './plans/handover'
 
 export interface Team { id: string; name: string; pod: string; personIds: string[] }
 export interface TeamSettings {
@@ -11,9 +12,10 @@ export interface Snapshot {
  accounts: {id: string; document: string; revision: string; ownerId: string | null; assignedAt: string | null}[];
  territories: {accountId: string; territory: string}[];
  people: {id: string; role: string; status: string; version: number}[];
- tasks: {id: string; accountId: string; ownerId: string | null; completedAt: string | null}[]
+ tasks: {id: string; accountId: string; ownerId: string | null; completedAt: string | null}[];
+ drafts: DraftHandover[]
 }
-export interface Move { accountId: string; fromId: string | null; toId: string; openTasks: number }
+export interface Move { accountId: string; fromId: string | null; toId: string; openTasks: number; drafts:{id:string;name:string;revision:string}[] }
 export const keys = (value: Record<string, unknown>, allowed: string[]) => insist(Object.keys(value).every(key => allowed.includes(key)), 'Unsupported team field.')
 const list = (value: unknown, label: string, max = 500): unknown[] => {
  insist(Array.isArray(value) && value.length <= max, `${label} must be an array of at most ${max} entries.`)
@@ -85,7 +87,8 @@ export function plan(snapshot: Snapshot, input: AssignmentInput) {
   if (!toId) { diagnostics.push({accountId: account.id, reason: 'No eligible active CSM with remaining configured capacity in the first matching rule or handover target.'}); continue }
   counts.set(toId, (counts.get(toId) ?? 0) + 1)
   if (account.ownerId) counts.set(account.ownerId, (counts.get(account.ownerId) ?? 0) - 1)
-  moves.push({accountId: account.id, fromId: account.ownerId, toId, openTasks: snapshot.tasks.filter(t => t.accountId === account.id && t.ownerId === account.ownerId && account.ownerId !== null && t.completedAt === null).length})
+  const drafts=snapshot.drafts.filter(p=>account.ownerId!==null&&p.accountId===account.id&&p.staffOwnerId===account.ownerId).map(p=>({id:p.id,name:JSON.parse(p.document).name as string,revision:p.revision}))
+  moves.push({accountId: account.id, fromId: account.ownerId, toId, drafts, openTasks: snapshot.tasks.filter(t => t.accountId === account.id && t.ownerId === account.ownerId && account.ownerId !== null && t.completedAt === null).length})
  }
  return {moves, diagnostics, canApply: diagnostics.length === 0, books: settings.capacities.map(c => ({...c, assigned: counts.get(c.personId) ?? 0}))}
 }

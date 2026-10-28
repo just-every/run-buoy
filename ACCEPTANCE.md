@@ -969,8 +969,8 @@ Core · target · **partial**
 **Acceptance.**
 1. Assign 300 accounts by rule across four CSMs with capacity targets, then reassign one CSM's book; counts respect targets, every open task and plan moves and each account shows the handover note.
 
-**Evidence.** `src/buoy/team.ts`; `src/buoy/team-plan.ts`; `src/buoy/tasks.ts`; `src/buoy/ui/team.ts`; `src/buoy/ui/team-actions.ts`; `src/buoy/ui/account.ts`; `migrations/core/0024_buoy_teams.sql`; `docs/books.md`; `tests/team-journey.mjs`; `tests/flows.test.mjs`; `tests/teams.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every open plan moves with the book; the cited team journey covers tasks but no plan fixture. Asserted: Three hundred accounts are previewed; Four CSMs receive seventy-five accounts each; Recorded owner counts match capacity allocation; All open tasks move; Each moved account has actor/time/handover note.
+**Evidence.** `tests/flows.test.mjs` (TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance), via `tests/team-journey.mjs` teamJourney: 300 accounts across four CSMs, full 75-draft review and ownership reconciliation, stale draft and sharing refusal with no partial movement, unrelated and customer-owned content preservation, capacity and handover notes; `tests/teams.mjs` native team forms, reviewed draft list and end states at 1440 and 390; `tests/plan-journey.mjs` planCustodyJourney retains manual draft handover and erasure proof.
+**Gap.** Shared or customer-visible plan handover and journey handover remain unimplemented by the reviewed bulk door. ROLE-001 retains scoped manager and CSM authority, including the current account and field authorization duty under RL-102 for plan work and retained reviews. PLAN-001 and its existing held prerequisites remain unchanged.
 
 #### AUDIT-001 — Durable audit log
 
