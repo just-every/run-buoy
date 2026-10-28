@@ -116,6 +116,7 @@ try{
  const heldBody={revision:(await heldCurrent()).revision,confirmation:'synthetic-buoy-374',request:{verificationMethod:'verified-offline',receivedDate:new Date().toISOString().slice(0,10),requesterReference:randomUUID()}}
  const heldExport=await call('/customer-people/'+heldPerson.id+'/privacy/export','POST',heldBody)
  let heldVersionsBefore=heldExport.records.heldVersions
+ const heldBaselineBefore=heldExport.records.hold[0].snapshot
  assert.ok(heldVersionsBefore.some(v=>v.record_kind==='buoy_customer_values'&&JSON.parse(JSON.parse(v.document).document).portable_seats===4),'The intermediate held version is exported before backup')
 
  let privacyRequestsBefore=await call('/privacy/requests');
@@ -353,6 +354,7 @@ try{
  assert.ok(!(await call('/customer-people')).records.some(p=>p.id===privacyPerson.id),'ERASE-002 erased customer stays absent after restore');
  const restoredHeld=await call('/customer-people/'+heldPerson.id+'/privacy/export','POST',{...heldBody,revision:(await heldCurrent()).revision})
  assert.deepEqual(restoredHeld.records.heldVersions,heldVersionsBefore,'Every retained hold version survives real archive restoration')
+ assert.equal(restoredHeld.records.hold[0].snapshot,heldBaselineBefore,'The bounded hold baseline survives real archive restoration')
  const restoredHoldPreview=await call('/customer-people/'+heldPerson.id+'/privacy/preview','POST',{revision:(await heldCurrent()).revision,emails:[]})
  assert.equal(restoredHoldPreview.held,true,'A restored hold does not release automatically')
 

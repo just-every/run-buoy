@@ -18,7 +18,7 @@ Save the returned `id`, `token` and `expiresAt` privately. Buoy stores only the 
 
 Send agent requests to the installed app’s origin, with `Authorization: Bearer <credential>`. Send JSON with `Content-Type: application/json`. Never put a credential in a URL or a log.
 
-`GET /api/buoy/commands` lists only the grant’s commands. The default names are `renewals.list`, `playbook.prepare` and `renewal.prepare`. Explicit API grants can also select `experiment.prepare` and `experiment.report`; see [matched retention experiments](experiments.md). These new commands require all four current data classes and never grant approval. Existing credentials and default grants retain their original commands. Data classes are `account`, `billing`, `support` and `sentiment`. Send the following bodies with `POST /api/buoy/commands`.
+`GET /api/buoy/commands` lists only the grant’s commands. The default names are `renewals.list`, `playbook.prepare` and `renewal.prepare`. Explicit API grants can also select `experiment.prepare` and `experiment.report`; see [matched retention experiments](https://github.com/just-every/run-buoy/blob/main/docs/experiments.md). These new commands require all four current data classes and never grant approval. Existing credentials and default grants retain their original commands. Data classes are `account`, `billing`, `support` and `sentiment`. Send the following bodies with `POST /api/buoy/commands`.
 
 ### List renewal accounts
 
@@ -104,7 +104,7 @@ and account link, with task/source/free text and exact commercial values omitted
 Outside-scope or invalidated assignments receive no account notice or reminder.
 Aggregate digests remain excluded for assigned profiles until ported. This mail
 projection does not give an agent a send scope or change its command/data-class
-grant. See [providers and data flows](providers.md) and [staff profiles](roles.md).
+grant. See [providers and data flows](/docs/providers) and [staff profiles](https://github.com/just-every/run-buoy/blob/main/docs/roles.md).
 
 
 ## Data trust review

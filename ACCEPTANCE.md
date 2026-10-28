@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 21 | 47 | 37 | 105 |
+| Core | 23 | 45 | 37 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 21 | 47 | 46 | 114 |
+| Full target | 23 | 45 | 46 | 114 |
 
-Judged from the code and tests at commit `08898229c21c31b589b993c54f9e3cf96cab9e2d` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -102,15 +102,15 @@ Core · published · **partial** · Cites BASE-DATA-001, BASE-BACKUP-001, BASE-S
 
 #### SITE-001 — Public run site
 
-Core · published · **partial** · Cites BASE-PUBLIC-001
+Core · published · **done** · Cites BASE-PUBLIC-001
 
 **Requirement.** The static run site contains the product homepage, `/run`, Markdown owner guides and a 404. It reads no installation data and links only public routes. Installed `/` keeps the shared Lobby. Run-site deployment stays gated off until its release gate.
 
 **Acceptance.**
 1. Build with `rer build --site` and crawl the output through Cloudflare's static-asset server; the homepage reaches `/run` and `/docs`, every guide renders and unknown paths return the 404.
 
-**Evidence.** `src/site/run.json`; `docs/`; `tests/site.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every owner-guide body renders its content; linked-resource HTTP 200 checks do not assert rendered guide content. Asserted: Homepage reaches run instructions; Homepage reaches docs navigation; Guides are traversed as linked resources; Unknown path returns 404.
+**Evidence.** `tests/site.mjs` — Run-site journey: Cloudflare static-asset crawl reaches the homepage, run instructions and docs, checks public links and fragments, and returns 404 for an unknown path; Owner-guide content: every emitted Markdown article has its own visible headings, paragraphs, list items, commands, inline code and links at 1440 pixels. Release captures cover every guide at 1440 and 390 pixels.
+**Gap.** None.
 
 #### STYLE-001 — One theme at every width
 
@@ -1278,7 +1278,7 @@ Core · target · **partial**
 
 #### BOUNDARY-005 — Certifications are the deployment's
 
-Core · target · **partial** · Cites BASE-INSTALL-001, BASE-DATA-004 · Register R-6
+Core · target · **done** · Cites BASE-INSTALL-001, BASE-DATA-004 · Register R-6
 
 **Requirement.** SOC 2 or similar attestations cover the buyer's deployment and are prepared with Evidence or their auditor; a provider's network, terms and data-processing agreements still apply to each connector. The providers guide (`docs/providers.md`) lists every provider an installation can talk to, with what each receives and returns and the terms and data-processing agreement that govern it. The guide also describes incoming Segment observations under USAGE-001 and INAPP-001's buyer-operated authenticated product relay: the relay requests content from Buoy and sends view/completion/dismissal receipts back. It is not a third-party provider or an outbound Buoy provider call; neither incoming observations nor stored receipts claim provider verification, hosted delivery or legal acceptance. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#boundary-005).
 
@@ -1287,8 +1287,8 @@ Core · target · **partial** · Cites BASE-INSTALL-001, BASE-DATA-004 · Regist
 2. The site check derives current connector provider origins (Stripe and Totango account search), the mail providers the installation accepts and the OpenID presets from code, with Cloudflare and Segment explicitly named, then requires a section in the built guide for each, with when it is used, what it sends and receives, and a link to its terms.
 3. The buyer-operated in-app relay has its own When/Sends/Receives/Terms guide section describing server-only authenticated requests, exact reviewed source/user/group mapping, campaign content and view/completion/dismissal receipts, buyer and source external copies and deployment responsibilities; it is not a third-party provider and has no fabricated provider terms or outbound Buoy call.
 
-**Evidence.** `docs/providers.md`; `src/site/docs.ts`; `tests/site.mjs`
-**Gap.** Not asserted by the cited baseline evidence: The buyer-operated in-app relay has independently asserted exact mapping/content/three receipt kinds/external-custody sections; Relay has no fabricated third-party provider terms or outbound Buoy call. Asserted: Every derived provider has a guide section; When/Sends/Receives/Terms are present; Provider terms have real links; Derived connector, mail and identity origins all have guide sections; Each section includes data flow fields.
+**Evidence.** `tests/site.mjs` — Run-site journey: code-derived connector, model, mail and OpenID provider inventory has data-flow sections and real terms links; Buyer-operated relay guide: independently checks server authentication, exact reviewed mapping, campaign content, all three receipt kinds, external copies, deployment responsibility and no fabricated provider or outbound call. `docs/providers.md`; `src/site/docs.ts`.
+**Gap.** None.
 
 ### Push further: agents that carry the job
 

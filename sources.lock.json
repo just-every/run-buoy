@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "4252181bee50075dc7dbab083ede5742406561d28d781c60447537a481141eaf",
+      "sha256": "9985c10d092717014c97d270b11fcb46d7e5bee6a95da83496cb094440f322b0",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8c1b0b81f9dc943328897e5b25aeae90e7779cae9b09286c668f09b5c6066d5a",
+      "sha256": "e75fce55b59c784713a1cbe9818efabff7a7542905424b5800523e31fbc2b822",
       "executable": false
     },
     "DEMO.md": {
@@ -136,7 +136,7 @@
       "executable": false
     },
     "docs/agents.md": {
-      "sha256": "16b5759b39ca92f40c2257f92d01ef0152340b8078e9a758e18aa8bdf48dd978",
+      "sha256": "a151361ab14d7718e7048b574cfc2bc2d4681c04184c0f6197958b56de3bb06b",
       "executable": false
     },
     "docs/ai-schedules.md": {
@@ -152,7 +152,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "8aa1929599c088489248dc8534ee0fc344fb20bf81287d800e6f2f36195f1fde",
+      "sha256": "d566c221efe07c7e42d342be98a9c17c82311c8779a53fb8136c7e561a99a03d",
       "executable": false
     },
     "docs/communication-sentiment.md": {
@@ -1608,7 +1608,7 @@
       "executable": false
     },
     "src/buoy/privacy.ts": {
-      "sha256": "15d0f77a25638b1d081f8eab1b04af96301bb19230238bb68097e8c73d0314a4",
+      "sha256": "8762e086b55b09fc2349b64780617c5cd24208687c0bf9dbddc5c504c3f51a00",
       "executable": false
     },
     "src/buoy/privacy/discovery.ts": {
@@ -4360,7 +4360,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "84e1fc04e6c94865613d31371f059ab91b20b937ec13ad9f733be06c49fb2432",
+      "sha256": "506575776e3e275f5eb6a5750160a4787cdf597b6fa36a008c6a6390456e9bab",
       "executable": false
     },
     "tests/portal-browser.mjs": {
@@ -4368,7 +4368,7 @@
       "executable": false
     },
     "tests/portal-journey.mjs": {
-      "sha256": "902649d514f8fd0294d9a76b6ae67811150acf63a41060c204d3a91a0cf2e782",
+      "sha256": "ab8cac11a365d9261a3a4d1405eaa0f679a45ce6e94aaaef2625b794681f1dee",
       "executable": false
     },
     "tests/portal-mail-live.mjs": {
@@ -4496,7 +4496,7 @@
       "executable": false
     },
     "tests/site.mjs": {
-      "sha256": "85a5d3fae2f912bc8b657f0406ab0448d582665c87bb299d29f48dc799d0aba9",
+      "sha256": "cecb93044753b444be332262bba874c51f3f58c1e43fa15e170354f23e747e8e",
       "executable": false
     },
     "tests/style.mjs": {

@@ -9,7 +9,7 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 1 | Spot the risk. Save the renewal. | `HEALTH-001` done; `SIGNAL-001` partial; `RENEW-001` partial | partial |
 | 2 | Joins CRM, billing, support and usage data for every account. | `ACCOUNT-002` partial; `CRM-001` missing; `CRM-002` missing; `BILLING-001` done; `SUPPORT-001` missing; `USAGE-001` done | partial |
 | 3 | Explains account health, runs playbooks and reconciles renewals to billing. | `HEALTH-001` done; `PLAY-001` partial; `RENEW-001` partial; `REPORT-001` done | partial |
-| 4 | 100% free and open source alternative to Gainsight, ChurnZero and Totango; MIT licensed. | `BOUNDARY-005` partial | partial |
+| 4 | 100% free and open source alternative to Gainsight, ChurnZero and Totango; MIT licensed. | `BOUNDARY-005` done | done |
 | 5 | Account health recovers when the account’s evidence recovers. | `HEALTH-001` done; `AGENT-001` partial | partial |
 | 6 | Every point in the configured weighted scorecard is explained with its source and freshness. | `HEALTH-001` done; `DATA-001` done | done |
 | 7 | Risk alerts reach Slack; Salesforce and Zendesk show the same health. | `SIGNAL-001` partial; `CHAT-001` missing; `CRM-001` missing; `SUPPORT-003` missing | partial |
@@ -32,7 +32,7 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 24 | Buoy takes over incumbent-written Salesforce fields on their existing scales without blanking reports and dashboards. | `CRM-004` missing; `MIGRATE-006` missing | missing |
 | 25 | Move-in carries companies, 52 weeks of health, contacts, tasks, playbooks, success plans, NPS, activities and custom objects. | `MIGRATE-001` missing; `MIGRATE-007` missing; `ACCOUNT-006` missing | missing |
 | 26 | Also moves in from ChurnZero, Totango, Planhat, Vitally and Velaris. | `MIGRATE-002` partial; `MIGRATE-003` partial; `MIGRATE-004` missing; `MIGRATE-005` partial | partial |
-| 27 | Run Buoy on your own computer, with source and data under your control. | `BOUNDARY-005` partial; `RESTORE-001` partial | partial |
+| 27 | Run Buoy on your own computer, with source and data under your control. | `BOUNDARY-005` done; `RESTORE-001` partial | partial |
 | 28 | Illustrated Cascade renewal is signed six weeks early with retained terms and source evidence. | `RENEW-001` partial; `RENEW-005` partial; `AGENT-003` partial | partial |
 
-Claims: 28; 2 done, 23 partial, 3 missing.
+Claims: 28; 3 done, 22 partial, 3 missing.

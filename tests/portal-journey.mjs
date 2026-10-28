@@ -81,6 +81,15 @@ export async function portalJourney(){
   assert.equal((await uploadPortalFile(f,{type:'text/html',name:'unsafe.html',contents:'<script>unsafe</script>'})).status,400)
   assert.equal((await uploadPortalFile(f,{cookie:outsider.cookie})).status,403)
   assert.ok((await api('/accounts/'+accountId+'/activity?source=customer-portal')).records.some(record=>record.kind==='customer-file-uploaded'&&record.reference==='setup-evidence.txt'))
+  const attachments=[]
+  for(let n=1;n<=3;n++){
+   const contents=('Customer rollout evidence '+n+' 🌊\n').repeat(30000)
+   const bytes=new TextEncoder().encode(contents).slice(0,730000)
+   const uploaded=await uploadPortalFile(f,{name:'rollout-evidence-'+n+'.txt',contents:bytes})
+   assert.equal(uploaded.status,201,await uploaded.clone().text())
+   attachments.push({id:(await uploaded.json()).id,payload:Buffer.from(bytes).toString('base64')})
+  }
+
   assert.equal((await api('/audit?action=portal.confirmation')).entries.length,1)
   const sharePath='/api/buoy/accounts/'+accountId+'/portal-sharing'
   for(const days of [0,366])assert.equal((await app.request(sharePath,{cookie:app.cookie,method:'POST',body:{...f.shareBody(),days}})).status,400)
@@ -109,15 +118,19 @@ export async function portalJourney(){
   assert.equal((await app.request('/api/buoy/portal/'+again.id,{cookie:recipient.cookie})).status,403)
   assert.equal((await app.request('/api/buoy/state',{cookie:recipient.cookie})).status,403,'Revocation never converts a customer back to internal staff')
   let person=(await api('/customer-people')).records.find(value=>value.id===f.champion.id)
-  const exported=await privacyCommand(api,person,'export');assert.equal(exported.records.portalFiles.length,1)
+  const exported=await privacyCommand(api,person,'export');assert.equal(exported.records.portalFiles.length,4)
+  for(const file of attachments)assert.equal(exported.records.portalFiles.find(row=>row.id===file.id).payload,file.payload,'Person export retains every accepted attachment byte')
   await api('/customer-people/'+person.id+'/privacy/hold','POST',{revision:person.revision,confirmation:person.name,operation:'set',reason:'legal-obligation'})
   person=(await api('/customer-people')).records.find(value=>value.id===f.champion.id)
+  const heldExport=await privacyCommand(api,person,'export')
+  for(const file of attachments)assert.equal(JSON.parse(heldExport.records.hold[0].snapshot).portalFiles.find(row=>row.id===file.id).payload,file.payload,'The hold baseline retains all accepted attachment bytes')
   assert.equal((await privacyCommand(api,person,'erase')).receipt.outcome,'held')
   assert.equal((await app.request(staffPath,{cookie:app.cookie})).status,200,'A preservation hold retains its linked file')
   await api('/customer-people/'+person.id+'/privacy/hold','POST',{revision:person.revision,confirmation:person.name,operation:'release',reason:'review-completed'})
   person=(await api('/customer-people')).records.find(value=>value.id===f.champion.id)
-  assert.equal((await privacyCommand(api,person,'erase')).receipt.counts.portalFiles,1)
+  assert.equal((await privacyCommand(api,person,'erase')).receipt.counts.portalFiles,4)
   assert.equal((await app.request(staffPath,{cookie:app.cookie})).status,404,'Person erasure removes linked file contents')
+  for(const file of attachments)assert.equal((await app.request('/api/buoy/accounts/'+accountId+'/portal-files/'+file.id,{cookie:app.cookie})).status,404,'Erasure removes every large attachment')
   assert.equal((await uploadPortalFile(f,{revision:view.revision})).status,403,'An erased customer cannot replay an upload')
   await api('/accounts/'+accountId,'DELETE',{confirmation:f.customer(accountId).name})
   assert.equal((await app.request(staffPath,{cookie:app.cookie})).status,404,'Account erasure removes the file payload')
