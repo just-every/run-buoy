@@ -68,6 +68,47 @@ try {
     for (const label of ['When:', 'Sends:', 'Receives:', 'Terms:']) assert.ok(section.includes(label), `BOUNDARY-005: ${name} lists ${label}`)
     if (name !== 'Auth' && name !== 'Company') assert.match(section.split('Terms:')[1], /href="https:\/\/[^"]+"/, `BOUNDARY-005: ${name} links its provider terms`)
   }
+  // The buyer's relay is an incoming door, so it is absent from the provider-origin inventory.
+  // Check its served article against the owner's expected responsibilities independently of the Markdown.
+  const relay = guide.match(/<h3[^>]*>In-app relay<\/h3>([\s\S]*?)(?=<h[23]\b|$)/)?.[1]
+  assert.ok(relay, 'BOUNDARY-005: the built guide explains the buyer-operated in-app relay')
+  const relayFields = new Map([...relay.matchAll(/<li><strong>(When|Sends|Receives|Terms):<\/strong>([\s\S]*?)<\/li>/g)]
+    .map(([, label, html]) => [label, html.replace(/<[^>]*>/g, '').replaceAll('&#39;', "'").replaceAll('&amp;', '&').replace(/\s+/g, ' ').trim()]))
+  const relayExpectations = {
+    When: [
+      [/browser sends same-origin JSON POST actions to your product server/, 'browser actions stay on the buyer product'],
+      [/server authenticates the real product session and current account membership/, 'the product server authenticates current membership'],
+      [/separate server-only in-app credential.*Buoy delivery or submit receipts/, 'Buoy requests use a separate server credential'],
+      [/browser holds no Buoy credential/, 'no Buoy credential reaches the browser'],
+      [/exact administrator-reviewed source.user.group mapping.*existing customer person.*current account membership.segment/, 'targeting uses the exact reviewed source, user and group'],
+      [/unknown or conflicting identities receive no targeted content/, 'unreviewed identities receive no targeted content'],
+    ],
+    Sends: [
+      [/relay sends validated user.group identity claims to Buoy, replacing browser-supplied identities/, 'the relay replaces untrusted browser identities'],
+      [/campaign ID, delivery ID when mapped, exact message ID and view, completion or dismissal kind/, 'receipts identify the campaign, delivery, message and all three kinds'],
+      [/stores receipt observations with source provenance and instants.*attributes only through the reviewed mapping.*advances the mapped account revision/, 'receipt custody preserves provenance and reviewed attribution'],
+      [/Buoy makes no outbound call to the relay or a new third-party provider/, 'Buoy never calls a relay provider'],
+    ],
+    Receives: [
+      [/relay receives eligible announcement, banner, checklist or walkthrough content.*plain-text title, body and steps.*campaign and delivery IDs.*returns that content to the product browser/, 'eligible campaign content returns through the relay'],
+      [/Receipt submissions receive stored.accepted.duplicate counts or an error/, 'receipt responses distinguish storage, acceptance, duplicates and errors'],
+      [/reservation is not a view.*stored receipt is not proof of hosted delivery, provider verification or verified attention/, 'reservations and receipts do not certify delivery or attention'],
+    ],
+    Terms: [
+      [/your buyer-operated server, not a third-party provider with separate provider terms/, 'the relay has no invented third-party terms'],
+      [/own hosting and product.source agreements apply/, 'buyer hosting and source agreements still apply'],
+      [/operate, authenticate and secure the relay and browser deployment, keep the credential server-side/, 'the buyer secures and deploys the relay'],
+      [/copies retained by your product, relay or source as external holders.*erasure in Buoy does not delete those copies/, 'external copies remain the buyer and source responsibility'],
+      [/data flows and responsibilities, not legal acceptance or certification/, 'the guide makes no legal or certification claim'],
+    ],
+  }
+  for (const [label, expectations] of Object.entries(relayExpectations)) {
+    assert.ok(relayFields.has(label), `BOUNDARY-005: the relay lists ${label}`)
+    for (const [pattern, outcome] of expectations) assert.match(relayFields.get(label), pattern, `BOUNDARY-005: ${outcome}`)
+  }
+  assert.deepEqual([...relay.matchAll(/href="([^"]+)"/g)].map(match => match[1]).sort(), [
+    'https://www.cloudflare.com/cloudflare-customer-dpa/', 'https://www.cloudflare.com/terms/',
+  ], 'BOUNDARY-005: relay terms link only to the existing deployment host, with no fabricated relay provider')
   assert.equal((await fetch(origin + '/does-not-exist')).status, 404, 'Unknown route is a 404')
   console.log(`Run-site journey passed: ${documents.size} public documents, ${checked.size} linked resources, all fragments resolve`)
 } finally {
