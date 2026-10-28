@@ -27,7 +27,7 @@ Old reference: `fab68ffc3066c5f4852bc4cf9c158e3fb9c8f8c3`.
 | `DATA-001` | 3 | Connected repeat is a pointer to CONNECT-001, retained in the Requirement and linked domain rules | none | moved |
 | `APPROVAL-001` | 1 | Two approvals create one task | `tests/flows.test.mjs:72` | asserted |
 | `APPROVAL-001` | 1 | Completion without evidence is refused | `tests/flows.test.mjs:74` | asserted |
-| `APPROVAL-001` | 1 | Completion with evidence is stored | `tests/flows.test.mjs:76` | asserted |
+| `APPROVAL-001` | 1 | Completion with evidence is stored | `tests/flows.test.mjs:378` | asserted |
 | `APPROVAL-001` | 1 | One renewed decision and its evidence are retained | `tests/flows.test.mjs:86` | asserted |
 | `APPROVAL-001` | 1 | Stale approval is refused after source refresh | `tests/flows.test.mjs:94` | asserted |
 | `APPROVAL-001` | 1 | Earlier decision retains original renewal date | `tests/flows.test.mjs:95` | asserted |
@@ -125,7 +125,7 @@ Old reference: `fab68ffc3066c5f4852bc4cf9c158e3fb9c8f8c3`.
 | `HEALTH-001` | 1 | Missing required source becomes unknown | `tests/health-scorecard-journey.mjs:60` | asserted |
 | `HEALTH-001` | 1 | Every measure has sources and freshness | `tests/health-scorecard-journey.mjs:62` | asserted |
 | `HEALTH-001` | 1 | Republishing preserves previous immutable version | `tests/health-scorecard-journey.mjs:185` | asserted |
-| `HEALTH-001` | 1 | Changed source recalculates within the specified bound | `tests/health-scorecard-journey.mjs:117` | asserted |
+| `HEALTH-001` | 1 | Changed source recalculates within the specified bound | `tests/health-scorecard-journey.mjs:117`; `tests/health-scorecard-journey.mjs:118`; `tests/health-scorecard-journey.mjs:120` | asserted |
 | `HEALTH-001` | 1 | Unchanged account hourly timestamp is fresh | `tests/health-scorecard-journey.mjs:135` | asserted |
 | `HEALTH-001` | 1 | Excluded missing measure is not reweighted as a fabricated zero | `tests/health-scorecard-journey.mjs:71` | asserted |
 | `HEALTH-002` | 1 | Person sentiment changes health | `tests/flows.test.mjs:146` | asserted |
@@ -366,7 +366,7 @@ Old reference: `fab68ffc3066c5f4852bc4cf9c158e3fb9c8f8c3`.
 | `AGENT-008` | 5 | Backtest spans exact twelve-month window | `tests/configuration-journey.mjs:41` | asserted |
 | `AGENT-008` | 5 | Fire count and churn capture are independently expected | `tests/configuration-journey.mjs:42` | asserted |
 | `AGENT-008` | 5 | Equal-timestamp retained-scorecard ordering is asserted on the exact historical source image | `tests/configuration-journey.mjs:147` | asserted |
-| `AGENT-008` | 6 | Missing history remains visibly missing | `tests/configuration-journey.mjs:49` | asserted |
+| `AGENT-008` | 6 | Backtest reports nonzero missing weeks | `tests/configuration-journey.mjs:49` | asserted |
 | `AGENT-008` | 7 | Wrong exact fingerprint is refused | `tests/configuration-journey.mjs:73` | asserted |
 | `AGENT-008` | 7 | Replay returns same definition | `tests/configuration-journey.mjs:75` | asserted |
 | `AGENT-008` | 7 | Exactly one definition is published | `tests/configuration-journey.mjs:76` | asserted |
@@ -375,3 +375,16 @@ Old reference: `fab68ffc3066c5f4852bc4cf9c158e3fb9c8f8c3`.
 | `AGENT-008` | 8 | Active control still produces new fresh-day notices | `tests/configuration-journey.mjs:101` | asserted |
 | `AGENT-008` | 8 | Account erasure withdraws every dependent configuration draft | `tests/configuration-journey.mjs:114` | asserted |
 | `AGENT-008` | 8 | Restored archive excludes pending person-approval authority for every draft kind | `tests/portable.mjs:292` | asserted |
+| `SITE-001` | 1 | Every owner-guide body renders its content; linked-resource HTTP 200 checks do not assert rendered guide content | none | none |
+| `SEGMENT-001` | 1 | CSV membership and count reconcile across every row; the cited assertions match one account name rather than the complete result | none | none |
+| `PLAY-004` | 3 | Native report timing equals the independently calculated elapsed time at 1440 and 390; a nonnegative API mean does not assert displayed timing | none | none |
+| `PLAY-004` | 3 | The browser CSV end state reconciles every cohort, rate and timing field rather than matching one account name | none | none |
+| `AGENT-008` | 2 | Configuration calls enforce provider-bound credential selection, metered budget and Pause before effects; the cited configuration bodies do not assert this complete guard set | none | none |
+| `AGENT-008` | 2 | Request consent refusal makes no model request | `tests/configuration-journey.mjs:55` | asserted |
+| `AGENT-008` | 2 | Changed model policy invalidates publication | `tests/configuration-journey.mjs:108` | asserted |
+| `AGENT-008` | 2 | Disabled model hides configuration preparation | `tests/configuration-browser.mjs:52` | asserted |
+| `AGENT-008` | 6 | An explicitly skipped historical week remains absent | `tests/configuration-journey.mjs:148` | asserted |
+| `AGENT-008` | 6 | Usable current inputs do not fabricate history for the history-free account | `tests/configuration-journey.mjs:149` | asserted |
+| `AGENT-008` | 6 | Missing account-week count equals exact independently expected 107 | `tests/configuration-journey.mjs:151` | asserted |
+| `AGENT-008` | 7 | Scorecard replay keeps one native version | `tests/configuration-journey.mjs:155` | asserted |
+| `AGENT-008` | 7 | Segment/report/playbook replay preserves the complete definition set | `tests/configuration-journey.mjs:172` | asserted |

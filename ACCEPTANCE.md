@@ -8,10 +8,10 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 24 | 42 | 39 | 105 |
+| Core | 20 | 46 | 39 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 24 | 42 | 48 | 114 |
+| Full target | 20 | 46 | 48 | 114 |
 
 Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -102,7 +102,7 @@ Core · published · **partial** · Cites BASE-DATA-001, BASE-BACKUP-001, BASE-S
 
 #### SITE-001 — Public run site
 
-Core · published · **done** · Cites BASE-PUBLIC-001
+Core · published · **partial** · Cites BASE-PUBLIC-001
 
 **Requirement.** The static run site contains the product homepage, `/run`, Markdown owner guides and a 404. It reads no installation data and links only public routes. Installed `/` keeps the shared Lobby. Run-site deployment stays gated off until its release gate.
 
@@ -110,7 +110,7 @@ Core · published · **done** · Cites BASE-PUBLIC-001
 1. Build with `rer build --site` and crawl the output through Cloudflare's static-asset server; the homepage reaches `/run` and `/docs`, every guide renders and unknown paths return the 404.
 
 **Evidence.** `src/site/run.json`; `docs/`; `tests/site.mjs`
-**Gap.** None.
+**Gap.** Not asserted by the cited baseline evidence: Every owner-guide body renders its content; linked-resource HTTP 200 checks do not assert rendered guide content. Asserted: Homepage reaches run instructions; Homepage reaches docs navigation; Guides are traversed as linked resources; Unknown path returns 404.
 
 #### STYLE-001 — One theme at every width
 
@@ -567,7 +567,7 @@ Core · target · **partial**
 
 #### SEGMENT-001 — Segments, tiers and lifecycle stages
 
-Core · target · **done**
+Core · target · **partial**
 
 **Requirement.** Dynamic segments defined by rules over any field, metric or relationship update automatically and record entry and exit times; static lists are also available. Accounts carry an owner/admin-defined service tier (seeded with, for example, high-touch, scaled and digital) and a lifecycle stage (onboarding, adoption, expansion, renewal or churned) set by rule or by hand. Segments drive scorecard weights, playbooks, journeys, permissions and reports. Today's complete boundary is the existing account, renewal, native billing/support snapshot, health band/evidence, sentiment, CSM, territory and task-count fields, ACCOUNT-004 custom/calculated fields on accounts and USAGE-001 customer contacts/users, static lists, segment-filtered account reports and CSV, and TEAM-001 assignment rules. Related customer fields use people.contact and people.user paths with their existing typed representation; all conditions for one related kind must be satisfied by the same person, including currency and amount, while any-rules need one matching related condition. Customer value or explicit membership changes reevaluate these rules before a successful write returns. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#segment-001).
 
@@ -578,7 +578,7 @@ Core · target · **done**
 4. Exercise static lists, typed all/any/missing rules, manual and rule tier/stage with precedence and clearing, imports, sentiment/expiry and TEAM-001 segment allocation, member reads and mutation refusal, erasure, and the real management/approval/report forms at 1440 and 390.
 
 **Evidence.** `src/buoy/segments/rules.ts`; `src/buoy/segments/snapshot.ts`; `src/buoy/segments/index.ts`; `src/buoy/ui/segments.ts`; `src/buoy/team-plan.ts`; `src/buoy/work.ts`; `migrations/core/0025_buoy_segments.sql`; `migrations/core/0027_buoy_tiers.sql`; `docs/segments.md`; `tests/segment-journey.mjs`; `tests/flows.test.mjs`; `tests/segments.mjs`; `src/buoy/people/model.ts`; `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`
-**Gap.** None.
+**Gap.** Not asserted by the cited baseline evidence: CSV membership and count reconcile across every row; the cited assertions match one account name rather than the complete result. Asserted: Initial entry has timestamp and correct account; Exactly one approved task is created; Inclusive threshold exits and is timestamped; Different currencies do not mix; Reentry has a new distinct proposal; Report has exact selected account and risk count; CSV includes selected account; Reads and Cron do not duplicate entries; Stale account revision refuses approval; Stale configuration refuses approval; Exited-entry approval is refused after exit; Used custom tier cannot be removed; Member cannot edit tier list; Custom tier is returned after manual classification; Static-list membership; Typed any rules; Missing rules; Manual tier/stage clearing; Import membership refresh; Sentiment expiry membership; Team allocation from segment; Erasure removes membership; Member mutation is refused; Native form end states at 1440; Native form end states at 390.
 
 ### Lifecycle work
 
@@ -620,7 +620,7 @@ Core · target · **partial** · Cites BASE-ROLE-001, BASE-MAIL-001, BASE-OPS-00
 
 #### PLAY-004 — Outcome tracking for playbooks
 
-Core · target · **done**
+Core · target · **partial**
 
 **Requirement.** Each playbook records which enrolled accounts reached its intended outcome (health recovered, milestone reached, renewal closed) within a window, with completion rates, time to outcome and comparison to unenrolled accounts in the same segment. The outcome must be unsatisfied at baseline; accounts must currently belong to the chosen segment. This single start operation freezes both the enrolled accounts and the other unsatisfied members of the same segment as the comparison group. Later segment changes do not rewrite either cohort. The window starts at tracking creation and includes its deadline; an outcome is the first satisfied evidence observed on a request, after a source/action change or on the hourly run, not an inferred transition time. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#play-004).
 
@@ -630,7 +630,7 @@ Core · target · **done**
 3. Use the real setup form and read its rate, timing, evidence, comparison and CSV end states at 1440 and 390.
 
 **Evidence.** `src/buoy/outcomes/index.ts`; `src/buoy/outcomes/observe.ts`; `src/buoy/outcomes/report.ts`; `src/buoy/ui/outcomes.ts`; `migrations/core/0026_buoy_outcomes.sql`; `docs/outcomes.md`; `tests/outcome-journey.mjs`; `tests/flows.test.mjs`; `tests/outcomes.mjs`
-**Gap.** None.
+**Gap.** Not asserted by the cited baseline evidence: Native report timing equals the independently calculated elapsed time at 1440 and 390; a nonnegative API mean does not assert displayed timing; The browser CSV end state reconciles every cohort, rate and timing field rather than matching one account name. Asserted: Enrolled and control cohorts each contain forty accounts; Correct enrolled list; Correct control list; Recovery rates are fifty and twelve-and-a-half percent; First-observed elapsed times match timestamps; Mean elapsed time equals independent mean; CSV has eighty records and twenty-five reached outcomes; Already-satisfied baseline is refused; Member outcome start is refused; Window is exactly two days; Replay returns same outcome window; Segment edit preserves frozen cohorts; Repeated observation preserves first evidence; Renewal outcome uses approved decision evidence; At-deadline observation counts; Window-missed outcomes are read back; Late recovery does not count; Reports never complete tasks; Erasure removes enrolled evidence; Rate/timing and comparison form end states at 1440; Evidence is shown at 1440; CSV read-back at 1440; Rate/timing and comparison form end states at 390; Evidence is shown at 390; CSV read-back at 390.
 
 #### ONBOARD-001 — Onboarding projects
 
@@ -1403,7 +1403,7 @@ Core · push-further · **partial** · Cites BASE-AGENT-002, BASE-AGENT-006, BAS
 
 #### AGENT-008 — Plain-language configuration
 
-Core · push-further · **done** · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-007
+Core · push-further · **partial** · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-007
 
 **Requirement.** An admin describes a scorecard, segment, playbook or report in plain language; the agent builds a draft, back-tests scorecards and signals against the last twelve months (how often they would have fired, how many churned accounts they would have caught), shows the draft and test, and classifies publication as standard, adding external or live when publication starts outside messages or changes running automation; the company’s policy decides publication.
 
@@ -1418,7 +1418,7 @@ Core · push-further · **done** · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-A
 8. Internal owner signal alerts use inbox preferences and can be paused with an audit. Account erasure withdraws dependent drafts; archives exclude pending person-approval authority. MIGRATE-007 owns imported-history coverage.
 
 **Evidence.** `tests/flows.test.mjs`; `tests/configuration-journey.mjs`; `tests/configuration-browser.mjs`; `tests/portable.mjs`; `tests/configuration-portability.mjs`
-**Gap.** None.
+**Gap.** Not asserted by the cited baseline evidence: Configuration calls enforce provider-bound credential selection, metered budget and Pause before effects; the cited configuration bodies do not assert this complete guard set. Asserted: Signal definition has exact weekly-drop and urgent-ticket predicates; Preparation and backtest publish no signal; Twelve-month fire count matches seeded expectation; Distinct churn capture matches expected denominator; Exact-fingerprint approval is required in held slice; Publication returns one definition; Scorecard draft; Segment draft; Playbook draft; Report draft; Complete outgoing body contains only description/schema/instructions; Weekly drop and urgent-ticket conjunction has independent account-week matches; Backtest spans exact twelve-month window; Fire count and churn capture are independently expected; Equal-timestamp retained-scorecard ordering is asserted on the exact historical source image; Missing history remains visibly missing; Wrong exact fingerprint is refused; Replay returns same definition; Exactly one definition is published; Pause has one audit action; Paused fresh-day signal suppresses new notices; Active control still produces new fresh-day notices; Account erasure withdraws every dependent configuration draft; Restored archive excludes pending person-approval authority for every draft kind; Request consent refusal makes no model request; Changed model policy invalidates publication; Disabled model hides configuration preparation; An explicitly skipped historical week remains absent; Usable current inputs do not fabricate history for the history-free account; Missing account-week count equals exact independently expected 107; Scorecard replay keeps one native version; Segment/report/playbook replay preserves the complete definition set.
 
 ## Agent surface
 
