@@ -1,4 +1,6 @@
 import {trustJourney,trustPrivacyJourney,trustUndoJourney} from './trust-journey.mjs'
+import {planOutcomeJourney} from './plan-outcome-journey.mjs'
+import {portalJourney,portalWithdrawalJourney} from './portal-journey.mjs'
 import {integrationJourney} from './integration-journey.mjs'
 import {reviewJourney} from './review-journey.mjs'
 import {dashboardJourney} from './dashboard-journey.mjs'
@@ -645,3 +647,8 @@ test('AGENT-008 native configuration kinds and retained scorecard back-testing',
 test('AGENT-007 evidence review, admin-only correction and immediate health refresh',trustJourney)
 test('AGENT-007 person evidence export, reviewed redaction, holds and erasure',trustPrivacyJourney)
 test('AGENT-007 import undo preserves dependent trust work on either account',trustUndoJourney)
+test('PLAN-001 customer portal confirmation and isolated collaboration',portalJourney)
+
+test('PLAN-001 customer access expiry and withdrawal',portalWithdrawalJourney)
+
+test('PLAN-001 objective milestone windows and frozen comparison',planOutcomeJourney)
