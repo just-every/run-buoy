@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "d34810c364f96d267dd8c0d8c8c963de7bb9900ca336373e5c15a0b018da71f9",
+      "sha256": "2a27c9edb91d038134f698f5d4b198844e8197d2095a7787030ecb8bac236601",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "e4fe0706333205b09564967de601f5b3769068af3d4736584e49b54709d3f0d3",
+      "sha256": "105c16128770323e8b394014bf3e549b1c5e4e6c6d373724263566264f3370c0",
       "executable": false
     },
     "DEMO.md": {
@@ -236,7 +236,7 @@
       "executable": false
     },
     "docs/reports.md": {
-      "sha256": "6f133298328f918b136fc6ddc7a2471924755d79b07f112e3822a6ebeaa730bf",
+      "sha256": "d49cbaaa5ef74b1139531abe68cde5fcf4fdeb406f84ea85d0a47210cad5ebec",
       "executable": false
     },
     "docs/revenue-reporting.md": {
@@ -1624,7 +1624,7 @@
       "executable": false
     },
     "src/buoy/reports/index.ts": {
-      "sha256": "95c5e72b3737151642151001fbb037cb6ed0e97c691a8c503d9ca672ba759aba",
+      "sha256": "d3b736f7c1cdd9ac7e69535e77fad75b19fcecead3685ff1e8785083243808cb",
       "executable": false
     },
     "src/buoy/reports/model.ts": {
@@ -2084,7 +2084,7 @@
       "executable": false
     },
     "src/buoy/ui/scoped.ts": {
-      "sha256": "3db790f733bc64c77681db9da74d22947eb18bed0b8280dd0c6b3aaf5c92c448",
+      "sha256": "156c00a32944526524f84ab04307948d585cda6cb9b8831254f1b8adb530ca4c",
       "executable": false
     },
     "src/buoy/ui/scorecards.ts": {
@@ -4216,7 +4216,7 @@
       "executable": false
     },
     "tests/dashboard-journey.mjs": {
-      "sha256": "b57402bbd75aacf9609599f345ceba552e731ff4698ac40b3db860504fef7680",
+      "sha256": "5220be374dc9330bab8e05ad5165bb74b1093d5f795399013ffa39cf79a40a65",
       "executable": false
     },
     "tests/email-link.mjs": {
@@ -4444,7 +4444,7 @@
       "executable": false
     },
     "tests/roles-browser.mjs": {
-      "sha256": "a0ceb65684a7181e2b952debbf7d663f5599ea9599f87bff35a789f098e3e55a",
+      "sha256": "6c71568fda9477d616b8e459275ed828aa30404f75017d5bf81dcb734ef6afbc",
       "executable": false
     },
     "tests/roles-journey.mjs": {

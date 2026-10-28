@@ -8,12 +8,13 @@ import {scan,submit,failures} from './a11y-checks.mjs'
 const app=await startWorker(),api=async(path,method='GET',body)=>{
  const r=await app.request('/api/buoy'+path,{cookie:app.cookie,method,body});assert.ok(r.ok,await r.clone().text());return r.json()
 }
-const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+const browser=await chromium.launch({headless:true,...(process.env.BUOY_CHROMIUM_PATH?{executablePath:process.env.BUOY_CHROMIUM_PATH}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
 const evidence=process.env.EVIDENCE_DIR??'../evidence/roles';await mkdir(evidence,{recursive:true})
 const cookies=(cookie,origin)=>cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:origin}})
 try{
- await app.request('/auth/invite',{cookie:app.cookie,method:'POST',body:{email:'roles-browser@example.test',displayName:'Harbour success colleague',role:'member'}})
- const member=await app.signIn('roles-browser@example.test'),person=(await (await app.request('/api/buoy/state',{cookie:member})).json()).operator
+ const email='synthetic-buoy-2203'+'@'+'example.test'
+ await app.request('/auth/invite',{cookie:app.cookie,method:'POST',body:{email,displayName:'Harbour success colleague',role:'member'}})
+ const member=await app.signIn(email),person=(await (await app.request('/api/buoy/state',{cookie:member})).json()).operator
  const on=new Date().toISOString().slice(0,10),ids=['synthetic-buoy-2200','synthetic-buoy-2201']
  for(const [i,id]of ids.entries()){
   await api('/accounts','POST',{id,name:['Harbour Marine','Coastal Analytics'][i],renewalDate:'2027-12-31',noticeDays:30,renewalEvidence:'synthetic-buoy-private-renewal',billing:null,support:null})
@@ -69,7 +70,7 @@ try{
    await read.goto(app.origin+'/app/approvals',{waitUntil:'networkidle'});await submit(read,read.locator('#renewal-approve-'+proposal.id).getByRole('button',{name:'Approve renewal outcome',exact:true}));assert.equal(await read.getByRole('alert').count(),0);assert.equal(await read.locator('#scoped-renewal-approvals li').count(),0);assert.equal((await api('/state')).decisions.filter(d=>d.proposalId===proposal.id).length,1);await proof(read,'renewal-recorded','#work')
    await api('/accounts/'+renewalAccount,'DELETE',{confirmation:'Harbour Marine renewal review'})
 
-   await page.goto(app.origin+'/app/roles',{waitUntil:'networkidle'});await page.locator('#role-definition-panel > summary').click();form=page.locator('#role-definition');await form.getByLabel('Custom profile name',{exact:true}).fill('Own book observer '+width);await form.getByLabel('Default record scope',{exact:true}).selectOption('own');await form.getByLabel('Read accounts',{exact:true}).selectOption('scope');await submit(page,form.getByRole('button',{name:'Create custom profile',exact:true}));assert.equal(await page.getByRole('alert').count(),0);await page.locator('#role-definitions > summary').click();assert.match(await page.locator('#role-definitions').innerText(),new RegExp('Own book observer '+width));await proof(page,'custom-created','#role-definitions')
+   await page.goto(app.origin+'/app/roles',{waitUntil:'networkidle'});await page.locator('#role-definition-panel > summary').click();form=page.locator('#role-definition');await form.getByLabel('Custom profile name',{exact:true}).fill('Own book observer '+width);await form.getByLabel('Default record scope',{exact:true}).selectOption('own');await form.getByLabel('Read accounts',{exact:true}).selectOption('scope');await form.getByLabel('Author reports and dashboards',{exact:true}).selectOption('author');await form.getByLabel('Export',{exact:true}).selectOption('reports');await submit(page,form.getByRole('button',{name:'Create custom profile',exact:true}));assert.equal(await page.getByRole('alert').count(),0);await page.locator('#role-definitions > summary').click();assert.match(await page.locator('#role-definitions').innerText(),new RegExp('Own book observer '+width));assert.equal((await api('/roles')).roles.find(r=>r.name==='Own book observer '+width).permissions.reports,'author');await proof(page,'custom-created','#role-definitions')
   }finally{await context.close();await reader.close()}
  }
  assert.deepEqual(failures,[],'Role configuration and scoped account/search screens inherit accessibility')
