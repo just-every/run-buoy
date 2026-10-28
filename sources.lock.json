@@ -4340,7 +4340,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "ed1906a1ac522204aa69f895406a9aa252c2d60fbf7633b379c53eb9153441ef",
+      "sha256": "ab2435c371926e2a6e5b3c9ad2674752a57337c19d41f7c19219b3835da528e8",
       "executable": false
     },
     "tests/portal-browser.mjs": {

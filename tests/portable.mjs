@@ -80,7 +80,8 @@ try{
  assert.equal((await running.request('/api/buoy/accounts/'+accountId,{method:'PUT',body:{},token:token.token})).status,403)
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,200)
  const erased={...fixture.accounts[0],id:'erase-before-backup',name:'Retired account'}
- await call('/accounts','POST',erased)
+ const erasedImport=await door.plan({accounts:[...fixture.accounts,erased]},true)
+ const erasedJob=await door.apply(erasedImport)
  await call('/accounts/erase-before-backup','DELETE',{confirmation:'Retired account'})
  assert.equal((await running.request('/auth/invite',{method:'POST',cookie:running.cookie,body:{email:'analyst@example.test',displayName:'Ana Lyst',role:'member'}})).status,202)
  const analyst=(await (await running.request('/auth/operators',{cookie:running.cookie})).json()).find(p=>p.email==='analyst@example.test')
@@ -356,6 +357,14 @@ try{
  assert.equal((await privacyIntake(freshUsage.secret)).status,409,'ERASE-002 restored digest custody refuses erased source replay with fresh authority');
  await call('/usage/credentials/'+freshUsage.credential.id,'DELETE',{});
  assert.equal((await running.request('/api/buoy/accounts',{method:'POST',body:erased,cookie:running.cookie})).status,409,'restored erasure tombstone prevents recreation')
+ const restoredDoor=importClient(running.request,running.cookie)
+ const replayUpload=await restoredDoor.upload({accounts:[erased]})
+ const replay=await restoredDoor.send('plan',{uploadId:replayUpload})
+ assert.equal(replay.status,409,await replay.clone().text())
+ assert.equal((await replay.json()).error,'source_erased','IMPORT-001 restored source custody refuses a fresh native import')
+ assert.equal((await restoredDoor.send('reconcile',{planId:erasedImport.planId})).status,410,'IMPORT-001 restored reviewed snapshot stays withdrawn')
+ const retainedErasedJob=await call('/imports/'+erasedJob.id)
+ assert.ok(!JSON.stringify(retainedErasedJob).includes(erased.name),'IMPORT-001 restored job retains no erased source name')
  const inappAfter=await call('/inapp');
  assert.deepEqual(inappAfter,{...inappBefore,credentials:[]},'INAPP-001 campaigns portable, hash/credential table excluded');
  assert.deepEqual(await call('/customer-people/'+usagePerson.id+'/timeline'),inappTimeline,'INAPP-001 user receipts and provenance survive archive restore');
