@@ -36,4 +36,6 @@ jobs:
             pnpm exec playwright install-deps chromium
             node --input-type=module -e "import {chromium} from '@playwright/test'; const browser=await chromium.launch(); await browser.close()"
           fi
+      - name: Check generated contract documents
+        run: node src/base/contract-docs.mjs check
       - run: pnpm run verify
