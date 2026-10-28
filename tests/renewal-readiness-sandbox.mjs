@@ -5,7 +5,7 @@ import {startWorker} from './worker.mjs'
 
 const key=process.env.STRIPE_TEST_KEY
 assert.ok(key&&/^(sk|rk)_test_/.test(key),'Inject the dedicated Stripe test key by environment name')
-const version='2025-02-24.acacia',tag='synthetic-buoy-uplift-'+Date.now(),prices=[],productCalls=[]
+const version='2025-02-24.acacia',tag='synthetic-buoy-'+Date.now(),prices=[],productCalls=[]
 let product,customer,subscription,app,summary
 async function stripe(method,path,values={}){
  const params=new URLSearchParams(Object.entries(values).map(([k,v])=>[k,String(v)]))

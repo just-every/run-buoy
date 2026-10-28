@@ -4380,11 +4380,11 @@
       "executable": false
     },
     "tests/renewal-readiness-journey.mjs": {
-      "sha256": "7c67c993e5783a4d0a348ad87a94275cb1c317c15aea6a3334e062853c9f4516",
+      "sha256": "6a052fc8e787705fda9cfd2ad01d5edb528f2aa338639aed48bba7efa0e1dac9",
       "executable": false
     },
     "tests/renewal-readiness-sandbox.mjs": {
-      "sha256": "429fecb608e2ec4f459d92b2cfb4a30bbdae5cf44c59b34167e8f419d58c3568",
+      "sha256": "70712cbac1b6602131f02290802007b608caca989dfeee19d851c50ff4806211",
       "executable": false
     },
     "tests/renewal-sandbox.mjs": {

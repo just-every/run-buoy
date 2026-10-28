@@ -18,6 +18,7 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   assert.ok(['/v1/customers','/v1/invoices','/v1/payment_intents','/v1/charges','/v1/credit_notes'].includes(url.pathname));return list([])
  }
  const app=await startWorker({clock:()=>instant,providerFetch}),cookie=app.cookie
+ console.log('Renewal readiness: native Worker ready')
  const request=(path,method='GET',body,options={})=>app.request('/api/buoy'+path,{cookie,method,body,...options})
  const api=async(path,method='GET',body)=>{const r=await request(path,method,body);assert.ok(r.ok,await r.clone().text());return r.json()}
  try{
@@ -27,10 +28,13 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   const champion=await api('/customer-people','POST',{kind:'contact',name:'Morgan Hale',accountIds:[accountId],source:'Cascade contact register'})
   const participant=await api('/customer-people','POST',{kind:'contact',name:'Jamie Quinn',accountIds:[accountId],source:'Cascade procurement introduction'})
   const currentAccount=async()=>(await api('/state')).accounts.find(a=>a.id===accountId)
+  console.log('Renewal readiness: account and contacts seeded')
   await api('/accounts/'+accountId+'/hierarchy','PUT',{revision:(await currentAccount()).revision,parentId:null,kind:'account',accountExecutiveId:null,executiveSponsorId:null,supportOwnerId:null,stakeholders:[{personId:champion.id,roles:['champion']}],source:'Customer-confirmed stakeholder map'})
   await api('/accounts/'+accountId+'/plans','POST',{accountRevision:(await currentAccount()).revision,name:'Cascade success outcomes',staffOwnerId:owner,customerOwnerId:participant.id,objectives:[{id:'synthetic-buoy-9811',title:'Customer confirms reporting time saved',kind:'customer-statement',dueOn:'2027-01-15'}]})
+  console.log('Renewal readiness: stakeholder map and plan seeded')
   const connection=await api('/connections','POST',{name:'Cascade test subscription source',key:billingFixtureKey}),base='/billing/'+connection.id
   const binding=await api(base+'/bindings/preview','POST',{customerId:customer,accountId});await api(base+'/bindings','POST',{token:binding.token})
+  console.log('Renewal readiness: Stripe binding reviewed')
   const sync=async()=>{const result=await api(base+'/sync','POST',{});assert.equal(result.status,'succeeded',result.error)}
   await sync()
   console.log('Renewal readiness: billing source seeded')
