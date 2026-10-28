@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 22 | 45 | 38 | 105 |
+| Core | 23 | 44 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 22 | 45 | 47 | 114 |
+| Full target | 23 | 44 | 47 | 114 |
 
-Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `9cba987f2af6f9f2e13f8867668dd51bc041f0ab` (28 October 2026). The submitted candidate is Git commit `HEAD`; its exact SHA is reported with Verify. Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -61,7 +61,7 @@ Core · published · **done** · Cites BASE-AGENT-007, BASE-AGENT-008, BASE-AGEN
 
 #### IMPORT-001 — Reviewed move-in custody
 
-Core · published · **partial** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-ACCESS-004
+Core · published · **done** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-ACCESS-004
 
 **Requirement.** Every import, including each incumbent migration in MIGRATE-001 to MIGRATE-005, runs through the single Base import door: original-byte upload, no-write plan, the exact reviewed fingerprint, idempotent apply, native reconciliation and a journal with strict undo that survives restart. Business imports require an enabled door and a signed action-bound grant; self-hosted installs start disabled. Revoked signing keys stay revoked. The import page alone permits same-origin static scripts and connections; its mutations require the current owner session and exact Origin. The current format is a JSON account snapshot (up to 50 records and 256 KB); unsupported records are reported, credential removals are disclosed, imported accounts are inert, and installation archives remain separate. A later snapshot uses explicit catch-up; absent source records are retained with that explanation, never deleted. Undo refuses accounts edited since import or with dependent work. Erasure withdraws original bytes and door snapshots together with native rows and the portable restore checkpoint. Transport details are specified in [domain rules](docs/contract/domain-rules.md).
 
@@ -73,8 +73,8 @@ Core · published · **partial** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-AC
 5. Claim with and without the provisioning flag, disable and revisit the owner path, and re-enable after key revocation; only the provisioning opt-in opens initially, an explicit disable stays closed and revoked keys stay revoked.
 6. Erase an imported account and read its public job/journal plus door reconciliation; retained source values disappear, the journal inventories door custody, reconciliation returns snapshot withdrawn, and native replay is refused.
 
-**Evidence.** `src/buoy/imports/door.ts`; `src/buoy/imports/index.ts`; `src/buoy/imports/targets.ts`; `public/import-door.js`; `tests/flows.test.mjs`; `tests/import-door-journey.mjs`; `tests/portable.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every anonymous/member/cross-origin mutation and disabled Business grant is asserted in the complete actor matrix; Native replay is refused after erasure for every named source-custody path. Asserted: Planning leaves native records unchanged; Wrong reviewed fingerprint is refused; Apply reaches completed state; Replay returns original job; Reconciliation reads present native record; Undo removes imported native account; Native edit refuses undo; Dependent work refuses undo; Revoked-session mutation is refused; Owner undo works with Business disabled; Revoked Business key stays refused; Explicit disable stays disabled on later owner path; Revoked keys remain retained; Re-enable does not revive revoked key; Only provisioning opt-in opens initially across both claim variants; Erased import source name is absent from retained job; Erased import source invoice reference is absent from retained job; Reconciliation reports withdrawal; Same target cannot be recreated; Journal inventories door custody.
+**Evidence.** `tests/import-door-journey.mjs` — importDoorJourney, invoked by the HTTP-001 IMPORT-001 operator and Business door authority journey in `tests/flows.test.mjs`: (1) original-byte upload and unchanged native planning; (2) wrong fingerprint refusal, exact reviewed apply, same-job replay, native reconciliation and undo; (3) native edit and dependent-work undo refusals; (4) every native action under anonymous, member, revoked-session and cross-origin conditions, all eight disabled and revoked Business actions, action-bound grants and unchanged public reads; (5) both provisioning variants, durable disable and permanent key revocation; (6) importErasure in `tests/import-door-erasure.mjs`, complete retained job and journal reads, upload and snapshot withdrawal, catch-up and Business archive replay refusal. `tests/portable.mjs` — real installation archive journey, restarted custody and restored native source replay refusal. `tests/a11y-import.mjs` — importJourney, owner review, apply, reconciliation and undo at 1440 and 390 through the shipped page.
+**Gap.** None.
 
 #### ERASE-001 — Owner erasure with tombstones
 

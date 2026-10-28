@@ -90,6 +90,9 @@ export async function importDoorJourney() {
    assert.equal((await businessClient.json('reconcile',{planId:businessPlan.planId})).counts.present,1)
    const mixed=(await (await request('/api/operator/import-history',{cookie})).json()).history
    assert.ok(mixed.some(entry=>entry.planId===businessPlan.planId && /approved via Business by/.test(entry.caption)),'IMPORT-001 Business and owner share honest approval history')
+   const bound=await authority.snapshot(businessPlan,businessJob)
+   assert.equal((await request('/api/rer/import/undo',{method:'POST',body:{planId:businessPlan.planId},token:await grant('status')})).status,403,'A Business status grant cannot undo an approved native import')
+   assert.deepEqual(await authority.snapshot(businessPlan,businessJob),bound,'An action-mismatched grant leaves native state and retained import custody unchanged')
    await request('/api/operator/import-settings',{method:'POST',cookie,body:{enabled:false}})
    const businessCases=[['uploads',importChunks(businessInput)[0]],['plan',{uploadId:businessUpload}],['apply',{planId:businessPlan.planId,reviewedFingerprint:businessPlan.fingerprint}],...['status','reconcile','undo'].map(action=>[action,{planId:businessPlan.planId}]),['archive',archiveBody],['restore-check',{archiveId:archive.archiveId}]]
    const sendBusiness=(action,body)=>business(action,body,action==='apply'?{fingerprint:body.reviewedFingerprint,approvalRecordId:'test-business-approval',approvedAt}:{})
