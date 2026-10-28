@@ -4328,7 +4328,7 @@
       "executable": false
     },
     "tests/portal-journey.mjs": {
-      "sha256": "f00af13569768e3ffbe2b3e650e5db187533050ac515354700697579835a91ac",
+      "sha256": "3c6978df911f399bb89c40e646cfc636c816a8d58323af33bcf6addc6e25912d",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
