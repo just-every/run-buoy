@@ -140,4 +140,36 @@ The paused native review structure maps journey and milestone descriptions, Expe
 
 The complete source definition remains available alongside the normalized structure in the account's existing source details. Every unsupported supplied element remains in import diagnostics with its source pointer. In particular, IsActive, Status and IsSharedExternally never enable execution or customer visibility. A conditional flag does not provide its predicate: supplied condition data remains explicitly unmapped. Trigger predicates, automatic completion, assignment, timing beyond the exposed durations, progress instances and any other unavailable semantics remain gaps. No task template creates an operational task; no achievement is evaluated; no source status enables a journey. Approval, replay, schedule evaluation and restoration keep the review draft paused and inert.
 
-This documents a supported structural mapping, not full migration completion. The fixture is synthetic, a customer's authentic source still needs reconciliation, and the remaining MIGRATE-002 inputs and API acquisition remain unbuilt. The conservative journey-review default still awaits ct approval.
+This documents a supported structural mapping, not full migration completion. The fixture is synthetic, a customer's authentic source still needs reconciliation, and the remaining MIGRATE-002 record kinds and their API acquisition remain unbuilt. The conservative journey-review default remains the interim floor under the standing ct rule; scoped delegation and provider boundaries are unproved. The account page shows the paused journey name, milestone names, expected durations and separate team task and customer achievement templates. Account source details retain the full source definition and normalized structure.
+
+## ChurnZero account API preparation
+
+ChurnZero's public REST reference documents an OData account endpoint, Basic authentication with the user's API key, explicit field selection, filters, counts and pagination. It also says the REST add-on and Developer Tools and Bulk Read permissions must be enabled in the source tenant. Buoy supports read-only account acquisition from a US or EU tenant origin. It does not enable those source permissions or claim a live tenant receipt.
+
+Set `BUOY_CHURNZERO_USERNAME` and `BUOY_CHURNZERO_API_KEY` privately in the terminal process that runs preparation. Never put either value in a query file, argument, bundle or repository. Create a query file, for example:
+
+```json
+{"tenant":"https://your-tenant.us1app.churnzero.net","select":["Id","ExternalId","Name","NextRenewalDate","PrimaryChurnScoreValue","Cf\u002fNoticeDays","Cf\u002fContractReference","Cf\u002fUsageFactor","Cf\u002fEngagementFactor"],"filter":"IsActive eq true","pageSize":100}
+```
+
+The custom field names in this example are a preparation example, not built-in ChurnZero fields. Read the source tenant's own documentation and select its actual names. Explicitly map the customer-supplied notice and evidence fields; missing terms are never inferred. Custom fields use their exact OData `Cf` path. Each ChurnZero date-time maps to its supplied calendar date without converting to the reviewer's local time zone. Choose the intended contract date in the source selection.
+
+```sh
+node src/buoy/migrate/cli.mjs --source churnzero --api-query query.json --columns '{"id":"ExternalId","name":"Name","renewalDate":"NextRenewalDate","noticeDays":"Cf\u002fNoticeDays","renewalEvidence":"Cf\u002fContractReference","churnScore":"PrimaryChurnScoreValue","churnScoreFactors":{"usage":"Cf\u002fUsageFactor","engagement":"Cf\u002fEngagementFactor"}}' --output reviewed.json
+```
+
+Preparation sends GET requests only to the fixed account path at that tenant, with redirects refused. It constructs pagination from the reviewed query and never fetches provider-supplied links. The source tenant receives the query and credential; Buoy's bundle receives the token-free query, retrieval time, exact response text and response digests. Acquisition is limited to 500 accounts and the existing 2 MB bundle bound. Changing totals, incomplete pages, duplicate external identities, credential reflection and denied reads refuse preparation without writing an output bundle. The importer independently checks totals, offsets, source identities and every response digest.
+
+Upload the resulting JSON in the existing Imports screen. Planning writes no native records; applying requires the exact reviewed fingerprint. API accounts share the ChurnZero source namespace with CSV accounts. Replay does not create another import, native values reconcile field by field and strict undo protects later edits and dependent work. Account API acquisition does not fetch contacts, factor definition records, tasks, plays, success plans, journey definitions, events or NPS responses. Those native mappings and their API inputs remain MIGRATE-002 work. Synthetic network-edge journeys prove this protocol and custody path; they do not certify a particular tenant or its custom schema.
+
+## ChurnZero structured export preparation
+
+Select `--source-format json` when preparing a ChurnZero JSON source. Its preparation envelope contains an `accounts` array and the original additional collections alongside it. This is a Buoy preparation envelope, not a claimed ChurnZero export schema. Preserve source field names and identities and use explicit `--columns` mappings for the account records, ChurnScore observations and journey definitions. A selected journey field may contain a JSON array directly; CSV continues to contain its encoded JSON text. Original UTF-8 text, byte-order mark and line endings remain retained with their digest. Duplicate JSON keys refuse preparation instead of silently discarding a source value.
+
+```sh
+node src/buoy/migrate/cli.mjs --source churnzero --source-format json --input original-export.json --columns '{"id":"ExternalId","name":"Name","renewalDate":"NextRenewalDate","noticeDays":"NoticeDays","renewalEvidence":"ContractReference"}' --output reviewed.json
+```
+
+Supply the actual source field names in `--columns`; it takes JSON text rather than a file name. Add the earlier health and journey mappings when those source fields are supplied.
+
+The reviewed plan explicitly lists each additional collection and its source record count when no native mapping exists. Contacts, source scorecard definitions, tasks, plays, success plans, events and NPS can therefore be retained and reported without being silently omitted or mistaken for native records. These collections remain unmapped; their intake alone does not complete their native migration. A journey label still cannot substitute for a definition. Native reconciliation reports mapped accounts and explains unsupported collections; undo removes the imported accounts and their paused definitions without creating work or sends from the retained collections.

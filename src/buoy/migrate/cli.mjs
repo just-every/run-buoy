@@ -2,6 +2,8 @@
 // Prepare a lossless migration bundle for the existing reviewed Imports screen.
 import {csvRows} from './csv.ts'
 import {acquireTotango} from './totango-api.ts'
+import {acquireChurnzero} from './churnzero-api.ts'
+import {parseJson} from '../../modules/import-kit/src/readers/json.ts'
 import {referenceRecords,referenceKinds} from './references.ts'
 import {assertNoCredentials} from '../../modules/import-kit/src/provenance/credentials.ts'
 import {readFile,writeFile} from 'node:fs/promises'
@@ -11,10 +13,11 @@ import {createInterface} from 'node:readline/promises'
 const flags = new Map()
 for(let i=2;i<process.argv.length;i+=2) {
  const name=process.argv[i], value=process.argv[i+1]
- if(!['--source','--input','--output','--columns','--date-order','--api-query','--region','--references'].includes(name)||!value||flags.has(name))throw new Error('Use --source, --input, --output, optional --columns JSON, --date-order and --references manifest.')
+ if(!['--source','--input','--output','--columns','--date-order','--api-query','--region','--references','--source-format'].includes(name)||!value||flags.has(name))throw new Error('Use --source, --input, --output, optional --columns JSON, --date-order, --source-format and --references manifest.')
  flags.set(name,value)
 }
 const source=flags.get('--source'), input=flags.get('--input'), output=flags.get('--output'), dateOrder=flags.get('--date-order')??'iso'
+if(flags.has('--source-format')&&(source!=='churnzero'||!input||!['csv','json'].includes(flags.get('--source-format'))))throw new Error('--source-format selects csv or json for a ChurnZero input file only.')
 if(!['csv','vitally','velaris','totango','churnzero'].includes(source)||(!input&&!flags.has('--api-query'))||(input&&flags.has('--api-query'))||!output||!['iso','day-first','month-first'].includes(dateOrder))throw new Error('Choose csv, totango, churnzero, vitally or velaris, input and output files, and an explicit date order.')
 let references
 if(flags.has('--references')){
@@ -32,6 +35,17 @@ if(flags.has('--references')){
  for(const record of referenceRecords(references))assertNoCredentials(record.payload)
 }
 if(flags.has('--api-query')){
+ if(source==='churnzero'){
+  if(!flags.has('--columns')||flags.has('--region'))throw new Error('ChurnZero acquisition requires explicit --columns and a tenant origin in its query, without --region.')
+  const query=JSON.parse(await readFile(flags.get('--api-query'),'utf8'))
+  const api=await acquireChurnzero(query,process.env.BUOY_CHURNZERO_USERNAME??'',process.env.BUOY_CHURNZERO_API_KEY??'')
+  const bundle={format:'buoy-migration-v1',source,dateOrder,columns:JSON.parse(flags.get('--columns')),api}
+  const encoded=JSON.stringify(bundle)
+  if(Buffer.byteLength(encoded)>2_000_000)throw new Error('Prepared ChurnZero bundle exceeds 2 MB; narrow the source filter.')
+  await writeFile(output,encoded,{mode:0o600,flag:'wx'})
+  console.log('ChurnZero account API bundle prepared. No native records changed. Review the exact fingerprint in Imports before applying.')
+  process.exit(0)
+ }
  if(source!=='totango'||!flags.has('--columns'))throw new Error('Totango API acquisition requires explicit --columns and --source totango.')
  const query=JSON.parse(await readFile(flags.get('--api-query'),'utf8'))
  const api=await acquireTotango(query,flags.get('--region')??'us',process.env.BUOY_TOTANGO_APP_TOKEN??'')
@@ -46,10 +60,14 @@ if(flags.has('--region'))throw new Error('--region applies only to Totango API a
 const bytes=await readFile(input)
 if(bytes.length>2_000_000)throw new Error('Source exceeds the 2 MB migration bundle bound.')
 const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes)
-const csvSource=source==='csv'||source==='totango'||source==='churnzero'
+const csvSource=source==='csv'||source==='totango'||source==='churnzero'&&flags.get('--source-format')!=='json'
 const header=csvSource?csvRows(text)[0]:null
-if(!csvSource)JSON.parse(text.replace(/^\uFEFF/,''))
+if(!csvSource){
+ if(source==='churnzero')parseJson(text.replace(/^\uFEFF/,''),{artifact:'ChurnZero export',pointer:''})
+ else JSON.parse(text.replace(/^\uFEFF/,''))
+}
 let columns=flags.has('--columns')?JSON.parse(flags.get('--columns')):undefined
+if(source==='churnzero'&&!csvSource&&!columns)throw new Error('ChurnZero JSON preparation requires explicit --columns mappings.')
 if(csvSource&&!columns) {
  if(!process.stdin.isTTY)throw new Error('Pass --columns JSON when no interactive terminal is available.')
  const terminal=createInterface({input:process.stdin,output:process.stdout}); columns={}

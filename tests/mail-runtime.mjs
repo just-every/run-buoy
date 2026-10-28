@@ -46,7 +46,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   }
  };`
  const mf = new Miniflare({ ...convertV4MiniflareOptions({
-  host:'127.0.0.1', port:0, https:secure,
+  host:'127.0.0.1', port:0, https:secure, unsafeTriggerHandlers:!!persistenceDirectory,
   modulesRoot: join(root, 'dist/server'),
   modules: [{type:'ESModule',path:join(root,'dist/server/test-runtime.mjs'),contents:wrapper},...[config.main, ...(await readdir(join(root, 'dist/server/assets'))).filter(file => file.endsWith('.js')).map(file => `assets/${file}`)].map(file => ({type:'ESModule',path:join(root,'dist/server',file)}))],
   compatibilityDate: config.compatibility_date, compatibilityFlags: config.compatibility_flags,
@@ -68,7 +68,9 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   const origin = (await mf.ready).origin
   runtimeBindings = {AUTH_ORIGIN:origin, ...bindings(origin)}
   Object.assign(vars, runtimeBindings)
-  const db=await mf.getD1Database('DB')
+  // Persistent fixtures applied migrations through Wrangler above; they do not
+  // need another Node D1 proxy before the Worker's own binding is opened.
+  const db=persistenceDirectory?null:await mf.getD1Database('DB')
   for(const file of (persistenceDirectory?[]:await readdir(join(root,'migrations/core'))).filter(file=>file.endsWith('.sql')).sort()) {
    for(const sql of splitSql(await readFile(join(root,'migrations/core',file),'utf8'))) await db.prepare(sql).run()
   }
@@ -89,7 +91,14 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
    return response.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
   }
   // The Cron Trigger door, as Cloudflare calls it.
-  const scheduled=async(cron='0 * * * *',scheduledTime=Date.now())=>(await mf.getWorker()).scheduled({cron,scheduledTime})
+  const scheduled=async(cron='0 * * * *',scheduledTime=Date.now())=>{
+   if(!persistenceDirectory)return (await mf.getWorker()).scheduled({cron,scheduledTime})
+   // The supported local Cron endpoint reaches the exported scheduled handler
+   // inside workerd, without a Node RPC proxy against a restored D1 database.
+   const response=await mf.dispatchFetch(origin+'/cdn-cgi/local/scheduled?'+new URLSearchParams({cron,time:String(scheduledTime),format:'json'}))
+   const body=await response.text();assert.equal(response.status,200,body)
+   assert.equal(JSON.parse(body).outcome,'ok')
+  }
   return {origin,directory,request,dispatch:async request=>mf.dispatchFetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()})}),cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){for(const response of responses)if(response.body&&!response.body.locked)await response.body.cancel();responses.clear();await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true})}}
  }catch(error){await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true});throw error}
 }

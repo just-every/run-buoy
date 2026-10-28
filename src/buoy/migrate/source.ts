@@ -1,4 +1,6 @@
 import {churnzeroJourneys,journeyColumns} from './churnzero-journeys'
+import {churnzeroApiRows} from './churnzero-api'
+import {parseJson} from '../../modules/import-kit/src/readers/json.ts'
 import {churnzeroHealth,healthFields} from './churnzero-health'
 import { csvRows } from './csv'
 import {totangoApiRows} from './totango-api'
@@ -18,9 +20,13 @@ function object(value: unknown): Record<string, unknown> {
  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected an object.')
  return value as Record<string, unknown>
 }
-function realDate(value: unknown, order: unknown): string {
+function realDate(value: unknown, order: unknown, sourceTimestamp=false): string {
  if (typeof value !== 'string') throw new Error('Date must be text.')
- const text = value.trim(), match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text)
+ let text = value.trim()
+ // ChurnZero documents renewal dates as date-time values. Keep the supplied
+ // calendar date, without converting it to the reviewer's local time zone.
+ if(sourceTimestamp&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(text)&&Number.isFinite(Date.parse(text)))text=text.slice(0,10)
+ const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text)
  let result = text
  if (match && ['day-first','month-first'].includes(String(order))) {
   const [day,month] = order === 'day-first' ? [match[1],match[2]] : [match[2],match[1]]
@@ -53,11 +59,15 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
   let rows: Record<string,unknown>[], columns: Record<string,unknown>, pointers: string[]
   let exportData: Record<string,unknown> | undefined
   if(bundle.api!==undefined){
-   if(source!=='totango'||bundle.csv!==undefined||bundle.data!==undefined||bundle.exportText!==undefined||bundle.originalSha256!==undefined)throw new Error('Totango API bundles cannot contain a second export representation.')
-   const parsed=totangoApiRows(bundle.api);rows=parsed.rows;pointers=parsed.pointers;columns=object(bundle.columns)
-   for(const [key,column]of Object.entries(columns))if(!fields.includes(key as typeof fields[number])||typeof column!=='string'||!column.trim())throw new Error('Invalid Totango API field mapping.')
-   const selected=Object.values(columns);if(new Set(selected).size!==selected.length)throw new Error('Each Totango source field maps to only one destination field.')
-  }else if (source === 'csv' || source === 'totango' || source === 'churnzero') {
+   if(!['totango','churnzero'].includes(source)||bundle.csv!==undefined||bundle.data!==undefined||bundle.exportText!==undefined||bundle.originalSha256!==undefined)throw new Error('API bundles cannot contain a second export representation.')
+   const parsed=source==='churnzero'?churnzeroApiRows(bundle.api):totangoApiRows(bundle.api);rows=parsed.rows;pointers=parsed.pointers;columns=object(bundle.columns)
+   for(const [key,column]of Object.entries(columns)){
+    const factors=source==='churnzero'&&key==='churnScoreFactors'&&column&&typeof column==='object'&&!Array.isArray(column)
+    const selected=factors?Object.values(column):[column]
+    if((!(fields as readonly string[]).includes(key)&&!(source==='churnzero'&&(healthFields as readonly string[]).includes(key)))||!selected.length||selected.some(value=>typeof value!=='string'||!value.trim()))throw new Error('Invalid API field mapping.')
+   }
+   const selected=Object.values(columns).flatMap(value=>value&&typeof value==='object'?Object.values(value):[value]);if(new Set(selected).size!==selected.length)throw new Error('Each API source field maps to only one destination field.')
+  }else if (source === 'csv' || source === 'totango' || source === 'churnzero'&&bundle.csv!==undefined) {
    if (bundle.data !== undefined || bundle.exportText !== undefined) throw new Error('CSV bundles cannot contain a second export representation.')
    if (typeof bundle.csv !== 'string' || sha256(bundle.csv) !== bundle.originalSha256) throw new Error('Original CSV digest does not match its embedded UTF-8 text.')
    const [header,...data] = csvRows(bundle.csv); columns = object(bundle.columns)
@@ -74,11 +84,19 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
   } else {
    if (bundle.csv !== undefined) throw new Error('Incumbent bundles cannot contain CSV data.')
    if (bundle.exportText !== undefined && (typeof bundle.exportText !== 'string' || sha256(bundle.exportText) !== bundle.originalSha256 || bundle.data !== undefined)) throw new Error('Original export digest is invalid or the bundle has two export representations.')
-   const data = object(bundle.exportText === undefined ? bundle.data : JSON.parse(String(bundle.exportText).replace(/^\uFEFF/,'')))
+   if(source==='churnzero'&&typeof bundle.exportText!=='string')throw new Error('ChurnZero JSON bundles require original export text and its digest.')
+   const data = object(bundle.exportText === undefined ? bundle.data : source==='churnzero'?parseJson(String(bundle.exportText).replace(/^\uFEFF/,''),{artifact:'ChurnZero export',pointer:''}):JSON.parse(String(bundle.exportText).replace(/^\uFEFF/,'')))
    exportData = data
    if (!Array.isArray(data.accounts) || !data.accounts.length || data.accounts.length > 2000) throw new Error('Export must contain 1 to 2000 accounts.')
    columns = bundle.columns === undefined ? Object.fromEntries(fields.map(field=>[field,field])) : object(bundle.columns)
-   for (const [key,column] of Object.entries(columns)) if (!fields.includes(key as typeof fields[number]) || typeof column !== 'string' || !column.trim()) throw new Error('Invalid export column mapping.')
+   for (const [key,column] of Object.entries(columns)) {
+    const factors=source==='churnzero'&&key==='churnScoreFactors'&&column&&typeof column==='object'&&!Array.isArray(column)
+    const journey=source==='churnzero'&&key==='journeyDefinitions'
+    const selected=journey?[journeyColumns(column).column]:factors?Object.values(column):[column]
+    if((!(fields as readonly string[]).includes(key)&&!(source==='churnzero'&&([...healthFields,'journeyDefinitions'] as readonly string[]).includes(key)))||!selected.length||selected.some(value=>typeof value!=='string'||!value.trim()))throw new Error('Invalid export column mapping.')
+   }
+   const selected=Object.entries(columns).flatMap(([key,value])=>key==='journeyDefinitions'?[journeyColumns(value).column]:value&&typeof value==='object'?Object.values(value):[value])
+   if(new Set(selected).size!==selected.length)throw new Error('Each export field maps to only one destination field.')
    rows = data.accounts as Record<string,unknown>[]; pointers = rows.map((_,i)=>['','data','accounts',i].join('/'))
   }
   for (const field of ['id','name','renewalDate','noticeDays','renewalEvidence']) if (!columns[field]) throw new Error(`Map the required ${field} column.`)
@@ -93,6 +111,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
     if (!id || id.length > 200 || /[\u0000-\u001f]/.test(id)) throw new Error('Source ID must be nonempty text of at most 200 characters.')
     if (counts.get(id)!==1) throw new Error('Duplicate source ID; every occurrence is rejected.')
     const get = (field: string) => row[String(columns[field])] ?? ''
+    const dateValue=(field:string)=>realDate(get(field),bundle.dateOrder,source==='churnzero'&&bundle.csv===undefined)
     const notice = String(get('noticeDays')).trim()
     if (!/^\d+$/.test(notice)) throw new Error('Notice days must be a nonnegative whole number.')
     const invoiceFields = ['invoiceTotal','invoiceCurrency','invoiceObservedAt','invoiceDueDate']
@@ -101,9 +120,9 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
     const supportFields = ['supportObservedAt','supportReference','openTickets','urgentTickets']
     const hasSupport = supportFields.some(field => String(get(field)).trim() !== '')
     const ticketCount = (field: string) => {const value=String(get(field)).trim();if(!/^\d+$/.test(value)||!Number.isSafeInteger(Number(value)))throw new Error('Ticket counts must be exact nonnegative whole numbers.');return Number(value)}
-    const support = hasSupport ? {observedAt:realDate(get('supportObservedAt'),bundle.dateOrder),reference:get('supportReference'),openTickets:ticketCount('openTickets'),urgentTickets:ticketCount('urgentTickets')} : null
-    const account = parseAccount({id:migrationTarget(source,id),name:get('name'),renewalDate:realDate(get('renewalDate'),bundle.dateOrder),noticeDays:Number(notice),renewalEvidence:get('renewalEvidence'),support,
-     billing:hasInvoice ? {observedAt:realDate(get('invoiceObservedAt'),bundle.dateOrder),reference:`${source} account ${id}`,currency,totalMinor:money(get('invoiceTotal'),currency),creditsMinor:0,allocatedMinor:0,dueDate:realDate(get('invoiceDueDate'),bundle.dateOrder)} : null})
+    const support = hasSupport ? {observedAt:dateValue('supportObservedAt'),reference:get('supportReference'),openTickets:ticketCount('openTickets'),urgentTickets:ticketCount('urgentTickets')} : null
+    const account = parseAccount({id:migrationTarget(source,id),name:get('name'),renewalDate:dateValue('renewalDate'),noticeDays:Number(notice),renewalEvidence:get('renewalEvidence'),support,
+     billing:hasInvoice ? {observedAt:dateValue('invoiceObservedAt'),reference:`${source} account ${id}`,currency,totalMinor:money(get('invoiceTotal'),currency),creditsMinor:0,allocatedMinor:0,dueDate:dateValue('invoiceDueDate')} : null})
     const migrationHealth=source==='churnzero'?churnzeroHealth(row,columns,id):undefined
     const migrationJourneys=source==='churnzero'?churnzeroJourneys(row,columns.journeyDefinitions,id):undefined
     const nativeAccount={...account,...(migrationHealth?{migrationHealth}:{}),...(migrationJourneys?{migrationJourneys}:{})}
@@ -111,7 +130,7 @@ export function parseMigration(value: Json, source: MigrationSource): ParsedReco
     return {kind:KIND,sourceId:id,payload:{account:nativeAccount as unknown as Json,unmapped},pointer}
    } catch (error) { return rejection(`row-${i+1}`,error instanceof Error ? error.message : 'Invalid migration row.',pointer) }
   })
-  if (source !== 'csv' && source !== 'totango' && source !== 'churnzero') {
+  if (exportData) {
    for (const [kind,items] of Object.entries(exportData!)) if (kind !== 'accounts') {
     const count = Array.isArray(items) ? items.length : 1
     records.push({kind:'migration-unmapped',sourceId:`collection-${kind}`,payload:{collection:kind,count,reason:'This record kind is not mapped. No native records or automation are created.'},pointer:['','data',kind.replaceAll('~','~0').replaceAll('/','~1')].join('/')})

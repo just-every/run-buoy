@@ -32,8 +32,8 @@ export function journeyColumns(value:unknown):JourneyColumns{
 export function churnzeroJourneys(row:Record<string,unknown>,value:unknown,accountId:string):PausedJourneyDraft[]|undefined{
  if(value===undefined)return undefined
  const mapping=journeyColumns(value),raw=row[mapping.column]
- if(typeof raw!=='string')throw Error('Journey definitions must be a JSON array in the explicitly mapped source column.')
- const definitions=parseJson(raw,{artifact:'ChurnZero journey definitions',pointer:''})
+ if(typeof raw!=='string'&&!Array.isArray(raw))throw Error('Journey definitions must be a JSON array in the explicitly mapped source field.')
+ const definitions=typeof raw==='string'?parseJson(raw,{artifact:'ChurnZero journey definitions',pointer:''}):raw
  if(!Array.isArray(definitions)||definitions.length>32)throw Error('Supply an explicit JSON array of at most 32 journey definitions; use [] when none are supplied.')
  const seen=new Set<string>();let elements=0
  return definitions.map(raw=>{

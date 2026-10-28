@@ -1,6 +1,8 @@
 import {journeyBundle,journeyDefinition,journeyPointers,structureBundle,structureDefinition,structureMapping,expectedStructure} from './churnzero-journey-fixture.mjs'
 import {csvRows} from '../src/buoy/migrate/csv.ts'
 import {churnzeroJourney} from './churnzero-journey.mjs'
+import {churnzeroApiJourney} from './churnzero-api-journey.mjs'
+import {churnzeroExportJourney} from './churnzero-export-journey.mjs'
 import assert from 'node:assert/strict'
 import Ajv2020 from 'ajv/dist/2020.js'
 import {totangoApiJourney,apiBrowserBundle,totangoReferenceJourney,referenceFiles} from './totango-api-journey.mjs'
@@ -118,6 +120,8 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   assert.equal(history.find(row=>row.planId===plan.planId).namespace,'buoy-migrate-churnzero-v1')
   assert.equal(app.outbound.length,outbound,'Account import does not send or execute provider work')
   await door.undo(plan);assert.deepEqual(await state(app),before)
+  await churnzeroApiJourney({app,scratch,door,state,target})
+  await churnzeroExportJourney({app,scratch,door,state,target})
   // Isolate exported scores from invoice observations that legitimately affect native health.
   const scoreCsv=input.csv.replaceAll('synthetic-buoy-','synthetic-buoy-score-only-')
   const scorePlan=await door.plan({...input,csv:scoreCsv,originalSha256:createHash('sha256').update(scoreCsv).digest('hex'),columns:Object.fromEntries(Object.entries(churnzeroColumns).filter(([field])=>!field.startsWith('invoice')))})
@@ -234,7 +238,6 @@ test('MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and prot
   const afterErasure=await (await app.request('/api/buoy/scorecards',{cookie:app.cookie})).json()
   assert.equal(afterErasure.accounts.some(row=>row.accountId===dependentId),false)
   assert.equal((await door.send('reconcile',{planId:dependencyPlan.planId})).status,410)
-
  }finally{await app.close();await rm(scratch,{recursive:true,force:true})}
 })
 
@@ -450,6 +453,11 @@ test('MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bund
     if(source==='churnzero'){
      const accountId=target(source,'synthetic-buoy-1')
      const detail=await context.newPage();await detail.goto(app.origin+'/app/accounts/'+accountId,{waitUntil:'networkidle'})
+     const journeys=detail.locator('#imported-journeys')
+     await journeys.waitFor({state:'visible'})
+     for(const text of ['Paused imported journeys','Synthetic onboarding','Paused','Requirements','Configuration','Synthetic welcome call','Synthetic first login'])assert.ok((await journeys.innerText()).includes(text),'The imported journey shows '+text)
+     await journeys.scrollIntoViewIfNeeded()
+     await detail.screenshot({path:join(evidence,'migration-churnzero-journeys-'+width+'.png'),fullPage:true})
      await detail.locator('[data-open="account-source-details"]').click()
      const retained=JSON.parse(await detail.locator('#account-source-details pre').innerText())
      assert.deepEqual(retained.migrationHealth,{source:'churnzero',sourceId:'synthetic-buoy-1',score:4,factors:{usage:1,engagement:19},fields:{score:'ChurnScore',factors:'ChurnScore Factors'}})
