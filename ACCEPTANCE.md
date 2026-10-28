@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 22 | 45 | 38 | 105 |
+| Core | 23 | 44 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 22 | 45 | 47 | 114 |
+| Full target | 23 | 44 | 47 | 114 |
 
-Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `a3086d8b7b9b7942202addade0c65c74f4451000` (28 October 2026). HTTP-001 proof is unchanged in the generated Status update; the landing report binds the candidate SHA and Verify run. Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -21,7 +21,7 @@ Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4
 
 #### HTTP-001 — Authenticated product HTTP
 
-Core · published · **partial** · Cites BASE-ACCESS-002, BASE-ROLE-001, BASE-AGENT-005
+Core · published · **done** · Cites BASE-ACCESS-002, BASE-ROLE-001, BASE-AGENT-005
 
 **Requirement.** Buoy distinguishes browser-session writes from explicitly scoped bearer commands. Browser writes require the installation’s exact Origin and same-site request metadata. A valid bearer preparation works with no Origin or a foreign Origin and retains its grant’s scope when a cookie is also present; an invalid bearer never falls back to cookie authority. GOVERN-001 defines command and data-class grants. Under the held company policy, agents prepare account work while approval and account edits are refused; other policies decide those calls from their classes. The transport details are specified in [domain rules](docs/contract/domain-rules.md#http-001).
 
@@ -31,8 +31,8 @@ Core · published · **partial** · Cites BASE-ACCESS-002, BASE-ROLE-001, BASE-A
 3. Under the held company policy, attempt approval and account edits with the bearer token; both return 403, and an unsupported command is refused.
 4. Repeat with a session cookie alongside a valid token, then an invalid, expired or revoked token; the valid token keeps only its bearer scope and an invalid token cannot authorize a cross-origin session write.
 
-**Evidence.** `src/buoy/access.ts`; `src/buoy/api.ts`; `src/buoy/core.ts`; `src/buoy/work.ts`; `docs/agents.md`; `tests/flows.test.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every product route has the named actor matrix; the cited file exercises a route inventory but does not assert this whole matrix; No-Origin bearer preparation succeeds and its saved proposal identifies the agent; Foreign-Origin bearer preparation succeeds and its saved audit identifies the agent; Valid bearer plus cookie keeps only bearer scope; Invalid bearer plus cookie cannot authorize cross-origin writes; Expired bearer plus cookie cannot authorize cross-origin writes; Revoked bearer plus cookie cannot authorize cross-origin writes. Asserted: Signed-out data read is refused; Cross-origin browser account write is refused; Member account edit is refused; Member person-approval is refused; Held-policy bearer person-approval is refused; Held-policy bearer account edit is refused; Unsupported bearer command is refused with a reason.
+**Evidence.** `tests/flows.test.mjs` — Buoy public HTTP jobs and trust boundaries, agents prepare decisions, cannot approve; revoked tokens stop; invokes `tests/http-journey.mjs` bearerTransportJourney and `tests/http-route-matrix.mjs` routeAuthorityMatrix: (1) all current product routes under signed-out, cross-origin cookie, member and held agent actors; (2) missing and foreign Origin, with saved agent proposals and audit events; (3) approval, account writes and unsupported-command refusal with unchanged work; (4) mixed cookie scope and data classes, invalid and unexpired revoked grants, exact-clock expiry beside a live owner session, unchanged state and audit, and supported owner controls. Separate source transports retain their own credentials; `tests/import-door-journey.mjs` importDoorJourney covers the separate operator and Business door.
+**Gap.** None.
 
 #### DATA-001 — Provenanced, validated observations
 
