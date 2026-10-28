@@ -1,9 +1,10 @@
 import { auditRecord } from './audit-records'
 import { authority, guard, id, insist, now, requirePerson, stmt, text, type Actor } from './core'
 import { assignmentInput, plan, settingsInput, type AssignmentInput, type Snapshot, type TeamSettings } from './team-plan'
+import {HANDOVER_DRAFTS,handoverDrafts} from './plans/handover'
 
 // One deterministic database image is both the review input and the atomic guard.
-// Include tasks and operator status so reviewed move counts and eligibility cannot drift.
+// Include draft revisions and sharing eligibility, tasks and current operator status.
 const SNAPSHOT = `SELECT json_object(
  'segments',json((SELECT json_group_array(json_object('id',s.id,'name',json_extract(s.document,'$.name'),'accountId',e.account_id)) FROM buoy_segments s LEFT JOIN buoy_segment_entries e ON e.segment_id=s.id AND e.exited_at IS NULL)),
  'settings',(SELECT document FROM buoy_team_settings WHERE singleton=1),
@@ -11,7 +12,8 @@ const SNAPSHOT = `SELECT json_object(
   (SELECT a.id,a.document,a.revision,o.owner_id,o.assigned_at FROM buoy_accounts a LEFT JOIN buoy_account_owners o ON o.account_id=a.id ORDER BY a.id))),
  'territories',json((SELECT json_group_array(json_object('accountId',account_id,'territory',territory)) FROM (SELECT * FROM buoy_account_territories ORDER BY account_id))),
  'people',json((SELECT json_group_array(json_object('id',id,'role',role,'status',status,'version',version)) FROM (SELECT id,role,status,version FROM oa_operators ORDER BY id))),
- 'tasks',json((SELECT json_group_array(json_object('id',id,'accountId',account_id,'ownerId',owner_id,'completedAt',completed_at)) FROM (SELECT id,account_id,owner_id,completed_at FROM buoy_tasks ORDER BY id)))
+ 'tasks',json((SELECT json_group_array(json_object('id',id,'accountId',account_id,'ownerId',owner_id,'completedAt',completed_at)) FROM (SELECT id,account_id,owner_id,completed_at FROM buoy_tasks ORDER BY id))),
+ 'drafts',json((${HANDOVER_DRAFTS}))
  ) AS snapshot`
 async function snapshot(db: D1Database) {
  const row = await db.prepare(SNAPSHOT).first<{snapshot: string}>()
@@ -74,8 +76,10 @@ export async function applyAssignment(db: D1Database, actor: Actor, input: Recor
  await db.batch([authority(db, actor, true), snapshotGuard(db, current.raw),
   stmt(db, `UPDATE buoy_tasks SET owner_id=(SELECT json_extract(m.value,'$.toId') FROM json_each(?) m WHERE json_extract(m.value,'$.accountId')=buoy_tasks.account_id)
    WHERE completed_at IS NULL AND EXISTS(SELECT 1 FROM json_each(?) m WHERE json_extract(m.value,'$.accountId')=buoy_tasks.account_id AND json_extract(m.value,'$.fromId')=buoy_tasks.owner_id)`, moves, moves),
-  stmt(db, `INSERT INTO buoy_account_owners(account_id,owner_id,assigned_at) SELECT json_extract(value,'$.accountId'),json_extract(value,'$.toId'),? FROM json_each(?) WHERE 1
-   ON CONFLICT(account_id) DO UPDATE SET owner_id=excluded.owner_id,assigned_at=excluded.assigned_at`, recordedAt, moves),
+  handoverDrafts(db,result.moves,recordedAt),
+  // Bulk replacement applies only the reviewed drafts above. The manual-owner UPDATE
+  // trigger must not silently transfer shared plans outside this reviewed selection.
+  stmt(db, `INSERT OR REPLACE INTO buoy_account_owners(account_id,owner_id,assigned_at) SELECT json_extract(value,'$.accountId'),json_extract(value,'$.toId'),? FROM json_each(?)`, recordedAt, moves),
   stmt(db, "UPDATE buoy_accounts SET revision=lower(hex(randomblob(16))) WHERE id IN (SELECT json_extract(value,'$.accountId') FROM json_each(?))", moves),
   stmt(db, `INSERT INTO buoy_handovers(id,account_id,from_id,to_id,note,actor_id,recorded_at)
    SELECT ?||':'||key,json_extract(value,'$.accountId'),json_extract(value,'$.fromId'),json_extract(value,'$.toId'),?,?,? FROM json_each(?)`, operationId, note, actor.id, recordedAt, moves),

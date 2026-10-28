@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "63d292710c3a3360ece858d9e08e52e0b66c87088e3ae8e9778d6d3ddd8885b2",
+      "sha256": "fc8da8587c3c0d3c868c195add0a11ff6b102d436b2e5557e390a83514237bd2",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "559fdb9d87110869b1930690d586aef259f6731693b2ddbff8646f02702c45b3",
+      "sha256": "143d951e977ac58eb17579cf25a9dc6d327057da9a87e6e63e30997df24c1158",
       "executable": false
     },
     "DEMO.md": {
@@ -1539,6 +1539,10 @@
       "sha256": "c06511edb36fb9ba9ca6351f9d005533bcce081cbd7bd49612ead5fb88241fee",
       "executable": false
     },
+    "src/buoy/plans/handover.ts": {
+      "sha256": "352589cf7317ef49e61752beb79aab99be9110f5be749b892766e800bddeef59",
+      "executable": false
+    },
     "src/buoy/plans/index.ts": {
       "sha256": "d3d6038c584e5d93bd97dfb8115ea3cd4ff61a203a46ce4797e4f40c9735007c",
       "executable": false
@@ -1852,11 +1856,11 @@
       "executable": false
     },
     "src/buoy/team-plan.ts": {
-      "sha256": "fc8e87445fc86432e2d4e9af01c893ae2647b9744b46591c446d2c10578e8e9d",
+      "sha256": "f462509a688b102ad3893f1a7e4a741e88552ae27d64af32073ed995d855b875",
       "executable": false
     },
     "src/buoy/team.ts": {
-      "sha256": "4b1388bfb2e538c5d34f3da6fae471fdff485776e37177d2439829c73c29e6db",
+      "sha256": "38270b85b080edf2049f092e6ce80580cec5733ff25b6bb520dcb25796b047fd",
       "executable": false
     },
     "src/buoy/trust-notes.ts": {
@@ -2092,7 +2096,7 @@
       "executable": false
     },
     "src/buoy/ui/team.ts": {
-      "sha256": "276a475e3f56e0129ae0e57b9eea51b67b30c51cd7766fe65bf2b25485ed167c",
+      "sha256": "00288c6340633427ba4c86086a556fab6f97075203531f4b582d96e9c8b36aa8",
       "executable": false
     },
     "src/buoy/ui/types.ts": {
@@ -4484,11 +4488,15 @@
       "executable": false
     },
     "tests/team-journey.mjs": {
-      "sha256": "05cf97c76411704c2e1c49be0c448d3493072721637ea6040d25759de2aeee1a",
+      "sha256": "24be40f3e872c3499913157aa81d14d36503f83657e32b0c3b465bf80c31bf3b",
+      "executable": false
+    },
+    "tests/team-plan-fixture.mjs": {
+      "sha256": "f2738974b8943b07d83e432eecb4e0074ccd8bc0abc600d633be4746f3cf0998",
       "executable": false
     },
     "tests/teams.mjs": {
-      "sha256": "d553f5b8d447388c8ef4498d119c806a2bd79bf599eb118f3ab5f0000048291a",
+      "sha256": "f45a9ef01ad030542560bb1f234367f3131f527626acae0f71c892a4d9f3589e",
       "executable": false
     },
     "tests/totango-api-edge.mjs": {

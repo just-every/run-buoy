@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
 import { chromium } from '@playwright/test'
 import { startWorker } from './worker.mjs'
+import {teamPlan,teamPlanRows,assertPlanHandover} from './team-plan-fixture.mjs'
 const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
 try{
  if(process.env.BUOY_SCREENSHOTS)await mkdir(process.env.BUOY_SCREENSHOTS,{recursive:true})
@@ -39,14 +40,21 @@ try{
    let state=await json(await call('/state'));assert.equal(state.accounts.filter(a=>a.ownerId).length,3)
    const fromId=[maya,owen].find(id=>state.accounts.filter(a=>a.ownerId===id).length===2),toId=[maya,owen].find(id=>id!==fromId),first=state.accounts.find(a=>a.ownerId===fromId)
    const task=await json(await call('/proposals','POST',{accountId:first.id,kind:'playbook',payload:{title:'Review adoption goals with the champion',dueDate:today}}),201);await json(await call(`/proposals/${task.id}/approve`,'POST',{}))
+   const drafts=[]
+   for(const account of state.accounts.filter(a=>a.ownerId===fromId))drafts.push(await teamPlan({call,json},account.id,fromId,{name:account.name+' rollout plan'}))
+   await teamPlan({call,json},first.id,toId,{name:'Executive adoption plan',customerOwnerId:drafts.find(p=>p.accountId===first.id).row.customerOwnerId})
+   const planAccounts=drafts.map(p=>p.accountId),beforePlans=await teamPlanRows({call,json},planAccounts)
    await page.goto(app.origin+'/app/team')
    await page.locator('#team-preview-handover select[name=fromId]').selectOption(fromId);await page.locator('#team-preview-handover select[name=toId]').selectOption(toId);await page.locator('#team-preview-handover textarea[name=note]').fill('New CSM: confirm the rollout workshop and review the adoption risks with the champion.')
    await Promise.all([page.waitForLoadState('networkidle'),page.locator('#team-preview-handover button').click()])
    assert.ok(await page.getByText('2 accounts, 1 open tasks will move.',{exact:true}).isVisible())
+   assert.ok(await page.getByText('2 private plan drafts will move with their account. Customer owners and plan content stay unchanged.',{exact:true}).isVisible())
+   for(const p of drafts)assert.ok(await page.getByText(p.row.name+' · '+operators.find(o=>o.id===fromId).displayName+' → '+operators.find(o=>o.id===toId).displayName,{exact:true}).isVisible())
    const capture=async(name)=>{await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${name} fits at ${width}`);if(process.env.BUOY_SCREENSHOTS)await page.screenshot({path:`${process.env.BUOY_SCREENSHOTS}/${name}-${width}.png`,fullPage:true})}
    await capture('team-preview')
    await submit('team-apply','Apply reviewed assignment')
    state=await json(await call('/state'));assert.ok(state.accounts.every(a=>a.ownerId===toId));assert.equal(state.tasks.find(t=>t.proposalId===task.id).ownerId,toId)
+   assertPlanHandover(beforePlans,await teamPlanRows({call,json},planAccounts),new Set(drafts.map(p=>p.row.id)),toId)
    // A lower target is allowed and offers an actionable rebalance preview.
    await page.locator('#team-capacity select[name=personId]').selectOption(toId);await page.locator('#team-capacity input[name=capacity]').fill('2');await submit('team-capacity','Save capacity')
    assert.ok(await page.getByText(/over target by 1/).isVisible());await capture('team-over-target')
