@@ -21,5 +21,7 @@ globalThis.fetch=async(input,options)=>{
  if(fixture.mode==='duplicate'&&calls>1)rows[0].ExternalId=fixture.accounts[0].ExternalId
  const result={'@odata.count':fixture.accounts.length+(fixture.mode==='changed'&&calls>1?1:0),value:rows,
   ...(offset+rows.length<fixture.accounts.length?{'@odata.nextLink':'https://example.invalid/never-fetch'}:{})}
- return new Response(JSON.stringify(result,null,2)+'\r\n',{headers:{'content-type':'application/json'}})
+ const text=JSON.stringify(result,null,2)+'\r\n'
+ // A reflected credential is still private after JSON string decoding.
+ return new Response(fixture.mode==='reflected'?text.replace('synthetic-buoy-8501','\\u0073ynthetic-buoy-8501'):text,{headers:{'content-type':'application/json'}})
 }

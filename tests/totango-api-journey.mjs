@@ -26,14 +26,14 @@ export async function seedTotangoArchive(app){
 
 export function assertTotangoArchiveRows(rows,image){
  const originals=rows.filter(item=>item.table==='ik_originals'&&item.row.job_id===image.job.id&&item.row.sha256===image.plan.bundleSha256)
- assert.equal(originals.length,1,'Totango archive retains exactly one matching original artifact')
+ assert.equal(originals.length,1,'Migration archive retains exactly one matching original artifact')
  const original=originals[0].row
  const chunks=rows.filter(item=>item.table==='ik_d1_original_chunks'&&item.row.job_id===image.job.id&&item.row.kind===original.kind&&item.row.original_key===original.original_key).map(item=>item.row).sort((a,b)=>a.ordinal-b.ordinal)
- assert.ok(chunks.length>0,'Totango original custody is nonempty')
+ assert.ok(chunks.length>0,'Migration original custody is nonempty')
  const encoded=chunks.map((chunk,index)=>{assert.equal(chunk.ordinal,index);assert.equal(typeof chunk.bytes,'string');return chunk.bytes}).join('')
  const bytes=Buffer.from(encoded,'base64');assert.equal(bytes.toString('base64'),encoded);assert.equal(bytes.length,original.size)
  assert.equal(createHash('sha256').update(bytes).digest('hex'),image.plan.bundleSha256)
- assert.deepEqual(bytes,Buffer.from(JSON.stringify(image.bundle)),'Totango original account bytes, reference text, associations and digests survive the real archive')
+ assert.deepEqual(bytes,Buffer.from(JSON.stringify(image.bundle)),'Migration original account bytes, reference text, associations and digests survive the real archive')
  const approval=rows.filter(item=>item.table==='ik_door_approvals'&&item.row.plan_id===image.plan.planId)
  assert.equal(approval.length,1);assert.equal(approval[0].row.fingerprint,image.plan.fingerprint)
 }

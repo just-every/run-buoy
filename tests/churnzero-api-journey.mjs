@@ -48,6 +48,12 @@ export async function churnzeroApiJourney({app,scratch,door,state,target}){
   assert.doesNotMatch(refused.stdout+refused.stderr,/synthetic-buoy-8501|synthetic-buoy-credentials/)
   await assert.rejects(readFile(destination),{code:'ENOENT'})
  }
+ await writeFile(queryFile,JSON.stringify({...query,filter:"ExternalId eq 'synthetic-buoy-8501'"}))
+ const privateQueryOutput=join(scratch,'churnzero-private-query.json')
+ const privateQuery=spawnSync(process.execPath,args.map(value=>value===output?privateQueryOutput:value),{env,encoding:'utf8'})
+ assert.notEqual(privateQuery.status,0)
+ assert.doesNotMatch(privateQuery.stdout+privateQuery.stderr,/synthetic-buoy-8501|synthetic-buoy-credentials/)
+ await assert.rejects(readFile(privateQueryOutput),{code:'ENOENT'})
  for(const alter of [api=>{api.pages[0].text+=' '},api=>{api.pages.pop()},api=>{api.pages[1].offset=0}]){
   const changed=structuredClone(input);alter(changed.api)
   const refused=await door.plan(changed);assert.equal(refused.counts.mapped,0);assert.equal(refused.counts.rejected,1)

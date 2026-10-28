@@ -1,4 +1,4 @@
-import {churnzeroPortability} from './churnzero-portability.mjs'
+import {seedChurnzeroArchive,assertChurnzeroRestored} from './churnzero-portability.mjs'
 import {playConfig} from './play-fixture.mjs'
 import {billingSource} from './billing-journey.mjs'
 import {billingFixtureKey} from './billing-fixture.mjs'
@@ -379,14 +379,16 @@ try{
  const totangoSource=await copy('totango-source'),totangoDestination=await copy('totango-destination'),totangoArchive=join(parent,'totango.rer')
  running=await startWorker({root:totangoSource,secure:true,persistenceDirectory:join(totangoSource,'.wrangler/state'),keepPersistence:true})
  const totangoImage=await seedTotangoArchive(running)
+ const churnzeroImage=await seedChurnzeroArchive(running)
  await running.close();running=null
  await command(totangoSource,['export','--output',totangoArchive])
  const totangoRows=(await readFile(totangoArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
  assertTotangoArchiveRows(totangoRows,totangoImage)
+ assertTotangoArchiveRows(totangoRows,churnzeroImage)
  await command(totangoDestination,['import','--input',totangoArchive,'--yes'])
  running=await startWorker({root:totangoDestination,secure:true,persistenceDirectory:join(totangoDestination,'.wrangler/state'),keepPersistence:true})
  await assertTotangoRestored(running,totangoImage)
+ await assertChurnzeroRestored(running,churnzeroImage)
  await running.close();running=null
- await churnzeroPortability()
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
 }finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}

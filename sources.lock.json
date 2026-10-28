@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "654358c6bad0137a1b2268b71c39bd84f5c87b2ff1ee08d93fe01f184285e769",
+      "sha256": "dd59e42f056778611963fa7cc66bf709098a42aefeff2b0b19bbcc4e79ea923a",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "d713f68a83f8a6ed452c73e2fbd5c51c23e0474708e5b126cdb7db27a5c34706",
+      "sha256": "135e40d886162d6e8ad86ee0086f759370d971252519477a33a03ce7aa3060e9",
       "executable": false
     },
     "DEMO.md": {
@@ -1452,7 +1452,7 @@
       "executable": false
     },
     "src/buoy/migrate/churnzero-api.ts": {
-      "sha256": "5e65d13decece5b57cfdcf85588e6082b3c4d0a240b8f1f1d2f280880946f2ea",
+      "sha256": "d462c63897139b254a4c2b2ffdf21c86da860a6b695f20aab01b53c61f48e8ff",
       "executable": false
     },
     "src/buoy/migrate/churnzero-health.ts": {
@@ -4116,11 +4116,11 @@
       "executable": false
     },
     "tests/churnzero-api-edge.mjs": {
-      "sha256": "5a2de951382e2ded6473188af3a9272a3033732b96e07920c199f67be460b51d",
+      "sha256": "7f8555f7648d901228bb11960d930f49ec98610702bd9ef35b6ae9d72d2bf1f6",
       "executable": false
     },
     "tests/churnzero-api-journey.mjs": {
-      "sha256": "afd15a671cd2511edbe11d4ff833d87ff5220ae90cd0d4e6b1bf8e596827d28b",
+      "sha256": "5be787a01113593ce25be59c9a55d05bf84ee566880681afb74c1c8933d70827",
       "executable": false
     },
     "tests/churnzero-export-journey.mjs": {
@@ -4136,7 +4136,7 @@
       "executable": false
     },
     "tests/churnzero-portability.mjs": {
-      "sha256": "af0b42582fb38e4a6516051786d833c198fbce6307c542fc6c8dfbfd77419386",
+      "sha256": "49c25fa4d1be11944d00bce78f7b955cba378fbfbebc53964c0c53194afd4647",
       "executable": false
     },
     "tests/communication-browser.mjs": {
@@ -4320,7 +4320,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "2d9a13a6b51cf7d0e84903a2b28a3fd94d8db005b0a1a821a0a243190af8b46e",
+      "sha256": "abdf4bbcffb42482ec2a3a616f4850daf8f0669d2ad729977f0693a16fa9a6ed",
       "executable": false
     },
     "tests/portal-browser.mjs": {
@@ -4476,7 +4476,7 @@
       "executable": false
     },
     "tests/totango-api-journey.mjs": {
-      "sha256": "54477f5a8875a3c167bbe02ef5aa6187a3bb6cb405eb7ec8a7309aed59f25d49",
+      "sha256": "2af722a8cac3bfe84fcf8df9164ce180a404205d9c3bb4acae41f1bf2b752a17",
       "executable": false
     },
     "tests/trust-browser.mjs": {

@@ -42,9 +42,10 @@ function endpoint(query:ChurnzeroQuery,offset:number){
 }
 export async function acquireChurnzero(value:unknown,username:string,apiKey:string):Promise<ChurnzeroApi>{
  const query=churnzeroQuery(value)
- if(!username||!apiKey||username.includes(':')||/[\r\n\u0000]/.test(username+apiKey))throw Error('Set BUOY_CHURNZERO_USERNAME and BUOY_CHURNZERO_API_KEY privately before acquisition.')
+ if(!username||!apiKey||username.includes(':')||/[\u0000-\u001f]/.test(username+apiKey))throw Error('Set BUOY_CHURNZERO_USERNAME and BUOY_CHURNZERO_API_KEY privately before acquisition.')
  const encoded=Buffer.from(username+':'+apiKey,'utf8').toString('base64')
  const reflects=reflectedCredentialMatcher([username,apiKey,encoded]),pages:ChurnzeroApi['pages']=[]
+ if(reflects(JSON.stringify(query)))throw Error('The query contains a private credential; no request or bundle written.')
  let offset=0,total:number|undefined,size=0
  do{
   const response=await fetch(endpoint(query,offset),{method:'GET',redirect:'error',headers:{authorization:'Basic '+encoded,accept:'application/json'},signal:AbortSignal.timeout(30000)})
@@ -57,6 +58,7 @@ export async function acquireChurnzero(value:unknown,username:string,apiKey:stri
   const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes)
   if(reflects(text))throw Error('ChurnZero reflected a private credential; no bundle written.')
   const page=pageContent(text)
+  if(reflects(JSON.stringify(page.row)))throw Error('ChurnZero reflected a private credential; no bundle written.')
   if(total!==undefined&&page.total!==total)throw Error('ChurnZero account total changed during acquisition; prepare a fresh source snapshot.')
   total=page.total
   if(!page.accounts.length||page.accounts.length>query.pageSize||offset+page.accounts.length>total||offset+page.accounts.length<total&&page.accounts.length!==query.pageSize)throw Error('ChurnZero account pagination is incomplete.')
