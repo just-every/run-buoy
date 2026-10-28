@@ -51,7 +51,7 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   const command=async(command,input,credential=token.token)=>request('/commands','POST',{command,input},{cookie:undefined,token:credential})
   const agentRead=await command('renewal.readiness',{renewalId:renewal.id});assert.equal(agentRead.status,200);assert.equal((await agentRead.json()).flags.find(f=>f.kind==='departed-champion').reference,ready.flags.find(f=>f.kind==='departed-champion').reference)
   const before=(await api('/state')),prepared=await command('renewal.timeline.prepare',{renewalId:renewal.id,...await timelineInput()});assert.equal(prepared.status,201)
-  const timeline=await prepared.json();assert.deepEqual(timeline.classification,['standard']);assert.equal(timeline.customerAgreement,'unconfirmed');assert.equal(timeline.milestones.length,4)
+  const timeline=await prepared.json();assert.deepEqual(timeline.classification,['standard']);assert.equal(timeline.customerAgreement,'unconfirmed');assert.ok(timeline.milestones.some(m=>m.title.includes('departed champion')&&m.dueOn==='2027-01-26'))
   assert.equal((await api('/state')).tasks.length,before.tasks.length,'Timeline preparation creates no operational work')
   assert.equal((await api('/state')).decisions.length,before.decisions.length,'Timeline preparation creates no commercial decision')
   assert.equal((await request(record+'/timelines/'+timeline.id+'/approve','POST',{}, {cookie:undefined,token:token.token})).status,403)
@@ -79,6 +79,17 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   amount=144000;await sync();ready=await readiness()
   assert.equal(ready.billing.status,'matched');assert.equal(ready.billing.actual.arrMinor,144000);assert.equal(ready.billing.actual.differenceMinor,0);assert.ok(!ready.flags.some(f=>f.kind==='billing-mismatch'))
   assert.equal((await api('/renewals')).records.find(r=>r.id===renewal.id).sourceVersionId,sourceVersion)
+  if(browser)for(const width of [1440,390]){
+   const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
+   try{
+    await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...parts]=pair.split('=');return {name,value:parts.join('='),url:app.origin}}))
+    const page=await context.newPage();await page.goto(app.origin+'/app/renewals?renewal='+renewal.id,{waitUntil:'networkidle'})
+    assert.match(await page.locator('#renewal-record').innerText(),/Billing reconciliation: matched/)
+    assert.equal(await page.locator('[data-readiness-kind=billing-mismatch]').count(),0)
+    await scan(page,'Renewal readiness billing matched '+width)
+    await page.locator('#renewal-record').screenshot({path:join(evidence,'renewal-readiness-matched-'+width+'.png')})
+   }finally{await context.close()}
+  }
   assert.ok((await api('/renewals')).fields.history.some(h=>h.recordId===renewal.id&&h.key==='billing-reconciliation'&&h.newValue.billingReconciliation==='mismatch'))
   await api('/connections/'+connection.id,'DELETE',{})
   assert.ok((await readiness()).flags.some(f=>f.kind==='billing-unavailable'),'Disconnecting never presents retained actuals as current verification')
