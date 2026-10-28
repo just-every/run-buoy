@@ -20,6 +20,8 @@ export async function focused(page, target, label) {
  if (await target.evaluate(element => element === document.activeElement)) await page.keyboard.press('Tab')
  const restingShadow = await target.evaluate(element => getComputedStyle(element).boxShadow)
  await tabTo(page, target)
+ // Inspect painted keyboard focus after the browser has applied its native scroll.
+ await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
  await check(label, async () => {
   const state = await target.evaluate((element, restingShadow) => {
    const style = getComputedStyle(element), rect = element.getBoundingClientRect()

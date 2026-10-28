@@ -4276,7 +4276,7 @@
       "executable": false
     },
     "tests/keyboard.mjs": {
-      "sha256": "243c8f54829ea6082989f372ec10e053e574d568320adfb71de62a314010e22d",
+      "sha256": "e47987ed08a76c6644c8887ea2bcfb832a80c17f52117d36413b1719bb45f02c",
       "executable": false
     },
     "tests/mail-runtime.mjs": {
