@@ -60,7 +60,8 @@ integrationApi.get(prefix+'/tokens',async c=>{
  WHEN o.id IS NULL OR o.status<>'active' OR o.role<>'owner' OR o.version<>t.owner_version THEN 'issuer_change'
  WHEN t.expires_at<=? THEN 'expiry' ELSE NULL END AS stopped_reason
  FROM buoy_integration_tokens t LEFT JOIN oa_operators o ON o.id=t.owner_id ORDER BY t.created_at DESC,t.id`,Date.now()).all<{id:string;label:string;scopes:string;account_ids:string;account_scope:string;requests_per_minute:number;expires_at:number;created_at:string|null;last_used_at:string|null;revoked_at:number|null;owner_id:string;display_name:string|null;stopped_reason:string|null}>()
- return c.json({items:rows.results.map(t=>({id:t.id,label:t.label,scopes:JSON.parse(t.scopes),accountIds:JSON.parse(t.account_ids),accountScope:t.account_scope,requestsPerMinute:t.requests_per_minute,expiresAt:t.expires_at,createdAt:t.created_at,lastUsedAt:t.last_used_at,issuer:{id:t.owner_id,displayName:t.display_name},stoppedReason:t.stopped_reason,expiringSoon:t.stopped_reason===null&&t.expires_at<=Date.now()+14*86400000}))})
+ const inventory:IntegrationInventory={items:rows.results.map(t=>({id:t.id,label:t.label,scopes:JSON.parse(t.scopes),accountIds:JSON.parse(t.account_ids),accountScope:t.account_scope,requestsPerMinute:t.requests_per_minute,expiresAt:t.expires_at,createdAt:t.created_at,lastUsedAt:t.last_used_at,issuer:{id:t.owner_id,displayName:t.display_name},stoppedReason:t.stopped_reason,expiringSoon:t.stopped_reason===null&&t.expires_at<=Date.now()+14*86400000}))}
+ return c.json(inventory)
 })
 integrationApi.delete(prefix+'/tokens/:id',async c=>{
  const env=runtimeBindings(c.env),actor=await owner(c.req.raw,env),tokenId=c.req.param('id')

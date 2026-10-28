@@ -143,6 +143,9 @@ if(process.argv.includes('--browser')){
  const worker=await startWorker({clock:()=>Date.parse('2026-10-26T12:00:10Z')})
  let browser
  try{
+  const empty=await worker.request('/app/audit',{cookie:worker.cookie})
+  assert.equal(empty.status,200)
+  assert.match(await empty.text(),/No integration credentials have been issued\./,'The native inventory has an honest empty state')
   const {accountId}=await integrationJourney(worker)
   browser=await chromium.launch({headless:true,...(process.env.BUOY_CHROMIUM?{executablePath:process.env.BUOY_CHROMIUM}:{}),args:['--no-sandbox']})
   const directory=process.env.BUOY_API_EVIDENCE
@@ -154,7 +157,7 @@ if(process.argv.includes('--browser')){
    await page.goto(worker.origin+'/app/accounts/'+accountId)
    await page.getByRole('heading',{name:'Updated synthetic account',exact:true}).waitFor()
    assert.match(await page.locator('body').innerText(),/Synthetic signed order/)
-   if(width===1440)assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Account screen fits the viewport after the integration write')
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Account screen fits the viewport after the integration write')
    if(directory)await page.screenshot({path:directory+'/account-'+width+'.png',fullPage:true})
    console.log('API-001 native account after scoped integration writes: '+width+' passed')
    await context.close()
