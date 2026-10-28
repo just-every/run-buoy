@@ -70,7 +70,8 @@ try {
   }
   // The buyer's relay is an incoming door, so it is absent from the provider-origin inventory.
   // Check its served article against the owner's expected responsibilities independently of the Markdown.
-  const relay = guide.match(/<h3[^>]*>In-app relay<\/h3>([\s\S]*?)(?=<h[23]\b|$)/)?.[1]
+  const article = guide.match(/<article\b[^>]*>([\s\S]*?)<\/article>/)?.[1] ?? ''
+  const relay = article.match(/<h3[^>]*>In-app relay<\/h3>([\s\S]*?)(?=<h[23]\b|$)/)?.[1]
   assert.ok(relay, 'BOUNDARY-005: the built guide explains the buyer-operated in-app relay')
   const relayFields = new Map([...relay.matchAll(/<li><strong>(When|Sends|Receives|Terms):<\/strong>([\s\S]*?)<\/li>/g)]
     .map(([, label, html]) => [label, html.replace(/<[^>]*>/g, '').replaceAll('&#39;', "'").replaceAll('&amp;', '&').replace(/\s+/g, ' ').trim()]))

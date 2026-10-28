@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 20 | 47 | 38 | 105 |
+| Core | 21 | 46 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 20 | 47 | 47 | 114 |
+| Full target | 21 | 46 | 47 | 114 |
 
-Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `37bd8ff51b4aa5facccbd347f9437df1ac5d3701` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -1278,7 +1278,7 @@ Core · target · **partial**
 
 #### BOUNDARY-005 — Certifications are the deployment's
 
-Core · target · **partial** · Cites BASE-INSTALL-001, BASE-DATA-004 · Register R-6
+Core · target · **done** · Cites BASE-INSTALL-001, BASE-DATA-004 · Register R-6
 
 **Requirement.** SOC 2 or similar attestations cover the buyer's deployment and are prepared with Evidence or their auditor; a provider's network, terms and data-processing agreements still apply to each connector. The providers guide (`docs/providers.md`) lists every provider an installation can talk to, with what each receives and returns and the terms and data-processing agreement that govern it. The guide also describes incoming Segment observations under USAGE-001 and INAPP-001's buyer-operated authenticated product relay: the relay requests content from Buoy and sends view/completion/dismissal receipts back. It is not a third-party provider or an outbound Buoy provider call; neither incoming observations nor stored receipts claim provider verification, hosted delivery or legal acceptance. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#boundary-005).
 
@@ -1287,8 +1287,8 @@ Core · target · **partial** · Cites BASE-INSTALL-001, BASE-DATA-004 · Regist
 2. The site check derives current connector provider origins (Stripe and Totango account search), the mail providers the installation accepts and the OpenID presets from code, with Cloudflare and Segment explicitly named, then requires a section in the built guide for each, with when it is used, what it sends and receives, and a link to its terms.
 3. The buyer-operated in-app relay has its own When/Sends/Receives/Terms guide section describing server-only authenticated requests, exact reviewed source/user/group mapping, campaign content and view/completion/dismissal receipts, buyer and source external copies and deployment responsibilities; it is not a third-party provider and has no fabricated provider terms or outbound Buoy call.
 
-**Evidence.** `docs/providers.md`; `src/site/docs.ts`; `tests/site.mjs`
-**Gap.** Not asserted by the cited baseline evidence: The buyer-operated in-app relay has independently asserted exact mapping/content/three receipt kinds/external-custody sections; Relay has no fabricated third-party provider terms or outbound Buoy call. Asserted: Every derived provider has a guide section; When/Sends/Receives/Terms are present; Provider terms have real links; Derived connector, mail and identity origins all have guide sections; Each section includes data flow fields.
+**Evidence.** `docs/providers.md`; `src/site/docs.ts`; `tests/site.mjs` — Run-site journey: code-derived provider inventory and deployment notice; independently expected relay authentication, reviewed mapping, campaign content, three receipt kinds, external copies, deployment duties and absence of relay provider terms or outbound calls.
+**Gap.** None.
 
 ### Push further: agents that carry the job
 

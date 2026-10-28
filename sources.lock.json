@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "dd59e42f056778611963fa7cc66bf709098a42aefeff2b0b19bbcc4e79ea923a",
+      "sha256": "43c3e8c355388a3e3d051e5bc0e1a686857b21edf44fa56a9a73c96bfc16cc2b",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "135e40d886162d6e8ad86ee0086f759370d971252519477a33a03ce7aa3060e9",
+      "sha256": "b221e9e4b2100f64602a50c40e8bf84025313da24a49229bd91dfbd9686a460d",
       "executable": false
     },
     "DEMO.md": {
@@ -152,7 +152,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "751a0cb5a9c41f885b36c13f11012c88d3058b37e03ba83830159e3f3dc2a9f4",
+      "sha256": "d6d5f88188ab503fc36a69a2fdb19a4bfdf345b0dce0a98bfc8c75cda5f4450c",
       "executable": false
     },
     "docs/communication-sentiment.md": {
@@ -4456,7 +4456,7 @@
       "executable": false
     },
     "tests/site.mjs": {
-      "sha256": "f62c7bf54ca7a28cf4418e53963d41c618598c235e6c2a790c0ffe6e2e3c668b",
+      "sha256": "61b19ba5557ecd3210424b281116db36251add13c014f4f556954a861d8ee1cc",
       "executable": false
     },
     "tests/style.mjs": {
