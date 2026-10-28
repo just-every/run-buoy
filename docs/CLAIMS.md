@@ -18,7 +18,7 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 10 | A released fix creates tell-your-customer tasks for the linked CSMs. | `PRODUCT-001` missing | missing |
 | 11 | Champion-change playbooks find existing contacts, book introductions and capture meeting commitments. | `PLAY-001` partial; `MEET-001` missing; `MEET-002` missing; `AI-002` done | partial |
 | 12 | In-app onboarding walkthroughs target identified users and record completion. | `INAPP-001` done; `JOURNEY-001` missing | partial |
-| 13 | Onboarding projects track customer and internal tasks, dependencies and go-live risk. | `ONBOARD-001` missing; `PORTAL-001` partial | partial |
+| 13 | Onboarding projects track customer and internal tasks, dependencies and go-live risk. | `ONBOARD-001` partial; `PORTAL-001` partial | partial |
 | 14 | Plain-English portfolio questions return accounts, citations and missing evidence, then draft introductions. | `AI-001` done; `AI-005` done; `EMAIL-001` missing | partial |
 | 15 | Six Q4 renewals with no executive contact can be found across the permitted portfolio. | `AI-001` done; `ACCOUNT-001` done; `RENEW-001` partial | partial |
 | 16 | Utilization growth opens an expansion; an unhappy NPS reply starts a playbook. | `ADOPT-001` done; `SIGNAL-001` partial; `RENEW-002` missing; `SURVEY-001` partial; `PLAY-001` partial | partial |

@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "dd59e42f056778611963fa7cc66bf709098a42aefeff2b0b19bbcc4e79ea923a",
+      "sha256": "c4578320d71c41ee058fea5945d1315a2bae8a80563e4a8933b8d32a33067e7f",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "135e40d886162d6e8ad86ee0086f759370d971252519477a33a03ce7aa3060e9",
+      "sha256": "f6dc3afc667b975417824e11b72bcea9887ee4e35f45093d79ca50d14239ad26",
       "executable": false
     },
     "DEMO.md": {
@@ -152,7 +152,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "751a0cb5a9c41f885b36c13f11012c88d3058b37e03ba83830159e3f3dc2a9f4",
+      "sha256": "7b600e5d324cd2982b06f3834d7627776cc0133c5b0e2c6808390e1854e96d0c",
       "executable": false
     },
     "docs/communication-sentiment.md": {
@@ -168,7 +168,7 @@
       "executable": false
     },
     "docs/contract/domain-rules.md": {
-      "sha256": "e4f39d803092f4fb9b823f0a095338ba61f6ad85220890a724aea10390db8f9f",
+      "sha256": "650bac07a98e5f81f4bd78751a3896c00563d410b8aa87a859826310ce7c8c7a",
       "executable": false
     },
     "docs/contract/DONE-AUDIT.md": {
@@ -832,7 +832,7 @@
       "executable": false
     },
     "RULINGS.md": {
-      "sha256": "12375b69c6d038e0e2d8f877e78a913dc23f496b96174422b9e3b2a41afade2e",
+      "sha256": "adb30a34c0811d38270fa758b492874848ee7a845488b9badbb1f701d4c40887",
       "executable": false
     },
     "RUN-LOCALLY.md": {

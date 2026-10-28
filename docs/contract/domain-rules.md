@@ -273,3 +273,14 @@ HTTP-001 currently exposes three bearer commands, selected in each GOVERN-001 ow
 ## HTTP ownership
 
 Hono owns authenticated product HTTP handlers. Base handles identity and setup.
+
+
+## PORTAL-001
+
+RL-108 records ct's sharing authority ruling. Customer classification is bound to the native identity before its first share and survives an email change or withdrawal. A staff profile change durably revokes existing portal grants; clearing that profile never restores them. Every portal read, download and write rechecks the current recipient, account membership, reviewed plan revision, issuing owner, expiry and revocation.
+
+Customers may edit the shared plan name, objective titles and dates, and milestone titles. Metric definitions, targets, ownership and task selection retain staff authority. Saving a customer edit creates native plan history, withdraws every prior share and its revision-bound confirmations, and returns the plan to the owner for a new review. Saving, sharing and customer actions send no mail.
+
+Customer files are stored in the native database, with their account, plan revision, customer identity and uploader. A current recipient can download their own files from the shared revision; the native owner can inspect the account's retained files. Downloads are attachments with content sniffing disabled. Current linked files join person export, preservation holds and erasure, and account erasure removes them. Installation archives retain file data and native onboarding projects, while excluding portal grants, customer session authority and invitations. Earlier downloaded files and archives remain outside native erasure.
+
+The native onboarding slice groups already approved plan tasks into an account project and explicitly assigns them to the plan's customer owner. It records project provenance, completed work and overdue counts. The portal exposes only tasks explicitly shared from that plan and assigned to its customer. Templates, automatic starts, phase dependencies, date recalculation, complete onboarding reports and inherited milestone outcome calculations remain ONBOARD-001 work. PLAN-001 and AGENT-001 inherit the current portal authority and customer-confirmation boundary when they consume portal evidence.

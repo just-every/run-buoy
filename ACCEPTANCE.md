@@ -8,10 +8,10 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 20 | 47 | 38 | 105 |
+| Core | 20 | 48 | 37 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 20 | 47 | 47 | 114 |
+| Full target | 20 | 48 | 46 | 114 |
 
 Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -634,7 +634,7 @@ Core · target · **partial**
 
 #### ONBOARD-001 — Onboarding projects
 
-Core · target · **missing**
+Core · target · **partial**
 
 **Requirement.** Templates for onboarding and implementation projects hold phases, milestones and tasks for both internal team members and customer contacts, with dependencies, relative due dates, owners and target go-live. A project starts automatically from a template chosen by product or segment. Triggers are a new account, an Orbit handoff, or a closed-won expansion or cross-sell opportunity on an existing account (from Orbit, Salesforce or HubSpot) that adds a product. A person can also start one by hand. Each project tracks percent complete, time to value and slippage, flags overdue customer-side tasks and rolls status up to the account and onboarding reports. Milestone outcomes inherit PLAY-004 outcome definitions, UTC windows, frozen comparison cohorts and report/time-to-outcome acceptance before shipping.
 
@@ -643,8 +643,8 @@ Core · target · **missing**
 2. Dates recalculate, the project shows at risk with the overdue customer task named, and the onboarding report shows time to value per account.
 3. Then close-won a Salesforce cross-sell opportunity for a new product on an existing account: a second project starts once from that product's template, beside the first.
 
-**Evidence.** None.
-**Gap.** No onboarding projects or expansion-triggered starts.
+**Evidence.** `tests/portal-journey.mjs` portalJourney; `tests/portal-browser.mjs` portalBrowser
+**Gap.** Native owner-started account projects group approved plan tasks and assign customer work explicitly; completion and overdue counts use native task evidence. Still missing templates, phases, dependency and relative-date recalculation, target go-live risk, automatic account, Orbit and closed-won expansion starts, onboarding reports and inherited PLAY-004 milestone outcome proof. Scoped staff project authority remains unbuilt; the current owner-only prerequisite is the conservative interim floor.
 
 #### PLAN-001 — Shared success plans and goals
 
@@ -661,9 +661,9 @@ Core · target · **partial** · Cites BASE-ROLE-001
 
 #### PORTAL-001 — Customer collaboration portal
 
-Core · target · **partial**
+Core · target · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-ACCESS-004, BASE-INPUT-003, BASE-DATA-001, BASE-DATA-003, BASE-PUBLIC-003
 
-**Requirement.** Invited customer contacts sign in by email link (or their company SSO) to a portal scoped to their own account, where they see and update their onboarding tasks and success plan, comment, upload files and confirm outcomes. Portal users never see internal notes, health scores or other customers.
+**Requirement.** Invited customer contacts sign in by email link (or their company SSO) to a portal scoped to their own account, where they see and update their onboarding tasks and success plan, comment, upload files and confirm outcomes. Portal users never see internal notes, health scores or other customers. RL-108 governs sharing authority; native custody and revision-bound edits are specified in [domain rules](docs/contract/domain-rules.md#portal-001).
 
 **Acceptance.**
 1. Invite a champion, complete a customer task and comment from the portal, then attempt to reach another account's portal URL and an internal note; the task and comment appear on the internal timeline and both cross-boundary reads are refused.
