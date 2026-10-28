@@ -8,10 +8,10 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 20 | 46 | 39 | 105 |
+| Core | 20 | 47 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 20 | 46 | 48 | 114 |
+| Full target | 20 | 47 | 47 | 114 |
 
 Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -656,20 +656,20 @@ Core · target · **partial** · Cites BASE-ROLE-001
 1. Create a plan with two objectives, one tied to a usage metric and one confirmed by the customer, share it with the champion, and let the metric reach its target; the first objective shows achieved from data, the second waits for the customer's confirmation and health shows the goal measure.
 2. An authorized team CS manager and own-book CSM read and edit their permitted plans and retained review artifacts; staff cannot confirm a customer statement, which its authenticated customer confirms through PORTAL-001; restored assignments confer no authority (RL-102).
 
-**Evidence.** `src/buoy/plans/index.ts`; `src/buoy/plans/model.ts`; `src/buoy/ui/plans.ts`; `migrations/core/0056_buoy_success_plans.sql`; `tests/plan-journey.mjs`; `tests/flows.test.mjs`; `tests/plan-browser.mjs`; `tests/record-browser.mjs`; `tests/portable.mjs`
-**Gap.** Customer sharing and authenticated confirmation require PORTAL-001 and remain unbuilt. Internal milestones currently link existing healthy or approved-renewal outcome reports; full inherited PLAY-004 milestone acceptance, including exact-candidate clock proof, missed-window and late-recovery refusal and milestone-specific erasure, remains unproved. Metric-target and customer-confirmed milestone outcome definitions are not implemented. Native milestone and task links, current business-review inclusion and goal evidence in renewal readiness are implemented; linked tasks and retained approved-renewal milestone evidence survive the real archive, while captured plan-review restoration remains unproved. Restored staff owner identifiers are historical assignments and confer no authority. Supplied ruling is adopted without a status change; delegated/complete acceptance and proof remain required.
+**Evidence.** `tests/plan-journey.mjs` (planAttainmentJourney, planAuthorityJourney and planCustodyJourney); `tests/portal-journey.mjs` (portalJourney and portalWithdrawalJourney); `tests/plan-outcome-journey.mjs` (planOutcomeJourney); `tests/plan-browser.mjs` (planBrowser); `tests/portal-browser.mjs` (portalBrowser), loaded by `tests/record-browser.mjs` in the plans Verify suite; `tests/portable.mjs` (archive restoration).
+**Gap.** Replayed prior native portal and metric-objective milestone work onto current main. Customer-only confirmation, task completion and comments, exact-revision sharing, stopped access and retained evidence are implemented; delegated account and full-field plan reads and edits and retained-review access follow RL-102. Full inherited PLAY-004 cohort and clock proof, delegated and restoration journeys on this candidate, received invitation proof and ct approval of the conservative owner-issued portal custody default remain unproved. PORTAL-001 retains broader editing, uploads, company SSO and onboarding tasks. Restored assignments confer no authority.
 
 #### PORTAL-001 — Customer collaboration portal
 
-Core · target · **missing**
+Core · target · **partial**
 
 **Requirement.** Invited customer contacts sign in by email link (or their company SSO) to a portal scoped to their own account, where they see and update their onboarding tasks and success plan, comment, upload files and confirm outcomes. Portal users never see internal notes, health scores or other customers.
 
 **Acceptance.**
 1. Invite a champion, complete a customer task and comment from the portal, then attempt to reach another account's portal URL and an internal note; the task and comment appear on the internal timeline and both cross-boundary reads are refused.
 
-**Evidence.** None.
-**Gap.** No customer portal.
+**Evidence.** `tests/portal-journey.mjs` (portalJourney and portalWithdrawalJourney); `tests/portal-browser.mjs` (portalBrowser); `tests/portable.mjs` (archive restoration).
+**Gap.** Conservative default: only a current native owner explicitly invites and shares one reviewed plan revision with a confirmed customer owner. Grants bind recipient and issuing-owner versions and last at most 365 days; plan edits, membership withdrawal, expiry, revocation and authority changes stop access; grants and recipient authority never restore. Customer actions project only selected tasks, agreed objective status, milestone titles and plan comments, with no internal notes, health scores or other accounts. New portal custody approval and received invitation proof remain pending. General customer editing, uploads, company SSO and onboarding tasks remain unbuilt.
 
 #### REVIEW-001 — Business review preparation and decks
 

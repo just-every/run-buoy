@@ -18,7 +18,7 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 10 | A released fix creates tell-your-customer tasks for the linked CSMs. | `PRODUCT-001` missing | missing |
 | 11 | Champion-change playbooks find existing contacts, book introductions and capture meeting commitments. | `PLAY-001` partial; `MEET-001` missing; `MEET-002` missing; `AI-002` done | partial |
 | 12 | In-app onboarding walkthroughs target identified users and record completion. | `INAPP-001` done; `JOURNEY-001` missing | partial |
-| 13 | Onboarding projects track customer and internal tasks, dependencies and go-live risk. | `ONBOARD-001` missing; `PORTAL-001` missing | missing |
+| 13 | Onboarding projects track customer and internal tasks, dependencies and go-live risk. | `ONBOARD-001` missing; `PORTAL-001` partial | partial |
 | 14 | Plain-English portfolio questions return accounts, citations and missing evidence, then draft introductions. | `AI-001` done; `AI-005` done; `EMAIL-001` missing | partial |
 | 15 | Six Q4 renewals with no executive contact can be found across the permitted portfolio. | `AI-001` done; `ACCOUNT-001` done; `RENEW-001` partial | partial |
 | 16 | Utilization growth opens an expansion; an unhappy NPS reply starts a playbook. | `ADOPT-001` done; `SIGNAL-001` partial; `RENEW-002` missing; `SURVEY-001` partial; `PLAY-001` partial | partial |
@@ -28,11 +28,11 @@ A claim is done when every clause behind it is done, missing when every one is m
 | 20 | Quarterly NRR and GRR retain their starting cohort, movement and source rows. | `REPORT-001` done; `BILLING-003` partial | partial |
 | 21 | The renewal runway shows owners, stages, risks and notice dates. | `RENEW-001` partial; `ACCOUNT-003` partial | partial |
 | 22 | QBR decks summarize account evidence with editable slides and linked source figures. | `REVIEW-001` partial | partial |
-| 23 | Success plans and customer outcomes feed the review and renewal work. | `PLAN-001` partial; `PORTAL-001` missing; `REVIEW-001` partial | partial |
+| 23 | Success plans and customer outcomes feed the review and renewal work. | `PLAN-001` partial; `PORTAL-001` partial; `REVIEW-001` partial | partial |
 | 24 | Buoy takes over incumbent-written Salesforce fields on their existing scales without blanking reports and dashboards. | `CRM-004` missing; `MIGRATE-006` missing | missing |
 | 25 | Move-in carries companies, 52 weeks of health, contacts, tasks, playbooks, success plans, NPS, activities and custom objects. | `MIGRATE-001` missing; `MIGRATE-007` missing; `ACCOUNT-006` missing | missing |
 | 26 | Also moves in from ChurnZero, Totango, Planhat, Vitally and Velaris. | `MIGRATE-002` partial; `MIGRATE-003` partial; `MIGRATE-004` missing; `MIGRATE-005` partial | partial |
 | 27 | Run Buoy on your own computer, with source and data under your control. | `BOUNDARY-005` partial; `RESTORE-001` partial | partial |
 | 28 | Illustrated Cascade renewal is signed six weeks early with retained terms and source evidence. | `RENEW-001` partial; `RENEW-005` partial; `AGENT-003` partial | partial |
 
-Claims: 28; 2 done, 22 partial, 4 missing.
+Claims: 28; 2 done, 23 partial, 3 missing.
