@@ -3,7 +3,7 @@ import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
 import {chromium} from '@playwright/test'
 import {configurationFixture,description} from './configuration-journey.mjs'
-import {scan,submit,failures} from './a11y-checks.mjs'
+import {scan,submit,focused,failures} from './a11y-checks.mjs'
 const evidence=process.env.EVIDENCE_DIR??'../evidence/configuration';await mkdir(evidence,{recursive:true})
 const fixture=await configurationFixture(),{app,api}=fixture
 const browser=await chromium.launch({headless:true,...(process.env.BUOY_CHROMIUM_PATH?{executablePath:process.env.BUOY_CHROMIUM_PATH}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
@@ -21,6 +21,15 @@ try{
   await prepare.getByLabel('Send this description to the configured model for this request',{exact:true}).check();await submit(page,prepare.getByRole('button',{name:'Prepare configuration draft',exact:true}))
   assert.equal(await page.getByRole('alert').count(),0)
   assert.equal(await page.locator('#configuration-fire-count').innerText(),'54');assert.equal(await page.locator('#configuration-churn-capture').innerText(),'1 of 2 churned accounts · 50.0%')
+  await page.setViewportSize({width:390,height:1000})
+  const preview=page.getByRole('region',{name:'Configuration draft JSON',exact:true})
+  assert.ok(await preview.evaluate(element=>element.scrollWidth>element.clientWidth),'The real configuration preview overflows at phone width')
+  await focused(page,preview,'Configuration JSON keyboard focus at 390')
+  await page.keyboard.press('ArrowRight')
+  await page.waitForFunction(()=>document.querySelector('pre[aria-label="Configuration draft JSON"]').scrollLeft>0)
+  await page.keyboard.press('ArrowLeft')
+  await page.waitForFunction(()=>document.querySelector('pre[aria-label="Configuration draft JSON"]').scrollLeft===0)
+  await page.setViewportSize({width:1440,height:1000})
   assert.deepEqual((await api('/ai/configuration')).signals,[]);assert.equal(await page.evaluate(()=>Object.keys(sessionStorage).filter(k=>k.startsWith('buoy:draft:/app/ai/configuration:')).length),0)
   await proof('reviewed-backtest')
   await page.getByText('Weekly evidence',{exact:true}).click();assert.equal(await page.getByRole('table',{name:'Historical signal observations'}).count(),1);assert.match(await page.locator('#configuration-evidence').innerText(),/Prior weekly active baseline unavailable/);await proof('weekly-evidence')

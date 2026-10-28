@@ -1920,7 +1920,7 @@
       "executable": false
     },
     "src/buoy/ui/configuration.ts": {
-      "sha256": "d7bc896ce795e21d7231e37f258d13ac76f96ef42620d8bd7665a24f1075ba8d",
+      "sha256": "7d0d307dc2fe6db3980622c42bb2c8520950ea5716e896bae53dd3ee0108c8e4",
       "executable": false
     },
     "src/buoy/ui/connected-billing.ts": {
@@ -4160,7 +4160,7 @@
       "executable": false
     },
     "tests/configuration-browser.mjs": {
-      "sha256": "32faa56c6ec80743fbd0f761c2390e5394b64b6098723a39890e2e2e0a60c781",
+      "sha256": "595e125fe72c8750392db88929cdf39a5a85ef9f81b5c3d2651ffc845001da06",
       "executable": false
     },
     "tests/configuration-journey.mjs": {
