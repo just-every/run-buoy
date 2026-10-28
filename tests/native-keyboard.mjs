@@ -9,13 +9,12 @@ export async function show(page, disclosure) {
 }
 
 export async function choose(page, select, value) {
- const values = await select.locator('option').evaluateAll(options => options.filter(option => !option.disabled).map(option => option.value))
- const index = values.indexOf(value)
- assert.ok(index >= 0, 'The requested select choice is available')
+ const choices = await select.locator('option').evaluateAll(options => options.filter(option => !option.disabled).map(option => ({value:option.value,label:option.label})))
+ const choice = choices.find(option => option.value === value)
+ assert.ok(choice, 'The requested select choice is available')
  await focused(page, select, 'Select keyboard focus')
- const current = values.indexOf(await select.inputValue())
- assert.ok(current >= 0, 'The current select choice is available')
- for (let step = 0; step < Math.abs(index - current); step++) await page.keyboard.press(index > current ? 'ArrowDown' : 'ArrowUp')
+ // Native type-ahead selects by the option the person reads on either platform.
+ if(await select.inputValue() !== value) await page.keyboard.type(choice.label)
  await page.keyboard.press('Tab')
  assert.equal(await select.inputValue(), value, 'Keyboard selection retains the chosen value')
 }

@@ -58,7 +58,7 @@ export async function reportBuilderKeyboard({page,app,width,evidence,spec,expect
  await open(page,page.locator('#report-create-panel'))
  let form=page.locator('#report-create')
  await type(page,form.getByLabel('Report name',{exact:true}),name)
- for(const [label,value]of [['Group by','ownerId'],['Measure','revenue.arrMinor'],['Aggregation','sum'],['Segment',''],['Display','bar']])await choose(page,form.getByRole('combobox',{name:label,exact:true}),value)
+ for(const [label,value]of [['Group by','ownerId'],['Measure','revenue.arrMinor'],['Aggregation','average'],['Aggregation','sum'],['Segment',''],['Display','table'],['Display','bar']])await choose(page,form.getByRole('combobox',{name:label,exact:true}),value)
  await type(page,form.getByRole('textbox',{name:'Filter rules JSON',exact:true}),'{ invalid JSON')
  await type(page,form.getByLabel('Calculated column formula (optional)',{exact:true}),'')
  await type(page,form.getByLabel('Viewer role IDs, comma separated (optional)',{exact:true}),'finance')

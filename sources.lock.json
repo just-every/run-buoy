@@ -4288,7 +4288,7 @@
       "executable": false
     },
     "tests/native-keyboard.mjs": {
-      "sha256": "b45262b2805d27363459f09044afc1cf921b0c41063d56b259a49875d3a5cf9c",
+      "sha256": "5456557c335271d08221f644a12302baec48b08d166b8ef7c4f1abc4ec84e914",
       "executable": false
     },
     "tests/notifications.mjs": {
@@ -4384,7 +4384,7 @@
       "executable": false
     },
     "tests/report-builder-keyboard.mjs": {
-      "sha256": "dc31f44c45087408dadfafe0f445588e767f00a62ca3d3311260f1c237e2dab9",
+      "sha256": "4be256e17077f6da85153c68d237f57096c0fa23ca9a4fe1c46a74c00b1178a6",
       "executable": false
     },
     "tests/reporting-browser.mjs": {
