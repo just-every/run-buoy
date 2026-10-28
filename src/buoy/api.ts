@@ -69,7 +69,6 @@ import { agentState, setAgentSettings } from './agent-policy/owner'
 
 export const buoyApi = new Hono<{Bindings: Bindings; Variables: {actor: Actor}}>()
 buoyApi.use('/api/buoy/billing/:id/webhook',async(c,next)=>{await next();if(c.res.ok)await refreshBillingConsumers(c.env)})
-buoyApi.route('/',portalApi)
 buoyApi.route('/',integrationApi)
 buoyApi.route('/',billingIngest)
 buoyApi.route('/',playIngest)
@@ -96,6 +95,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
   finally { await finishRequest(c.env.DB, actor, status) }
   return
  }
+ if(c.req.path.startsWith('/api/buoy/portal/')){await next();return}
  const profile=await roleAccess(c.env.DB,actor)
  if(profile.restricted){
   if(['GET','POST'].includes(c.req.method)&&/^\/api\/buoy\/accounts\/[^/]+\/plans$/.test(c.req.path)){await next();if(c.req.method==='POST'&&c.res.ok){await recalculateScorecards(c.env.DB);await observeOutcomes(c.env.DB,actor)}return}
@@ -142,6 +142,7 @@ buoyApi.route('/',configurationApi)
 buoyApi.route('/',communicationApi)
 buoyApi.route('/',scheduleApi)
 buoyApi.route('/',experimentsApi)
+buoyApi.route('/',portalApi)
 buoyApi.route('/',plansApi)
 buoyApi.get('/api/buoy/accounts/:id/portal-sharing',async c=>c.json(await sharingState(c.env.DB,c.get('actor'),c.req.param('id'))))
 buoyApi.post('/api/buoy/accounts/:id/portal-sharing',async c=>c.json(await sharePlan(c.env.DB,c.get('actor'),c.req.param('id'),await jsonBody(c.req.raw)),201))

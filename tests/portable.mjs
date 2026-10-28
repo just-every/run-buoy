@@ -169,6 +169,11 @@ try{
  const portalRead=await running.request('/api/buoy/portal/'+portableGrant.id,{cookie:portalCookie});assert.equal(portalRead.status,200);
  const portalRevision=(await portalRead.json()).revision;
  const portalConfirmed=await running.request('/api/buoy/portal/'+portableGrant.id+'/action',{cookie:portalCookie,method:'POST',body:{action:'confirm',revision:portalRevision,objectiveId:'customer',statement:'synthetic-buoy-1965'}});assert.equal(portalConfirmed.status,201);
+ const portableAuthorEmail=['synthetic-buoy-1997','example.test'].join('@');
+ assert.equal((await running.request('/auth/invite',{method:'POST',cookie:running.cookie,body:{email:portableAuthorEmail,displayName:'Synthetic portable plan author',role:'member'}})).status,202);
+ const portableAuthorCookie=await running.signIn(portableAuthorEmail),portableAuthor=(await (await running.request('/auth/operators',{cookie:running.cookie})).json()).find(p=>p.email===portableAuthorEmail);
+ await call('/roles/assignments','PUT',{revision:(await call('/roles')).revision,personId:portableAuthor.id,roleId:'cs-manager'});
+ assert.equal((await running.request('/api/buoy/accounts/'+accountId+'/plans',{cookie:portableAuthorCookie})).status,200,'The source author has explicit plan read authority before export');
  const successPlansBefore=await call('/accounts/'+accountId+'/plans');
  assert.equal(successPlansBefore.plans[0].objectives[1].status,'achieved');
  assert.equal(successPlansBefore.plans.find(p=>p.id===successPlan.id).objectives[0].status,'achieved');
@@ -261,6 +266,7 @@ try{
  for(const transcript of [retainedTranscript,discardedTranscript,erasedTranscript])for(const line of transcript.lines)assert.ok(!JSON.stringify(archivedAudit).includes(line),'AI-002 audit custody contains no transcript source text')
  assert.ok(!archiveRows.some(item=>['buoy_report_shares','buoy_dashboard_shares','buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
  assert.ok(!archiveRows.some(item=>['buoy_integration_tokens','buoy_integration_minutes','buoy_integration_receipts'].includes(item.table)),'API-001 integration authority and replay state are excluded from the actual archive');
+ assert.ok(!archiveRows.some(item=>item.table==='buoy_role_assignments'),'Restored plan assignments never carry executable staff authority');
  assert.ok(!archiveRows.some(item=>['buoy_portal_grants','buoy_portal_recipients'].includes(item.table)),'Customer access never enters the real archive');
  assert.ok(archiveRows.some(item=>item.table==='buoy_plan_confirmations'&&item.row.plan_id===successPlan.id),'Authenticated customer evidence survives without restoring authority');
  assertBillingArchiveRows(archiveRows,billingImage);
@@ -366,6 +372,11 @@ try{
  const restoredAi=(await call('/ai')).settings
  await call('/ai/settings','PUT',{...restoredAi,enabled:true,classes:[],budgetMinor:100,requestMinor:100,requestsPerMinute:100,noTraining:true,termsReference:'synthetic-buoy-8524'})
  assert.deepEqual(await assertConfigurationBacktest(call,configurationHistory),configurationBacktestBefore,'A fresh scorecard draft selects the same latest historical result and exact missing history after real restoration')
+ assert.equal((await running.request('/api/buoy/accounts/'+accountId+'/plans',{cookie:portableAuthorCookie})).status,401,'The old author session cannot read a restored plan');
+ assert.equal((await running.request('/auth/invite',{method:'POST',cookie:running.cookie,body:{email:portableAuthorEmail,displayName:'Synthetic portable plan author',role:'member'}})).status,202);
+ const destinationAuthorCookie=await running.signIn(portableAuthorEmail);
+ assert.equal((await running.request('/api/buoy/accounts/'+accountId+'/plans',{cookie:destinationAuthorCookie})).status,403,'A fresh identity with the same mailbox inherits no archived plan rights');
+ assert.equal((await running.request('/api/buoy/reviews?id='+capturedPlanReview.id,{cookie:destinationAuthorCookie})).status,403,'Retained review content also requires fresh local authorization');
  await running.close();running=null
  const restoredArchive=join(parent,'restored.rer');await command(destination,['export','--output',restoredArchive])
  const restoredRows=(await readFile(restoredArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
