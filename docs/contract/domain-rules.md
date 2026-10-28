@@ -150,9 +150,9 @@ The version 1 custom-object record door follows [RL-9](../../RULINGS.md#rl-9--cu
 
 The original “ARR over $50,000 and health below 60” repeat remains BILLING-003 and HEALTH-001 acceptance; invoices are never called ARR and health bands are never called scores.
 
-## API-001
+## API-002
 
-This conservative authentication default is ADOPTED pending ct approval; API-001 remains partial.
+This conservative authentication default is ADOPTED pending ct approval; API-002 remains partial.
 
 ## API-001
 

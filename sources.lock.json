@@ -168,7 +168,7 @@
       "executable": false
     },
     "docs/contract/domain-rules.md": {
-      "sha256": "5339fe33a31e7b7c4822b871ffeb5fe580a574f3e22314d486d6cfa741333e1f",
+      "sha256": "389d425e4a4394d11e8c0002c0e440520c3db3b727aad6a24e48a7df2a3f5007",
       "executable": false
     },
     "docs/contract/DONE-AUDIT.md": {
@@ -204,7 +204,7 @@
       "executable": false
     },
     "docs/integration-api.md": {
-      "sha256": "f5ac5bc503aade1a0038d18956a73c67a3c8fd9d8012dfa066b5842fde01995f",
+      "sha256": "c0772a887958e61a8127a159ecfb16a0b1bf5ad3f392c623da713183f74bc292",
       "executable": false
     },
     "docs/migrations.md": {

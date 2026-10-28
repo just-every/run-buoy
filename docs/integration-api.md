@@ -4,6 +4,8 @@ The installed origin serves the machine-readable OpenAPI document at
 `/api/buoy/v1/openapi.json`. This first increment supports account snapshots.
 Events, contacts, users, metrics, tasks, plans, opportunities, timeline entries,
 custom objects and outbound webhooks remain unfinished under API-001.
+Credential issuance, account and operation scopes, inventory, expiry and
+withdrawal belong to the API-002 credential-lifecycle part of API-001.
 
 An owner signs in and sends a same-origin JSON `POST /api/buoy/v1/tokens` with
 `label` (1 to 100 characters; omitted labels use "Integration credential"),
@@ -73,6 +75,6 @@ CT approved the account foundation with riders on 26 October 2026. Owner-only
 issuance remains the interim; admin authority bounded by current record and
 commercial-field rules, the native credential screen, event attribution, the
 remaining record kinds and outbound webhooks are unfinished. Webhook transport
-requires its own CT ruling before shipping. API-001 remains PARTIAL.
+requires its own CT ruling before shipping. API-001 and API-002 remain PARTIAL.
 
 Migrated account reads can include `migrationHealth`, a read-only incumbent observation described by the response schema. Account write bodies use the separate `AccountWrite` schema: omit `migrationHealth` when editing a returned account. Writes preserve existing source custody and reject attempts to supply or replace it.
