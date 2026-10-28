@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "fc8da8587c3c0d3c868c195add0a11ff6b102d436b2e5557e390a83514237bd2",
+      "sha256": "c1739baad370301207e65725286f4129a7bd33645aacaee8c91227c70edf557f",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "143d951e977ac58eb17579cf25a9dc6d327057da9a87e6e63e30997df24c1158",
+      "sha256": "a6693c8849d071f6e008d251b3480a973090695bdb884297b72ca6c28a4eb293",
       "executable": false
     },
     "DEMO.md": {
@@ -4264,7 +4264,7 @@
       "executable": false
     },
     "tests/import-door-journey.mjs": {
-      "sha256": "a1b2221be962007b8b9d5694952387e2e9affe202cf54d02d8db51b9690801f2",
+      "sha256": "d54692110dd2f75ad65efef0c8dd05b423699d2a931f6825675898221b4e113f",
       "executable": false
     },
     "tests/inapp-browser.mjs": {

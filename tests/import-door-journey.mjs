@@ -15,7 +15,7 @@ export async function accountErasureJourney({request,cookie,member,account}) {
  const kept={...account('synthetic-buoy-918011'),name:'synthetic-buoy-918012',renewalEvidence:'synthetic-buoy-918013',
   billing:{...account().billing,reference:'synthetic-buoy-918014'},support:{...account().support,reference:'synthetic-buoy-918015'}}
  const sourceMarkers=[erased.id,erased.name,erased.renewalEvidence,erased.billing.reference,erased.support.reference]
- const workMarkers=['synthetic-buoy-918006','synthetic-buoy-918007','synthetic-buoy-918008']
+ const workMarkers=['synthetic-buoy-918006','synthetic-buoy-918007','synthetic-buoy-918008','synthetic-buoy-918009','synthetic-buoy-918010']
  const plan=await door.plan({accounts:[erased,kept]}), job=await door.apply(plan)
  assert.equal((await door.json('reconcile',{planId:plan.planId})).counts.present,2)
  const audit=async()=>{
@@ -23,13 +23,15 @@ export async function accountErasureJourney({request,cookie,member,account}) {
   do {const page=await json(await call('/audit?offset='+offset));pages.push(page);offset=page.nextOffset} while(offset!==null)
   return pages
  }
- const work=async(accountId,title,reason,evidence)=>{
+ const work=async(accountId,title,reason,evidence,outcome,completionEvidence)=>{
   const proposal=await json(await call('/proposals','POST',{accountId,kind:'playbook',payload:{title,dueDate:'2027-01-31'}}),201)
   await json(await call(`/proposals/${proposal.id}/approve`,'POST',{}))
+  const task=(await json(await call('/state'))).tasks.find(row=>row.proposalId===proposal.id)
+  await json(await call(`/tasks/${task.id}/complete`,'POST',{outcome,evidence:completionEvidence}))
   const decision=await json(await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'renewed',reason,evidence}}),201)
   await json(await call(`/proposals/${decision.id}/approve`,'POST',{}))
  }
- await work(kept.id,'synthetic-buoy-918016','synthetic-buoy-918017','synthetic-buoy-918018')
+ await work(kept.id,'synthetic-buoy-918016','synthetic-buoy-918017','synthetic-buoy-918018','synthetic-buoy-918019','synthetic-buoy-918020')
  const priorAuditIds=new Set((await audit()).flatMap(page=>page.entries).map(entry=>entry.id))
  await work(erased.id,...workMarkers)
  const read=async()=>({
@@ -49,7 +51,7 @@ export async function accountErasureJourney({request,cookie,member,account}) {
  for(const key of ['proposals','tasks','decisions'])assert.ok(before.state[key].some(row=>row.accountId===erased.id),`${key} is populated before erasure`)
  assert.ok(before.history.history.some(row=>row.jobId===job.id),'The inspected history contains the imported job')
  const evidence=before.audit.flatMap(page=>page.entries).filter(entry=>!priorAuditIds.has(entry.id))
- assert.deepEqual(evidence.map(entry=>entry.action).sort(),['playbook.approved','playbook.prepared','renewal.approved','renewal.prepared'])
+ assert.deepEqual(evidence.map(entry=>entry.action).sort(),['playbook.approved','playbook.completed','playbook.prepared','renewal.approved','renewal.prepared'])
  const subject=evidence[0].subject
  for(const entry of evidence){assert.equal(entry.subject,subject);assert.match(entry.subject,/^[0-9a-f]{32}$/);assert.match(entry.actor,/^person:[0-9a-f-]+$/);assert.ok(Number.isFinite(Date.parse(entry.occurredAt)))}
  assert.equal((await door.send('undo',{planId:plan.planId})).status,409,'Dependent work refuses undo')
