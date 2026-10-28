@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 
-export async function teamPlan({call,json},accountId,staffOwnerId,{customerOwnerId,name='Rollout success draft',taskIds=[]}={}){
+export async function teamPlan({call,json},accountId,staffOwnerId,{customerOwnerId,name='Rollout success draft',taskIds=[],milestones=[]}={}){
  if(!customerOwnerId)customerOwnerId=(await json(await call('/customer-people','POST',{kind:'contact',name:'Rollout sponsor '+accountId,accountIds:[accountId],source:'synthetic-buoy-2301'}),201)).id
- const body={name,staffOwnerId,customerOwnerId,taskIds,milestones:[],objectives:[
+ const body={name,staffOwnerId,customerOwnerId,taskIds,milestones,objectives:[
   {id:'usage',title:'Adopt the agreed workflow',kind:'metric',field:'adoption.current.eventCount',target:10,direction:'at-least',dueOn:'2027-03-01'},
   {id:'statement',title:'Confirm the rollout outcome',kind:'customer-statement',dueOn:'2027-03-01'}]}
  const save=async(extra={})=>{

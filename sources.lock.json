@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "fc8da8587c3c0d3c868c195add0a11ff6b102d436b2e5557e390a83514237bd2",
+      "sha256": "21b918a0a81527eda77fd4209821794b1eafbd848010a26ad0b6d30be4e86622",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "143d951e977ac58eb17579cf25a9dc6d327057da9a87e6e63e30997df24c1158",
+      "sha256": "bbba676637dc80fc3f80505e73f1992d10dafaf2bd09c45bbf0b5cd5795e6e97",
       "executable": false
     },
     "DEMO.md": {
@@ -168,7 +168,7 @@
       "executable": false
     },
     "docs/contract/domain-rules.md": {
-      "sha256": "6ae7199d2913e6790524f68df4c595e4373d6e894c11b57eeece67e72e368b8b",
+      "sha256": "aa4a47a9b42740f720c3cd7b75f9cd91094597cfb2b82fad0250c44866f9ec6f",
       "executable": false
     },
     "docs/contract/DONE-AUDIT.md": {
@@ -4488,11 +4488,11 @@
       "executable": false
     },
     "tests/team-journey.mjs": {
-      "sha256": "480cddec09c0e13a207e1df4f076666a08c1acf7e439d1b0f473d62e4ed43a03",
+      "sha256": "f29764b4b9ea7257f935bef4f8f5d4c343280c3a7f12d84acbd625d8c8a04b3b",
       "executable": false
     },
     "tests/team-plan-fixture.mjs": {
-      "sha256": "f2738974b8943b07d83e432eecb4e0074ccd8bc0abc600d633be4746f3cf0998",
+      "sha256": "77874729e4df31339a57801b71ccb10f24809c7978a0d8d5cd2891a2cbe2e97e",
       "executable": false
     },
     "tests/teams.mjs": {
