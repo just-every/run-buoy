@@ -10,6 +10,9 @@ import {refreshAccountConsumers} from '../account-consumers'
 import {openapi} from './openapi'
 
 type Token={id:string;token_hash:string;owner_id:string;owner_version:number;scopes:string;account_ids:string;account_scope:'explicit'|'all';requests_per_minute:number;expires_at:number}
+export interface IntegrationInventory {
+ items:{id:string;label:string;scopes:string[];accountIds:string[];accountScope:string;requestsPerMinute:number;expiresAt:number;createdAt:string|null;lastUsedAt:string|null;issuer:{id:string;displayName:string|null};stoppedReason:string|null;expiringSoon:boolean}[]
+}
 type Receipt={request_hash:string;account_id:string;revision:string;status:number}
 const prefix='/api/buoy/v1'
 const authoritySql="EXISTS(SELECT 1 FROM buoy_integration_tokens t JOIN oa_operators o ON o.id=t.owner_id WHERE t.id=? AND t.token_hash=? AND t.revoked_at IS NULL AND t.expires_at>? AND o.status='active' AND o.role='owner' AND o.version=t.owner_version AND t.scopes=? AND t.account_ids=? AND t.account_scope=?)"

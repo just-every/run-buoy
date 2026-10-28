@@ -1,3 +1,5 @@
+import {integrationPanel} from './integration';
+import type {IntegrationInventory} from '../integration';
 import {configurationPage} from './configuration';
 import {dataTrustPanel} from './data-trust';
 import type {TrustPage} from '../data-trust';
@@ -155,7 +157,10 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
     try {
       body = auditPage(await apiCall<AuditPage>(api, request, '/api/buoy/audit?' + url.searchParams.toString()), url.searchParams);
       body=dataTrustPanel(await apiCall<TrustPage>(api,request,'/api/buoy/trust'),state,fields)+body;
-      if(state.operator.role==='owner') body=agentsPage(await apiCall<AgentPage>(api,request,'/api/buoy/agents'),fields,agentCredential)+body;
+      if(state.operator.role==='owner'){
+        body=integrationPanel(await apiCall<IntegrationInventory>(api,request,'/api/buoy/v1/tokens'),state)+body;
+        body=agentsPage(await apiCall<AgentPage>(api,request,'/api/buoy/agents'),fields,agentCredential)+body;
+      }
     } catch (caught) {
       status = caught instanceof ApiError ? caught.status : 503;
       body = section('Audit unavailable', `<p>${escape(caught instanceof Error ? caught.message : 'Reload to read the audit.')}</p><p><a href="/app/audit">Clear filters and reload</a></p>`);
