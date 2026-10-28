@@ -7,6 +7,7 @@ export const PERMISSION_VALUES = {
  edit:['all','team','own','prepare','none'],
  scorecards:['publish','draft','none'],
  playbooks:['publish','team-segments','draft','none'],
+ reports:['author','none'],
  export:['data-reports','team','own-reports','reports','none'],
  commercialRead:['full','own','band','classes','none'],
  commercialEdit:['all','team','none'],
@@ -25,7 +26,7 @@ export interface Assignment {roleId:string;scope:Scope;commercial:Commercial;sha
 export const NO_GRANTS:Grants={concessionLimitMinor:null,renewalOutcome:false}
 export const NO_PERMISSIONS = Object.fromEntries(Object.keys(PERMISSION_VALUES).map(key=>[key,'none'])) as Permissions
 const make=(id:string,name:string,permissions:Partial<Permissions>,scope:Scope,commercial:Commercial):RoleDefinition=>({id,name,permissions:{...NO_PERMISSIONS,...permissions},scope,commercial,builtin:true})
-const administrator:Partial<Permissions>={read:'all',home:'yes',edit:'all',scorecards:'publish',playbooks:'publish',export:'data-reports',commercialRead:'full',commercialEdit:'all',concessions:'yes',renewals:'yes',connectors:'yes',agents:'yes',users:'yes',audit:'yes',erase:'yes'}
+const administrator:Partial<Permissions>={reports:'author',read:'all',home:'yes',edit:'all',scorecards:'publish',playbooks:'publish',export:'data-reports',commercialRead:'full',commercialEdit:'all',concessions:'yes',renewals:'yes',connectors:'yes',agents:'yes',users:'yes',audit:'yes',erase:'yes'}
 export const DEFAULT_ROLES:RoleDefinition[]=[
  make('owner','Owner',administrator,{kind:'all'},'full'),
  make('admin','Admin',{...administrator,users:'except-owner',erase:'none'},{kind:'all'},'full'),

@@ -5,7 +5,7 @@ import {button,disclosure,escape,field,form,hidden,money,pill,section,valueOf} f
 import type {Fields} from './types'
 
 export type RolesPage=Awaited<ReturnType<typeof rolesState>>
-const labels:Record<string,string>={read:'Read accounts',home:'Open another CSM’s home',edit:'Edit customer records',scorecards:'Scorecards and signals',playbooks:'Playbooks and journeys',export:'Export',commercialRead:'Read commercial fields',commercialEdit:'Edit commercial fields',concessions:'Approve concessions',renewals:'Approve renewal outcomes',connectors:'Manage connectors',agents:'Manage AI settings and agents',users:'Invite users and assign roles',audit:'Read audit',erase:'Erase customer records'}
+const labels:Record<string,string>={read:'Read accounts',home:'Open another CSM’s home',edit:'Edit customer records',scorecards:'Scorecards and signals',playbooks:'Playbooks and journeys',reports:'Author reports and dashboards',export:'Export',commercialRead:'Read commercial fields',commercialEdit:'Edit commercial fields',concessions:'Approve concessions',renewals:'Approve renewal outcomes',connectors:'Manage connectors',agents:'Manage AI settings and agents',users:'Invite users and assign roles',audit:'Read audit',erase:'Erase customer records'}
 const select=(name:string,label:string,choices:{id:string;name:string}[],value:unknown)=>'<label>'+escape(label)+'<select name="'+escape(name)+'" aria-label="'+escape(label)+'">'+choices.map(c=>'<option value="'+escape(c.id)+'"'+(value===c.id?' selected':'')+'>'+escape(c.name)+'</option>').join('')+'</select></label>'
 const choices=(values:string[])=>values.map(id=>({id,name:id.replaceAll('-',' ')}))
 export function rolesPage(data:RolesPage,fields?:Fields){
