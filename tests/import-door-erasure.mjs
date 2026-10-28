@@ -11,6 +11,9 @@ export async function importErasure({request,cookie,door,businessClient,value,au
  const survivor={...value('synthetic-buoy-9606'),name:'synthetic-buoy-9607'}
  await api('/accounts','POST',survivor,201)
  const originalUpload=await door.upload(input), first=await door.planUpload(originalUpload), firstJob=await door.apply(first)
+ const proposal=await api('/proposals','POST',{accountId:account.id,kind:'playbook',payload:{title:'synthetic-buoy-9609',dueDate:'2027-01-31'}},201)
+ assert.equal((await door.send('undo',{planId:first.planId})).status,409,'Dependent work prevents undo of the native import')
+ assert.ok((await api('/state')).proposals.some(row=>row.id===proposal.id),'Refused undo preserves dependent work')
  const unchanged=await door.plan(input,true)
  assert.equal(unchanged.differences.unchanged.length,1,'An unchanged catch-up retains the source without writing it again')
  const unchangedJob=await door.apply(unchanged)
@@ -18,7 +21,6 @@ export async function importErasure({request,cookie,door,businessClient,value,au
  const heldUpload=await businessClient.upload(input), archiveBody={uploadId:heldUpload,tool:'buoy',takenAt:new Date().toISOString()}
  const archive=await businessClient.json('archive',archiveBody)
  assert.equal((await businessClient.json('restore-check',{archiveId:archive.archiveId})).counts.mapped,1)
- const proposal=await api('/proposals','POST',{accountId:account.id,kind:'playbook',payload:{title:'synthetic-buoy-9609',dueDate:'2027-01-31'}},201)
  await api('/accounts/'+account.id,'DELETE',{confirmation:account.name})
  const state=await api('/state')
  assert.ok(!state.accounts.some(row=>row.id===account.id))
@@ -30,8 +32,12 @@ export async function importErasure({request,cookie,door,businessClient,value,au
   const withdrawn=await door.send('reconcile',{planId:plan.planId})
   assert.equal(withdrawn.status,410)
   assert.equal((await withdrawn.json()).error,'snapshot_withdrawn')
-  const before=await authority.snapshot(plan,job), replay=await door.apply(plan)
-  assert.equal(replay.id,job.id,'A completed retry returns the sanitized original receipt without replaying native writes')
+  const before=await authority.snapshot(plan,job)
+  const replay=await door.send('apply',{planId:plan.planId,reviewedFingerprint:plan.fingerprint})
+  assert.equal(replay.status,plan===first?410:200,'Withdrawn older plans refuse replay; the completed head can return only its sanitized receipt')
+  const result=await replay.json()
+  if(plan===first)assert.equal(result.error,'snapshot_withdrawn')
+  else {assert.equal(result.job.id,job.id);reads.push(result)}
   assert.deepEqual(await authority.snapshot(plan,job),before)
  }
  for(const read of reads)for(const marker of [...markers,'synthetic-buoy-9608','synthetic-buoy-9609'])assert.ok(!JSON.stringify(read).includes(marker),`Public retained custody omits erased marker ${marker}`)

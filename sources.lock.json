@@ -4256,11 +4256,11 @@
       "executable": false
     },
     "tests/import-door-erasure.mjs": {
-      "sha256": "6bb180ea5b78399da425227f446146fae1da0016060888e84dded7b87e742c1b",
+      "sha256": "14487db5fa474c73b696763e3f1f0f60a0bf7aa9df816480e35aea2116aa14dd",
       "executable": false
     },
     "tests/import-door-journey.mjs": {
-      "sha256": "962bc4a9484dc4153ec140c94669cacbdaad15dfc5cb25a057777a70ece2e8ac",
+      "sha256": "abddeee374d3e3e03cc3fca7050a8a0cd7839784b43e5e31e4cd27346a2437eb",
       "executable": false
     },
     "tests/inapp-browser.mjs": {
