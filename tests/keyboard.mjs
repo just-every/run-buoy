@@ -26,11 +26,11 @@ export async function focused(page, target, label) {
    const x = Math.max(0, Math.min(innerWidth - 1, rect.x + rect.width / 2))
    const y = Math.max(0, Math.min(innerHeight - 1, rect.y + rect.height / 2))
    const top = document.elementFromPoint(x, y)
-   return { keyboardFocus: element.matches(':focus-visible'), ring: (style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0) || (style.boxShadow !== 'none' && style.boxShadow !== restingShadow),
+   return { control: element.tagName + '#' + element.id + '[name=' + (element.getAttribute('name') || element.getAttribute('aria-label') || '') + ']', width: innerWidth, rect: {left:rect.left, top:rect.top, width:rect.width, height:rect.height}, covering: top && {tag:top.tagName,id:top.id,class:typeof top.className === 'string' ? top.className : ''}, keyboardFocus: element.matches(':focus-visible'), ring: (style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0) || (style.boxShadow !== 'none' && style.boxShadow !== restingShadow),
     visible: rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < innerHeight,
     obscured: !top || !(element === top || element.contains(top) || top.contains(element)) }
   }, restingShadow)
   assert.ok(state.keyboardFocus && state.ring, 'Focused control has a visible outline or shadow')
-  assert.ok(state.visible && !state.obscured, 'Focused control is visible and unobscured')
+  assert.ok(state.visible && !state.obscured, 'Focused control is visible and unobscured: ' + JSON.stringify(state))
  })
 }
