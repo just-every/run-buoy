@@ -32,6 +32,8 @@ const stores=[
  ['licenses','buoy_adoption_person_licenses','person_id=?'],['licenseHistory','buoy_adoption_person_license_history','person_id=?'],
  ['declaredHolders','buoy_customer_holders','person_id=?'],
  ['stakeholderRoles','buoy_stakeholder_roles','person_id=?'],
+ ['stakeholderStatus','buoy_stakeholder_status','person_id=?'],
+ ['renewalTimelines','buoy_renewal_timelines','customer_id=?'],
  ['stakeholderHistory','buoy_hierarchy_history','id IN(SELECT history_id FROM buoy_hierarchy_history_people WHERE person_id=?)'],
  ['savedViews','buoy_workspace_views','id IN(SELECT view_id FROM buoy_workspace_view_people WHERE person_id=?)'],
  ['usageSources','buoy_usage_sources','id IN(SELECT source_id FROM buoy_usage_mappings WHERE person_id=?)']

@@ -655,6 +655,10 @@
       "sha256": "59bb35bdb647b1088384e5d4a52d807ba17cc9f10c962c41fde1791bafac9230",
       "executable": false
     },
+    "migrations/core/0078_buoy_renewal_readiness.sql": {
+      "sha256": "36a99179a3a20899a9ad8a69e9b50a2665ec9772b2071763b512c5ccf9dfc6a0",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
@@ -668,7 +672,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "3df14685cb530cfece8fa0ea3cf4b9658a44e9df3900cd177f1a6cd615bda453",
+      "sha256": "fd3eaff9859e7e110c7660c7c08a8f03b1d6234be3f372e9ab87d793ee88c830",
       "executable": false
     },
     "packaging.json": {
@@ -1168,7 +1172,7 @@
       "executable": false
     },
     "src/buoy/activity.ts": {
-      "sha256": "4910e7e601c1abe345a49fa8b0c463bbffe66282095b6b1935a3e54d4b977b07",
+      "sha256": "cf06211ce97436917a35d5a8083ff0f2faebc6e6b2f6bd3b22fe43ba1ab41b02",
       "executable": false
     },
     "src/buoy/adoption/consumers-alerts.ts": {
@@ -1236,7 +1240,7 @@
       "executable": false
     },
     "src/buoy/agent-policy/policy.ts": {
-      "sha256": "1de5f25e57258633ded6027f611dce3dce0abc855f6ffef2ee55c10eda3444ef",
+      "sha256": "f8b37caf306095aa0c42a5da8ba39ad75bc40985107e40fda7b936af20cc4613",
       "executable": false
     },
     "src/buoy/agent-policy/requests.ts": {
@@ -1280,7 +1284,7 @@
       "executable": false
     },
     "src/buoy/api.ts": {
-      "sha256": "2556b6ff3915a8bd2d867f2197fba0d19c8e297baff97055694fe3317fbd6864",
+      "sha256": "4a3a77164ed7d001b8bafed574d4378fb10184c5ce99809cb1f03de3951e0ab9",
       "executable": false
     },
     "src/buoy/audit-records.ts": {
@@ -1576,7 +1580,7 @@
       "executable": false
     },
     "src/buoy/privacy.ts": {
-      "sha256": "7e0de7b7c6cff268280a47da4299b574f80d980c20c693ac44efdb44ee00c10f",
+      "sha256": "2c7da4aec72990329c2d80ad1661133334bbec7b2fda6b6045f075ac08f61bee",
       "executable": false
     },
     "src/buoy/privacy/discovery.ts": {
@@ -1613,6 +1617,14 @@
     },
     "src/buoy/renewals/outcomes.ts": {
       "sha256": "fb406f6d072f232cf0e754ba567a4a9b5ee48e16908d201d7ef69f058417acb3",
+      "executable": false
+    },
+    "src/buoy/renewals/readiness.ts": {
+      "sha256": "8dd389e1f7c3a47da93af6b455a8dd7808c13a1aecc8f91944e507c9ef592ee4",
+      "executable": false
+    },
+    "src/buoy/renewals/timeline.ts": {
+      "sha256": "e18224c2dc84c84f880aaed228c98957cc9da84a3d84b70d9e179806c71c7cb1",
       "executable": false
     },
     "src/buoy/reports/index.ts": {
@@ -1868,7 +1880,7 @@
       "executable": false
     },
     "src/buoy/ui/actions.ts": {
-      "sha256": "8139a247ab7567ef3b2855256f0bb6708fbee77a77e3b01c5baba8190a1cc27e",
+      "sha256": "114b6e7dfa060d0a63927a241c7ac2aa2e2ad022a51c58d19759efc1df30d126",
       "executable": false
     },
     "src/buoy/ui/adoption-consumers.ts": {
@@ -1968,7 +1980,7 @@
       "executable": false
     },
     "src/buoy/ui/index.ts": {
-      "sha256": "f5ec7b2dd256dd24c3a8996bb7d2de281794e0f6fa2d05e4850dbd891f6287dc",
+      "sha256": "e1eca4c03a6a5aa351f3adce92fb6fd2e35c41d637e858f9eaeb1fd2fa0f28cd",
       "executable": false
     },
     "src/buoy/ui/monthly-revenue.ts": {
@@ -1999,8 +2011,12 @@
       "sha256": "4672967b1cc361637784912493aa60bb584130643d3e563139ff53ed332b637b",
       "executable": false
     },
+    "src/buoy/ui/renewal-readiness.ts": {
+      "sha256": "e972e9797a6e09dfae95547a35bd7f671a752e36a93034aa9c314a8c96c72e39",
+      "executable": false
+    },
     "src/buoy/ui/renewals.ts": {
-      "sha256": "dbd7797af50a026a5bcd63ddf768bd2146dc224bf9e1f4eec54230e4b67c4099",
+      "sha256": "d29cad8bdac8a825b21c1d5de2d9522c638d9314559db4e5836529fa8e3a6ae5",
       "executable": false
     },
     "src/buoy/ui/reporting.ts": {
@@ -4208,7 +4224,7 @@
       "executable": false
     },
     "tests/flows.test.mjs": {
-      "sha256": "91939d8cf01917c1d395f56c6f5e2d6893236fddd997daa3ded8272d555873e4",
+      "sha256": "93a2b4f0665995947d7b610f5a5365345fa838dc027a6d6e68b3963bbd80e58c",
       "executable": false
     },
     "tests/forecast-journey.mjs": {
@@ -4356,11 +4372,19 @@
       "executable": false
     },
     "tests/renewal-browser.mjs": {
-      "sha256": "6861a966991d6681d8556c7e31098c4db8104195c18739bf32cd7da398d01318",
+      "sha256": "92b693c323b2fc2987dc42ac6965e11c5345d39b7f2db718251dfdbdccf21d1b",
       "executable": false
     },
     "tests/renewal-journey.mjs": {
       "sha256": "6452b7c04694a1916c9be868cdc4c3b01bd5ad9924af3a63d6fe19e02b513424",
+      "executable": false
+    },
+    "tests/renewal-readiness-journey.mjs": {
+      "sha256": "e4c1eecf70515d17b659879c9c2f86a5af64b879dfcb0a6fa5296ab60339d54f",
+      "executable": false
+    },
+    "tests/renewal-readiness-sandbox.mjs": {
+      "sha256": "429fecb608e2ec4f459d92b2cfb4a30bbdae5cf44c59b34167e8f419d58c3568",
       "executable": false
     },
     "tests/renewal-sandbox.mjs": {

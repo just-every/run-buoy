@@ -19,6 +19,7 @@ import type {accountActivity} from '../activity';
 import {hierarchyPage,type HierarchyPage} from './hierarchy';
 import {workspacePage,type WorkspacePage,type CsmHome,type WorkspaceListPreview,type WorkspaceBulkPreview} from './workspace';
 import {renewalsPage,type RenewalPage,type RenewalPreview} from './renewals';
+import type {ReadinessPage} from './renewal-readiness';
 import {privacyControls,privacyReceipts,type PrivacyReceipt,type PrivacyPreview,type PrivacyHold} from './privacy';
 import {surveyPage,surveyPersonTimeline,type SurveyPage} from './surveys';
 import {revenuePage,type RevenuePage} from './revenue';
@@ -123,7 +124,10 @@ export async function buoyPage(request: Request, _env: Bindings, api: Api): Prom
   } else if(path==='/app/revenue'){title='Revenue and retention';const rates=canManage(state)?await apiCall<RatePage>(api,request,'/api/buoy/revenue/rates'):undefined;try{const query=new URLSearchParams([...url.searchParams].filter(([k,v])=>!['success','saved'].includes(k)&&v!==''));body=reportingPage(query,await apiCall<RetentionPage>(api,request,'/api/buoy/revenue/retention?'+query.toString()),rates,fields)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=reportingPage(url.searchParams,undefined,rates,fields,caught instanceof Error?caught.message:'Unable to load retention. Try again.')}
   } else if(path==='/app/search'){title='Search';try{body=searchPage(url.searchParams,url.searchParams.has('q')?await apiCall<SearchPage>(api,request,'/api/buoy/search?'+url.searchParams.toString()):undefined)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=searchPage(url.searchParams,undefined,caught instanceof Error?caught.message:'Unable to read search results. Try again.')}
   } else if(path==='/app/workspace'){title='Your workspace';try{body=workspacePage(await apiCall<WorkspacePage>(api,request,'/api/buoy/workspace'+(url.searchParams.has('view')?'?view='+encodeURIComponent(url.searchParams.get('view')!):'')),await apiCall<CsmHome>(api,request,'/api/buoy/workspace/home'+(url.searchParams.has('person')?'?person='+encodeURIComponent(url.searchParams.get('person')!):'')),state,fields,workspaceListPreview,workspaceBulkPreview)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Workspace unavailable','<p>'+escape(caught instanceof Error?caught.message:'Reload to read your workspace.')+'</p><p><a href="/app/workspace">Open your own workspace</a></p>')}
-  } else if(path==='/app/renewals'){title='Renewal pipeline';body=renewalsPage(await apiCall<RenewalPage>(api,request,'/api/buoy/renewals'+(url.searchParams.has('quarter')?'?quarter='+encodeURIComponent(url.searchParams.get('quarter')!):'')),state,fields,renewalFieldPreview,url.searchParams.get('renewal')??fields?.renewalId);
+  } else if(path==='/app/renewals'){
+    title='Renewal pipeline';const data=await apiCall<RenewalPage>(api,request,'/api/buoy/renewals'+(url.searchParams.has('quarter')?'?quarter='+encodeURIComponent(url.searchParams.get('quarter')!):'')),selectedId=url.searchParams.get('renewal')??fields?.renewalId,selected=data.records.find(r=>r.id===selectedId)??data.records[0];
+    const readiness=canManage(state)&&selected?await apiCall<ReadinessPage>(api,request,'/api/buoy/renewals/'+encodeURIComponent(selected.id)+'/readiness'):undefined;
+    body=renewalsPage(data,state,fields,renewalFieldPreview,selectedId,readiness);
   } else if(path==='/app/inapp'){title='In-app campaigns';body=inappPage(await apiCall<InappPage>(api,request,'/api/buoy/inapp'),state,fields,inappCredential);
   } else if(path==='/app/adoption'){
     title='Product adoption';

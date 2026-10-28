@@ -1,3 +1,5 @@
+import {readinessApi,readinessState} from './renewals/readiness'
+import {timelineApi,prepareTimeline} from './renewals/timeline'
 import {configurationApi} from './ai/configuration'
 import {trustApi} from './data-trust'
 import {portalApi,sharingState,sharePlan} from './portal'
@@ -150,6 +152,8 @@ buoyApi.route('/',reviewsApi)
 buoyApi.route('/',reportsApi)
 buoyApi.route('/',forecastApi)
 buoyApi.route('/',renewalsApi)
+buoyApi.route('/',readinessApi)
+buoyApi.route('/',timelineApi)
 buoyApi.route('/',workspaceApi)
 buoyApi.route('/',hierarchyApi)
 buoyApi.route('/',playApi)
@@ -253,6 +257,12 @@ buoyApi.post('/api/buoy/commands', async c => {
  }
  if(body.command==='experiment.prepare')return c.json(await proposeExperiment(db,actor,object(body.input)),201)
  if(body.command==='experiment.report'){if(actor.kind==='person')requirePerson(actor);return c.json(await experimentReport(db,text(object(body.input).id,'Experiment',100)))}
+ if(body.command==='renewal.readiness')return c.json(await readinessState(db,actor,text(object(body.input).renewalId,'Renewal',100)))
+ if(body.command==='renewal.timeline.prepare'){
+  const input=object(body.input)
+  insist(Object.keys(input).every(k=>['renewalId','revision','customerId','staffId'].includes(k)),'A timeline cannot set commercial terms.')
+  return c.json(await prepareTimeline(db,actor,text(input.renewalId,'Renewal',100),{revision:input.revision,customerId:input.customerId,staffId:input.staffId}),201)
+ }
  if (body.command === 'renewals.list') {
   const accounts = (await state(db, actor)).accounts
   return c.json({accounts: actor.agentPolicy ? projectAccounts(accounts, actor.agentPolicy) : accounts})

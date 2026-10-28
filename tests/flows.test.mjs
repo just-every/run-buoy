@@ -16,6 +16,7 @@ import {hierarchyJourney} from './hierarchy-journey.mjs'
 import {workspaceJourney} from './workspace-journey.mjs'
 import {forecastJourney} from './forecast-journey.mjs'
 import {renewalJourney} from './renewal-journey.mjs'
+import {renewalReadinessJourney} from './renewal-readiness-journey.mjs'
 import {eraseJourney} from './erase-journey.mjs'
 import {searchHttpJourney} from './search-journey.mjs'
 import {inappJourney} from './inapp-journey.mjs'
@@ -574,6 +575,7 @@ test('ERASE-002 owner customer export and erasure, source replay, aggregates and
 })
 
 test('RENEW-001 native renewal pipeline and inherited field carrier',renewalJourney)
+test('AGENT-003 cited renewal readiness and reviewed timeline through billing reconciliation',renewalReadinessJourney)
 
 test('RENEW-004 retained forecast movement and closed-period accuracy',()=>forecastJourney())
 

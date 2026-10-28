@@ -1,5 +1,5 @@
 import { insist } from '../core'
-export const COMMANDS = ['renewals.list', 'playbook.prepare', 'renewal.prepare', 'experiment.prepare', 'experiment.report'] as const
+export const COMMANDS = ['renewals.list', 'playbook.prepare', 'renewal.prepare', 'renewal.readiness', 'renewal.timeline.prepare', 'experiment.prepare', 'experiment.report'] as const
 export const DATA_CLASSES = ['account', 'billing', 'support', 'sentiment'] as const
 export const COST_LABEL = 'No metered agent charge; internal notification mail may use your provider. Provider fees are outside this budget.'
 export type AgentCommand = typeof COMMANDS[number]
