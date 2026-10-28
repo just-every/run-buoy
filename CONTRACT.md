@@ -139,7 +139,7 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 #### RESTORE-001 — Portable installation archives
 
-**Requirement.** Archives scale with SCALE-001.
+**Requirement.** Buoy archives carry native customer records and reviewed import custody. Destination authentication belongs to the new owner; agent tokens, connector credentials, outbox mail and installation settings confer no restored authority and are excluded. Archive volume follows SCALE-001.
 
 **Acceptance.**
 1. Export an installation with accounts, approved decisions, an agent token and an erased account; restore into an empty copy, then attempt a second restore and a damaged archive; state matches, the agent token is refused, the tombstone holds and both bad restores fail.

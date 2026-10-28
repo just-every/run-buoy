@@ -105,7 +105,7 @@
     {
       "file": "CONTRACT.md",
       "line": 27,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -120,11 +120,18 @@
     {
       "file": "CONTRACT.md",
       "line": 27,
-      "text": "Base handles identity and setup; Hono owns authenticated product HTTP handlers.",
+      "text": "Base handles identity and setup;",
       "to": "base",
       "ids": [
         "BASE-ACCESS-002"
       ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 27,
+      "text": "Hono owns authenticated product HTTP handlers.",
+      "to": "docs",
+      "path": "docs/contract/domain-rules.md"
     },
     {
       "file": "CONTRACT.md",
@@ -138,7 +145,7 @@
     {
       "file": "CONTRACT.md",
       "line": 27,
-      "text": "A write authenticated with a browser session cookie must carry the installation’s exact Origin and must not carry cross-site Fetch Metadata, so a cross-site page cannot act as the signed-in user. An explicitly scoped bearer token sent in the Authorization header is not sent automatically by a browser and is not subject to the Origin check: CSRF does not apply. ",
+      "text": "A write authenticated with a browser session cookie must carry the installation\u2019s exact Origin and must not carry cross-site Fetch Metadata, so a cross-site page cannot act as the signed-in user. An explicitly scoped bearer token sent in the Authorization header is not sent automatically by a browser and is not subject to the Origin check: CSRF does not apply. ",
       "to": "clause",
       "ids": [
         "HTTP-001"
@@ -147,7 +154,7 @@
     {
       "file": "CONTRACT.md",
       "line": 27,
-      "text": "Bearer commands must stay within their token’s scopes, refuse out-of-scope actions and audit writes with the agent’s identity.",
+      "text": "Bearer commands must stay within their token\u2019s scopes, refuse out-of-scope actions and audit writes with the agent\u2019s identity.",
       "to": "base",
       "ids": [
         "BASE-AGENT-005"
@@ -174,7 +181,7 @@
     {
       "file": "CONTRACT.md",
       "line": 29,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -227,7 +234,7 @@
     {
       "file": "CONTRACT.md",
       "line": 31,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -267,7 +274,7 @@
     {
       "file": "CONTRACT.md",
       "line": 33,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -323,7 +330,7 @@
     {
       "file": "CONTRACT.md",
       "line": 35,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -347,7 +354,7 @@
     {
       "file": "CONTRACT.md",
       "line": 37,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -363,18 +370,18 @@
       "file": "CONTRACT.md",
       "line": 37,
       "text": "Local RER archives carry domain data and import custody into an empty destination.",
-      "to": "base",
+      "to": "clause",
       "ids": [
-        "BASE-DATA-001"
+        "RESTORE-001"
       ]
     },
     {
       "file": "CONTRACT.md",
       "line": 37,
       "text": "New owner authentication is required; credentials, agent tokens, connector secrets, the outbox and settings are excluded.",
-      "to": "base",
+      "to": "clause",
       "ids": [
-        "BASE-AGENT-004"
+        "RESTORE-001"
       ]
     },
     {
@@ -407,7 +414,7 @@
     {
       "file": "CONTRACT.md",
       "line": 39,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -431,7 +438,7 @@
     {
       "file": "CONTRACT.md",
       "line": 41,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -455,7 +462,7 @@
     {
       "file": "CONTRACT.md",
       "line": 47,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -495,7 +502,7 @@
     {
       "file": "CONTRACT.md",
       "line": 49,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -519,7 +526,7 @@
     {
       "file": "CONTRACT.md",
       "line": 51,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -534,7 +541,7 @@
     {
       "file": "CONTRACT.md",
       "line": 51,
-      "text": "Current homes use the person’s current assigned book, open tasks handled by that person and due on the installation calendar date, unread active/not-dismissed alerts, and account renewal dates through both endpoints of the next 90 days.",
+      "text": "Current homes use the person\u2019s current assigned book, open tasks handled by that person and due on the installation calendar date, unread active/not-dismissed alerts, and account renewal dates through both endpoints of the next 90 days.",
       "to": "changelog"
     },
     {
@@ -574,7 +581,7 @@
     {
       "file": "CONTRACT.md",
       "line": 53,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -595,7 +602,7 @@
     {
       "file": "CONTRACT.md",
       "line": 53,
-      "text": "USAGE-001 carries separate contact/user definitions and values, explicit account memberships, previews against ten real accounts and customer records, calculations over the full customer-person portfolio, source-owned old/new history and typed related-person SEGMENT-001 inputs. The same person must satisfy an all-rule’s conditions for one related kind, including the currency and amount. ",
+      "text": "USAGE-001 carries separate contact/user definitions and values, explicit account memberships, previews against ten real accounts and customer records, calculations over the full customer-person portfolio, source-owned old/new history and typed related-person SEGMENT-001 inputs. The same person must satisfy an all-rule\u2019s conditions for one related kind, including the currency and amount. ",
       "to": "clause",
       "ids": [
         "ACCOUNT-004"
@@ -611,7 +618,7 @@
     {
       "file": "CONTRACT.md",
       "line": 53,
-      "text": "**Acceptance evidence:** Add a picklist, a currency field and a formula field \"seats used ÷ seats purchased\", preview it on ten accounts, save, change an input and read the field history; the formula updates, its explanation shows the inputs and the history records both changes with actor and source.",
+      "text": "**Acceptance evidence:** Add a picklist, a currency field and a formula field \"seats used \u00f7 seats purchased\", preview it on ten accounts, save, change an input and read the field history; the formula updates, its explanation shows the inputs and the history records both changes with actor and source.",
       "to": "clause",
       "ids": [
         "ACCOUNT-004"
@@ -629,7 +636,7 @@
     {
       "file": "CONTRACT.md",
       "line": 55,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -668,7 +675,7 @@
     {
       "file": "CONTRACT.md",
       "line": 57,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -715,7 +722,7 @@
     {
       "file": "CONTRACT.md",
       "line": 61,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -739,7 +746,7 @@
     {
       "file": "CONTRACT.md",
       "line": 63,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -763,7 +770,7 @@
     {
       "file": "CONTRACT.md",
       "line": 65,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -787,7 +794,7 @@
     {
       "file": "CONTRACT.md",
       "line": 67,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -811,7 +818,7 @@
     {
       "file": "CONTRACT.md",
       "line": 69,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -835,7 +842,7 @@
     {
       "file": "CONTRACT.md",
       "line": 71,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -859,7 +866,7 @@
     {
       "file": "CONTRACT.md",
       "line": 73,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -898,7 +905,7 @@
     {
       "file": "CONTRACT.md",
       "line": 75,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -922,13 +929,13 @@
     {
       "file": "CONTRACT.md",
       "line": 77,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "CONTRACT.md",
       "line": 77,
-      "text": "Subscription financial model.** Each account has contracted ARR and MRR, billed revenue, products and seats purchased, entitlements, contract start and end, billing frequency, and a monthly ARR history classified as new, expansion, contraction, churn and reactivation. Revenue comes from a billing connector (BILLING-001, BILLING-002, BILLING-006), from CRM contract records (BILLING-005), or from a warehouse or file feed of billing records (BILLING-007). An account with none of these uses confirmed contract terms entered by a person, labeled as such. When two sources disagree, IDENTITY-001 decides which leads. Every figure links to the billing records that produced it, and mismatches between contract and billing appear in a reconciliation queue. Amounts keep their billing currency (BILLING-004). Sourced ARR/MRR becomes SEGMENT-001 rule input; repeat its original “ARR over $50,000 and health below 60” entry/exit/playbook/report acceptance with HEALTH-001 before shipping. ",
+      "text": "Subscription financial model.** Each account has contracted ARR and MRR, billed revenue, products and seats purchased, entitlements, contract start and end, billing frequency, and a monthly ARR history classified as new, expansion, contraction, churn and reactivation. Revenue comes from a billing connector (BILLING-001, BILLING-002, BILLING-006), from CRM contract records (BILLING-005), or from a warehouse or file feed of billing records (BILLING-007). An account with none of these uses confirmed contract terms entered by a person, labeled as such. When two sources disagree, IDENTITY-001 decides which leads. Every figure links to the billing records that produced it, and mismatches between contract and billing appear in a reconciliation queue. Amounts keep their billing currency (BILLING-004). Sourced ARR/MRR becomes SEGMENT-001 rule input; repeat its original \u201cARR over $50,000 and health below 60\u201d entry/exit/playbook/report acceptance with HEALTH-001 before shipping. ",
       "to": "clause",
       "ids": [
         "BILLING-003"
@@ -961,7 +968,7 @@
     {
       "file": "CONTRACT.md",
       "line": 79,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1000,7 +1007,7 @@
     {
       "file": "CONTRACT.md",
       "line": 81,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1024,7 +1031,7 @@
     {
       "file": "CONTRACT.md",
       "line": 83,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1048,7 +1055,7 @@
     {
       "file": "CONTRACT.md",
       "line": 85,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1072,7 +1079,7 @@
     {
       "file": "CONTRACT.md",
       "line": 87,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1096,7 +1103,7 @@
     {
       "file": "CONTRACT.md",
       "line": 89,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1120,7 +1127,7 @@
     {
       "file": "CONTRACT.md",
       "line": 91,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1144,7 +1151,7 @@
     {
       "file": "CONTRACT.md",
       "line": 93,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1184,7 +1191,7 @@
     {
       "file": "CONTRACT.md",
       "line": 95,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1208,7 +1215,7 @@
     {
       "file": "CONTRACT.md",
       "line": 97,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1223,7 +1230,7 @@
     {
       "file": "CONTRACT.md",
       "line": 97,
-      "text": "An administrator previews an exact source/user/group combination against an existing account and an explicitly linked customer person, then approves its fingerprint; a changed target, membership or retained event count requires another preview. Group-only claims map to an account without a person. Reviewed combinations attribute both retained and future events; different combinations remain in review, even when one of their IDs is already known. A source user cannot be split between people or a source group between accounts. Attribution never creates a person or a membership. New attributed observations advance the account revision; duplicate deliveries change no account observation. Account pages distinguish missing usage from current or stale source evidence, with event/receipt instants. Account erasure retires its mapped raw observations and reviewed mappings alongside the customer carrier’s source custody. Incoming observations retain source system/reference and event/receipt instants; first source/message payload wins. Each source has a 1–365 whole UTC-day threshold, default 30, and is stale when the observation's UTC day is more than that many days before today; source labels use the latest observation, while event reads label each observation. Credential hashes are excluded from archives. Local intake receipts establish storage only, never provider identity, certification or hosted delivery.",
+      "text": "An administrator previews an exact source/user/group combination against an existing account and an explicitly linked customer person, then approves its fingerprint; a changed target, membership or retained event count requires another preview. Group-only claims map to an account without a person. Reviewed combinations attribute both retained and future events; different combinations remain in review, even when one of their IDs is already known. A source user cannot be split between people or a source group between accounts. Attribution never creates a person or a membership. New attributed observations advance the account revision; duplicate deliveries change no account observation. Account pages distinguish missing usage from current or stale source evidence, with event/receipt instants. Account erasure retires its mapped raw observations and reviewed mappings alongside the customer carrier\u2019s source custody. Incoming observations retain source system/reference and event/receipt instants; first source/message payload wins. Each source has a 1\u2013365 whole UTC-day threshold, default 30, and is stale when the observation's UTC day is more than that many days before today; source labels use the latest observation, while event reads label each observation. Credential hashes are excluded from archives. Local intake receipts establish storage only, never provider identity, certification or hosted delivery.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -1248,7 +1255,7 @@
     {
       "file": "CONTRACT.md",
       "line": 99,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1272,7 +1279,7 @@
     {
       "file": "CONTRACT.md",
       "line": 101,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1296,7 +1303,7 @@
     {
       "file": "CONTRACT.md",
       "line": 103,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1320,7 +1327,7 @@
     {
       "file": "CONTRACT.md",
       "line": 105,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1335,7 +1342,7 @@
     {
       "file": "CONTRACT.md",
       "line": 105,
-      "text": "Per-person utilization uses one explicit licensed seat across the selected current memberships: every selected membership must have recorded licensed/not-licensed evidence and at least one must be licensed; monthly activity is 0 or 1, so the ratio is 0 or 1. Missing membership evidence or no licensed membership gives no denominator. Individual license status does not change purchased account seats; current status applies to both periods. Owner/admin license evidence has a manual reference, observed UTC date and 1–365-day threshold (30 by default), is stale strictly after that many days and remains labeled beside the result; clearing retains old/new evidence, actor and time. Every write advances all of the person’s membership account revisions before returning; unchanged memberships retain licenses, removed memberships lose effective licenses, and account erasure removes their license evidence/history. Weekly change divides the difference by previous WAU; a zero baseline is unavailable, and a decline of at least 30% is flagged. First value is mean elapsed seconds from first retained identify to first strictly later configured event, rounded to milliseconds, unavailable without both observations. Current definitions/mappings/memberships/seats apply to both periods; installation coverage remains separate from filtered metrics. Purchased-seat evidence records its manual source/reference, observed UTC date and a 1–365-day freshness threshold (30 by default); staleness is strictly greater than the threshold, stays visible beside utilization, and changing the threshold does not change the observation date. Refresh/clear advances the account revision and retains source/actor/time history, so pending work based on the earlier revision cannot be approved. Account and related-person metrics are typed SEGMENT-001 inputs: current/previous counts, depth, breadth, utilization, feature/module fractions, weekly change/drop (1/0), and first-value people/mean seconds. Rules use today’s inclusive UTC report windows and the same reviewed data/definitions as the report; fractional values use finite numbers and unavailable metrics match only is-missing. Related-person conjunctions bind to one person. Direct aggregate metric fields are excluded from membership rules; final aggregate health remains available downstream. Entry prepares the existing human-approved playbook proposal; exit or changed source/configuration refuses stale approval. Definition changes advance account revisions before returning. Owner/admin adoption measures now select any exposed numeric metric for an account, any current product user or any current contact, an exact finite-number comparison (lt, lte, eq, gte, gt) or is-missing, and health, alert or both effects. Fractions use ratios, first-value duration uses seconds, and the report’s current/previous UTC windows apply. A related-person measure matches when any one current person matches; absent related people are unknown, never invented matches. A matching health measure adds risk; a required unavailable metric adds unknown unless another source or measure already shows risk. All configured health inputs, manual denominator evidence and installation source coverage remain explained in current health reads and segment/outcome reports. Measures evaluate on reads, source/configuration mutations and the hourly run; projected runway bands retain today’s adoption evidence and do not forecast future usage. Alerts use the existing NOTIFY-001 owner inbox and recipient signal email preferences: current active account owner only, no recipient without an owner, once per matching rule/account/recipient episode; a known non-match, disabled rule or reassignment rearms, while unknown input alone does not prove recovery. Configuration edits require the current revision, advance account revisions and record an opaque publish audit entry. No email delivery or external chat receipt is inferred. A segment aggregate alert selects one existing segment and applies its current report metric to each current member account, routing to that account’s current active owner. Distinct people and events count once across the selected accounts; purchased seats sum across all member accounts and utilization is unknown when any member lacks seat evidence or the total is zero. Alert thresholds use the same current/previous UTC windows and exact comparisons as the report, and inherit existing owner preference and episode semantics. Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping.",
+      "text": "Per-person utilization uses one explicit licensed seat across the selected current memberships: every selected membership must have recorded licensed/not-licensed evidence and at least one must be licensed; monthly activity is 0 or 1, so the ratio is 0 or 1. Missing membership evidence or no licensed membership gives no denominator. Individual license status does not change purchased account seats; current status applies to both periods. Owner/admin license evidence has a manual reference, observed UTC date and 1\u2013365-day threshold (30 by default), is stale strictly after that many days and remains labeled beside the result; clearing retains old/new evidence, actor and time. Every write advances all of the person\u2019s membership account revisions before returning; unchanged memberships retain licenses, removed memberships lose effective licenses, and account erasure removes their license evidence/history. Weekly change divides the difference by previous WAU; a zero baseline is unavailable, and a decline of at least 30% is flagged. First value is mean elapsed seconds from first retained identify to first strictly later configured event, rounded to milliseconds, unavailable without both observations. Current definitions/mappings/memberships/seats apply to both periods; installation coverage remains separate from filtered metrics. Purchased-seat evidence records its manual source/reference, observed UTC date and a 1\u2013365-day freshness threshold (30 by default); staleness is strictly greater than the threshold, stays visible beside utilization, and changing the threshold does not change the observation date. Refresh/clear advances the account revision and retains source/actor/time history, so pending work based on the earlier revision cannot be approved. Account and related-person metrics are typed SEGMENT-001 inputs: current/previous counts, depth, breadth, utilization, feature/module fractions, weekly change/drop (1/0), and first-value people/mean seconds. Rules use today\u2019s inclusive UTC report windows and the same reviewed data/definitions as the report; fractional values use finite numbers and unavailable metrics match only is-missing. Related-person conjunctions bind to one person. Direct aggregate metric fields are excluded from membership rules; final aggregate health remains available downstream. Entry prepares the existing human-approved playbook proposal; exit or changed source/configuration refuses stale approval. Definition changes advance account revisions before returning. Owner/admin adoption measures now select any exposed numeric metric for an account, any current product user or any current contact, an exact finite-number comparison (lt, lte, eq, gte, gt) or is-missing, and health, alert or both effects. Fractions use ratios, first-value duration uses seconds, and the report\u2019s current/previous UTC windows apply. A related-person measure matches when any one current person matches; absent related people are unknown, never invented matches. A matching health measure adds risk; a required unavailable metric adds unknown unless another source or measure already shows risk. All configured health inputs, manual denominator evidence and installation source coverage remain explained in current health reads and segment/outcome reports. Measures evaluate on reads, source/configuration mutations and the hourly run; projected runway bands retain today\u2019s adoption evidence and do not forecast future usage. Alerts use the existing NOTIFY-001 owner inbox and recipient signal email preferences: current active account owner only, no recipient without an owner, once per matching rule/account/recipient episode; a known non-match, disabled rule or reassignment rearms, while unknown input alone does not prove recovery. Configuration edits require the current revision, advance account revisions and record an opaque publish audit entry. No email delivery or external chat receipt is inferred. A segment aggregate alert selects one existing segment and applies its current report metric to each current member account, routing to that account\u2019s current active owner. Distinct people and events count once across the selected accounts; purchased seats sum across all member accounts and utilization is unknown when any member lacks seat evidence or the total is zero. Alert thresholds use the same current/previous UTC windows and exact comparisons as the report, and inherit existing owner preference and episode semantics. Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -1360,7 +1367,7 @@
     {
       "file": "CONTRACT.md",
       "line": 107,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1384,13 +1391,13 @@
     {
       "file": "CONTRACT.md",
       "line": 111,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "CONTRACT.md",
       "line": 111,
-      "text": "Configurable, explainable health scores.** Admins build scorecards from weighted measures (usage, adoption, support, billing, survey, engagement, CSM sentiment and any custom or calculated field) with thresholds per measure, overall bands and different weights per segment. Missing data is treated explicitly per measure (excluded and reweighted, or scored as unknown) and the result says so. Scores recalculate at least hourly and on source change, keep history, and every score explains which measures moved it and from which source. A scorecard change previews against current and historical accounts before it is published, and is versioned. Every scorecard publish records an AUDIT-001 entry (actor kind and id, time, action, opaque subject) before this clause ships. Numeric scores become SEGMENT-001 rule inputs; repeat its original “ARR over $50,000 and health below 60” entry/exit/playbook/report acceptance with BILLING-003, and prove segment-specific scorecard weights before shipping. ",
+      "text": "Configurable, explainable health scores.** Admins build scorecards from weighted measures (usage, adoption, support, billing, survey, engagement, CSM sentiment and any custom or calculated field) with thresholds per measure, overall bands and different weights per segment. Missing data is treated explicitly per measure (excluded and reweighted, or scored as unknown) and the result says so. Scores recalculate at least hourly and on source change, keep history, and every score explains which measures moved it and from which source. A scorecard change previews against current and historical accounts before it is published, and is versioned. Every scorecard publish records an AUDIT-001 entry (actor kind and id, time, action, opaque subject) before this clause ships. Numeric scores become SEGMENT-001 rule inputs; repeat its original \u201cARR over $50,000 and health below 60\u201d entry/exit/playbook/report acceptance with BILLING-003, and prove segment-specific scorecard weights before shipping. ",
       "to": "clause",
       "ids": [
         "HEALTH-001"
@@ -1399,7 +1406,7 @@
     {
       "file": "CONTRACT.md",
       "line": 111,
-      "text": "Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping. Scorecards currently consume delivered usage/adoption/engagement metrics, native billing/support observations, person-confirmed recurring terms, staff-recorded NPS/CSAT responses, current CSM judgment, and every existing account/contact/user custom or calculated field. Non-numeric inputs use an explicit category-to-number mapping before the configured bounds and direction; unmatched categories follow the configured missing policy. Related contact/user measures explicitly choose mean, min, max or sum over currently linked people after mapping, retaining each person’s value, revision and source. Mixed native monetary currencies are unavailable with an explanation, never summed or converted. Survey inputs use the newest response per current person and kind in the stated rolling 90-day UTC window; they claim recorded observations, not survey delivery. Changed native, SDK, Business-import, survey and customer-field inputs recalculate before successful source responses; hourly execution refreshes unchanged timestamps. Configuration versions are immutable; historical input snapshots retain genuine observations and are withdrawn when their contributing account or customer person is erased, while current results recalculate. HEALTH-002 expiry and ADOPT-001 risk/missing duties still apply. BILLING-001/002/003/005/006/007, SUPPORT-001/002/004/005, USAGE-002/003/004, SURVEY-001, ACCOUNT-001/004/006, AI-003 and future engagement sources inherit the same source/provenance, mapping, recalculation, history, segment and erasure parity when those sources or fields ship; no missing connector is represented as a live feed. BOUNDARY-003 retains accuracy against actual outcomes for any future closed prediction period; these scores and current outcome reports remain explicitly observational.",
+      "text": "Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping. Scorecards currently consume delivered usage/adoption/engagement metrics, native billing/support observations, person-confirmed recurring terms, staff-recorded NPS/CSAT responses, current CSM judgment, and every existing account/contact/user custom or calculated field. Non-numeric inputs use an explicit category-to-number mapping before the configured bounds and direction; unmatched categories follow the configured missing policy. Related contact/user measures explicitly choose mean, min, max or sum over currently linked people after mapping, retaining each person\u2019s value, revision and source. Mixed native monetary currencies are unavailable with an explanation, never summed or converted. Survey inputs use the newest response per current person and kind in the stated rolling 90-day UTC window; they claim recorded observations, not survey delivery. Changed native, SDK, Business-import, survey and customer-field inputs recalculate before successful source responses; hourly execution refreshes unchanged timestamps. Configuration versions are immutable; historical input snapshots retain genuine observations and are withdrawn when their contributing account or customer person is erased, while current results recalculate. HEALTH-002 expiry and ADOPT-001 risk/missing duties still apply. BILLING-001/002/003/005/006/007, SUPPORT-001/002/004/005, USAGE-002/003/004, SURVEY-001, ACCOUNT-001/004/006, AI-003 and future engagement sources inherit the same source/provenance, mapping, recalculation, history, segment and erasure parity when those sources or fields ship; no missing connector is represented as a live feed. BOUNDARY-003 retains accuracy against actual outcomes for any future closed prediction period; these scores and current outcome reports remain explicitly observational.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -1424,7 +1431,7 @@
     {
       "file": "CONTRACT.md",
       "line": 113,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1464,13 +1471,13 @@
     {
       "file": "CONTRACT.md",
       "line": 115,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "CONTRACT.md",
       "line": 115,
-      "text": "Risk and opportunity alerts.** Admins define signals from any field, metric, event or change: usage drop, champion or sponsor left, ticket spike, SLA breach, failed payment, detractor survey response, renewal approaching without engagement, license utilization above a threshold, new department adoption or a positive survey. Signals are deduplicated, routed to the account owner and chosen channels (in-app, email, Slack, Teams), can be snoozed or dismissed with a reason, and can start playbooks. Native adoption-alert dismissal belongs to its signed-in recipient: a reason and explicit future UTC deadline within 365 days suppress that rule/account/recipient through recovery and re-entry until expiry. The retained inbox evidence shows the reason and window; health and other recipients continue. Pending or queued matching mail is withdrawn; attempted mail cannot be recalled. SIGNAL-001’s future signal sources and CHAT-001 actions inherit these recipient, window, custody and audit semantics. **Acceptance evidence:** Configure a usage-drop risk and a 90% utilization upsell signal, generate both, and dismiss one with a reason; each fires once per account, reaches the owner in-app and in Slack, the dismissed one does not re-fire inside its window and the upsell signal can open an expansion opportunity.",
+      "text": "Risk and opportunity alerts.** Admins define signals from any field, metric, event or change: usage drop, champion or sponsor left, ticket spike, SLA breach, failed payment, detractor survey response, renewal approaching without engagement, license utilization above a threshold, new department adoption or a positive survey. Signals are deduplicated, routed to the account owner and chosen channels (in-app, email, Slack, Teams), can be snoozed or dismissed with a reason, and can start playbooks. Native adoption-alert dismissal belongs to its signed-in recipient: a reason and explicit future UTC deadline within 365 days suppress that rule/account/recipient through recovery and re-entry until expiry. The retained inbox evidence shows the reason and window; health and other recipients continue. Pending or queued matching mail is withdrawn; attempted mail cannot be recalled. SIGNAL-001\u2019s future signal sources and CHAT-001 actions inherit these recipient, window, custody and audit semantics. **Acceptance evidence:** Configure a usage-drop risk and a 90% utilization upsell signal, generate both, and dismiss one with a reason; each fires once per account, reaches the owner in-app and in Slack, the dismissed one does not re-fire inside its window and the upsell signal can open an expansion opportunity.",
       "to": "clause",
       "ids": [
         "SIGNAL-001"
@@ -1488,7 +1495,7 @@
     {
       "file": "CONTRACT.md",
       "line": 117,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1503,14 +1510,14 @@
     {
       "file": "CONTRACT.md",
       "line": 117,
-      "text": "An owner/admin creates and edits the tier-name list, segments and manual tier/stage overrides; removing a tier still used by a segment or account is refused until it is reclassified; members read under the existing account policy and segments confer no authority. Rules are typed all/any conditions with exact case-sensitive text comparisons, substring contains, ordered comparisons or is-missing; dates compare ISO calendar strings, counts and native money use whole numbers, and money comparisons pair currency with amounts. Missing values match only is-missing (even ne does not match missing). Inputs and unsupported fields/operators are refused. At most 50 segments with 32 conditions each fit today's 500-account installation. Classification evaluates source fields and explicit manual tier/stage first; the first matching segment in creation-time/id order supplies each non-manual classification, then membership evaluates the effective classification without recursive rules. A manual override, including explicitly unset, takes priority until returned to rules. Membership reevaluates before every authenticated product request, after every successful mutation (including native/file changes, sentiment, freshness, task and owner changes), and hourly for date/freshness/expiry changes. Entry and exit times are UTC instants; unchanged active membership never replays an entry, and re-entry creates a new interval. An optional entry playbook prepares exactly one revision-bound task proposal per interval; human approval is required, and active entry, segment configuration revision and account revision are checked atomically at approval. Manual risk playbooks retain their at-risk prerequisite. Due offsets are 0–365 UTC calendar days from entry. Every existing rule field, static membership, classification, proposal and report conforms today; ACCOUNT-001/004/006, BILLING-003/004, HEALTH-001, PLAY-001, JOURNEY-001, ROLE-001 and REPORT-001/002 each add their new fields, metrics, relationship rules or downstream segment use and its acceptance before shipping. Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping.",
+      "text": "An owner/admin creates and edits the tier-name list, segments and manual tier/stage overrides; removing a tier still used by a segment or account is refused until it is reclassified; members read under the existing account policy and segments confer no authority. Rules are typed all/any conditions with exact case-sensitive text comparisons, substring contains, ordered comparisons or is-missing; dates compare ISO calendar strings, counts and native money use whole numbers, and money comparisons pair currency with amounts. Missing values match only is-missing (even ne does not match missing). Inputs and unsupported fields/operators are refused. At most 50 segments with 32 conditions each fit today's 500-account installation. Classification evaluates source fields and explicit manual tier/stage first; the first matching segment in creation-time/id order supplies each non-manual classification, then membership evaluates the effective classification without recursive rules. A manual override, including explicitly unset, takes priority until returned to rules. Membership reevaluates before every authenticated product request, after every successful mutation (including native/file changes, sentiment, freshness, task and owner changes), and hourly for date/freshness/expiry changes. Entry and exit times are UTC instants; unchanged active membership never replays an entry, and re-entry creates a new interval. An optional entry playbook prepares exactly one revision-bound task proposal per interval; human approval is required, and active entry, segment configuration revision and account revision are checked atomically at approval. Manual risk playbooks retain their at-risk prerequisite. Due offsets are 0\u2013365 UTC calendar days from entry. Every existing rule field, static membership, classification, proposal and report conforms today; ACCOUNT-001/004/006, BILLING-003/004, HEALTH-001, PLAY-001, JOURNEY-001, ROLE-001 and REPORT-001/002 each add their new fields, metrics, relationship rules or downstream segment use and its acceptance before shipping. Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
     {
       "file": "CONTRACT.md",
       "line": 117,
-      "text": "**Acceptance evidence:** Define “USD invoice total over $50,000 and health at-risk”, change an account so it enters, exits at the inclusive threshold and re-enters, and open the segment report and CSV; counts match the rule, currencies never mix, every interval is timestamped and the entry playbook produces one proposal and one approved task per approved entry. Repeated reads and hourly runs add no duplicate; stale account/configuration or exited-entry approval is refused. Define a custom service tier, use it in rules and manual classification, refuse removal while used and refuse a member tier-list edit. Exercise static lists, typed all/any/missing rules, manual and rule tier/stage with precedence and clearing, imports, sentiment/expiry and TEAM-001 segment allocation, member reads and mutation refusal, erasure, and the real management/approval/report forms at 1440 and 390. ",
+      "text": "**Acceptance evidence:** Define \u201cUSD invoice total over $50,000 and health at-risk\u201d, change an account so it enters, exits at the inclusive threshold and re-enters, and open the segment report and CSV; counts match the rule, currencies never mix, every interval is timestamped and the entry playbook produces one proposal and one approved task per approved entry. Repeated reads and hourly runs add no duplicate; stale account/configuration or exited-entry approval is refused. Define a custom service tier, use it in rules and manual classification, refuse removal while used and refuse a member tier-list edit. Exercise static lists, typed all/any/missing rules, manual and rule tier/stage with precedence and clearing, imports, sentiment/expiry and TEAM-001 segment allocation, member reads and mutation refusal, erasure, and the real management/approval/report forms at 1440 and 390. ",
       "to": "clause",
       "ids": [
         "SEGMENT-001"
@@ -1519,7 +1526,7 @@
     {
       "file": "CONTRACT.md",
       "line": 117,
-      "text": "The original “ARR over $50,000 and health below 60” repeat remains BILLING-003 and HEALTH-001 acceptance; invoices are never called ARR and health bands are never called scores.",
+      "text": "The original \u201cARR over $50,000 and health below 60\u201d repeat remains BILLING-003 and HEALTH-001 acceptance; invoices are never called ARR and health bands are never called scores.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -1535,7 +1542,7 @@
     {
       "file": "CONTRACT.md",
       "line": 121,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1559,7 +1566,7 @@
     {
       "file": "CONTRACT.md",
       "line": 123,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1599,7 +1606,7 @@
     {
       "file": "CONTRACT.md",
       "line": 125,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1623,7 +1630,7 @@
     {
       "file": "CONTRACT.md",
       "line": 127,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1638,7 +1645,7 @@
     {
       "file": "CONTRACT.md",
       "line": 127,
-      "text": "Today every existing manual or segment-entry task playbook can be tracked: an owner/admin defines healthy evidence or a new approved renewed decision, sets a 1–365 whole UTC-day window and attaches one existing approved task per enrolled account.",
+      "text": "Today every existing manual or segment-entry task playbook can be tracked: an owner/admin defines healthy evidence or a new approved renewed decision, sets a 1\u2013365 whole UTC-day window and attaches one existing approved task per enrolled account.",
       "to": "changelog"
     },
     {
@@ -1678,7 +1685,7 @@
     {
       "file": "CONTRACT.md",
       "line": 129,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1702,7 +1709,7 @@
     {
       "file": "CONTRACT.md",
       "line": 131,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1757,7 +1764,7 @@
     {
       "file": "CONTRACT.md",
       "line": 133,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1781,7 +1788,7 @@
     {
       "file": "CONTRACT.md",
       "line": 135,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1821,7 +1828,7 @@
     {
       "file": "CONTRACT.md",
       "line": 139,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1854,7 +1861,7 @@
     {
       "file": "CONTRACT.md",
       "line": 141,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1887,7 +1894,7 @@
     {
       "file": "CONTRACT.md",
       "line": 143,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1920,7 +1927,7 @@
     {
       "file": "CONTRACT.md",
       "line": 145,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1944,7 +1951,7 @@
     {
       "file": "CONTRACT.md",
       "line": 147,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -1977,13 +1984,13 @@
     {
       "file": "CONTRACT.md",
       "line": 149,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "CONTRACT.md",
       "line": 149,
-      "text": "In-app messages and guides.** A JavaScript snippet in the buyer's product shows segmented announcements, banners, checklists and walkthroughs to identified users, records views, completions and dismissals as usage, and respects frequency caps. The snippet holds no Buoy authority and talks only to the buyer’s authenticated product relay (`sdk/relay.mjs`), which supplies validated product membership server-side using a separate server-only INAPP-scoped credential. Credentials record creator and last use, are checked transactionally without a cache so revocation stops the next request (within one minute), and their hashes are excluded from installation archives. Targeting resolves only USAGE-001’s exact reviewed source/user/group identities to an existing customer person and current account segment; unmapped or conflicting users receive no targeted content, and their receipts wait in the usage review queue. Views, completions and dismissals append to usage observations and the customer timeline with first-source/message-ID-wins deduplication; a repeated kind on one delivery is also a no-op. ",
+      "text": "In-app messages and guides.** A JavaScript snippet in the buyer's product shows segmented announcements, banners, checklists and walkthroughs to identified users, records views, completions and dismissals as usage, and respects frequency caps. The snippet holds no Buoy authority and talks only to the buyer\u2019s authenticated product relay (`sdk/relay.mjs`), which supplies validated product membership server-side using a separate server-only INAPP-scoped credential. Credentials record creator and last use, are checked transactionally without a cache so revocation stops the next request (within one minute), and their hashes are excluded from installation archives. Targeting resolves only USAGE-001\u2019s exact reviewed source/user/group identities to an existing customer person and current account segment; unmapped or conflicting users receive no targeted content, and their receipts wait in the usage review queue. Views, completions and dismissals append to usage observations and the customer timeline with first-source/message-ID-wins deduplication; a repeated kind on one delivery is also a no-op. ",
       "to": "clause",
       "ids": [
         "INAPP-001"
@@ -1992,7 +1999,7 @@
     {
       "file": "CONTRACT.md",
       "line": 149,
-      "text": "The server evaluates each campaign’s positive whole-number view cap per reviewed person over a rolling 1–8760 UTC-hour window (strictly after its lower bound). A pending delivery reserves one slot for five minutes without claiming a view; an expired reservation cannot accept a late view. Only actual snippet rendering records a view, and completion or dismissal suppresses that campaign for that person. Mapped receipts recheck delivery identity, current segment and enabled campaign; completion/dismissal require a view. Announcements and banners offer completion/dismissal, checklists require all displayed items before completion, and walkthroughs advance through their ordered steps before completion. Campaign content is plain text, managed by owner/admin under existing roles; saving a campaign, issuing a reservation or storing a receipt never claims hosted delivery or verified attention. New screens repeat A11Y-001 at 1440/390 down to 320.",
+      "text": "The server evaluates each campaign\u2019s positive whole-number view cap per reviewed person over a rolling 1\u20138760 UTC-hour window (strictly after its lower bound). A pending delivery reserves one slot for five minutes without claiming a view; an expired reservation cannot accept a late view. Only actual snippet rendering records a view, and completion or dismissal suppresses that campaign for that person. Mapped receipts recheck delivery identity, current segment and enabled campaign; completion/dismissal require a view. Announcements and banners offer completion/dismissal, checklists require all displayed items before completion, and walkthroughs advance through their ordered steps before completion. Campaign content is plain text, managed by owner/admin under existing roles; saving a campaign, issuing a reservation or storing a receipt never claims hosted delivery or verified attention. New screens repeat A11Y-001 at 1440/390 down to 320.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -2017,7 +2024,7 @@
     {
       "file": "CONTRACT.md",
       "line": 151,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2041,7 +2048,7 @@
     {
       "file": "CONTRACT.md",
       "line": 153,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2065,7 +2072,7 @@
     {
       "file": "CONTRACT.md",
       "line": 155,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2089,7 +2096,7 @@
     {
       "file": "CONTRACT.md",
       "line": 157,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2113,13 +2120,13 @@
     {
       "file": "CONTRACT.md",
       "line": 159,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "CONTRACT.md",
       "line": 159,
-      "text": "In-app notifications and digests.** Each user has an inbox of mentions, assignments, alerts and approvals, and an optional daily or weekly email digest of their book's changes, with per-type preferences. Each active person reads and marks only their own inbox and changes only their own preferences; agents cannot read it, mention someone or configure it. A person may mention one active teammate in an account note under the account’s existing ROLE-001 read access. The inbox keeps every mention, task assignment, current health alert and proposal approval request. Per-type email is immediate (the default), digest-only or none; the digest is off until the person chooses daily or weekly. PLAY-002 reminders and escalations remain compulsory on their separate schedule and are also listed in the inbox. Current health alerts are recorded on the hourly Cron Trigger when an assigned account’s risk reasons change, once per changed risk state and recipient. ",
+      "text": "In-app notifications and digests.** Each user has an inbox of mentions, assignments, alerts and approvals, and an optional daily or weekly email digest of their book's changes, with per-type preferences. Each active person reads and marks only their own inbox and changes only their own preferences; agents cannot read it, mention someone or configure it. A person may mention one active teammate in an account note under the account\u2019s existing ROLE-001 read access. The inbox keeps every mention, task assignment, current health alert and proposal approval request. Per-type email is immediate (the default), digest-only or none; the digest is off until the person chooses daily or weekly. PLAY-002 reminders and escalations remain compulsory on their separate schedule and are also listed in the inbox. Current health alerts are recorded on the hourly Cron Trigger when an assigned account\u2019s risk reasons change, once per changed risk state and recipient. ",
       "to": "clause",
       "ids": [
         "NOTIFY-001"
@@ -2128,7 +2135,7 @@
     {
       "file": "CONTRACT.md",
       "line": 159,
-      "text": "A digest runs on the first hourly trigger at or after 08:00 in the installation’s time zone (UTC until set), daily or on Monday for weekly, including queued digest-only notices once and counts of recorded changes in the person’s current book since their last digest; already-attempted immediate mail is not repeated in a digest. Notification mail contains its title, account name, note or risk reason, approval request or task title and a signed-in account link, to one active internal recipient. Mail attempts are durably reserved before the provider call and are not retried after refusal or an unconfirmed outcome; the inbox and digest history report provider acceptance, refusal or an unconfirmed outcome, never delivery. Account erasure removes its inbox content. SIGNAL-001 adds configurable signals through these same inbox, preference and digest doors before it ships; PLAY-001, JOURNEY-001 and SURVEY-001 add their future approval kinds through them before shipping.",
+      "text": "A digest runs on the first hourly trigger at or after 08:00 in the installation\u2019s time zone (UTC until set), daily or on Monday for weekly, including queued digest-only notices once and counts of recorded changes in the person\u2019s current book since their last digest; already-attempted immediate mail is not repeated in a digest. Notification mail contains its title, account name, note or risk reason, approval request or task title and a signed-in account link, to one active internal recipient. Mail attempts are durably reserved before the provider call and are not retried after refusal or an unconfirmed outcome; the inbox and digest history report provider acceptance, refusal or an unconfirmed outcome, never delivery. Account erasure removes its inbox content. SIGNAL-001 adds configurable signals through these same inbox, preference and digest doors before it ships; PLAY-001, JOURNEY-001 and SURVEY-001 add their future approval kinds through them before shipping.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -2153,7 +2160,7 @@
     {
       "file": "CONTRACT.md",
       "line": 163,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2168,7 +2175,7 @@
     {
       "file": "CONTRACT.md",
       "line": 163,
-      "text": "Their public HTTP and native 1440/390 journeys must assert all these points before shipping. Current native generation uses owner/admin-configured 0–730 whole UTC lead days (default 90) and named stages, one opportunity per confirmed account contract period, refreshed in place for source versions within that period. Expected ARR is the confirmed contract annualized in its native minor units, never a billing update or mixed-currency total. A notice deadline is shown only when the confirmed account renewal date matches the contract end; otherwise it is explicitly unknown. Closed approved outcomes retain their original source image. Pipeline and field changes invalidate prepared approvals; every sensitive outcome requires a separate APPROVAL-001 review. Reviewed Stripe test-mode customer bindings now generate one opportunity per subscription, exact source period and native currency at the same UTC lead window. Current, connected, successful observations alone generate or reconcile; a canceled subscription is zero ARR, while an absent subscription is not evidence of cancellation. Approved provider outcomes retain their original source and compare separately with each later successful subscription snapshot, showing matched or mismatched ARR, the signed difference, observation time and source reference. Neither approval nor reconciliation writes billing. Other billing/CRM sources inherit this generation and reconciliation duty under BILLING-002/005/006/007 and RENEW-003 before shipping.",
+      "text": "Their public HTTP and native 1440/390 journeys must assert all these points before shipping. Current native generation uses owner/admin-configured 0\u2013730 whole UTC lead days (default 90) and named stages, one opportunity per confirmed account contract period, refreshed in place for source versions within that period. Expected ARR is the confirmed contract annualized in its native minor units, never a billing update or mixed-currency total. A notice deadline is shown only when the confirmed account renewal date matches the contract end; otherwise it is explicitly unknown. Closed approved outcomes retain their original source image. Pipeline and field changes invalidate prepared approvals; every sensitive outcome requires a separate APPROVAL-001 review. Reviewed Stripe test-mode customer bindings now generate one opportunity per subscription, exact source period and native currency at the same UTC lead window. Current, connected, successful observations alone generate or reconcile; a canceled subscription is zero ARR, while an absent subscription is not evidence of cancellation. Approved provider outcomes retain their original source and compare separately with each later successful subscription snapshot, showing matched or mismatched ARR, the signed difference, observation time and source reference. Neither approval nor reconciliation writes billing. Other billing/CRM sources inherit this generation and reconciliation duty under BILLING-002/005/006/007 and RENEW-003 before shipping.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -2193,7 +2200,7 @@
     {
       "file": "CONTRACT.md",
       "line": 165,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2217,7 +2224,7 @@
     {
       "file": "CONTRACT.md",
       "line": 167,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2241,13 +2248,13 @@
     {
       "file": "CONTRACT.md",
       "line": 169,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "CONTRACT.md",
       "line": 169,
-      "text": "Renewal forecast.** A forecast by month and quarter, by CSM, team and segment, shows expected, commit and at-risk ARR, best and worst case, in USD at BILLING-004's stated rates, and the change since the last weekly snapshot; managers can override a forecast category with a reason. Closed periods compare forecast with actual. UTC month and quarter reads use each renewal-date rate under BILLING-004, retain native amounts, and expose source and rate references. Expected/best case is open expected ARR plus known closed actuals; commit/worst case is commit ARR plus those closed actuals; at-risk is open at-risk ARR, without probability weighting. A native actual is a separately approved outcome; a Stripe actual requires a later provider observation. The hourly job and owner/admin capture share one immutable snapshot per Monday–Sunday UTC week, retaining original source inputs and rates. Current role/commercial/account scopes and current segment membership filter both sides. Owners/admins and assigned CS managers acting only on active direct-report books override with a reason, person/time and prior/new category history; stale source/profile/team authority or a closed renewal refuses the write. An override invalidates pending outcomes. Closed-period signed/absolute USD error is available only with a pre-close snapshot, the same cohort and complete actual/rate coverage; otherwise it is explicitly unavailable. Current evaluation dates do not reconstruct historical sources. Snapshot movement can include its separately named rate change and never claims causation or guaranteed prediction. **Acceptance evidence:** Snapshot a quarter's forecast, move three renewals and close them, and open the forecast; it shows the movement since the snapshot, the override with its reason and forecast versus actual for the closed month.",
+      "text": "Renewal forecast.** A forecast by month and quarter, by CSM, team and segment, shows expected, commit and at-risk ARR, best and worst case, in USD at BILLING-004's stated rates, and the change since the last weekly snapshot; managers can override a forecast category with a reason. Closed periods compare forecast with actual. UTC month and quarter reads use each renewal-date rate under BILLING-004, retain native amounts, and expose source and rate references. Expected/best case is open expected ARR plus known closed actuals; commit/worst case is commit ARR plus those closed actuals; at-risk is open at-risk ARR, without probability weighting. A native actual is a separately approved outcome; a Stripe actual requires a later provider observation. The hourly job and owner/admin capture share one immutable snapshot per Monday\u2013Sunday UTC week, retaining original source inputs and rates. Current role/commercial/account scopes and current segment membership filter both sides. Owners/admins and assigned CS managers acting only on active direct-report books override with a reason, person/time and prior/new category history; stale source/profile/team authority or a closed renewal refuses the write. An override invalidates pending outcomes. Closed-period signed/absolute USD error is available only with a pre-close snapshot, the same cohort and complete actual/rate coverage; otherwise it is explicitly unavailable. Current evaluation dates do not reconstruct historical sources. Snapshot movement can include its separately named rate change and never claims causation or guaranteed prediction. **Acceptance evidence:** Snapshot a quarter's forecast, move three renewals and close them, and open the forecast; it shows the movement since the snapshot, the override with its reason and forecast versus actual for the closed month.",
       "to": "clause",
       "ids": [
         "RENEW-004"
@@ -2265,7 +2272,7 @@
     {
       "file": "CONTRACT.md",
       "line": 171,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2289,7 +2296,7 @@
     {
       "file": "CONTRACT.md",
       "line": 173,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2329,7 +2336,7 @@
     {
       "file": "CONTRACT.md",
       "line": 175,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2369,7 +2376,7 @@
     {
       "file": "CONTRACT.md",
       "line": 179,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2564,7 +2571,7 @@
     {
       "file": "CONTRACT.md",
       "line": 201,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2588,7 +2595,7 @@
     {
       "file": "CONTRACT.md",
       "line": 203,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2603,7 +2610,7 @@
     {
       "file": "CONTRACT.md",
       "line": 203,
-      "text": "Today every account assignment door conforms for today’s records: owner/admin-managed teams and named pods, whole-account capacity targets, ordered first-match territory rules and capacity-aware round-robin, manual assignments and reviewed book handovers.",
+      "text": "Today every account assignment door conforms for today\u2019s records: owner/admin-managed teams and named pods, whole-account capacity targets, ordered first-match territory rules and capacity-aware round-robin, manual assignments and reviewed book handovers.",
       "to": "changelog"
     },
     {
@@ -2618,7 +2625,7 @@
     {
       "file": "CONTRACT.md",
       "line": 203,
-      "text": "Before a manual target exists, the person is labelled “No capacity target set” and manual assignment remains available; a configured target is enforced for manual transfers too. Lowering a target below the current book is allowed, shows “over target by N” and offers a reviewed rebalance of excess accounts through the current rules; that person receives nothing new until below target. Reassignment moves the outgoing CSM’s open tasks on each account, preserving completed tasks and another person’s separately owned tasks as PLAY-002 requires. A book handover requires a note; each account shows its previous and new CSM, note, actor and date. Manual assignment records the supplied note or the generic “Assigned by hand.” / “Account reassigned by hand.” The reviewed operation is atomic and a changed account, owner, task, person or configuration invalidates it. SEGMENT-001 adds segment-rule inputs, BILLING-003/BILLING-004 add sourced ARR-band inputs and currency conversion, and PLAN-001/JOURNEY-001 move their future open plans and journeys through these same handovers before shipping; each inherits its acceptance point rather than treating absent record kinds as transferred.",
+      "text": "Before a manual target exists, the person is labelled \u201cNo capacity target set\u201d and manual assignment remains available; a configured target is enforced for manual transfers too. Lowering a target below the current book is allowed, shows \u201cover target by N\u201d and offers a reviewed rebalance of excess accounts through the current rules; that person receives nothing new until below target. Reassignment moves the outgoing CSM\u2019s open tasks on each account, preserving completed tasks and another person\u2019s separately owned tasks as PLAY-002 requires. A book handover requires a note; each account shows its previous and new CSM, note, actor and date. Manual assignment records the supplied note or the generic \u201cAssigned by hand.\u201d / \u201cAccount reassigned by hand.\u201d The reviewed operation is atomic and a changed account, owner, task, person or configuration invalidates it. SEGMENT-001 adds segment-rule inputs, BILLING-003/BILLING-004 add sourced ARR-band inputs and currency conversion, and PLAN-001/JOURNEY-001 move their future open plans and journeys through these same handovers before shipping; each inherits its acceptance point rather than treating absent record kinds as transferred.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -2643,7 +2650,7 @@
     {
       "file": "CONTRACT.md",
       "line": 205,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2701,7 +2708,7 @@
     {
       "file": "CONTRACT.md",
       "line": 207,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2725,7 +2732,7 @@
     {
       "file": "CONTRACT.md",
       "line": 209,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2740,7 +2747,7 @@
     {
       "file": "CONTRACT.md",
       "line": 209,
-      "text": "External holders are explicitly recorded by the owner with evidence and labelled unverified; no external deletion or provider verification is claimed. Authority and retention (ct 22 Oct 2026). Today only the owner records holders and confirms export or erasure; after ROLE-001 a scoped privacy role does the same within its scope. Each request records its verification method, received date and requester reference. Replay suppression keeps a keyed HMAC-SHA-256 of each erased source user ID, deleted with its source. Receipts and audit keep only a random subject, actor, UTC time, counts and system names, until the installation is retired. Free text is offered for owner-reviewed redaction from an exact-match preview, never deleted automatically. A hold keeps its records, the receipt discloses them, and a hold never releases automatically. Current request records accept a completed verification category, a nonfuture UTC received date and the UUID of the separately verified request; name confirmation alone is not verification. The installation archive carries the replay key. New fences HMAC the source and raw user ID; legacy SHA fences are re-keyed on privacy or intake access as HMACs of source and prior digest, without recovering erased IDs. Current discovery covers usage-event properties, traits and context, plus native proposal titles, reasons and evidence; task titles, outcomes and evidence; renewal decision reasons and evidence; sentiment reasons; handover notes; account renewal, billing and support evidence references and their retained proposal copies. It matches exact case-sensitive name and email phrases with identifier boundaries; a fingerprint binds the complete preview, and only explicitly selected matches change. Unselected or held matches are counted in the receipt. Whole-customer holds retain the live customer, a baseline linked-record snapshot and later captured linked record versions; owner-set and explicit owner-release changes are audited. Export includes discovered text matches and retained versions. Native narratives on accounts containing held customers are not eligible for redaction. A changed narrative or hold invalidates the reviewed preview; a successful narrative replacement invalidates pending account approvals. Explicit release removes the held-version copies along with the baseline hold. Other retained source snapshots and other free text, email and timeline connector records, verified external discovery and deletion notices and the ROLE-001 privacy role remain unbuilt or unproved; earlier archives and downloads remain the owner’s separate responsibility. This clause remains partial. ACCOUNT-002, EMAIL-001, SURVEY-001 and future connector and contact record kinds inherit the full contact export and erasure and opaque audit obligation before shipping.",
+      "text": "External holders are explicitly recorded by the owner with evidence and labelled unverified; no external deletion or provider verification is claimed. Authority and retention (ct 22 Oct 2026). Today only the owner records holders and confirms export or erasure; after ROLE-001 a scoped privacy role does the same within its scope. Each request records its verification method, received date and requester reference. Replay suppression keeps a keyed HMAC-SHA-256 of each erased source user ID, deleted with its source. Receipts and audit keep only a random subject, actor, UTC time, counts and system names, until the installation is retired. Free text is offered for owner-reviewed redaction from an exact-match preview, never deleted automatically. A hold keeps its records, the receipt discloses them, and a hold never releases automatically. Current request records accept a completed verification category, a nonfuture UTC received date and the UUID of the separately verified request; name confirmation alone is not verification. The installation archive carries the replay key. New fences HMAC the source and raw user ID; legacy SHA fences are re-keyed on privacy or intake access as HMACs of source and prior digest, without recovering erased IDs. Current discovery covers usage-event properties, traits and context, plus native proposal titles, reasons and evidence; task titles, outcomes and evidence; renewal decision reasons and evidence; sentiment reasons; handover notes; account renewal, billing and support evidence references and their retained proposal copies. It matches exact case-sensitive name and email phrases with identifier boundaries; a fingerprint binds the complete preview, and only explicitly selected matches change. Unselected or held matches are counted in the receipt. Whole-customer holds retain the live customer, a baseline linked-record snapshot and later captured linked record versions; owner-set and explicit owner-release changes are audited. Export includes discovered text matches and retained versions. Native narratives on accounts containing held customers are not eligible for redaction. A changed narrative or hold invalidates the reviewed preview; a successful narrative replacement invalidates pending account approvals. Explicit release removes the held-version copies along with the baseline hold. Other retained source snapshots and other free text, email and timeline connector records, verified external discovery and deletion notices and the ROLE-001 privacy role remain unbuilt or unproved; earlier archives and downloads remain the owner\u2019s separate responsibility. This clause remains partial. ACCOUNT-002, EMAIL-001, SURVEY-001 and future connector and contact record kinds inherit the full contact export and erasure and opaque audit obligation before shipping.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -2765,7 +2772,7 @@
     {
       "file": "CONTRACT.md",
       "line": 211,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2828,7 +2835,7 @@
     {
       "file": "CONTRACT.md",
       "line": 217,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2867,7 +2874,7 @@
     {
       "file": "CONTRACT.md",
       "line": 219,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2906,7 +2913,7 @@
     {
       "file": "CONTRACT.md",
       "line": 221,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -2981,7 +2988,7 @@
     {
       "file": "CONTRACT.md",
       "line": 231,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3020,7 +3027,7 @@
     {
       "file": "CONTRACT.md",
       "line": 233,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3059,7 +3066,7 @@
     {
       "file": "CONTRACT.md",
       "line": 235,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3083,7 +3090,7 @@
     {
       "file": "CONTRACT.md",
       "line": 237,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3107,7 +3114,7 @@
     {
       "file": "CONTRACT.md",
       "line": 239,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3131,7 +3138,7 @@
     {
       "file": "CONTRACT.md",
       "line": 241,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3146,14 +3153,14 @@
     {
       "file": "CONTRACT.md",
       "line": 241,
-      "text": "Product, portal and mobile screens meet WCAG 2.2 AA: keyboard operation, visible focus, labeled controls, text alternatives for charts and color never the only signal of health. The DONE boundary covers every screen that ships today: the entry and first-run screens, renewal runway, account and playbook preparation/approval, imports, backups, inbox, team, audit, segments and outcome reports. The runway has a screen-reader semantic table with every account’s invoice, health and reasons, renewal and notice dates, missing/stale evidence and projected changes. PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 add their portal, native screens, builder and new reports only with the same axe, keyboard, chart-table and text-health acceptance before shipping.",
+      "text": "Product, portal and mobile screens meet WCAG 2.2 AA: keyboard operation, visible focus, labeled controls, text alternatives for charts and color never the only signal of health. The DONE boundary covers every screen that ships today: the entry and first-run screens, renewal runway, account and playbook preparation/approval, imports, backups, inbox, team, audit, segments and outcome reports. The runway has a screen-reader semantic table with every account\u2019s invoice, health and reasons, renewal and notice dates, missing/stale evidence and projected changes. PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 add their portal, native screens, builder and new reports only with the same axe, keyboard, chart-table and text-health acceptance before shipping.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
     {
       "file": "CONTRACT.md",
       "line": 241,
-      "text": "**Acceptance evidence:** Run axe and a keyboard-only pass over the home, account, playbook builder, report and portal screens; no serious violations, every chart has a text table and every health color has a text label. Until the named future screens ship, run every current screen at 1440 and 390 pixels, reflow to 320 pixels, and use the keyboard for sign-in, setup, runway expansion, dialog open/close and focus return, validation recovery, preparation, approval, completion and report export. Assert visible, unobscured focus, labeled fields, health text and the runway table’s values against the public account data.",
+      "text": "**Acceptance evidence:** Run axe and a keyboard-only pass over the home, account, playbook builder, report and portal screens; no serious violations, every chart has a text table and every health color has a text label. Until the named future screens ship, run every current screen at 1440 and 390 pixels, reflow to 320 pixels, and use the keyboard for sign-in, setup, runway expansion, dialog open/close and focus return, validation recovery, preparation, approval, completion and report export. Assert visible, unobscured focus, labeled fields, health text and the runway table\u2019s values against the public account data.",
       "to": "clause",
       "ids": [
         "A11Y-001"
@@ -3171,7 +3178,7 @@
     {
       "file": "CONTRACT.md",
       "line": 243,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3195,7 +3202,7 @@
     {
       "file": "CONTRACT.md",
       "line": 247,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3246,7 +3253,7 @@
     {
       "file": "CONTRACT.md",
       "line": 249,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3297,7 +3304,7 @@
     {
       "file": "CONTRACT.md",
       "line": 251,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3330,7 +3337,7 @@
     {
       "file": "CONTRACT.md",
       "line": 253,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3372,13 +3379,13 @@
     {
       "file": "CONTRACT.md",
       "line": 255,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "CONTRACT.md",
       "line": 255,
-      "text": "Cited generative answers.** Free-form generated account and portfolio answers and meeting briefs cite each generated claim to the timeline entry, metric or record that supports it, identify missing sources and respect the asker’s current record and commercial-field authority. This preserves the generative work separated from AI-001 by ct on 25 October 2026. The current generated door uses permission-projected native account records, renewal fields, health bands and permitted commercial and support snapshots. Every generated claim carries exact source quotations and server-built links; a citation read rechecks current authority and refuses changed evidence. Missing connected sources remain explicit, and generated prose is labeled for human review rather than provider verification. **Acceptance evidence:** Ask the five AI-001 scripted questions as a CSM and a read-only user; each generated claim has a working supporting-record citation, missing data is named and out-of-scope records are absent.",
+      "text": "Cited generative answers.** Free-form generated account and portfolio answers and meeting briefs cite each generated claim to the timeline entry, metric or record that supports it, identify missing sources and respect the asker\u2019s current record and commercial-field authority. This preserves the generative work separated from AI-001 by ct on 25 October 2026. The current generated door uses permission-projected native account records, renewal fields, health bands and permitted commercial and support snapshots. Every generated claim carries exact source quotations and server-built links; a citation read rechecks current authority and refuses changed evidence. Missing connected sources remain explicit, and generated prose is labeled for human review rather than provider verification. **Acceptance evidence:** Ask the five AI-001 scripted questions as a CSM and a read-only user; each generated claim has a working supporting-record citation, missing data is named and out-of-scope records are absent.",
       "to": "clause",
       "ids": [
         "AI-005"
@@ -3396,7 +3403,7 @@
     {
       "file": "CONTRACT.md",
       "line": 257,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3436,7 +3443,7 @@
     {
       "file": "CONTRACT.md",
       "line": 261,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3505,7 +3512,7 @@
     {
       "file": "CONTRACT.md",
       "line": 263,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3529,7 +3536,7 @@
     {
       "file": "CONTRACT.md",
       "line": 265,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3568,7 +3575,7 @@
     {
       "file": "CONTRACT.md",
       "line": 267,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3621,7 +3628,7 @@
     {
       "file": "CONTRACT.md",
       "line": 269,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3700,13 +3707,13 @@
     {
       "file": "CONTRACT.md",
       "line": 275,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "CONTRACT.md",
       "line": 275,
-      "text": "Agent authority and action ledger.** Each agent has an owner-issued, expiring, revocable credential with named scopes (read, prepare, send within policy, update fields), a USD spend budget, rate limits and the data classes it may read. Agents may prepare anything in scope but cannot approve their own proposals; external sends follow EMAIL-002 policy and approval settings; concessions, discounts, credits, contract changes and product commitments always need a person with that approval right. Every agent read, proposal and action lands in an action ledger, and a kill switch stops all agents at once. The DONE boundary covers the original commands `renewals.list`, `playbook.prepare` and `renewal.prepare`, plus AGENT-002’s explicitly granted `experiment.prepare` and `experiment.report`. The new commands require all four current data classes and inherit the same expiry, revocation, rate, zero metered charge, ledger and kill-switch guards; agents cannot approve experiments. Existing and default grants retain their original commands. `tests/outcome-journey.mjs` (experimentJourney) proves the inherited experiment authority and accounting behavior. ",
+      "text": "Agent authority and action ledger.** Each agent has an owner-issued, expiring, revocable credential with named scopes (read, prepare, send within policy, update fields), a USD spend budget, rate limits and the data classes it may read. Agents may prepare anything in scope but cannot approve their own proposals; external sends follow EMAIL-002 policy and approval settings; concessions, discounts, credits, contract changes and product commitments always need a person with that approval right. Every agent read, proposal and action lands in an action ledger, and a kill switch stops all agents at once. The DONE boundary covers the original commands `renewals.list`, `playbook.prepare` and `renewal.prepare`, plus AGENT-002\u2019s explicitly granted `experiment.prepare` and `experiment.report`. The new commands require all four current data classes and inherit the same expiry, revocation, rate, zero metered charge, ledger and kill-switch guards; agents cannot approve experiments. Existing and default grants retain their original commands. `tests/outcome-journey.mjs` (experimentJourney) proves the inherited experiment authority and accounting behavior. ",
       "to": "clause",
       "ids": [
         "GOVERN-001"
@@ -3715,14 +3722,14 @@
     {
       "file": "CONTRACT.md",
       "line": 275,
-      "text": "The owner issues a nonempty named command grant, a nonempty list of account terms, billing snapshots, support snapshots and CSM sentiment data classes, a 1–365 whole-day expiry (7 by default), a per-UTC-minute request cap (1–10,000; 60 by default) and a nonnegative integer-cent USD budget. Expiry is the issue instant plus that many 24-hour days. Minute windows are UTC epoch minutes; every authenticated request, including a refusal or malformed body, consumes one atomic reservation, and a 429 names the seconds until the next minute in Retry-After. Partial-class reads omit excluded fields and all derived health, segments and outlook; preparation needs all four classes because its immutable review snapshot contains them. Existing credentials retain their prior three commands, all four classes and original seven-day expiry; they can be revoked and deliberately reissued. Every authenticated attempt has a separate durable succeeded/refused outcome, without storing a credential or request payload in the action ledger. The owner reads the latest 100 entries, controls the installation-wide pause switch and can revoke individual grants on the Audit screen. The switch is checked before dispatch and again in the same atomic batch that prepares a proposal. Owner deactivation or a changed owner version also ends the grant. No current command sends to customers, calls a model, changes fields or changes commercial terms. EMAIL-001, EMAIL-002, EMAIL-003, JOURNEY-001, AI-001, AI-002 and AI-003, and every future paid, send or update scope, inherit reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before they ship; the in-policy/out-of-policy send acceptance is theirs, never claimed by today's local commands.",
+      "text": "The owner issues a nonempty named command grant, a nonempty list of account terms, billing snapshots, support snapshots and CSM sentiment data classes, a 1\u2013365 whole-day expiry (7 by default), a per-UTC-minute request cap (1\u201310,000; 60 by default) and a nonnegative integer-cent USD budget. Expiry is the issue instant plus that many 24-hour days. Minute windows are UTC epoch minutes; every authenticated request, including a refusal or malformed body, consumes one atomic reservation, and a 429 names the seconds until the next minute in Retry-After. Partial-class reads omit excluded fields and all derived health, segments and outlook; preparation needs all four classes because its immutable review snapshot contains them. Existing credentials retain their prior three commands, all four classes and original seven-day expiry; they can be revoked and deliberately reissued. Every authenticated attempt has a separate durable succeeded/refused outcome, without storing a credential or request payload in the action ledger. The owner reads the latest 100 entries, controls the installation-wide pause switch and can revoke individual grants on the Audit screen. The switch is checked before dispatch and again in the same atomic batch that prepares a proposal. Owner deactivation or a changed owner version also ends the grant. No current command sends to customers, calls a model, changes fields or changes commercial terms. EMAIL-001, EMAIL-002, EMAIL-003, JOURNEY-001, AI-001, AI-002 and AI-003, and every future paid, send or update scope, inherit reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before they ship; the in-policy/out-of-policy send acceptance is theirs, never claimed by today's local commands.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
     {
       "file": "CONTRACT.md",
       "line": 275,
-      "text": "**Acceptance evidence:** Issue a prepare-only agent and a send-within-policy agent, have each attempt preparation, approval, an in-policy email, an out-of-policy email and a discount; only allowed actions occur, approvals and the discount are refused, the ledger records every attempt, and the kill switch stops both mid-run. The USD budget and ledger measure metered agent operations, currently USD0. Automatic NOTIFY-001/PLAY-002 internal team notifications continue through the owner’s existing mail provider and preferences; provider fees are not measured or included in this budget. The UI/API/docs label this “No metered agent charge; internal notification mail may use your provider” beside the budget and ledger. Until a paid, send or update scope exists, the GOVERN-001 HTTP and browser journeys issue two different local command grants, check expiry bounds/defaults, refused invalid policies, selected-field reads without derived leaks, denied preparation with missing classes, concurrent minute exhaustion and Retry-After, owner-only settings, revocation/owner-version invalidation, and pause/resume stopping both mid-run without work. Every valid-token attempt has a distinct succeeded/refused outcome; ledger reads contain no payload or credential and show actual metered USD0. The owner form chooses the actual grant, displays the token once, then pauses/resumes/revokes it at 1440 and 390. Every message a preparation induces is the single-recipient internal approval notice, never a customer send or billing/model action.",
+      "text": "**Acceptance evidence:** Issue a prepare-only agent and a send-within-policy agent, have each attempt preparation, approval, an in-policy email, an out-of-policy email and a discount; only allowed actions occur, approvals and the discount are refused, the ledger records every attempt, and the kill switch stops both mid-run. The USD budget and ledger measure metered agent operations, currently USD0. Automatic NOTIFY-001/PLAY-002 internal team notifications continue through the owner\u2019s existing mail provider and preferences; provider fees are not measured or included in this budget. The UI/API/docs label this \u201cNo metered agent charge; internal notification mail may use your provider\u201d beside the budget and ledger. Until a paid, send or update scope exists, the GOVERN-001 HTTP and browser journeys issue two different local command grants, check expiry bounds/defaults, refused invalid policies, selected-field reads without derived leaks, denied preparation with missing classes, concurrent minute exhaustion and Retry-After, owner-only settings, revocation/owner-version invalidation, and pause/resume stopping both mid-run without work. Every valid-token attempt has a distinct succeeded/refused outcome; ledger reads contain no payload or credential and show actual metered USD0. The owner form chooses the actual grant, displays the token once, then pauses/resumes/revokes it at 1440 and 390. Every message a preparation induces is the single-recipient internal approval notice, never a customer send or billing/model action.",
       "to": "clause",
       "ids": [
         "GOVERN-001"
@@ -3740,7 +3747,7 @@
     {
       "file": "CONTRACT.md",
       "line": 277,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3764,7 +3771,7 @@
     {
       "file": "CONTRACT.md",
       "line": 279,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3809,7 +3816,7 @@
     {
       "file": "CONTRACT.md",
       "line": 281,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3833,7 +3840,7 @@
     {
       "file": "CONTRACT.md",
       "line": 283,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3857,7 +3864,7 @@
     {
       "file": "CONTRACT.md",
       "line": 285,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3881,7 +3888,7 @@
     {
       "file": "CONTRACT.md",
       "line": 287,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3905,7 +3912,7 @@
     {
       "file": "CONTRACT.md",
       "line": 289,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -3978,7 +3985,7 @@
     {
       "file": "CONTRACT.md",
       "line": 291,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4060,7 +4067,7 @@
       "file": "CONTRACT.md",
       "line": 312,
       "cell": "gap",
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4831,7 +4838,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 15,
-      "text": "HTTP-001 ships the owner-selected read/preparation grant described in CONTRACT.md; invalid bearer credentials are refused even when a valid session cookie accompanies them. RESTORE-001 remains partial because SCALE-001 archive volumes are unproven and installations remain capped at 500 accounts. A11Y-001 is done for every currently shipped screen: named public Worker/browser journeys assert axe, computed text contrast over grid/gradient backgrounds, keyboard-only work with visible unobscured focus, labeled controls, text health, semantic runway values and reflow at 1440/390 down to 320 pixels. Entry/setup, import review/apply/reconcile/undo and one-time agent issuance/pause/resume/revocation are included; br’s approved colours are unchanged. PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 inherit that acceptance before their new screens ship. BILLING-004 and REPORT-001 are done for the named live Stripe test-mode acceptance and existing confirmed-term doors: native provider money, exact USD projections, provider forecast, a year of retained source reads, source-linked retention and unmatched-invoice exceptions are proven. Daily-rate origin and provider key scope remain unverified.",
+      "text": "HTTP-001 ships the owner-selected read/preparation grant described in CONTRACT.md; invalid bearer credentials are refused even when a valid session cookie accompanies them. RESTORE-001 remains partial because SCALE-001 archive volumes are unproven and installations remain capped at 500 accounts. A11Y-001 is done for every currently shipped screen: named public Worker/browser journeys assert axe, computed text contrast over grid/gradient backgrounds, keyboard-only work with visible unobscured focus, labeled controls, text health, semantic runway values and reflow at 1440/390 down to 320 pixels. Entry/setup, import review/apply/reconcile/undo and one-time agent issuance/pause/resume/revocation are included; br\u2019s approved colours are unchanged. PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 inherit that acceptance before their new screens ship. BILLING-004 and REPORT-001 are done for the named live Stripe test-mode acceptance and existing confirmed-term doors: native provider money, exact USD projections, provider forecast, a year of retained source reads, source-linked retention and unmatched-invoice exceptions are proven. Daily-rate origin and provider key scope remain unverified.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -4845,7 +4852,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 19,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4865,7 +4872,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 20,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4899,7 +4906,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 21,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4919,7 +4926,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 22,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4939,7 +4946,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 23,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4959,7 +4966,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 24,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4979,7 +4986,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 25,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -4999,7 +5006,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 26,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5019,7 +5026,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 30,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5039,7 +5046,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 31,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5059,13 +5066,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 32,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 32,
-      "text": "Workspaces, lists and saved views** (`partial`). As a CSM, open the home, then save a filtered view of at-risk accounts renewing in 90 days, share it, bulk-assign three accounts and enroll them in a playbook; the home lists exactly that CSM's tasks due today, open alerts, renewals within 90 days and today's customer meetings, a manager opening that CSM's home sees the same list, a second CSM sees the shared view, and the assignments and enrollments are recorded once each. Current `src/buoy/workspace.ts`/`src/buoy/ui/workspace.ts` and `tests/workspace-journey.mjs` cover current account/user field/metric filters, columns/sort, personal/shared creator-owned live definitions, explicit same-team manager home parity, and atomically reviewed/replayed assignment, one-step and immutable-version multi-step enrollment and static segment membership. The same workspaceJourney proves changed-version refusal, three pinned run IDs/replay, whole-selection active-run refusal and each step’s separate approval. Current bulk approval remains owner/admin-only; ROLE-001 carries the future CSM authority/record scopes and future PLAY-001 step kinds. MEET-001 meetings remain labelled unavailable. `tests/workspace-browser.mjs` (workspaceBrowser through `tests/record-browser.mjs` with workspace) proves native home/view/bulk refusal, recovery and end states at 1440/390 with axe, keyboard and 320 reflow. `tests/record-portability.mjs` (assertRecordPortability through `tests/portable.mjs`) proves shared-view restoration and fresh-owner replay isolation.",
+      "text": "Workspaces, lists and saved views** (`partial`). As a CSM, open the home, then save a filtered view of at-risk accounts renewing in 90 days, share it, bulk-assign three accounts and enroll them in a playbook; the home lists exactly that CSM's tasks due today, open alerts, renewals within 90 days and today's customer meetings, a manager opening that CSM's home sees the same list, a second CSM sees the shared view, and the assignments and enrollments are recorded once each. Current `src/buoy/workspace.ts`/`src/buoy/ui/workspace.ts` and `tests/workspace-journey.mjs` cover current account/user field/metric filters, columns/sort, personal/shared creator-owned live definitions, explicit same-team manager home parity, and atomically reviewed/replayed assignment, one-step and immutable-version multi-step enrollment and static segment membership. The same workspaceJourney proves changed-version refusal, three pinned run IDs/replay, whole-selection active-run refusal and each step\u2019s separate approval. Current bulk approval remains owner/admin-only; ROLE-001 carries the future CSM authority/record scopes and future PLAY-001 step kinds. MEET-001 meetings remain labelled unavailable. `tests/workspace-browser.mjs` (workspaceBrowser through `tests/record-browser.mjs` with workspace) proves native home/view/bulk refusal, recovery and end states at 1440/390 with axe, keyboard and 320 reflow. `tests/record-portability.mjs` (assertRecordPortability through `tests/portable.mjs`) proves shared-view restoration and fresh-owner replay isolation.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -5079,13 +5086,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 33,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 33,
-      "text": "Custom fields, calculated fields and field history** (`done`). Add a picklist, a currency field and a formula field \"seats used ÷ seats purchased\", preview it on ten accounts, save, change an input and read the field history; the formula updates, its explanation shows the inputs and the history records both changes with actor and source. The ACCOUNT-004 public HTTP journey also asserts every current field type, missing/zero/error handling, arithmetic/conditions/UTC date differences/portfolio rollups, formula dependencies and rejection, typed fractional segment rules and recalculation, stale revisions, native source refresh and erasure. The native form journey previews ten real accounts, saves fields and a source-referenced input change, and reads explanations and old/new history at 1440/390 with inherited A11Y-001 checks. USAGE-001 contacts and product users now repeat every type, formula, ten-record/real-account preview, explanation, source-owned old/new history and typed related-person segment point in `tests/customer-people-journey.mjs` and `tests/customer-people-browser.mjs`. The same person satisfies all conditions for its related kind, and portfolio formulas count each customer person once. ACCOUNT-001/006 and RENEW-001/002 retain the obligations for hierarchy/relationship rollups, opportunities and custom objects before shipping. New custom and calculated fields become typed SEGMENT-001 rule inputs before shipping.",
+      "text": "Custom fields, calculated fields and field history** (`done`). Add a picklist, a currency field and a formula field \"seats used \u00f7 seats purchased\", preview it on ten accounts, save, change an input and read the field history; the formula updates, its explanation shows the inputs and the history records both changes with actor and source. The ACCOUNT-004 public HTTP journey also asserts every current field type, missing/zero/error handling, arithmetic/conditions/UTC date differences/portfolio rollups, formula dependencies and rejection, typed fractional segment rules and recalculation, stale revisions, native source refresh and erasure. The native form journey previews ten real accounts, saves fields and a source-referenced input change, and reads explanations and old/new history at 1440/390 with inherited A11Y-001 checks. USAGE-001 contacts and product users now repeat every type, formula, ten-record/real-account preview, explanation, source-owned old/new history and typed related-person segment point in `tests/customer-people-journey.mjs` and `tests/customer-people-browser.mjs`. The same person satisfies all conditions for its related kind, and portfolio formulas count each customer person once. ACCOUNT-001/006 and RENEW-001/002 retain the obligations for hierarchy/relationship rollups, opportunities and custom objects before shipping. New custom and calculated fields become typed SEGMENT-001 rule inputs before shipping.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -5099,7 +5106,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 34,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5119,7 +5126,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 35,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5146,7 +5153,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 39,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5166,7 +5173,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 40,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5186,7 +5193,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 41,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5206,7 +5213,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 42,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5226,7 +5233,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 43,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5246,7 +5253,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 44,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5266,7 +5273,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 45,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5286,7 +5293,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 46,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5306,13 +5313,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 47,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 47,
-      "text": "Subscription financial model** (`partial`). With BILLING-001 data covering twelve months of upgrades, downgrades and one churn, open an account's revenue tab; each month's movement is classified correctly and links to its invoice or subscription change, and a contract-versus-billing mismatch appears in the queue until a person resolves it. Sourced ARR/MRR becomes SEGMENT-001 rule input; repeat its original “ARR over $50,000 and health below 60” entry/exit/playbook/report acceptance with HEALTH-001 before shipping. Current evidence: `tests/billing-journey.mjs` (billingJourney): exact native recurring sources, invoice and payment records, product and purchased-quantity source records, billing frequencies, source revisions and connected risk; `tests/revenue-health-journey.mjs` (revenueHealth): confirmed products, units, entitlements, service terms, exact ARR and MRR, source history, authority and the original currency-scoped ARR over USD 50000 and health below 60 segment flow; `tests/provider-reporting.mjs` (providerMonthlyJourney through `tests/billing-journey.mjs`): twelve exact native months, all five movement types, actual retained invoice and subscription-change links, the original sourced ARR and health entry and exit and reentry, approved playbook and CSV, owner and admin human reconciliation, unchanged native sources, stale-source and duplicate-resolution refusal and erasure; `tests/reporting-sandbox.mjs` with --monthly (26 October 2026 held-key Stripe test-mode run: 844 provider GET requests, zero Buoy provider writes; two test clocks and four currencies; Worker clock aligned to test-clock instants; no provider-verified rate origin or credential scope): twelve actual Stripe test-clock invoice months and independent native amounts for every month, EUR expansion, GBP contraction, CAD churn, real source links and an actual contract mismatch resolved through the native form while Stripe sources remain immutable; `tests/provider-reporting-browser.mjs` (monthlyRevenueBrowser): source-linked monthly history, pending and resolved mismatch forms and end states at 1440 and 390 with inherited accessibility and 320 reflow; `tests/revenue-health-browser.mjs` (revenueHealthBrowser): original native confirmed terms, refusal, recovery and numeric health segment; `tests/portable.mjs` with `tests/record-portability.mjs`: underlying retained financial sources and terms restore. Policy ruling pending, not an external block: the conservative adopted default lets only owners and admins record an audited review note for a source pair. It retains both values, selects no new authority, and keeps the financial variance visible in retention reports until the amounts agree. ct must approve whether that review-note meaning satisfies person-resolved reconciliation before this clause becomes done. Monthly boundaries use retained UTC reads, never reconstructed earlier observations; missing history stays unavailable. Confirmed terms retain their existing precedence, with separately labelled Stripe history. A resolution records an explanation for the exact retained source pair, keeps both sources and changes no authority; a new source version becomes pending again. Detailed provider history and resolution controls retain owner and admin authority. IDENTITY-001 owns later cross-source authority. BILLING-002 and BILLING-005 to BILLING-007 inherit monthly movements, actual source links and the approved person-resolved reconciliation semantics before their feeds ship.",
+      "text": "Subscription financial model** (`partial`). With BILLING-001 data covering twelve months of upgrades, downgrades and one churn, open an account's revenue tab; each month's movement is classified correctly and links to its invoice or subscription change, and a contract-versus-billing mismatch appears in the queue until a person resolves it. Sourced ARR/MRR becomes SEGMENT-001 rule input; repeat its original \u201cARR over $50,000 and health below 60\u201d entry/exit/playbook/report acceptance with HEALTH-001 before shipping. Current evidence: `tests/billing-journey.mjs` (billingJourney): exact native recurring sources, invoice and payment records, product and purchased-quantity source records, billing frequencies, source revisions and connected risk; `tests/revenue-health-journey.mjs` (revenueHealth): confirmed products, units, entitlements, service terms, exact ARR and MRR, source history, authority and the original currency-scoped ARR over USD 50000 and health below 60 segment flow; `tests/provider-reporting.mjs` (providerMonthlyJourney through `tests/billing-journey.mjs`): twelve exact native months, all five movement types, actual retained invoice and subscription-change links, the original sourced ARR and health entry and exit and reentry, approved playbook and CSV, owner and admin human reconciliation, unchanged native sources, stale-source and duplicate-resolution refusal and erasure; `tests/reporting-sandbox.mjs` with --monthly (26 October 2026 held-key Stripe test-mode run: 844 provider GET requests, zero Buoy provider writes; two test clocks and four currencies; Worker clock aligned to test-clock instants; no provider-verified rate origin or credential scope): twelve actual Stripe test-clock invoice months and independent native amounts for every month, EUR expansion, GBP contraction, CAD churn, real source links and an actual contract mismatch resolved through the native form while Stripe sources remain immutable; `tests/provider-reporting-browser.mjs` (monthlyRevenueBrowser): source-linked monthly history, pending and resolved mismatch forms and end states at 1440 and 390 with inherited accessibility and 320 reflow; `tests/revenue-health-browser.mjs` (revenueHealthBrowser): original native confirmed terms, refusal, recovery and numeric health segment; `tests/portable.mjs` with `tests/record-portability.mjs`: underlying retained financial sources and terms restore. Policy ruling pending, not an external block: the conservative adopted default lets only owners and admins record an audited review note for a source pair. It retains both values, selects no new authority, and keeps the financial variance visible in retention reports until the amounts agree. ct must approve whether that review-note meaning satisfies person-resolved reconciliation before this clause becomes done. Monthly boundaries use retained UTC reads, never reconstructed earlier observations; missing history stays unavailable. Confirmed terms retain their existing precedence, with separately labelled Stripe history. A resolution records an explanation for the exact retained source pair, keeps both sources and changes no authority; a new source version becomes pending again. Detailed provider history and resolution controls retain owner and admin authority. IDENTITY-001 owns later cross-source authority. BILLING-002 and BILLING-005 to BILLING-007 inherit monthly movements, actual source links and the approved person-resolved reconciliation semantics before their feeds ship.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -5326,7 +5333,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 48,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5352,7 +5359,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 49,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5372,7 +5379,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 50,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5392,7 +5399,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 51,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5412,7 +5419,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 52,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5432,7 +5439,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 53,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5452,7 +5459,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 54,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5472,7 +5479,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 55,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5492,7 +5499,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 56,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5512,7 +5519,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 57,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5532,7 +5539,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 58,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5552,7 +5559,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 59,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5572,7 +5579,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 60,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5592,13 +5599,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 61,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 61,
-      "text": "Adoption and license metrics** (`done`). With 90 days of synthetic events for 30 accounts, define two features and a seat count; Buoy's active-user, adoption and utilization figures match an independent calculation from the same events, and a 30% drop in weekly active users is flagged as a trend. `tests/adoption.mjs` asserts this numeric slice through public HTTP, including all three activity windows, feature/module sets, independent counts/fractions, depth/breadth, first-value evidence, previous periods, missing denominators, current segment filters and erasure; `tests/adoption-browser.mjs` asserts native forms/report/CSV, refusal/recovery and A11Y-001 at 1440/390. The exact UTC-window and denominator semantics are in CONTRACT.md and docs/adoption.md. `tests/adoption-segment-journey.mjs` asserts current/previous typed metric parity with the report, fractional rules, same-person conjunctions, entry/exit/reentry, definition/source invalidation and exactly one approved entry task; `tests/adoption-segment-browser.mjs` uses native segment forms, refusal/recovery, approval and report end states with A11Y-001 at 1440/390. `tests/adoption-license-journey.mjs` and `tests/adoption-license-browser.mjs` assert explicit per-person licensed/unlicensed/missing/inactive utilization, UTC freshness, old/new source history, membership lifecycle, source revision invalidation, typed segment/report/CSV parity, native refusal/recovery and authority at 1440/390; `tests/portable.mjs` asserts individual evidence/history restore. `tests/adoption-consumer-journey.mjs` asserts every account metric’s report parity, configurable health, missing evidence, related-person licensed utilization, owner routing, episode deduplication/recovery, preferences/reassignment, configuration revision/authority and one human-approved adoption playbook. `tests/adoption-consumer-browser.mjs` asserts native configuration, refusal/recovery, account/runway health, owner inbox, disablement and A11Y-001 at 1440/390 with 320 reflow; `tests/portable.mjs` asserts measure/evidence restore. `tests/adoption-consumers.mjs` runs independent 30-account, 90-day fixtures for the account/person and segment aggregate consumers in parallel Verify jobs; no acceptance assertion or fixture size is reduced. `tests/adoption-aggregate-journey.mjs` asserts every exposed segment aggregate metric against the public report, current member owner routing, missing peer denominators, episode deduplication/recovery, membership changes, authority, aggregate health, layer-1 selection, named direct/transitive/save-edit dependency refusal, downstream final-health entry/exit/reentry playbooks, one approved task and stale peer-evidence refusal (adoptionAggregateAlerts, aggregateHealth). `tests/adoption-aggregate-browser.mjs` uses native segment selection, alert configuration, refusal/recovery, account/runway/segment/outcome health evidence, owner inbox, native playbook approval, missing denominators and disablement at 1440/390 (adoptionAggregateBrowser) with inherited A11Y-001 and 320 reflow; `tests/portable.mjs` asserts effective segment aggregate health/alert restore. Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping. Current account/person playbooks consume metrics through the existing segment-entry proposal or adoption-driven at-risk preparation.",
+      "text": "Adoption and license metrics** (`done`). With 90 days of synthetic events for 30 accounts, define two features and a seat count; Buoy's active-user, adoption and utilization figures match an independent calculation from the same events, and a 30% drop in weekly active users is flagged as a trend. `tests/adoption.mjs` asserts this numeric slice through public HTTP, including all three activity windows, feature/module sets, independent counts/fractions, depth/breadth, first-value evidence, previous periods, missing denominators, current segment filters and erasure; `tests/adoption-browser.mjs` asserts native forms/report/CSV, refusal/recovery and A11Y-001 at 1440/390. The exact UTC-window and denominator semantics are in CONTRACT.md and docs/adoption.md. `tests/adoption-segment-journey.mjs` asserts current/previous typed metric parity with the report, fractional rules, same-person conjunctions, entry/exit/reentry, definition/source invalidation and exactly one approved entry task; `tests/adoption-segment-browser.mjs` uses native segment forms, refusal/recovery, approval and report end states with A11Y-001 at 1440/390. `tests/adoption-license-journey.mjs` and `tests/adoption-license-browser.mjs` assert explicit per-person licensed/unlicensed/missing/inactive utilization, UTC freshness, old/new source history, membership lifecycle, source revision invalidation, typed segment/report/CSV parity, native refusal/recovery and authority at 1440/390; `tests/portable.mjs` asserts individual evidence/history restore. `tests/adoption-consumer-journey.mjs` asserts every account metric\u2019s report parity, configurable health, missing evidence, related-person licensed utilization, owner routing, episode deduplication/recovery, preferences/reassignment, configuration revision/authority and one human-approved adoption playbook. `tests/adoption-consumer-browser.mjs` asserts native configuration, refusal/recovery, account/runway health, owner inbox, disablement and A11Y-001 at 1440/390 with 320 reflow; `tests/portable.mjs` asserts measure/evidence restore. `tests/adoption-consumers.mjs` runs independent 30-account, 90-day fixtures for the account/person and segment aggregate consumers in parallel Verify jobs; no acceptance assertion or fixture size is reduced. `tests/adoption-aggregate-journey.mjs` asserts every exposed segment aggregate metric against the public report, current member owner routing, missing peer denominators, episode deduplication/recovery, membership changes, authority, aggregate health, layer-1 selection, named direct/transitive/save-edit dependency refusal, downstream final-health entry/exit/reentry playbooks, one approved task and stale peer-evidence refusal (adoptionAggregateAlerts, aggregateHealth). `tests/adoption-aggregate-browser.mjs` uses native segment selection, alert configuration, refusal/recovery, account/runway/segment/outcome health evidence, owner inbox, native playbook approval, missing denominators and disablement at 1440/390 (adoptionAggregateBrowser) with inherited A11Y-001 and 320 reflow; `tests/portable.mjs` asserts effective segment aggregate health/alert restore. Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping. Current account/person playbooks consume metrics through the existing segment-entry proposal or adoption-driven at-risk preparation.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -5612,7 +5619,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 62,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5632,20 +5639,20 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 66,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 66,
-      "text": "Configurable, explainable health scores** (`done`). Build a scorecard with five measures and segment-specific weights, preview it, publish it, then change a source value and remove a source; the changed account rescores within five minutes of the source change, an unchanged account shows a recalculation timestamp no older than an hour, every account shows a score with its measure breakdown and sources, history shows the change of version, and the missing source is reweighted or shown as unknown exactly as configured. The audit lists each scorecard publish (AUDIT-001). Numeric scores become SEGMENT-001 rule inputs; repeat its original “ARR over $50,000 and health below 60” entry/exit/playbook/report acceptance with BILLING-003, and prove segment-specific scorecard weights before shipping. ",
+      "text": "Configurable, explainable health scores** (`done`). Build a scorecard with five measures and segment-specific weights, preview it, publish it, then change a source value and remove a source; the changed account rescores within five minutes of the source change, an unchanged account shows a recalculation timestamp no older than an hour, every account shows a score with its measure breakdown and sources, history shows the change of version, and the missing source is reweighted or shown as unknown exactly as configured. The audit lists each scorecard publish (AUDIT-001). Numeric scores become SEGMENT-001 rule inputs; repeat its original \u201cARR over $50,000 and health below 60\u201d entry/exit/playbook/report acceptance with BILLING-003, and prove segment-specific scorecard weights before shipping. ",
       "to": "docs",
       "path": "docs/verify.md"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 66,
-      "text": "Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping. Scorecards currently consume delivered usage/adoption/engagement metrics, native billing/support observations, person-confirmed recurring terms, staff-recorded NPS/CSAT responses, current CSM judgment, and every existing account/contact/user custom or calculated field. Non-numeric inputs use an explicit category-to-number mapping before the configured bounds and direction; unmatched categories follow the configured missing policy. Related contact/user measures explicitly choose mean, min, max or sum over currently linked people after mapping, retaining each person’s value, revision and source. Mixed native monetary currencies are unavailable with an explanation, never summed or converted. Survey inputs use the newest response per current person and kind in the stated rolling 90-day UTC window; they claim recorded observations, not survey delivery. Changed native, SDK, Business-import, survey and customer-field inputs recalculate before successful source responses; hourly execution refreshes unchanged timestamps. Configuration versions are immutable; historical input snapshots retain genuine observations and are withdrawn when their contributing account or customer person is erased, while current results recalculate. HEALTH-002 expiry and ADOPT-001 risk/missing duties still apply. BILLING-001/002/003/005/006/007, SUPPORT-001/002/004/005, USAGE-002/003/004, SURVEY-001, ACCOUNT-001/004/006, AI-003 and future engagement sources inherit the same source/provenance, mapping, recalculation, history, segment and erasure parity when those sources or fields ship; no missing connector is represented as a live feed. BOUNDARY-003 retains accuracy against actual outcomes for any future closed prediction period; these scores and current outcome reports remain explicitly observational.",
+      "text": "Aggregate health uses two layers (ct 21 October 2026): native/account/person health, usage, fields and other non-aggregate inputs determine health-input segment membership first; aggregate effects then determine final health and downstream segment membership. Final health.status/health.reasons and transitive tier/stage classification dependencies cannot select an aggregate-health input; measure saves and segment edits refuse a named dependency chain. health.nativeStatus/health.nativeReasons expose layer-1 health. Health explanations identify the selecting segment and its revision and state that membership was evaluated before aggregate health. Downstream health-based segment entry prepares a human-approved playbook task; peer evidence/configuration/membership changes refuse stale aggregate-based approval even if the threshold still matches. HEALTH-001 scorecards and SEGMENT-001 future dependencies retain these two-layer and save-time cycle obligations before shipping. Scorecards currently consume delivered usage/adoption/engagement metrics, native billing/support observations, person-confirmed recurring terms, staff-recorded NPS/CSAT responses, current CSM judgment, and every existing account/contact/user custom or calculated field. Non-numeric inputs use an explicit category-to-number mapping before the configured bounds and direction; unmatched categories follow the configured missing policy. Related contact/user measures explicitly choose mean, min, max or sum over currently linked people after mapping, retaining each person\u2019s value, revision and source. Mixed native monetary currencies are unavailable with an explanation, never summed or converted. Survey inputs use the newest response per current person and kind in the stated rolling 90-day UTC window; they claim recorded observations, not survey delivery. Changed native, SDK, Business-import, survey and customer-field inputs recalculate before successful source responses; hourly execution refreshes unchanged timestamps. Configuration versions are immutable; historical input snapshots retain genuine observations and are withdrawn when their contributing account or customer person is erased, while current results recalculate. HEALTH-002 expiry and ADOPT-001 risk/missing duties still apply. BILLING-001/002/003/005/006/007, SUPPORT-001/002/004/005, USAGE-002/003/004, SURVEY-001, ACCOUNT-001/004/006, AI-003 and future engagement sources inherit the same source/provenance, mapping, recalculation, history, segment and erasure parity when those sources or fields ship; no missing connector is represented as a live feed. BOUNDARY-003 retains accuracy against actual outcomes for any future closed prediction period; these scores and current outcome reports remain explicitly observational.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -5666,7 +5673,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 67,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5686,7 +5693,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 68,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5706,20 +5713,20 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 69,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 69,
-      "text": "Segments, tiers and lifecycle stages** (`done`). Define “USD invoice total over $50,000 and health at-risk”, change an account so it enters, exits at the inclusive threshold and re-enters, and open the segment report and CSV; counts match the rule, currencies never mix, every interval is timestamped and the entry playbook produces one proposal and one approved task per approved entry. Repeated reads and hourly runs add no duplicate; stale account/configuration or exited-entry approval is refused. Define a custom service tier, use it in rules and manual classification, refuse removal while used and refuse a member tier-list edit. Exercise static lists, typed all/any/missing rules, manual and rule tier/stage with precedence and clearing, imports, sentiment/expiry and TEAM-001 segment allocation, member reads and mutation refusal, erasure, and the real management/approval/report forms at 1440 and 390. ",
+      "text": "Segments, tiers and lifecycle stages** (`done`). Define \u201cUSD invoice total over $50,000 and health at-risk\u201d, change an account so it enters, exits at the inclusive threshold and re-enters, and open the segment report and CSV; counts match the rule, currencies never mix, every interval is timestamped and the entry playbook produces one proposal and one approved task per approved entry. Repeated reads and hourly runs add no duplicate; stale account/configuration or exited-entry approval is refused. Define a custom service tier, use it in rules and manual classification, refuse removal while used and refuse a member tier-list edit. Exercise static lists, typed all/any/missing rules, manual and rule tier/stage with precedence and clearing, imports, sentiment/expiry and TEAM-001 segment allocation, member reads and mutation refusal, erasure, and the real management/approval/report forms at 1440 and 390. ",
       "to": "docs",
       "path": "docs/verify.md"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 69,
-      "text": "The original “ARR over $50,000 and health below 60” repeat remains BILLING-003 and HEALTH-001 acceptance; invoices are never called ARR and health bands are never called scores.",
+      "text": "The original \u201cARR over $50,000 and health below 60\u201d repeat remains BILLING-003 and HEALTH-001 acceptance; invoices are never called ARR and health bands are never called scores.",
       "to": "docs",
       "path": "docs/contract/domain-rules.md"
     },
@@ -5740,7 +5747,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 73,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5760,7 +5767,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 74,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5780,7 +5787,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 75,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5800,7 +5807,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 76,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5820,7 +5827,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 77,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5840,7 +5847,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 78,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5860,7 +5867,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 79,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5880,7 +5887,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 80,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5900,7 +5907,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 84,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5936,7 +5943,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 85,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5965,7 +5972,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 86,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -5994,7 +6001,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 87,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6014,7 +6021,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 88,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6043,13 +6050,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 89,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 89,
-      "text": "In-app messages and guides** (`done`). Install the snippet on a test app, target a walkthrough to one segment and a banner with a frequency cap, and visit as users in and out of the segment; only targeted users see each, caps hold and completions appear on user timelines. The INAPP-001 public HTTP journey in `tests/inapp-journey.mjs` (via `tests/flows.test.mjs`) asserts all four formats, source-namespaced reviewed mapping, no unknown/out-of-segment content, receipts in review, per-person concurrent server caps, message/delivery dedupe, source provenance and account revisions, relay identity replacement, separate credential scope, creator/last use, immediate revocation and erasure. `tests/inapp-browser.mjs` uses native campaign and one-time credential forms plus the shipped snippet on an authenticated test-product relay at 1440/390, including checklist and walkthrough completion, banner dismissal, caps, user timeline end states and A11Y-001 keyboard/axe/contrast/reflow. `tests/portable.mjs` restores campaigns, source identities, receipts and timelines, refuses the archived credential and preserves caps after fresh owner authorization. Server-only relay authentication follows ct’s 20 Oct 23:45Z ruling and the exact UTC cap/reservation semantics in CONTRACT.md.",
+      "text": "In-app messages and guides** (`done`). Install the snippet on a test app, target a walkthrough to one segment and a banner with a frequency cap, and visit as users in and out of the segment; only targeted users see each, caps hold and completions appear on user timelines. The INAPP-001 public HTTP journey in `tests/inapp-journey.mjs` (via `tests/flows.test.mjs`) asserts all four formats, source-namespaced reviewed mapping, no unknown/out-of-segment content, receipts in review, per-person concurrent server caps, message/delivery dedupe, source provenance and account revisions, relay identity replacement, separate credential scope, creator/last use, immediate revocation and erasure. `tests/inapp-browser.mjs` uses native campaign and one-time credential forms plus the shipped snippet on an authenticated test-product relay at 1440/390, including checklist and walkthrough completion, banner dismissal, caps, user timeline end states and A11Y-001 keyboard/axe/contrast/reflow. `tests/portable.mjs` restores campaigns, source identities, receipts and timelines, refuses the archived credential and preserves caps after fresh owner authorization. Server-only relay authentication follows ct\u2019s 20 Oct 23:45Z ruling and the exact UTC cap/reservation semantics in CONTRACT.md.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -6063,7 +6070,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 90,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6083,7 +6090,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 91,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6103,7 +6110,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 92,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6123,7 +6130,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 93,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6143,13 +6150,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 94,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 94,
-      "text": "In-app notifications and digests** (`done`). Mention a user, assign a task and fire a signal, then set preferences to digest-only for signals; the inbox shows all three and the next digest includes the signal but no duplicate notification. The NOTIFY-001 HTTP journey also asserts proposal approval requests, own-inbox/read/preference isolation, agent refusals, immediate/digest-only/no-email modes, digest off by default, installation-zone daily/weekly timing including daylight saving, current-book change counts, one internal recipient, honest provider acceptance/refusal/unconfirmed outcomes without retries, and account erasure. The NOTIFY-001 browser journey uses the real preference, mention and mark-read forms at 1440 and 390. Today’s alerts use the actual health reasons; SIGNAL-001 inherits configurable signals, and PLAY-001, JOURNEY-001 and SURVEY-001 inherit future approval kinds through the same inbox/preferences/digest doors. PLAY-002 reminders remain compulsory and separately listed.",
+      "text": "In-app notifications and digests** (`done`). Mention a user, assign a task and fire a signal, then set preferences to digest-only for signals; the inbox shows all three and the next digest includes the signal but no duplicate notification. The NOTIFY-001 HTTP journey also asserts proposal approval requests, own-inbox/read/preference isolation, agent refusals, immediate/digest-only/no-email modes, digest off by default, installation-zone daily/weekly timing including daylight saving, current-book change counts, one internal recipient, honest provider acceptance/refusal/unconfirmed outcomes without retries, and account erasure. The NOTIFY-001 browser journey uses the real preference, mention and mark-read forms at 1440 and 390. Today\u2019s alerts use the actual health reasons; SIGNAL-001 inherits configurable signals, and PLAY-001, JOURNEY-001 and SURVEY-001 inherit future approval kinds through the same inbox/preferences/digest doors. PLAY-002 reminders remain compulsory and separately listed.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -6163,7 +6170,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 98,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6183,7 +6190,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 99,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6203,7 +6210,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 100,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6223,7 +6230,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 101,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6243,7 +6250,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 102,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6263,7 +6270,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 103,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6289,7 +6296,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 104,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6309,7 +6316,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 108,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6329,7 +6336,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 109,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6349,13 +6356,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 110,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 110,
-      "text": "Books of business and reassignment** (`done`). Assign 300 accounts by rule across four CSMs with capacity targets, then reassign one CSM's book; counts respect targets, every outgoing CSM-owned open task moves, separately owned and completed tasks stay as PLAY-002 requires, and each account shows its handover note, previous/new CSM, actor and date. The TEAM-001 HTTP journey imports 300 accounts, assigns them across four CSMs through ordered territory/round-robin rules, checks pods/teams, insufficient-capacity whole-run and manual refusals, stale review refusal, book handover, lower targets with “over target by N” and rebalance, plus erasure of handover notes. The TEAM-001 browser journey uses the real team, capacity, rule, assignment, handover and rebalance forms and checks the account end state at 1440 and 390. Until ROLE-001, the owner/admin manages allocation and teams grant no access. SEGMENT-001 adds segment-rule inputs, BILLING-003/BILLING-004 add sourced ARR-band inputs and currency conversion, and PLAN-001/JOURNEY-001 inherit the transfer acceptance point for every future open plan and journey before they ship.",
+      "text": "Books of business and reassignment** (`done`). Assign 300 accounts by rule across four CSMs with capacity targets, then reassign one CSM's book; counts respect targets, every outgoing CSM-owned open task moves, separately owned and completed tasks stay as PLAY-002 requires, and each account shows its handover note, previous/new CSM, actor and date. The TEAM-001 HTTP journey imports 300 accounts, assigns them across four CSMs through ordered territory/round-robin rules, checks pods/teams, insufficient-capacity whole-run and manual refusals, stale review refusal, book handover, lower targets with \u201cover target by N\u201d and rebalance, plus erasure of handover notes. The TEAM-001 browser journey uses the real team, capacity, rule, assignment, handover and rebalance forms and checks the account end state at 1440 and 390. Until ROLE-001, the owner/admin manages allocation and teams grant no access. SEGMENT-001 adds segment-rule inputs, BILLING-003/BILLING-004 add sourced ARR-band inputs and currency conversion, and PLAN-001/JOURNEY-001 inherit the transfer acceptance point for every future open plan and journey before they ship.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -6369,7 +6376,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 111,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6389,7 +6396,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 112,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6409,7 +6416,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 113,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6429,7 +6436,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 114,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6484,7 +6491,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 119,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6504,13 +6511,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 120,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 120,
-      "text": "ChurnZero migration** (`partial`). Import a ChurnZero sample export, reconcile 20 accounts and their health factors field by field, and confirm journeys arrive as paused Buoy journeys for review. Evidence: `tests/migrate-journey.mjs`: “MIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and protect reviewed custody” proves exact CSV custody, twenty native account identities and field values, read-only ChurnScore and factor observations field by field, invalid-factor refusal, native scorecard preview and explicit publication from mapped factors with missing-source treatment, cross-account field-catalog erasure and schema-valid integration reads, no-write review, fingerprint-bound approval, replay, source isolation, reconciliation, non-owner refusal, strict undo after edits or dependent work and erasure refusal; “MIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390” includes ChurnZero review, apply, source-observation readback and native scorecard preview, reload, reconciliation and undo. `./fixtures/move-in/churnzero/README.md` documents the synthetic source and unverified schema. The additional `tests/churnzero-journey.mjs` selected-column journey independently checks exact source bytes, twenty accounts, unknown health, source isolation, replay and strict undo. Remaining: Account CSV mapping and read-only ChurnScore and factor observations ship; the source schema is unverified and the twenty-account fixture is synthetic. Native contacts, vendor scorecard-definition mapping, tasks, plays, success plans, paused Buoy journeys with definition mapping and inertness proof, events, NPS and ChurnZero API intake remain unbuilt. Contact and journey columns are explicitly unmapped and retained in source custody; retained journey labels are not native paused journeys. Source observations become available native scorecard inputs; import does not publish a scoring rule or infer weights, bands, dates or scale. The original full sample-export acceptance remains unproved.",
+      "text": "ChurnZero migration** (`partial`). Import a ChurnZero sample export, reconcile 20 accounts and their health factors field by field, and confirm journeys arrive as paused Buoy journeys for review. Evidence: `tests/migrate-journey.mjs`: \u201cMIGRATE-002 ChurnZero accounts reconcile twenty explicit mappings and protect reviewed custody\u201d proves exact CSV custody, twenty native account identities and field values, read-only ChurnScore and factor observations field by field, invalid-factor refusal, native scorecard preview and explicit publication from mapped factors with missing-source treatment, cross-account field-catalog erasure and schema-valid integration reads, no-write review, fingerprint-bound approval, replay, source isolation, reconciliation, non-owner refusal, strict undo after edits or dependent work and erasure refusal; \u201cMIGRATE-003 and MIGRATE-005 existing Imports screen reviews migration bundles at 1440 and 390\u201d includes ChurnZero review, apply, source-observation readback and native scorecard preview, reload, reconciliation and undo. `./fixtures/move-in/churnzero/README.md` documents the synthetic source and unverified schema. The additional `tests/churnzero-journey.mjs` selected-column journey independently checks exact source bytes, twenty accounts, unknown health, source isolation, replay and strict undo. Remaining: Account CSV mapping and read-only ChurnScore and factor observations ship; the source schema is unverified and the twenty-account fixture is synthetic. Native contacts, vendor scorecard-definition mapping, tasks, plays, success plans, paused Buoy journeys with definition mapping and inertness proof, events, NPS and ChurnZero API intake remain unbuilt. Contact and journey columns are explicitly unmapped and retained in source custody; retained journey labels are not native paused journeys. Source observations become available native scorecard inputs; import does not publish a scoring rule or infer weights, bands, dates or scale. The original full sample-export acceptance remains unproved.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -6524,7 +6531,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 121,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6579,7 +6586,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 133,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6599,7 +6606,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 134,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6619,7 +6626,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 135,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6639,7 +6646,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 136,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6659,7 +6666,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 137,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6679,13 +6686,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 138,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 138,
-      "text": "Accessibility** (`done`). Run axe and a keyboard-only pass over the home, account, playbook builder, report and portal screens; no serious violations, every chart has a text table and every health color has a text label. Every shipped screen is in scope today, including entry, setup, runway, account, preparation/approval, imports, backups, inbox, team, audit, segments and outcomes, at 1440 and 390 pixels with reflow to 320. Use the keyboard for sign-in, setup, expansion, dialog open/close and focus return, validation recovery, preparation, approval, completion and report export; assert visible unobscured focus, labeled controls, text health and semantic table values against public account data. PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 repeat this acceptance before their new screens ship. `tests/a11y.mjs` and its auth/import/governance/contrast helpers assert the all-screen and end-state pass, including every plus/minus control’s named account/action; `tests/runway-keyboard.mjs` also asserts native-currency table values, missing/stale sources and projected dates.",
+      "text": "Accessibility** (`done`). Run axe and a keyboard-only pass over the home, account, playbook builder, report and portal screens; no serious violations, every chart has a text table and every health color has a text label. Every shipped screen is in scope today, including entry, setup, runway, account, preparation/approval, imports, backups, inbox, team, audit, segments and outcomes, at 1440 and 390 pixels with reflow to 320. Use the keyboard for sign-in, setup, expansion, dialog open/close and focus return, validation recovery, preparation, approval, completion and report export; assert visible unobscured focus, labeled controls, text health and semantic table values against public account data. PORTAL-001, MOBILE-001, PLAY-001 and REPORT-002 repeat this acceptance before their new screens ship. `tests/a11y.mjs` and its auth/import/governance/contrast helpers assert the all-screen and end-state pass, including every plus/minus control\u2019s named account/action; `tests/runway-keyboard.mjs` also asserts native-currency table values, missing/stale sources and projected dates.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -6699,7 +6706,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 139,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6719,7 +6726,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 143,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6770,7 +6777,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 144,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6821,7 +6828,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 145,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6857,7 +6864,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 146,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6899,13 +6906,13 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 150,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
       "file": "ACCEPTANCE.md",
       "line": 150,
-      "text": "Agent authority and action ledger** (`done`). Issue a prepare-only agent and a send-within-policy agent, have each attempt preparation, approval, an in-policy email, an out-of-policy email and a discount; only allowed actions occur, approvals and the discount are refused, the ledger records every attempt, and the kill switch stops both mid-run. The USD budget and ledger measure metered agent operations, currently USD0. Automatic NOTIFY-001/PLAY-002 internal team notifications continue through the owner’s existing mail provider and preferences; provider fees are not measured or included in this budget. The UI/API/docs label this “No metered agent charge; internal notification mail may use your provider” beside the budget and ledger. Until a paid, send or update scope exists, the GOVERN-001 HTTP and browser journeys issue two different local command grants, check expiry bounds/defaults, refused invalid policies, selected-field reads without derived leaks, denied preparation with missing classes, concurrent minute exhaustion and Retry-After, owner-only settings, revocation/owner-version invalidation, and pause/resume stopping both mid-run without work. Every valid-token attempt has a distinct succeeded/refused outcome; ledger reads contain no payload or credential and show actual metered USD0. The owner form chooses the actual grant, displays the token once, then pauses/resumes/revokes it at 1440 and 390. Every message a preparation induces is the single-recipient internal approval notice, never a customer send or billing/model action.",
+      "text": "Agent authority and action ledger** (`done`). Issue a prepare-only agent and a send-within-policy agent, have each attempt preparation, approval, an in-policy email, an out-of-policy email and a discount; only allowed actions occur, approvals and the discount are refused, the ledger records every attempt, and the kill switch stops both mid-run. The USD budget and ledger measure metered agent operations, currently USD0. Automatic NOTIFY-001/PLAY-002 internal team notifications continue through the owner\u2019s existing mail provider and preferences; provider fees are not measured or included in this budget. The UI/API/docs label this \u201cNo metered agent charge; internal notification mail may use your provider\u201d beside the budget and ledger. Until a paid, send or update scope exists, the GOVERN-001 HTTP and browser journeys issue two different local command grants, check expiry bounds/defaults, refused invalid policies, selected-field reads without derived leaks, denied preparation with missing classes, concurrent minute exhaustion and Retry-After, owner-only settings, revocation/owner-version invalidation, and pause/resume stopping both mid-run without work. Every valid-token attempt has a distinct succeeded/refused outcome; ledger reads contain no payload or credential and show actual metered USD0. The owner form chooses the actual grant, displays the token once, then pauses/resumes/revokes it at 1440 and 390. Every message a preparation induces is the single-recipient internal approval notice, never a customer send or billing/model action.",
       "to": "docs",
       "path": "docs/verify.md"
     },
@@ -6919,7 +6926,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 151,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6939,7 +6946,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 152,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6959,7 +6966,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 153,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6979,7 +6986,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 154,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -6999,7 +7006,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 155,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7019,7 +7026,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 156,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7039,7 +7046,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 157,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7115,7 +7122,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 158,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7191,7 +7198,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 162,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7211,7 +7218,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 163,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7231,7 +7238,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 164,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7251,7 +7258,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 165,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7271,7 +7278,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 166,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7304,7 +7311,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 168,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {
@@ -7324,7 +7331,7 @@
     {
       "file": "ACCEPTANCE.md",
       "line": 169,
-      "text": "—",
+      "text": "\u2014",
       "to": "changelog"
     },
     {

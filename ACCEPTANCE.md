@@ -92,7 +92,7 @@ Core · published · **partial** · Cites BASE-DATA-003, BASE-DATA-006
 
 Core · published · **partial** · Cites BASE-DATA-001, BASE-BACKUP-001, BASE-SECRET-001, BASE-AGENT-004
 
-**Requirement.** Archives scale with SCALE-001.
+**Requirement.** Buoy archives carry native customer records and reviewed import custody. Destination authentication belongs to the new owner; agent tokens, connector credentials, outbox mail and installation settings confer no restored authority and are excluded. Archive volume follows SCALE-001.
 
 **Acceptance.**
 1. Export an installation with accounts, approved decisions, an agent token and an erased account; restore into an empty copy, then attempt a second restore and a damaged archive; state matches, the agent token is refused, the tombstone holds and both bad restores fail.

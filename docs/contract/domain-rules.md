@@ -269,3 +269,7 @@ HTTP-001 currently exposes three bearer commands, selected in each GOVERN-001 ow
 ## Bearer-command baseline
 
 HTTP-001 currently exposes three bearer commands, selected in each GOVERN-001 owner grant: `renewals.list`, `playbook.prepare` and `renewal.prepare` on `/api/buoy/commands` only. Successful preparation records the token ID and label in the proposal and account event; each valid scoped request also records its receipt as an attempt, without claiming an outcome; GOVERN-001 enforces the selected command/data-class grant, expiry, rate, USD budget boundary and installation-wide kill switch; future send and update scopes inherit it before shipping. Authorization takes precedence over cookies: malformed, expired or revoked credentials are refused, with no fallback to the cookie session. A valid bearer token may omit Origin or send a foreign Origin, but cannot approve or edit accounts. USAGE-001 has separate per-source server-only intake credentials that grant no agent command, staff session or account read; non-source agent credentials still pass through the agent refusal ledger. Session writes require an exact Origin match and reject `Sec-Fetch-Site: cross-site`. The agent guide documents the separate session-cookie and explicit bearer request paths.
+
+## HTTP ownership
+
+Hono owns authenticated product HTTP handlers. Base handles identity and setup.
