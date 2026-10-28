@@ -4444,11 +4444,11 @@
       "executable": false
     },
     "tests/segment-journey.mjs": {
-      "sha256": "a4a50387c3b1f4e4af76a1a8ec2497279e9981f4c4e3b31aceec37bbb3247b2c",
+      "sha256": "dee3af4ff41e2137efff926a832bd1d8a4459c6eadfe083b77cabfebd6bf5b9f",
       "executable": false
     },
     "tests/segments.mjs": {
-      "sha256": "c71ee3ef0c73fad71ba25f54bbe92f5710c2681e2c0f29ce1c1cdfce1634a315",
+      "sha256": "09a903a9af8b23210c175565e435becf81dc7374334704d247c0c7f05b20a328",
       "executable": false
     },
     "tests/signal-dismissal-journey.mjs": {
