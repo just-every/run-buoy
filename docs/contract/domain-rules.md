@@ -56,7 +56,9 @@ Renewed evidence must be a new approved decision at or after tracking start; hea
 
 ## PLAN-001
 
-Internal milestones link an objective to an existing PLAY-004 healthy or approved-renewal report only when this account belongs to its enrolled cohort. The report retains its original UTC window, frozen comparison cohort, first observation and elapsed time; linking never starts or restarts observation, and completing linked work never invents attainment. Task links accept existing tasks on the same account. Business reviews capture current plan objectives, milestone states and linked work with source references. The renewal pipeline consumes current goal counts, unavailable evidence and unconfirmed statements for owners and admins only; these observations never assert a renewal prediction or customer confirmation.
+A plan objective observation freezes its business objective, due date, metric criterion and customer owner, with one plan per enrolled account and matching unsatisfied objectives from the chosen segment as controls. Missing metric evidence refuses an enrolled baseline; changed definitions cannot satisfy the old criterion. Identical operation replays retain the original window; a different reviewed input with that key is refused. Windows run for 1 to 365 whole UTC days and include the deadline. The first observed satisfied evidence is retained, and late evidence never changes a missed result.
+
+Milestones also link an objective to an existing PLAY-004 healthy or approved-renewal report only when this account belongs to its enrolled cohort. The report retains its original UTC window, frozen comparison cohort, first observation and elapsed time; linking never starts or restarts observation, and completing linked work never invents attainment. Task links accept existing tasks on the same account. Business reviews capture current plan objectives, milestone states and linked work with source references. The renewal pipeline consumes current goal counts, unavailable evidence and unconfirmed statements for owners and admins only; these observations never assert a renewal prediction or customer confirmation.
 
 ## INAPP-001
 
