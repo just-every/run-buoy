@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "dd59e42f056778611963fa7cc66bf709098a42aefeff2b0b19bbcc4e79ea923a",
+      "sha256": "26051ab294ada1071e3936eb976bd66084e52a46567717effc3482d7f4c6e446",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "135e40d886162d6e8ad86ee0086f759370d971252519477a33a03ce7aa3060e9",
+      "sha256": "0825c0f555f3890d0800dbbdb357f3970c61079d27add3a7a4a690a059414f9d",
       "executable": false
     },
     "DEMO.md": {
@@ -4380,7 +4380,7 @@
       "executable": false
     },
     "tests/renewal-readiness-journey.mjs": {
-      "sha256": "704bdc7a345662dc0b1581eb9b599d6282995aa3f0701d3ee0a39326b36fdc05",
+      "sha256": "a29ade17376ba5de21b0e4ddb576173c177a9aa6ade4f8e5cd55615da59a9e43",
       "executable": false
     },
     "tests/renewal-readiness-sandbox.mjs": {

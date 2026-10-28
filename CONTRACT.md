@@ -1323,7 +1323,7 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 
 #### AGENT-003 — Evidence-backed renewal readiness
 
-*Tier:* Core · *Cites:* BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-007
+*Tier:* Core · *Cites:* BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-007 · *Rules:* D-3
 
 **Requirement.** From 120 days before each renewal the agent reads terms, notice dates, billing, success-plan goals, stakeholder engagement and open risks; identifies missing renewal authority (no economic buyer contact, champion departed), unresolved obligations and unconfirmed goals; prepares a joint timeline with the customer; and after the company’s money and commitment policy permits commercial steps verifies that they reached the CRM and billing system. Terms, amounts and negotiation positions carry commitment and money, which the company’s policy decides; direct payment processing remains outside Buoy’s scope.
 
