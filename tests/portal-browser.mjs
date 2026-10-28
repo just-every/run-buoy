@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
-import {join} from 'node:path'
+import {join,resolve} from 'node:path'
+import {pathToFileURL} from 'node:url'
+import {mkdir} from 'node:fs/promises'
 import {portalFixture} from './portal-journey.mjs'
 import {scan,submit,failures} from './a11y-checks.mjs'
 export async function portalBrowser(browser,evidence){
@@ -86,4 +88,12 @@ export async function portalBrowser(browser,evidence){
  }
  assert.deepEqual(failures,[],'Customer portal keeps native accessibility')
  console.log('PORTAL-001 native sharing, home, customer completion, comment, authenticated confirmation, staff timeline, refused private reads and revoked access at 1440 and 390.')
+}
+
+// A file entry point keeps the native database proxy thread in its own CommonJS mode.
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
+ const {chromium}=await import('@playwright/test')
+ const evidence=resolve(process.env.EVIDENCE_DIR??'../evidence/portal');await mkdir(evidence,{recursive:true})
+ const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
+ try{await portalBrowser(browser,evidence)}finally{await browser.close()}
 }

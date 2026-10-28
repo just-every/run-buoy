@@ -4308,7 +4308,7 @@
       "executable": false
     },
     "tests/mail-runtime.mjs": {
-      "sha256": "adf612cbee49dd78081024901a432a2209d55fdfc5eec88e1ebb3ef0ce878516",
+      "sha256": "2d9aadd25059e3ee1de49377feb6679848a81de247d74b5e97af08703731c30e",
       "executable": false
     },
     "tests/migrate-journey.mjs": {
@@ -4364,7 +4364,7 @@
       "executable": false
     },
     "tests/portal-browser.mjs": {
-      "sha256": "b3cb0e5e16975a1c72aa7920448961a76e65c9738aee3151e4d8c2af6e39859b",
+      "sha256": "3f20a995a2d79a728a09b3720686551f006d955e53515168c3dee6a798df4457",
       "executable": false
     },
     "tests/portal-journey.mjs": {

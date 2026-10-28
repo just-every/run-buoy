@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 import {execFileSync} from 'node:child_process'
 
-export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true, secure = true, providerFetch, clock, persistenceDirectory, keepPersistence = false, trace } = {}) {
+export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true, secure = true, providerFetch, clock, persistenceDirectory, keepPersistence = false } = {}) {
  const require = createRequire(await realpath(join(root, 'node_modules/wrangler/package.json')))
  const { Miniflare, convertV4MiniflareOptions } = require('miniflare')
  const { unstable_splitSqlQuery: splitSql } = require('wrangler')
@@ -65,26 +65,20 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   },
  }), resourcePersistencePath:join(directory,persistenceDirectory?'v3':'state') })
  try {
-  trace?.('waiting for the native Worker listener')
   const origin = (await mf.ready).origin
-  trace?.('native Worker listener ready')
   runtimeBindings = {AUTH_ORIGIN:origin, ...bindings(origin)}
   Object.assign(vars, runtimeBindings)
   // Persistent fixtures applied migrations through Wrangler above; they do not
   // need another Node D1 proxy before the Worker's own binding is opened.
   const db=persistenceDirectory?null:await mf.getD1Database('DB')
-  trace?.('native database binding ready')
   for(const file of (persistenceDirectory?[]:await readdir(join(root,'migrations/core'))).filter(file=>file.endsWith('.sql')).sort()) {
    for(const sql of splitSql(await readFile(join(root,'migrations/core',file),'utf8'))) await db.prepare(sql).run()
   }
-  trace?.('native schema applied')
   const request=async(path,{method='GET',body,cookie,token,headers={}}={})=>{const response=await mf.dispatchFetch(origin+path,{method,redirect:'manual',headers:{origin,...(clock===undefined?{}:{'x-buoy-test-time':String(clockValue())}),...(body===undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});responses.add(response);return response}
   const boot=await request('/auth/bootstrap',{method:'POST',body:{token:vars.SETUP_TOKEN,displayName:'Harbour CS owner'}})
   assert.equal(boot.status,303,await boot.clone().text())
-  trace?.('native owner bootstrapped')
   const cookie=boot.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
   if (completeSetup) await mf.dispatchFetch(origin+'/setup',{method:'POST',redirect:'manual',headers:{origin,cookie,'content-type':'application/x-www-form-urlencoded'},body:'confirm=yes'})
-  trace?.('native setup completed')
   async function signIn(email) {
    assert.equal((await request('/auth/magic-link',{method:'POST',body:{email}})).status,202)
    const message=mails.findLast(mail=>mail.to.includes(email))
