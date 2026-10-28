@@ -6,6 +6,7 @@ import {scan,submit} from './a11y-checks.mjs'
 
 // Real application, sessions and storage; only Stripe's network boundary is fake.
 export async function renewalReadinessJourney({browser,evidence}={}){
+ console.log('Renewal readiness: starting native fixture')
  let instant=Date.parse('2026-10-28T12:00:00Z'),amount=120000
  const calls=[],customer='synthetic-buoy-9801',subscription='synthetic-buoy-9802',seconds=day=>Date.parse(day+'T00:00:00Z')/1000
  const providerFetch=async request=>{
@@ -32,6 +33,7 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   const binding=await api(base+'/bindings/preview','POST',{customerId:customer,accountId});await api(base+'/bindings','POST',{token:binding.token})
   const sync=async()=>{const result=await api(base+'/sync','POST',{});assert.equal(result.status,'succeeded',result.error)}
   await sync()
+  console.log('Renewal readiness: billing source seeded')
   const renewal=(await api('/renewals')).records.find(r=>r.accountId===accountId),record='/renewals/'+renewal.id,readiness=()=>api(record+'/readiness')
   let ready=await readiness();assert.equal(ready.active,true);assert.equal(ready.startsOn,'2026-10-28')
   const timelineInput=async()=>({revision:(await readiness()).revision,customerId:participant.id,staffId:owner})
@@ -39,6 +41,7 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   instant=Date.parse('2026-10-28T12:00:00Z')
   await api(record+'/stakeholder-status','PUT',{revision:(await readiness()).revision,personId:champion.id,status:'departed',observedOn:'2026-10-27',source:'Customer departure confirmation C-17'})
   ready=await readiness()
+  console.log('Renewal readiness: cited stakeholder and plan evidence')
   assert.ok(ready.flags.some(f=>f.kind==='departed-champion'&&f.title.includes('Morgan Hale')&&f.reference.includes('C-17')&&f.href.includes(accountId)))
   assert.ok(ready.flags.some(f=>f.kind==='unconfirmed-goal'&&f.title.includes('reporting time saved')&&f.reference.includes('synthetic-buoy-9811')&&f.href.endsWith('#success-plans')))
   assert.ok(ready.flags.some(f=>f.kind==='missing-authority'));assert.ok(ready.flags.some(f=>f.kind==='health-risk'))
@@ -60,6 +63,7 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   await api(record+'/stakeholder-status','PUT',{revision:(await readiness()).revision,personId:participant.id,status:'active',observedOn:'2026-10-28',source:'Customer participant confirmed C-18'})
   assert.equal((await request(record+'/timelines/'+timeline.id+'/approve','POST',{})).status,409,'Changed evidence refuses stale review')
   const fresh=await api(record+'/timelines','POST',await timelineInput())
+  console.log('Renewal readiness: stale and forbidden review paths checked')
   const approvalPath=record+'/timelines/'+fresh.id+'/approve'
   await api(approvalPath,'POST',{});await api(approvalPath,'POST',{})
   const approved=(await readiness()).timelines.find(t=>t.id===fresh.id);assert.equal(approved.approvedBy,owner);assert.ok(approved.approvedAt)
@@ -75,7 +79,7 @@ export async function renewalReadinessJourney({browser,evidence}={}){
   await sync();ready=await readiness()
   assert.equal(ready.billing.status,'mismatch');assert.equal(ready.billing.actual.arrMinor,120000);assert.equal(ready.billing.actual.differenceMinor,-24000);assert.equal(ready.billing.expectedArrMinor,144000)
   assert.ok(ready.flags.some(f=>f.kind==='billing-mismatch'&&f.reference===ready.billing.actual.sourceReference))
-  if(browser)await readinessScreens({browser,evidence,app,renewalId:renewal.id,api,readiness,timelineInput,participant,owner})
+  if(browser){console.log('Renewal readiness: opening native browser screens');await readinessScreens({browser,evidence,app,renewalId:renewal.id,api,readiness,timelineInput,participant,owner})}
   amount=144000;await sync();ready=await readiness()
   assert.equal(ready.billing.status,'matched');assert.equal(ready.billing.actual.arrMinor,144000);assert.equal(ready.billing.actual.differenceMinor,0);assert.ok(!ready.flags.some(f=>f.kind==='billing-mismatch'))
   assert.equal((await api('/renewals')).records.find(r=>r.id===renewal.id).sourceVersionId,sourceVersion)
@@ -108,11 +112,13 @@ export async function renewalReadinessJourney({browser,evidence}={}){
 
 async function readinessScreens({browser,evidence,app,renewalId,api,readiness,timelineInput,participant,owner}){
  for(const width of [1440,390]){
+  console.log('Renewal readiness: browser viewport',width)
   const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
   try{
    await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...parts]=pair.split('=');return {name,value:parts.join('='),url:app.origin}}))
    const page=await context.newPage(),url=app.origin+'/app/renewals?renewal='+renewalId
    await page.goto(url,{waitUntil:'networkidle'})
+   console.log('Renewal readiness: native page loaded',width)
    const panel=page.locator('#renewal-readiness')
    assert.match(await panel.innerText(),/Champion departed: Morgan Hale/);assert.match(await panel.innerText(),/Customer confirms reporting time saved/)
    assert.match(await panel.innerText(),/Stripe does not match/)

@@ -4380,7 +4380,7 @@
       "executable": false
     },
     "tests/renewal-readiness-journey.mjs": {
-      "sha256": "448213adee1e3294e5365d898a42e1263bf22010660a006d3c9678e93edec6ef",
+      "sha256": "7c67c993e5783a4d0a348ad87a94275cb1c317c15aea6a3334e062853c9f4516",
       "executable": false
     },
     "tests/renewal-readiness-sandbox.mjs": {
