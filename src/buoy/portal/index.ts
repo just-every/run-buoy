@@ -15,7 +15,7 @@ export async function portalState(db:D1Database,actor:Actor,grantId:string){
  const {row,fence}=await grant(db,actor,grantId)
  const snapshot=JSON.parse((await db.prepare(PLAN_SQL).first<{snapshot:string}>())!.snapshot) as PlanRow[],plan=snapshot.find(p=>p.id===row.plan_id)!
  const image=await inputImage(db,new Date()),values=image.accounts.find(a=>a.accountId===row.account_id)!.inputs.values,projected=planProjection(plan,values)
- const tasks=(await stmt(db,'SELECT id,title,completed_at AS completedAt FROM buoy_tasks WHERE account_id=? AND id IN (SELECT value FROM json_each(?)) ORDER BY id',row.account_id,row.task_ids).all<{id:string;title:string;completedAt:string|null}>()).results
+ const tasks=(await stmt(db,'SELECT t.id,t.title,t.completed_at AS completedAt,p.name AS projectName FROM buoy_tasks t LEFT JOIN buoy_onboarding_projects p ON p.id=t.onboarding_project_id WHERE t.account_id=? AND t.id IN (SELECT value FROM json_each(?)) AND (t.onboarding_project_id IS NULL OR (t.customer_person_id=? AND p.plan_id=?)) ORDER BY t.id',row.account_id,row.task_ids,row.person_id,row.plan_id).all<{id:string;title:string;completedAt:string|null;projectName:string|null}>()).results
  const comments=(await stmt(db,"SELECT id,body,recorded_at AS recordedAt FROM buoy_portal_events WHERE plan_id=? AND kind='comment' ORDER BY recorded_at,id",row.plan_id).all<{id:string;body:string;recordedAt:string}>()).results
  const files=await portalFiles(db,row.plan_id,row.person_id,row.plan_revision)
  await db.batch([fence(),stmt(db,'DELETE FROM buoy_assertions')])
@@ -40,6 +40,7 @@ export async function sharePlan(db:D1Database,actor:Actor,accountId:string,input
  guard(db,"EXISTS(SELECT 1 FROM buoy_customer_people p JOIN buoy_customer_memberships m ON m.person_id=p.id WHERE p.id=? AND p.kind='contact' AND m.account_id=?)",personId,accountId),
  guard(db,"EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND email=? AND version=? AND role='member' AND status='active' AND last_signin_at IS NOT NULL AND NOT EXISTS(SELECT 1 FROM buoy_role_assignments WHERE person_id=?))",recipient.id,email,recipient.version,recipient.id),
  ...taskIds.map(t=>guard(db,'EXISTS(SELECT 1 FROM buoy_tasks WHERE id=? AND account_id=?)',t,accountId)),
+ ...taskIds.map(t=>guard(db,'EXISTS(SELECT 1 FROM buoy_tasks t LEFT JOIN buoy_onboarding_projects p ON p.id=t.onboarding_project_id WHERE t.id=? AND (t.onboarding_project_id IS NULL OR (t.customer_person_id=? AND p.plan_id=?)))',t,personId,planId)),
  stmt(db,'INSERT INTO buoy_portal_recipients(operator_id,email) VALUES(?,?) ON CONFLICT(operator_id) DO UPDATE SET email=excluded.email',recipient.id,email),
  stmt(db,'UPDATE buoy_portal_grants SET revoked_at=? WHERE plan_id=? AND operator_id=? AND revoked_at IS NULL',stamp,planId,recipient.id),
  stmt(db,"INSERT INTO buoy_portal_grants(id,account_id,plan_id,plan_revision,person_id,operator_id,operator_version,owner_id,owner_version,revision,task_ids,expires_at,created_at) SELECT ?,?,?,?,?,?,?,id,version,?,?,?,? FROM oa_operators WHERE id=? AND role='owner' AND status='active'",grantId,accountId,planId,revision,personId,recipient.id,recipient.version,id(),JSON.stringify(taskIds),Date.now()+days*86400000,stamp,actor.id),
@@ -77,7 +78,7 @@ portalApi.post('/api/buoy/portal/:id/action',async c=>{
  }else if(input.action==='complete-task'){
   const taskId=text(input.taskId,'Customer task',100);insist(JSON.parse(row.task_ids).includes(taskId),'This task is not shared with you.',403)
   kind='task-completed';body=text(input.evidence,'Completion evidence',2000)
-  statements.push(guard(db,'EXISTS(SELECT 1 FROM buoy_tasks WHERE id=? AND account_id=? AND completed_at IS NULL)',taskId,row.account_id),stmt(db,'UPDATE buoy_tasks SET completed_at=?,outcome=?,evidence=? WHERE id=?',stamp,'Completed by customer','Customer receipt '+eventId,taskId))
+  statements.push(guard(db,'EXISTS(SELECT 1 FROM buoy_tasks t LEFT JOIN buoy_onboarding_projects p ON p.id=t.onboarding_project_id WHERE t.id=? AND t.account_id=? AND t.completed_at IS NULL AND (t.onboarding_project_id IS NULL OR (t.customer_person_id=? AND p.plan_id=?)))',taskId,row.account_id,row.person_id,row.plan_id),stmt(db,'UPDATE buoy_tasks SET completed_at=?,outcome=?,evidence=? WHERE id=?',stamp,'Completed by customer','Customer receipt '+eventId,taskId))
  }else {insist(input.action==='comment','Choose an available customer action.');kind='comment';body=text(input.comment,'Comment',2000)}
  statements.push(stmt(db,'INSERT INTO buoy_portal_events(id,account_id,plan_id,person_id,operator_id,kind,body,recorded_at) VALUES(?,?,?,?,?,?,?,?)',eventId,row.account_id,row.plan_id,row.person_id,actor.id,kind,body,stamp),...accountAudit(db,actor,row.account_id,'portal.'+kind),stmt(db,'DELETE FROM buoy_assertions'))
  await db.batch(statements);await recalculateScorecards(db)

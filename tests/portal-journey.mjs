@@ -5,6 +5,7 @@ export async function portalFixture(options={}){
  await f.api('/fields','POST',{key:'portal_goal',label:'Agreed measure',type:'number'})
  await f.api('/accounts/'+f.accountId+'/fields','PUT',{revision:(await f.api('/state')).accounts.find(a=>a.id===f.accountId).revision,values:{portal_goal:1},source:'synthetic-buoy-1960'})
  const plan=await f.save({objectives:[{...f.objectives[0],field:'custom.portal_goal'},f.objectives[1]],taskIds:[dep.taskId],milestones:dep.milestones})
+ const onboarding=options.onboarding===false?null:await f.api('/accounts/'+f.accountId+'/onboarding-projects','POST',{planId:plan.id,planRevision:plan.revision,name:'Champion rollout',taskIds:[dep.taskId]})
  const beforeInvitation=f.app.mails.length
  await f.api('/portal-invitations','POST',{email:'plan-champion@example.test',displayName:'Customer champion'})
  assert.equal(f.app.mails.length,beforeInvitation+1,'An explicit customer invitation produces one native sign-in message')
@@ -18,7 +19,7 @@ export async function portalFixture(options={}){
  const request=(suffix='',method='GET',body,cookie=recipient.cookie,headers={})=>f.app.request('/api/buoy/portal/'+shared.id+suffix,{cookie,method,body,headers})
  const read=async()=>{const response=await request();assert.equal(response.status,200,await response.clone().text());return response.json()}
  const action=async body=>request('/action','POST',{revision:(await read()).revision,...body})
- return {...f,dep,plan,recipient,outsider,otherShared,shareBody,shared,request,read,action}
+ return {...f,dep,plan,onboarding,recipient,outsider,otherShared,shareBody,shared,request,read,action}
 }
 export async function uploadPortalFile(f,{cookie=f.recipient.cookie,grantId=f.shared.id,revision=f.shared.revision,type='text/plain',name='setup-evidence.txt',contents='Customer rollout completed.'}={}){
  if(revision===undefined)revision=(await f.read()).revision
@@ -29,6 +30,7 @@ export async function portalJourney(){
  const f=await portalFixture(),{app,api,accountId,other,plan,shared,recipient,outsider,request,read,action}=f
  try{
   let view=await read();assert.deepEqual(view.objectives.map(o=>[o.id,o.status]),[['usage','achieved'],['statement','awaiting-customer-confirmation']]);assert.deepEqual(view.tasks.map(t=>t.id),[f.dep.taskId]);assert.deepEqual(view.milestones.map(m=>m.id),['recovery'])
+  assert.equal(view.tasks[0].projectName,'Champion rollout')
   assert.equal((await request('', 'GET',undefined,outsider.cookie)).status,403)
   assert.equal((await app.request('/api/buoy/portal/'+f.otherShared.id,{cookie:recipient.cookie})).status,403)
   const otherView=await app.request('/api/buoy/portal/'+f.otherShared.id,{cookie:outsider.cookie});assert.equal(otherView.status,200);assert.equal((await otherView.json()).name,'Other private plan')
@@ -55,6 +57,7 @@ export async function portalJourney(){
   view=await read();assert.deepEqual(view.objectives.map(o=>o.status),['achieved','achieved']);assert.equal(view.comments.length,1);assert.equal(view.comments[0].body,'Customer reviewed the agreed plan.');assert.ok(view.tasks[0].completedAt)
   const observed=await api('/outcomes/'+statementReport.id+'/report');assert.equal(observed.rate,1);assert.equal(observed.comparisonRate,0);assert.deepEqual(observed.enrolled.map(a=>a.accountId),[accountId]);assert.deepEqual(observed.comparison.map(a=>a.accountId),[other]);assert.match(observed.enrolled[0].evidence,/Plan objective statement achieved/)
   const staff=(await f.plans());assert.equal(staff.readiness.achieved,2);assert.equal(staff.readiness.awaitingConfirmation,0)
+  assert.equal(staff.onboardingProjects.find(project=>project.id===f.onboarding.id).completed,1)
   await api('/scorecards/publish','POST',{revision:null,config:{name:'Confirmed plan goal measure',measures:[{key:'goals',name:'Plan attainment',field:'goals.attainmentPercent',min:0,max:100,weight:1,direction:'higher',missing:'unknown'}],bands:{riskBelow:40,healthyAt:75},segments:[]}})
   assert.equal((await api('/scorecards')).accounts.find(a=>a.accountId===accountId).score,100)
   const timeline=await api('/accounts/'+accountId+'/activity?source=customer-portal');assert.deepEqual(timeline.records.map(r=>r.kind).sort(),['customer-comment','customer-confirmation','customer-task-completed']);assert.ok(timeline.records.some(r=>r.reference==='Customer reviewed the agreed plan.'))
@@ -73,8 +76,21 @@ export async function portalJourney(){
   for(const days of [0,366])assert.equal((await app.request(sharePath,{cookie:app.cookie,method:'POST',body:{...f.shareBody(),days}})).status,400)
   assert.equal((await app.request(sharePath,{cookie:outsider.cookie,method:'POST',body:f.shareBody()})).status,403)
   assert.equal((await app.request(sharePath,{cookie:app.cookie,method:'POST',body:{...f.shareBody(),taskIds:[f.dep.foreignTaskId]}})).status,400)
+  assert.equal((await action({action:'update-plan',name:'Attempted foreign ownership',staffOwnerId:outsider.id})).status,400)
+  assert.equal((await request('/action','POST',{revision:view.revision,action:'update-plan',name:'Staff pretending to be customer'},app.cookie)).status,403)
+  assert.equal((await action({action:'update-plan',name:'Customer revised success plan','title:statement':'Confirm the expanded business result','due:statement':'2027-03-02','milestone:recovery':'Reach the updated healthy target'})).status,201)
+  const customerEdited=(await f.plans()).plans[0]
+  assert.equal(customerEdited.name,'Customer revised success plan');assert.equal(customerEdited.objectives[1].title,'Confirm the expanded business result');assert.equal(customerEdited.objectives[1].dueOn,'2027-03-02');assert.equal(customerEdited.objectives[0].field,'custom.portal_goal');assert.equal(customerEdited.customerOwnerId,f.champion.id);assert.equal(customerEdited.staffOwnerId,f.ownerId)
+  assert.equal(customerEdited.objectives[1].status,'awaiting-customer-confirmation')
+  assert.equal((await request()).status,403,'Customer edits also withdraw the exact reviewed share')
+  assert.equal((await request(filePath)).status,403)
+  assert.equal((await request('/action','POST',{revision:view.revision,action:'comment',comment:'Replayed old collaboration'})).status,403)
+  assert.ok((await api('/accounts/'+accountId+'/activity?source=customer-portal')).records.some(record=>record.kind==='customer-plan-updated'))
+  const reviewedEdit=await api('/accounts/'+accountId+'/portal-sharing','POST',{...f.shareBody(),planRevision:customerEdited.revision})
+  assert.equal((await app.request('/api/buoy/portal/'+reviewedEdit.id,{cookie:recipient.cookie})).status,200)
   // Any edit withdraws the reviewed revision and its old confirmation.
-  await f.save({id:plan.id,revision:plan.revision,name:'Revised business objectives'})
+  await f.save({id:plan.id,revision:customerEdited.revision,name:'Revised business objectives'})
+  assert.equal((await app.request('/api/buoy/portal/'+reviewedEdit.id,{cookie:recipient.cookie})).status,403,'A staff edit withdraws a newly reviewed customer revision')
   assert.equal((await request()).status,403);assert.equal((await f.plans()).plans[0].objectives[1].status,'awaiting-customer-confirmation')
   assert.equal((await request(filePath)).status,403,'Old file links follow withdrawn reviewed access')
   const current=(await f.plans()).plans[0],again=await api('/accounts/'+accountId+'/portal-sharing','POST',{...f.shareBody(),planRevision:current.revision,taskIds:[]})

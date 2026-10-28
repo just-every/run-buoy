@@ -663,6 +663,10 @@
       "sha256": "d9d35e49f39d2287c9fb80c67816884661ea8c48b3f97d21c25bbecfbbbb179a",
       "executable": false
     },
+    "migrations/core/0080_buoy_onboarding_projects.sql": {
+      "sha256": "111827221eb11d3550eb617c15b770c689f5aff4a4d19f66042b66207470c46a",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
@@ -1544,11 +1548,15 @@
       "executable": false
     },
     "src/buoy/plans/index.ts": {
-      "sha256": "1f3e6ff941aa8c201c895defd9ca67d7706a2ed5eed49c0bc399763d06838620",
+      "sha256": "5f2250730a3416f6548353942be650fece224d908f5273271513a2c5149b8b17",
       "executable": false
     },
     "src/buoy/plans/model.ts": {
       "sha256": "8dfbe9724359422389f9772e37cc9c1a41a087196b1533462972513cdcfa5742",
+      "executable": false
+    },
+    "src/buoy/plans/onboarding.ts": {
+      "sha256": "b3a5e0db75e27227ce14ae30cc7bc68b74b51e69f4844de4d954d0f57238b804",
       "executable": false
     },
     "src/buoy/plans/outcomes.ts": {
@@ -1592,7 +1600,7 @@
       "executable": false
     },
     "src/buoy/portal/index.ts": {
-      "sha256": "d1ec700ac8466d3d5721e89eeb60cc802277f3eab5a457413135c8fa180f9b93",
+      "sha256": "69f31269f7463d9daa089d791e88a20888e9bd71deb7a6bf608f44d1bcfab3a7",
       "executable": false
     },
     "src/buoy/privacy.ts": {
@@ -1888,7 +1896,7 @@
       "executable": false
     },
     "src/buoy/ui/actions.ts": {
-      "sha256": "8139a247ab7567ef3b2855256f0bb6708fbee77a77e3b01c5baba8190a1cc27e",
+      "sha256": "aa13304146d27f4c4fed939153f4f8b0806d1e04ed98cfa0d87012b1e6fb5804",
       "executable": false
     },
     "src/buoy/ui/adoption-consumers.ts": {
@@ -2004,7 +2012,7 @@
       "executable": false
     },
     "src/buoy/ui/plans.ts": {
-      "sha256": "41a08e52ff99ed7c8091f33101497f339a599b4dff1c3be361d018a3edd9915d",
+      "sha256": "a23267869a952e391d4f10f6dd0f90510f87a5296a3b3828b4d936846b9a9873",
       "executable": false
     },
     "src/buoy/ui/playbooks.ts": {
@@ -2012,7 +2020,7 @@
       "executable": false
     },
     "src/buoy/ui/portal.ts": {
-      "sha256": "28ea785d6557576b80c6d08a9179b9214825c01e9633cf9763ccce1c3697c1ec",
+      "sha256": "64b34c285cc6232b6302e9e473b6f039524fc47df21c7148d6ded445547140b0",
       "executable": false
     },
     "src/buoy/ui/privacy.ts": {
@@ -4340,15 +4348,15 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "abdf4bbcffb42482ec2a3a616f4850daf8f0669d2ad729977f0693a16fa9a6ed",
+      "sha256": "2b1d9e99d6a8d2866a101aa57c0a0b65e61b84419a19ddebc38206891943573f",
       "executable": false
     },
     "tests/portal-browser.mjs": {
-      "sha256": "642280847fa63cb3e95d00280c414e671eaaf8f9a12133eb76a97f46087959bf",
+      "sha256": "6627d4cfe201a24c895566646648bd709b143605065fe243034056be1aaa5053",
       "executable": false
     },
     "tests/portal-journey.mjs": {
-      "sha256": "802e3949646af5c21516430df9a9ea1269f67fdbba6b62e825ae490897599fb4",
+      "sha256": "ab373e74ea1924c8157a395160b4128fae3bbedbee69273225ed1c2175b3c509",
       "executable": false
     },
     "tests/portal-mail-live.mjs": {

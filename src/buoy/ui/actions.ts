@@ -44,6 +44,9 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
   if (request.headers.get('origin') !== new URL(request.url).origin) throw new ApiError('This form must be submitted from this Buoy installation. Reload and try again.', 403);
   const send = <T>(url: string, body: unknown, method = 'POST') => apiCall<T>(api, request, url, method, body);
   if(fields.action==='portal-invite'){await send('/api/buoy/portal-invitations',{email:fields.email,displayName:fields.displayName});return {redirect:path+'#success-plans',message:'Customer invitation requested. Share the reviewed plan after the recipient confirms their email.'}}
+  if(accountId&&fields.action==='onboarding-start'){
+   await send('/api/buoy/accounts/'+encodeURIComponent(accountId)+'/onboarding-projects',{planId:fields.planId,planRevision:fields.planRevision,name:fields.name,taskIds:Object.keys(fields).filter(key=>key.startsWith('projectTask:')&&fields[key]==='on').map(key=>key.slice(12))});return {redirect:path+'#success-plans',message:'Onboarding project started. Review customer access before sharing its tasks.'}
+  }
   if(accountId&&fields.action==='plan-milestone-start'){await send('/api/buoy/outcomes',{name:fields.name,kind:'plan-objective',planIds:[fields.planId],objectiveId:fields.objectiveId,segmentId:fields.segmentId,windowDays:Number(fields.windowDays),operationKey:fields.operationKey});return {redirect:path+'#success-plans',message:'Objective outcome report started. Link it to this plan as a milestone.'}}
   if(accountId&&fields.action==='plan-share'){
    await send('/api/buoy/accounts/'+encodeURIComponent(accountId)+'/portal-sharing',{planId:fields.planId,planRevision:fields.planRevision,email:fields.email,days:Number(fields.days),taskIds:Object.keys(fields).filter(k=>k.startsWith('customerTask:')&&fields[k]==='on').map(k=>k.slice(13))});return {redirect:path+'#success-plans',message:'Plan shared. Give the recipient their portal sign-in address.'}

@@ -4,12 +4,17 @@ import {portalFixture} from './portal-journey.mjs'
 import {scan,submit,failures} from './a11y-checks.mjs'
 export async function portalBrowser(browser,evidence){
  for(const width of [1440,390]){
-  const f=await portalFixture(),{app,api,accountId,recipient}=f
+  const f=await portalFixture({onboarding:false}),{app,api,accountId,recipient}=f
   const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
   const cookies=cookie=>cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}})
   try{
    await context.addCookies(cookies(app.cookie));const page=await context.newPage()
    await page.goto(app.origin+'/app/accounts/'+accountId+'#success-plans',{waitUntil:'networkidle'})
+   await page.locator('#onboarding-project-'+f.plan.id+' > summary').click()
+   const projectForm=page.locator('#onboarding-start-'+f.plan.id)
+   await projectForm.getByLabel('Project name').fill('Champion rollout');await projectForm.getByLabel('Agreed plan follow-up').check()
+   await submit(page,projectForm.getByRole('button',{name:'Start customer onboarding',exact:true}))
+   assert.equal((await f.plans()).onboardingProjects[0].name,'Champion rollout')
    await page.locator('#plan-sharing-'+f.plan.id+' > summary').click()
    const sharing=await api('/accounts/'+accountId+'/portal-sharing'),grant=sharing.grants.find(g=>g.id===f.shared.id)
    await api('/accounts/'+accountId+'/portal-sharing/'+grant.id,'DELETE',{revision:grant.revision})
@@ -55,6 +60,21 @@ export async function portalBrowser(browser,evidence){
    const live=(await api('/accounts/'+accountId+'/portal-sharing')).grants.find(g=>g.id===current.id);await api('/accounts/'+accountId+'/portal-sharing/'+live.id,'DELETE',{revision:live.revision})
    const stopped=await page.reload({waitUntil:'networkidle'});if(width===1440){assert.equal(stopped.status(),403);assert.match(await page.locator('main').innerText(),/access has stopped/)}
    await scan(page,'PLAN-001 stopped access '+width);await page.screenshot({path:join(evidence,'portal-stopped-'+width+'.png'),fullPage:true})
+   const editable=await api('/accounts/'+accountId+'/portal-sharing','POST',f.shareBody())
+   await page.goto(app.origin+'/portal/'+editable.id,{waitUntil:'networkidle'})
+   await page.locator('#portal-editor > summary').click();const edit=page.locator('#portal-edit')
+   await edit.getByLabel('Plan name',{exact:true}).fill('Champion updated rollout')
+   await edit.locator('input[name="title:statement"]').fill('Confirm the revised business outcome')
+   await edit.locator('input[name="due:statement"]').fill('2027-03-02')
+   await submit(page,edit.getByRole('button',{name:'Save plan changes',exact:true}))
+   assert.equal(new URL(page.url()).pathname,'/portal');assert.equal(await page.getByRole('status').count(),1)
+   const changed=(await f.plans()).plans[0];assert.equal(changed.name,'Champion updated rollout');assert.equal(changed.objectives[1].title,'Confirm the revised business outcome');assert.equal(changed.objectives[1].status,'awaiting-customer-confirmation')
+   assert.equal((await app.request('/api/buoy/portal/'+editable.id,{cookie:recipient.cookie})).status,403)
+   await scan(page,'PORTAL-001 customer edit saved '+width);await page.screenshot({path:join(evidence,'portal-edit-saved-'+width+'.png'),fullPage:true})
+   const republished=await api('/accounts/'+accountId+'/portal-sharing','POST',{...f.shareBody(),planRevision:changed.revision})
+   await page.goto(app.origin+'/portal/'+republished.id,{waitUntil:'networkidle'})
+   assert.match(await page.locator('main').innerText(),/Champion updated rollout/);assert.equal(await page.getByRole('link',{name:'rollout-checklist.txt',exact:true}).count(),0)
+   await scan(page,'PORTAL-001 reviewed customer edit '+width);await page.screenshot({path:join(evidence,'portal-edit-reviewed-'+width+'.png'),fullPage:true})
   }finally{await context.close();await app.close()}
  }
  assert.deepEqual(failures,[],'Customer portal keeps native accessibility')

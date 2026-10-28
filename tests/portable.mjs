@@ -169,6 +169,9 @@ try{
  const portalRead=await running.request('/api/buoy/portal/'+portableGrant.id,{cookie:portalCookie});assert.equal(portalRead.status,200);
  const portalRevision=(await portalRead.json()).revision;
  const portalConfirmed=await running.request('/api/buoy/portal/'+portableGrant.id+'/action',{cookie:portalCookie,method:'POST',body:{action:'confirm',revision:portalRevision,objectiveId:'customer',statement:'synthetic-buoy-1965'}});assert.equal(portalConfirmed.status,201);
+ const portalUpload=new FormData();portalUpload.set('revision',portalRevision);portalUpload.set('file',new File(['Portable customer rollout evidence.'],'customer-rollout.txt',{type:'text/plain'}));
+ const uploadedPortalFile=await running.dispatch(new Request(running.origin+'/api/buoy/portal/'+portableGrant.id+'/files',{method:'POST',headers:{origin:running.origin,cookie:portalCookie},body:portalUpload}));assert.equal(uploadedPortalFile.status,201);
+ const portableFile=(await uploadedPortalFile.json()).id;
  const successPlansBefore=await call('/accounts/'+accountId+'/plans');
  assert.equal(successPlansBefore.plans[0].objectives[1].status,'achieved');
  assert.equal(successPlansBefore.plans.find(p=>p.id===successPlan.id).objectives[0].status,'achieved');
@@ -262,6 +265,7 @@ try{
  assert.ok(!archiveRows.some(item=>['buoy_report_shares','buoy_dashboard_shares','buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
  assert.ok(!archiveRows.some(item=>['buoy_integration_tokens','buoy_integration_minutes','buoy_integration_receipts'].includes(item.table)),'API-001 integration authority and replay state are excluded from the actual archive');
  assert.ok(!archiveRows.some(item=>['buoy_portal_grants','buoy_portal_recipients'].includes(item.table)),'Customer access never enters the real archive');
+ assert.equal(Buffer.from(archiveRows.find(item=>item.table==='buoy_portal_files'&&item.row.id===portableFile).row.payload,'base64').toString(),'Portable customer rollout evidence.','The actual archive retains the uploaded file bytes');
  assert.ok(archiveRows.some(item=>item.table==='buoy_plan_confirmations'&&item.row.plan_id===successPlan.id),'Authenticated customer evidence survives without restoring authority');
  assertBillingArchiveRows(archiveRows,billingImage);
  assert.ok(archiveRows.some(item=>item.table==='buoy_success_plans'&&item.row.id===successPlan.id),'The real archive contains the persisted success plan');
@@ -285,6 +289,8 @@ try{
  const restoredPlans=await call('/accounts/'+accountId+'/plans');assert.deepEqual({...restoredPlans,sharing:null},{...successPlansBefore,sharing:null},'PLAN-001 definitions, customer confirmation, task links and milestone evidence restore exactly');
  assert.deepEqual(restoredPlans.sharing.grants,[],'Restoration never restores portal authority');
  assert.equal((await running.request('/api/buoy/portal/'+portableGrant.id,{cookie:portalCookie})).status,401,'A former portal session cannot read a restored installation');
+ assert.equal((await running.request('/api/buoy/portal/'+portableGrant.id+'/files/'+portableFile,{cookie:portalCookie})).status,401,'Restoration never restores a file download credential');
+ const restoredPortalFile=await running.request('/api/buoy/accounts/'+accountId+'/portal-files/'+portableFile,{cookie:running.cookie});assert.equal(restoredPortalFile.status,200);assert.equal(await restoredPortalFile.text(),'Portable customer rollout evidence.');
  await assertBillingPortability(call,running.request,running.cookie,billingImage)
  assert.equal(stripe.calls.length,sourceCallsBeforeRestore,'Restored native reads and rejected source/webhook attempts never call Stripe without fresh authority')
  await assertRecordPortability(call,(path,options)=>running.request(path,{...options,cookie:running.cookie}),recordIds,billingAwareRecordImage(recordImage,before.accounts,after.accounts,billingImage))
