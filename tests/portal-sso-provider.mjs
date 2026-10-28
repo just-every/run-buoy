@@ -20,8 +20,11 @@ export function portalIdentityEdge(instant){
    if(url.pathname==='/.well-known/openid-configuration')return Response.json({issuer,authorization_endpoint:issuer+'/authorize',token_endpoint:issuer+'/token',jwks_uri:issuer+'/jwks',response_types_supported:['code'],response_modes_supported:['query'],grant_types_supported:['authorization_code'],code_challenge_methods_supported:['S256'],id_token_signing_alg_values_supported:['ES256'],token_endpoint_auth_methods_supported:['private_key_jwt'],token_endpoint_auth_signing_alg_values_supported:['ES256'],authorization_response_iss_parameter_supported:true,rer_interfaces:['oidc-provider@1.0.0']})
    if(url.pathname==='/.well-known/rer-provider')return Response.json({issuer,interface:'oidc-provider@1',version:1,initiate:issuer+'/link/initiate',redeem:issuer+'/link/redeem',deregister:issuer+'/link/deregister'})
    if(url.pathname==='/link/redeem'){
-    const input=await request.json();assert.equal(input.code,'synthetic-buoy-portal-link-code');assert.ok(input.origin&&input.callback&&input.sector_id)
-    return Response.json({issuer,interface:'oidc-provider@1',origin:input.origin,callback:input.callback,sector_id:input.sector_id,client_id:clientId})
+    const input=await request.json();assert.equal(input.code,'synthetic-buoy-portal-link-code')
+    const [header,payload,signature]=input.client_assertion.split('.'),metadata=JSON.parse(Buffer.from(header,'base64url')),claims=JSON.parse(Buffer.from(payload,'base64url'))
+    assert.ok(verify('sha256',Buffer.from(header+'.'+payload),{key:createPublicKey({key:clientKeys.find(key=>key.kid===metadata.kid),format:'jwk'}),dsaEncoding:'ieee-p1363'},Buffer.from(signature,'base64url')),'The native application signs its link redemption')
+    assert.equal(claims.iss,input.origin);assert.equal(claims.sub,input.origin);assert.equal(claims.aud,issuer+'/link/redeem');assert.equal(claims.code,input.code);assert.equal(claims.callback,input.callback);assert.ok(claims.sector_id)
+    return Response.json({issuer,interface:'oidc-provider@1',origin:input.origin,callback:input.callback,sector_id:claims.sector_id,client_id:clientId})
    }
    if(url.pathname==='/jwks')return Response.json({keys:[jwk]})
    if(url.pathname==='/token'){

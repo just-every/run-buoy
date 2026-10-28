@@ -4352,7 +4352,7 @@
       "executable": false
     },
     "tests/portal-browser.mjs": {
-      "sha256": "e949e32d569f4a3ea0500fd4cd41c1ce358e1d016f7f7e8880474a2272b529c1",
+      "sha256": "047b59f56ca57e1aeef50b9268031b5192d8a8349387b7af2e2dd1e7df189fc3",
       "executable": false
     },
     "tests/portal-journey.mjs": {
@@ -4364,7 +4364,7 @@
       "executable": false
     },
     "tests/portal-sso-provider.mjs": {
-      "sha256": "4a8fcdde04b0f16b9e6ba22755dfb4cb41f1e9f0e9643f3c24471af0248dfc54",
+      "sha256": "62247e4fd62772f13000c5f8b9070322bc0e4939703582c82038d5bb5f1f9ad4",
       "executable": false
     },
     "tests/portal-sso.mjs": {
