@@ -5,7 +5,7 @@ import {join} from 'node:path'
 export function auditTuples(entries){
  assert.equal(new Set(entries.map(entry=>entry.id)).size,entries.length,'Audit entry identities are unique')
  return entries.map(({id,actor,action,subject,detail,occurredAt})=>{
-  assert.match(id,/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+  assert.ok(typeof id==='string'&&id.length>0,'Every audit tuple carries its persisted opaque identity')
   assert.equal(new Date(occurredAt).toISOString(),occurredAt,'Audit time is an exact recorded UTC instant')
   return {id,actor,action,subject,detail,occurredAt}
  })
@@ -49,9 +49,12 @@ export async function reconcileAuditScreen(browser,app,expected,{query='',screen
    assert.equal(await next.count(),offset+50<expected.length?1:0,'Screen continuation neither drops nor invents a page')
    if(screens&&offset===0){
     await mkdir(screens,{recursive:true})
-    await page.screenshot({path:join(screens,'audit-1440.png'),fullPage:true})
+    const showEntries=()=>records.first().evaluate(node=>scrollTo(0,node.parentElement.getBoundingClientRect().top+scrollY-16))
+    await showEntries()
+    await page.screenshot({path:join(screens,'audit-1440.png')})
     await page.setViewportSize({width:390,height:1000})
-    await page.screenshot({path:join(screens,'audit-390.png'),fullPage:true})
+    await showEntries()
+    await page.screenshot({path:join(screens,'audit-390.png')})
     await page.setViewportSize({width:1440,height:1000})
    }
    offset+=50

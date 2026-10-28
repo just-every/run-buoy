@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "efdc5d902f02bc5a0160727eae9d727c7c11059689fc00730b421bb2d4e7f5da",
+      "sha256": "488b81a57511b3ac95ec3f50e68a11afa32681a774482a4f6f4d5d691339f313",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "4e3d579705f3afb0f35dee12ac1cdbb0aa3ad3717a5a728af483d24eab7e291c",
+      "sha256": "af81803307a374f2a00f7c34944311d1af9eddc3a481b10470c0e2661d2a3683",
       "executable": false
     },
     "DEMO.md": {
@@ -4116,7 +4116,7 @@
       "executable": false
     },
     "tests/audit-view.mjs": {
-      "sha256": "a1891f0faa64e6889598db4f129ecb5ee304894b2911b6ac8969562670e132c4",
+      "sha256": "684a05543a40d86dff65ac4b18fbe9da65821b94e5e6ebac0e57e8cf6dde85c1",
       "executable": false
     },
     "tests/billing-browser.mjs": {
@@ -4368,7 +4368,7 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "c89d549c39f9d3c4b14b11898aa617fc4e50de40e34fe9ac1ecc47dbcfb03c0a",
+      "sha256": "ba98e92938043cae03fd31d104ba8877766f00354d7006b3f88c9c552181be48",
       "executable": false
     },
     "tests/portal-browser.mjs": {
