@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "a6cdcb7b339d010acaa08c1c3044eb448db8bc8285274b49cc0f7831b1b3603f",
+      "sha256": "67e1dc8c7d8cabcf50934d30f8e5c308295301fa9cd3c39379a2c1c4f0069cd1",
       "executable": false
     },
     "AGENTS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "97d71bbb17099f3687a92db009e73bb74e3c97cde3f3ea518595fbda7ec34a08",
+      "sha256": "50401bf56cde6ba21dce4526fbec44992f2c3db30add5b5ec10fc0f819720089",
       "executable": false
     },
     "DEMO.md": {
@@ -1444,7 +1444,7 @@
       "executable": false
     },
     "src/buoy/integration/index.ts": {
-      "sha256": "e193060a2ea4f8690efceae21414983166e7760f47fb98d151281396716155ac",
+      "sha256": "c95aa25772617cb39466e768973b1d9d6d92cede160f13cc3ef78f5e5fc723ef",
       "executable": false
     },
     "src/buoy/integration/openapi.ts": {
@@ -4292,7 +4292,7 @@
       "executable": false
     },
     "tests/integration-journey.mjs": {
-      "sha256": "8f237bb24c4d1e813b6646edaf1483b8da123ee0b1b4fb1b410b8b5f999d4a6d",
+      "sha256": "95d7b21fe0830caffad737e757cf4dbdbde2eb340935a90d3e62d43b7fc52185",
       "executable": false
     },
     "tests/keyboard.mjs": {
