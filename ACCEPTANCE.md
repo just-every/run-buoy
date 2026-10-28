@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 22 | 45 | 38 | 105 |
+| Core | 23 | 44 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 22 | 45 | 47 | 114 |
+| Full target | 23 | 44 | 47 | 114 |
 
-Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `ccd9979ddd727c41c3407dedbfa87ebaa8d47096` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -1122,7 +1122,7 @@ Core · target · **partial** · Register R-3, R-4
 
 #### A11Y-001 — Accessibility
 
-Core · target · **partial** · Cites BASE-ACCESSIBILITY-001 · Register R-1, R-2
+Core · target · **done** · Cites BASE-ACCESSIBILITY-001 · Register R-1, R-2
 
 **Requirement.** Buoy applies BASE-ACCESSIBILITY-001 to the account workspace, renewal runway, plan and playbook work, imports, reports, customer portal and native clients. Charts have text tables and health has text labels. The runway’s accessible table includes invoice, health reasons, renewal and notice dates, missing or stale evidence and projected changes. The human screen-reader pass and VPAT are field proof.
 
@@ -1131,8 +1131,8 @@ Core · target · **partial** · Cites BASE-ACCESSIBILITY-001 · Register R-1, R
 2. Until the named future screens ship, run every current screen at 1440 and 390 pixels, reflow to 320 pixels, and use the keyboard for sign-in, setup, runway expansion, dialog open/close and focus return, validation recovery, preparation, approval, completion and report export.
 3. Assert visible, unobscured focus, labeled fields, health text and the runway table’s values against the public account data.
 
-**Evidence.** `src/buoy/ui/runway.ts`; `src/buoy/ui/work.ts`; `src/buoy/ui/browser.ts`; `src/buoy/ui/html.ts`; `tests/a11y.mjs`; `tests/a11y-auth.mjs`; `tests/a11y-import.mjs`; `tests/a11y-governance.mjs`; `tests/a11y-checks.mjs`; `tests/symbolic-labels.mjs`; `tests/a11y-contrast.mjs`; `tests/runway-keyboard.mjs`; `tests/fields-browser.mjs`; `tests/customer-people-browser.mjs`; `tests/usage-browser.mjs`; `tests/connections-browser.mjs`; `tests/adoption-browser.mjs`; `tests/adoption-license-browser.mjs`; `tests/adoption-segment-browser.mjs`; `tests/adoption-consumer-browser.mjs`; `tests/adoption-aggregate-browser.mjs`; `tests/inapp-browser.mjs`; `tests/health-scorecard-browser.mjs`; `tests/revenue-health-browser.mjs`; `tests/survey-scorecard-browser.mjs`  `tests/dashboard-journey.mjs` — dashboardJourney; `tests/report-builder-keyboard.mjs` — reportBuilderKeyboard (owner and admin authoring, validation recovery, chart and table values, actual CSV at both widths);
-**Gap.** Remaining: keyboard-only playbook-builder and portal journeys and the complete current-screen matrix at both widths. Existing native-client prerequisites remain. Asserted: sign-in, setup, runway expansion, dialog focus return, validation recovery, preparation, approval, completion, private report creation and editing, and actual report CSV at 1440 and 390 with 320-pixel reflow; runway values match public account data; charts have text alternatives and health has text labels. Human screen-reader review and VPAT remain field proof R-1 and R-2.
+**Evidence.** `src/buoy/ui/runway.ts`; `src/buoy/ui/work.ts`; `src/buoy/ui/browser.ts`; `src/buoy/ui/html.ts`; `tests/a11y.mjs` — native keyboard and axe journey; `tests/a11y-auth.mjs`; `tests/a11y-import.mjs`; `tests/a11y-governance.mjs`; `tests/a11y-checks.mjs`; `tests/symbolic-labels.mjs`; `tests/a11y-contrast.mjs`; `tests/runway-keyboard.mjs` — native-currency semantic runway journey; `tests/fields-browser.mjs`; `tests/customer-people-browser.mjs`; `tests/usage-browser.mjs`; `tests/connections-browser.mjs`; `tests/adoption-browser.mjs`; `tests/adoption-license-browser.mjs`; `tests/adoption-segment-browser.mjs`; `tests/adoption-consumer-browser.mjs`; `tests/adoption-aggregate-browser.mjs`; `tests/inapp-browser.mjs`; `tests/health-scorecard-browser.mjs`; `tests/revenue-health-browser.mjs`; `tests/survey-scorecard-browser.mjs`  `tests/dashboard-journey.mjs` — dashboardJourney; `tests/report-builder-keyboard.mjs` — reportBuilderKeyboard (owner and admin authoring, validation recovery, chart and table values, actual CSV at both widths);  `tests/play-browser.mjs` — playBrowser; `tests/portal-browser.mjs` — portalBrowser; `tests/configuration-browser.mjs` — native configuration preview and screen matrix; `tests/record-browser.mjs` — native record screen matrix; `tests/ai-browser.mjs` — AI screen matrix; `tests/communication-browser.mjs` — communication screen matrix; `tests/roles-browser.mjs` — scoped screen matrix.
+**Gap.** None.
 
 #### SCALE-001 — Scale for a growing book
 

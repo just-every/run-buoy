@@ -66,6 +66,7 @@ export async function reportBuilderKeyboard({page,app,width,evidence,spec,expect
  const error=page.getByRole('alert')
  assert.match(await error.innerText(),/valid report JSON/)
  assert.ok(await error.evaluate(element=>element===document.activeElement),'Validation announces and focuses the error')
+ assert.ok(await error.evaluate(element=>{const r=element.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.top>=0&&r.bottom<=innerHeight&&!!top&&element.contains(top)}),'The focused validation message is fully visible and unobscured')
  assert.equal(await page.getByLabel('Report name',{exact:true}).inputValue(),name,'Validation retains the typed report name')
  assert.equal(await page.getByRole('textbox',{name:'Filter rules JSON',exact:true}).inputValue(),'{ invalid JSON')
  await scan(page,'Report keyboard validation '+actor+' '+width)

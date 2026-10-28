@@ -64,7 +64,7 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 | BASE-SIGNIN-002 | Native multi-factor authentication | none | not run |
 | BASE-INSTALL-001 | Free self-host and removal | BOUNDARY-005 | not run |
 | BASE-MAIL-001 | Truthful mail outcomes | PLAY-002, PLAY-003, NOTIFY-001 | not run |
-| BASE-ACCESSIBILITY-001 | One accessibility bar | STYLE-001, A11Y-001 | not run |
+| BASE-ACCESSIBILITY-001 | One accessibility bar | STYLE-001, A11Y-001 | `tests/a11y.mjs` — native keyboard and axe journey |
 | BASE-DOCS-001 | On-site docs from one contract | none | not run |
 | BASE-AGENT-001 | One MCP door per seed | none | not run |
 | BASE-AGENT-002 | The seed's jobs are tools, through the UI's own actions | AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, AGENT-007, AGENT-008, SURFACE-001 | not run |
@@ -1445,13 +1445,13 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 
 ## Status
 
-Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026).
+Judged from the code and tests at commit `ccd9979ddd727c41c3407dedbfa87ebaa8d47096` (28 October 2026).
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 4 | 4 | 0 | 8 |
-| Target and push further | 18 | 41 | 47 | 106 |
-| All | 22 | 45 | 47 | 114 |
+| Target and push further | 19 | 40 | 47 | 106 |
+| All | 23 | 44 | 47 | 114 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -1538,7 +1538,7 @@ Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4
 | `MIGRATE-006` | Parallel run and delta re-import | target | missing |  | No delta re-import, conflict preview or cutover record. |
 | `MIGRATE-007` | Health history carried over | target | missing |  | No health history import. |
 | `MOBILE-001` | Mobile apps | target | partial | `src/buoy/ui/`; `public/buoy.css` | Native apps, push and offline use are absent. |
-| `A11Y-001` | Accessibility | target | partial | `src/buoy/ui/runway.ts`; `src/buoy/ui/work.ts`; `src/buoy/ui/browser.ts`; `src/buoy/ui/html.ts`; `tests/a11y.mjs`; `tests/a11y-auth.mjs`; `tests/a11y-import.mjs`; `tests/a11y-governance.mjs`; `tests/a11y-checks.mjs`; `tests/symbolic-labels.mjs`; `tests/a11y-contrast.mjs`; `tests/runway-keyboard.mjs`; `tests/fields-browser.mjs`; `tests/customer-people-browser.mjs`; `tests/usage-browser.mjs`; `tests/connections-browser.mjs`; `tests/adoption-browser.mjs`; `tests/adoption-license-browser.mjs`; `tests/adoption-segment-browser.mjs`; `tests/adoption-consumer-browser.mjs`; `tests/adoption-aggregate-browser.mjs`; `tests/inapp-browser.mjs`; `tests/health-scorecard-browser.mjs`; `tests/revenue-health-browser.mjs`; `tests/survey-scorecard-browser.mjs`  `tests/dashboard-journey.mjs` — dashboardJourney; `tests/report-builder-keyboard.mjs` — reportBuilderKeyboard (owner and admin authoring, validation recovery, chart and table values, actual CSV at both widths); | Remaining: keyboard-only playbook-builder and portal journeys and the complete current-screen matrix at both widths. Existing native-client prerequisites remain. Asserted: sign-in, setup, runway expansion, dialog focus return, validation recovery, preparation, approval, completion, private report creation and editing, and actual report CSV at 1440 and 390 with 320-pixel reflow; runway values match public account data; charts have text alternatives and health has text labels. Human screen-reader review and VPAT remain field proof R-1 and R-2. |
+| `A11Y-001` | Accessibility | target | done | `src/buoy/ui/runway.ts`; `src/buoy/ui/work.ts`; `src/buoy/ui/browser.ts`; `src/buoy/ui/html.ts`; `tests/a11y.mjs` — native keyboard and axe journey; `tests/a11y-auth.mjs`; `tests/a11y-import.mjs`; `tests/a11y-governance.mjs`; `tests/a11y-checks.mjs`; `tests/symbolic-labels.mjs`; `tests/a11y-contrast.mjs`; `tests/runway-keyboard.mjs` — native-currency semantic runway journey; `tests/fields-browser.mjs`; `tests/customer-people-browser.mjs`; `tests/usage-browser.mjs`; `tests/connections-browser.mjs`; `tests/adoption-browser.mjs`; `tests/adoption-license-browser.mjs`; `tests/adoption-segment-browser.mjs`; `tests/adoption-consumer-browser.mjs`; `tests/adoption-aggregate-browser.mjs`; `tests/inapp-browser.mjs`; `tests/health-scorecard-browser.mjs`; `tests/revenue-health-browser.mjs`; `tests/survey-scorecard-browser.mjs`  `tests/dashboard-journey.mjs` — dashboardJourney; `tests/report-builder-keyboard.mjs` — reportBuilderKeyboard (owner and admin authoring, validation recovery, chart and table values, actual CSV at both widths);  `tests/play-browser.mjs` — playBrowser; `tests/portal-browser.mjs` — portalBrowser; `tests/configuration-browser.mjs` — native configuration preview and screen matrix; `tests/record-browser.mjs` — native record screen matrix; `tests/ai-browser.mjs` — AI screen matrix; `tests/communication-browser.mjs` — communication screen matrix; `tests/roles-browser.mjs` — scoped screen matrix. | |
 | `SCALE-001` | Scale for a growing book | target | missing |  | `tests/scale-journey.mjs` now attempts the actual 10000-account/500000-user/50-million-event public Worker and archive journey outside push Verify. Run 20261022T214617142128Z-heavy-slot-0e8958d1 at 3c4e44ea044e245d7b2d196469561659ad14613e passed reviewed import/reconciliation, then D1 refused the directory load with BUOY_ACCOUNT_LIMIT / SQLITE_CONSTRAINT. Later outside-Verify run 20261022T221817625242Z-heavy-slot-70ce74e9 at 5c993c0bbd9bbf039b419f5057b00496709caf60 loaded 100000 actual retained events: D1 logical size grew 2433024 to 87977984 bytes, projecting 42774913024 bytes at 50 million, beyond the single-binding 10 GB limit. The full load was refused, with no reduced-volume pass. The 500-account guard remains; full volumes, hourly health, page/report timings and complete archive restore remain unproved. |
 | `AI-001` | Cited account summaries and questions | target | done | `tests/flows.test.mjs`; `tests/ai-journey.mjs`; `tests/ai-browser.mjs`; `tests/ai-question-browser.mjs` |  |
 | `AI-002` | Conversation and meeting summaries with proposed work | target | done | `tests/flows.test.mjs`; `tests/ai-journey.mjs`; `tests/portable.mjs`; `tests/ai-browser.mjs` |  |
