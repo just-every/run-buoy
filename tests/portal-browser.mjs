@@ -66,6 +66,7 @@ export async function portalBrowser(browser,evidence){
    await edit.getByLabel('Plan name',{exact:true}).fill('Champion updated rollout')
    await edit.locator('input[name="title:statement"]').fill('Confirm the revised business outcome')
    await edit.locator('input[name="due:statement"]').fill('2027-03-02')
+   await scan(page,'PORTAL-001 customer edit draft '+width);await page.screenshot({path:join(evidence,'portal-edit-draft-'+width+'.png'),fullPage:true})
    await submit(page,edit.getByRole('button',{name:'Save plan changes',exact:true}))
    assert.equal(new URL(page.url()).pathname,'/portal');assert.equal(await page.getByRole('status').count(),1)
    const changed=(await f.plans()).plans[0];assert.equal(changed.name,'Champion updated rollout');assert.equal(changed.objectives[1].title,'Confirm the revised business outcome');assert.equal(changed.objectives[1].status,'awaiting-customer-confirmation')

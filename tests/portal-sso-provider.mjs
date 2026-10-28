@@ -3,6 +3,12 @@ import assert from 'node:assert/strict'
 import {generateKeyPairSync,createPublicKey,createHash,sign,verify,randomBytes} from 'node:crypto'
 
 const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url')
+async function bounded(label,operation){
+ let timer
+ try{return await Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('SSO public door timed out: '+label)),30000)})])}
+ finally{clearTimeout(timer)}
+}
+const request=(app,path,options)=>bounded(path.split('?')[0],app.request(path,options))
 export function portalIdentityEdge(instant){
  const issuer='https://portal-idp.example.test',clientId='synthetic-buoy-portal-client',kid='synthetic-buoy-portal-signing'
  const {privateKey,publicKey}=generateKeyPairSync('ec',{namedCurve:'prime256v1'}),jwk={...publicKey.export({format:'jwk'}),kid,alg:'ES256',use:'sig'}
@@ -32,19 +38,22 @@ export function portalIdentityEdge(instant){
    assert.fail('Unexpected identity provider path: '+url.pathname)
   },
   async link(app){
+   console.log('PORTAL-001 SSO: proving owner relink authority')
    await ownerProof(app,'providers:relink')
-   let response=await app.request('/auth/dependencies/relink',{cookie:app.cookie,method:'POST',body:{issuer,interface:'oidc-provider@1'}});assert.ok(response.ok,await response.clone().text())
-   response=await app.request('/.well-known/rer-link/jwks/oidc-provider@1');assert.equal(response.status,200);clientKeys=(await response.json()).keys
-   response=await app.request('/.well-known/rer-link/callback',{method:'POST',body:{issuer,interface:'oidc-provider@1',code:'synthetic-buoy-portal-link-code'}});assert.ok(response.ok,await response.clone().text());assert.equal((await response.json()).linked,true)
-   response=await app.request('/auth/settings/identity',{cookie:app.cookie,method:'POST',body:{idpSignIn:true}});assert.equal(response.status,200,await response.clone().text())
+   console.log('PORTAL-001 SSO: requesting an owner-approved link')
+   let response=await request(app,'/auth/dependencies/relink',{cookie:app.cookie,method:'POST',body:{issuer,interface:'oidc-provider@1'}});assert.ok(response.ok,await response.clone().text())
+   response=await request(app,'/.well-known/rer-link/jwks/oidc-provider@1');assert.equal(response.status,200);clientKeys=(await response.json()).keys
+   console.log('PORTAL-001 SSO: redeeming the provider callback')
+   response=await request(app,'/.well-known/rer-link/callback',{method:'POST',body:{issuer,interface:'oidc-provider@1',code:'synthetic-buoy-portal-link-code'}});assert.ok(response.ok,await response.clone().text());assert.equal((await response.json()).linked,true)
+   response=await request(app,'/auth/settings/identity',{cookie:app.cookie,method:'POST',body:{idpSignIn:true}});assert.equal(response.status,200,await response.clone().text())
   },
   async signIn(app,email,subject){
-   const start=await app.request('/auth/oidc/auth/start',{method:'POST',body:{returnTo:'/portal'}});assert.equal(start.status,303,await start.clone().text())
+   const start=await request(app,'/auth/oidc/auth/start',{method:'POST',body:{returnTo:'/portal'}});assert.equal(start.status,303,await start.clone().text())
    const authorization=new URL(start.headers.get('location')),code='synthetic-buoy-'+randomBytes(16).toString('hex')
    assert.equal(authorization.origin,issuer);assert.equal(authorization.searchParams.get('client_id'),clientId)
    codes.set(code,{email,subject,nonce:authorization.searchParams.get('nonce'),challenge:authorization.searchParams.get('code_challenge'),redirectUri:authorization.searchParams.get('redirect_uri')})
    const binding=cookies(start),path='/auth/oidc/auth/callback?'+new URLSearchParams({code,state:authorization.searchParams.get('state'),iss:issuer})
-   return app.request(path,{cookie:binding})
+   return request(app,path,{cookie:binding})
   },
   get tokenCalls(){return tokenCalls}
  }
@@ -52,7 +61,7 @@ export function portalIdentityEdge(instant){
 }
 export const cookies=response=>response.headers.getSetCookie().map(value=>value.split(';')[0]).join('; ')
 export async function ownerProof(app,action){
- const response=await app.request('/auth/step-up',{cookie:app.cookie,method:'POST',body:{action}});assert.equal(response.status,202)
+ const response=await request(app,'/auth/step-up',{cookie:app.cookie,method:'POST',body:{action}});assert.equal(response.status,202)
  const message=app.mails.findLast(value=>value.to.includes(['owner','example.test'].join('@'))),link=new URL(message.html.match(/href="([^"]*\/auth\/confirm\?token=[^"]+)"/)[1].replaceAll('&amp;','&'))
- const confirmed=await app.request('/auth/confirm',{cookie:app.cookie,method:'POST',body:{token:link.searchParams.get('token')}});assert.equal(confirmed.status,303)
+ const confirmed=await request(app,'/auth/confirm',{cookie:app.cookie,method:'POST',body:{token:link.searchParams.get('token')}});assert.equal(confirmed.status,303)
 }

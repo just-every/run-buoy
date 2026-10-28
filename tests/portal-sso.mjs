@@ -4,9 +4,12 @@ import {portalIdentityEdge,cookies} from './portal-sso-provider.mjs'
 
 export async function portalSsoJourney(){
  const instant=Date.UTC(2026,9,28,12),edge=portalIdentityEdge(instant)
+ console.log('PORTAL-001 SSO: starting native customer fixture')
  const f=await planFixture({clock:instant,bindings:edge.bindings,providerFetch:edge.fetch})
  try{
+  console.log('PORTAL-001 SSO: linking the identity provider')
   await edge.link(f.app)
+  console.log('PORTAL-001 SSO: provider linked; exercising identities')
   const email=['synthetic-buoy-sso-customer','example.test'].join('@'),otherEmail=['synthetic-buoy-sso-other','example.test'].join('@')
   const plan=await f.save()
   await f.api('/portal-invitations','POST',{email,displayName:'Company SSO champion'})
