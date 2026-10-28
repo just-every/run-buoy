@@ -656,7 +656,7 @@
       "executable": false
     },
     "migrations/core/0078_buoy_renewal_readiness.sql": {
-      "sha256": "36a99179a3a20899a9ad8a69e9b50a2665ec9772b2071763b512c5ccf9dfc6a0",
+      "sha256": "623e076dc0ac8f5b585b493981159db7fbd1a6fd4ebda8094bca926d9c6a2722",
       "executable": false
     },
     "ONBOARDING.md": {

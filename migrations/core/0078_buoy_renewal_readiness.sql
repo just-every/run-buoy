@@ -17,6 +17,16 @@ CREATE TABLE buoy_renewal_timelines (
  FOREIGN KEY(customer_id,account_id) REFERENCES buoy_customer_memberships(person_id,account_id) ON DELETE CASCADE
 );
 CREATE INDEX buoy_renewal_timelines_record ON buoy_renewal_timelines(renewal_id,prepared_at);
+ALTER TABLE buoy_agent_ledger RENAME TO buoy_agent_ledger_before_readiness;
+CREATE TABLE buoy_agent_ledger (
+ id TEXT PRIMARY KEY, request_id TEXT NOT NULL, token_id TEXT NOT NULL,
+ command TEXT NOT NULL CHECK(command IN ('renewals.list','playbook.prepare','renewal.prepare','renewal.readiness','renewal.timeline.prepare','experiment.prepare','experiment.report','commands.read','commands.request','other.route')),
+ status TEXT NOT NULL CHECK(status IN ('attempt','succeeded','refused')), reason TEXT NOT NULL,
+ spent_minor INTEGER NOT NULL DEFAULT 0 CHECK(spent_minor>=0), occurred_at TEXT NOT NULL
+);
+INSERT INTO buoy_agent_ledger SELECT * FROM buoy_agent_ledger_before_readiness;
+DROP TABLE buoy_agent_ledger_before_readiness;
+CREATE INDEX buoy_agent_ledger_time ON buoy_agent_ledger(occurred_at DESC,id);
 -- A fresh installation opens its renewal workspace at the readiness lead time.
 UPDATE buoy_renewal_settings SET document=json_set(document,'$.leadDays',120)
  WHERE revision='initial' AND json_extract(document,'$.leadDays')=90;
