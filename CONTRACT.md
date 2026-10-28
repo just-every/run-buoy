@@ -1445,13 +1445,13 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 
 ## Status
 
-Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026).
+Judged from the code and tests at commit `fc06dcaa07b1b557eddf6ff321ecd0f9f5b59ec5` (28 October 2026).
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 3 | 5 | 0 | 8 |
+| Published | 4 | 4 | 0 | 8 |
 | Target and push further | 17 | 42 | 47 | 106 |
-| All | 20 | 47 | 47 | 114 |
+| All | 21 | 46 | 47 | 114 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -1459,7 +1459,7 @@ Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c
 | `DATA-001` | Provenanced, validated observations | published | done | `src/buoy/health.ts`; `src/buoy/settings.ts`; `src/buoy/currencies.ts`; `src/buoy/imports/validation.ts`; `migrations/core/0018_buoy_settings.sql`; `src/buoy/ui/account.ts`; `tests/flows.test.mjs` |  |
 | `APPROVAL-001` | Revision-bound human approval | published | done | `src/buoy/work.ts`; `tests/flows.test.mjs` |  |
 | `IMPORT-001` | Reviewed move-in custody | published | partial | `src/buoy/imports/door.ts`; `src/buoy/imports/index.ts`; `src/buoy/imports/targets.ts`; `public/import-door.js`; `tests/flows.test.mjs`; `tests/import-door-journey.mjs`; `tests/portable.mjs` | Not asserted by the cited baseline evidence: Every anonymous/member/cross-origin mutation and disabled Business grant is asserted in the complete actor matrix; Native replay is refused after erasure for every named source-custody path. Asserted: Planning leaves native records unchanged; Wrong reviewed fingerprint is refused; Apply reaches completed state; Replay returns original job; Reconciliation reads present native record; Undo removes imported native account; Native edit refuses undo; Dependent work refuses undo; Revoked-session mutation is refused; Owner undo works with Business disabled; Revoked Business key stays refused; Explicit disable stays disabled on later owner path; Revoked keys remain retained; Re-enable does not revive revoked key; Only provisioning opt-in opens initially across both claim variants; Erased import source name is absent from retained job; Erased import source invoice reference is absent from retained job; Reconciliation reports withdrawal; Same target cannot be recreated; Journal inventories door custody. |
-| `ERASE-001` | Owner erasure with tombstones | published | partial | `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs`; `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs` | Not asserted by the cited baseline evidence: Full state, import journal and history contain nothing naming the erased account; a subset/job read is insufficient. Asserted: Member erasure is refused; Native account is removed; Dependent proposal is removed; Retained import job omits account name and invoice; Same target cannot be recreated. |
+| `ERASE-001` | Owner erasure with tombstones | published | done | `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs` — IMPORT-001 ERASE-001 door undo preserves dependent work and owner erasure withdraws door custody; `tests/import-door-journey.mjs` — accountErasureJourney (complete state, job, journal, history, status and paginated audit reads; unrelated records and opaque evidence; refused member erasure and confirmation; tombstone and inert replay); `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs` |  |
 | `RESTORE-001` | Portable installation archives | published | partial | `scripts/installer/local.mjs`; `tests/portable.mjs` | SCALE-001 archive volumes are unproven; usable installations remain capped at 500 accounts. |
 | `SITE-001` | Public run site | published | partial | `src/site/run.json`; `docs/`; `tests/site.mjs` | Not asserted by the cited baseline evidence: Every owner-guide body renders its content; linked-resource HTTP 200 checks do not assert rendered guide content. Asserted: Homepage reaches run instructions; Homepage reaches docs navigation; Guides are traversed as linked resources; Unknown path returns 404. |
 | `STYLE-001` | One theme at every width | published | done | `public/rer-theme.css`; `public/fonts/fonts.css`; `public/brand/mark.svg`; `public/favicon-32.svg`; `src/site/`; `public/buoy.css`; `public/buoy-runway.css`; `src/buoy/ui/`; `tests/style.mjs` |  |
