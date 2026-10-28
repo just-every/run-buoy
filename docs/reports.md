@@ -1,6 +1,6 @@
 # Saved reports and dashboards
 
-Open **Reports** from Buoy's navigation. An owner or administrator can build an
+Open **Reports** from Buoy's navigation. An owner, administrator or explicitly assigned report author can build an
 account report, choose filters, group by a current field, and select sum,
 average or count. Add an optional calculated column using the same plain formula
 language as account fields. The report displays its formula, each matching
@@ -28,7 +28,7 @@ dashboard and its reports. Sharing a definition grants no account or commercial
 permission. Assigned profiles receive only their current permitted account
 fields; a report requiring another field is unavailable to that profile. Current
 account-book transfers take effect on the next read. Read-only viewers cannot
-edit either definition through the UI or API. Owner/admin writes require the
+edit either definition through the UI or API. Definition writes require the
 current revision and an authenticated same-origin request and leave an audit row.
 
 Report and dashboard shares are installation-local authority excluded from
@@ -36,11 +36,29 @@ backups, alongside role assignments. A fresh owner can read restored definitions
 and explicitly share them again. An identity-specific saved filter follows the
 account's erasure custody; a general report reevaluates the remaining accounts.
 
+Owners and administrators assign report authors through **Roles** in Settings.
+Choose **Author reports and dashboards** in a custom profile, together with
+account-read and report-export permissions. Existing default staff profiles gain
+no author permission automatically. Authors create private definitions and edit
+only definitions they created; native owners and administrators can maintain all
+definitions. A role share grants view access, including when the viewer is another
+author, and never grants edit access. Author permission does not grant account
+edits, configuration access or any delivery authority.
+
+Assigned authors use the current native account field allowlist, current record
+scope and current commercial permissions. When exact commercial rights are absent,
+account counts and health-band reports remain available while monetary fields,
+filters and formulas are unavailable. Changing book ownership or field rights
+affects the next read and export. Withdrawing author permission also withdraws
+access to private authored definitions; an explicit current role share may still
+grant read access. Restored role assignments and report shares remain inactive.
+
 This is a partial implementation of REPORT-002. Other object kinds, the complete
 prebuilt dashboard catalog beyond these two starters, historical health trends,
-engagement and onboarding measures, delegated authorship and scheduled email or
+engagement and onboarding measures, delegated access to fields outside the native
+account allowlist and scheduled email or
 Slack delivery remain required. Creating a report never sends anything. RL-105
-requires explicitly assigned author rights under ROLE-001; only owners and
-administrators can publish through today's implemented door. Explicit role
+requires explicitly assigned author rights under ROLE-001; assigned authors can
+now create native account reports within their current account and field scope. Explicit role
 sharing never broadens the viewer's existing field or record authority. Delivery
 stays disabled until its own delivery clause and approved destinations ship.
