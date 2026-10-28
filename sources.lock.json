@@ -168,7 +168,7 @@
       "executable": false
     },
     "docs/contract/domain-rules.md": {
-      "sha256": "e4f39d803092f4fb9b823f0a095338ba61f6ad85220890a724aea10390db8f9f",
+      "sha256": "6ae7199d2913e6790524f68df4c595e4373d6e894c11b57eeece67e72e368b8b",
       "executable": false
     },
     "docs/contract/DONE-AUDIT.md": {
@@ -268,7 +268,7 @@
       "executable": false
     },
     "docs/success-plans.md": {
-      "sha256": "f55322ecc2e71330525b045ca51ef51ca8ffd295d6c6438433f13e1a68ed1b57",
+      "sha256": "3c2f499a982e8c9362f7b02854f8a5add80b6a82abc2cabc0badf5f84d80f8dd",
       "executable": false
     },
     "docs/usage.md": {
@@ -1280,7 +1280,7 @@
       "executable": false
     },
     "src/buoy/api.ts": {
-      "sha256": "834f72de6cc4edc6a535960bd0314203598360f24752c0f7e9b3862dc7717438",
+      "sha256": "b88d0cce1f9ab614f5dae8b0cb230a8dd8083c7532be0a1fba1d6f99ab9a785f",
       "executable": false
     },
     "src/buoy/audit-records.ts": {
@@ -1568,7 +1568,7 @@
       "executable": false
     },
     "src/buoy/privacy.ts": {
-      "sha256": "7e0de7b7c6cff268280a47da4299b574f80d980c20c693ac44efdb44ee00c10f",
+      "sha256": "31bd068324b4977e4b4e67c82114fe6df8415d7302c3f38634923d620b62f5d4",
       "executable": false
     },
     "src/buoy/privacy/discovery.ts": {
@@ -4260,7 +4260,7 @@
       "executable": false
     },
     "tests/plan-browser.mjs": {
-      "sha256": "021a70bfc6956d31e8f3aee83400cd0e36a4026f6319467fb60fdf5e593684a5",
+      "sha256": "fa1d56938ed7c765a6cc20a0166a73bedbc980955a5fddb70c89a2fec1331139",
       "executable": false
     },
     "tests/plan-delegated-journey.mjs": {
@@ -4276,7 +4276,7 @@
       "executable": false
     },
     "tests/plan-outcome-journey.mjs": {
-      "sha256": "fe5fff3f21c4d3c816a3e413bc8ef9bcdc4629f9336c48db824f6bcb14585316",
+      "sha256": "8e357b0343622709ab7ac75923ca0806b05ac3adcedb70eab447440827890f9b",
       "executable": false
     },
     "tests/play-browser.mjs": {
@@ -4292,15 +4292,15 @@
       "executable": false
     },
     "tests/portable.mjs": {
-      "sha256": "88c20f257929f90db7c5aa1db4ddeced4e0e544c3f3a9dbb425a9e712a39ff64",
+      "sha256": "b2f46a67d33b2db9331d0ae448218c1964f9437c2c1c5aecd55eaec62d5e3a29",
       "executable": false
     },
     "tests/portal-browser.mjs": {
-      "sha256": "7d1dc4bc93475cf98bc71509777e3e368efc525e7beca3b9db88edebdd7ec7b0",
+      "sha256": "c483f5128abf3b979aee1c864e0f12bf6e20de1eea6a7495b468d228857b5628",
       "executable": false
     },
     "tests/portal-journey.mjs": {
-      "sha256": "f00af13569768e3ffbe2b3e650e5db187533050ac515354700697579835a91ac",
+      "sha256": "bd83ba44a9432e392bf0aab67b4714e431edcb63f164093e518b17c6382fc98f",
       "executable": false
     },
     "tests/privacy-browser.mjs": {
