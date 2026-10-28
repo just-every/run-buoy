@@ -4216,7 +4216,7 @@
       "executable": false
     },
     "tests/flows.test.mjs": {
-      "sha256": "b21dbf4a2025757d01ba97fc7d303b197328b0cbc30ff6fc93dcfd8583749113",
+      "sha256": "93ad1a8635508e956590e5f5ed9baaa49ce87d21ddf2808ab5f35ee19e767688",
       "executable": false
     },
     "tests/forecast-journey.mjs": {
@@ -4245,6 +4245,14 @@
     },
     "tests/hierarchy-journey.mjs": {
       "sha256": "296954086ce286b78db6425c283eac3850e1ccecda2072d999c07eccbf8142c7",
+      "executable": false
+    },
+    "tests/http-journey.mjs": {
+      "sha256": "91bdb807ede92a95ebb3bcbcafd02213c246bc660b35a8a5c46cf0b247733007",
+      "executable": false
+    },
+    "tests/http-route-matrix.mjs": {
+      "sha256": "3598aca79028d7f09c86b76193851bb9a45aff127e56f6c11ba93fb964c47108",
       "executable": false
     },
     "tests/import-door-client.mjs": {
@@ -4280,7 +4288,7 @@
       "executable": false
     },
     "tests/mail-runtime.mjs": {
-      "sha256": "08133d99d147d9e668199508b9ad2a48fb5656e7bdd284ef06a332f7129df6ee",
+      "sha256": "26f618c1bee30177bc7003aced7e5c33adeef34c902720d8d9b11cda9c1d226e",
       "executable": false
     },
     "tests/migrate-journey.mjs": {

@@ -28,6 +28,7 @@ import { outcomeJourney } from './outcome-journey.mjs'
 import { segmentJourney } from './segment-journey.mjs'
 import { teamJourney } from './team-journey.mjs'
 import { startWorker } from './worker.mjs'
+import { bearerTransportJourney } from './http-journey.mjs'
 
 const today=new Date().toISOString().slice(0,10)
 const account=(id='harbour')=>({id,name:'Harbour Software',renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Signed order form section 4, approved by customer',billing:{observedAt:today,reference:'Nectar invoice INV-1042',currency:'AUD',totalMinor:120000,creditsMinor:10000,allocatedMinor:20000,dueDate:'2026-01-01'},support:{observedAt:today,reference:'Support case CS-42',openTickets:3,urgentTickets:1}})
@@ -77,6 +78,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok((await json(await call('/state'))).tasks[0].completedAt)
   })
   await t.test('agents prepare decisions, cannot approve; revoked tokens stop',async()=>{
+   await bearerTransportJourney()
    await json(await call('/agents'))
    await json(await call('/agents/settings','PUT',{disabled:false}))
    token=await json(await call('/agent-tokens','POST',{label:'Renewal assistant'}),201)

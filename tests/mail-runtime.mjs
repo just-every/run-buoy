@@ -74,7 +74,8 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   for(const file of (persistenceDirectory?[]:await readdir(join(root,'migrations/core'))).filter(file=>file.endsWith('.sql')).sort()) {
    for(const sql of splitSql(await readFile(join(root,'migrations/core',file),'utf8'))) await db.prepare(sql).run()
   }
-  const request=async(path,{method='GET',body,cookie,token,headers={}}={})=>{const response=await mf.dispatchFetch(origin+path,{method,redirect:'manual',headers:{origin,...(clock===undefined?{}:{'x-buoy-test-time':String(clockValue())}),...(body===undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});responses.add(response);return response}
+  // A null override omits a header, allowing real server requests without Origin.
+  const request=async(path,{method='GET',body,cookie,token,headers={}}={})=>{const response=await mf.dispatchFetch(origin+path,{method,redirect:'manual',headers:Object.fromEntries(Object.entries({origin,...(clock===undefined?{}:{'x-buoy-test-time':String(clockValue())}),...(body===undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers}).filter(([,value])=>value!==null)),...(body===undefined?{}:{body:JSON.stringify(body)})});responses.add(response);return response}
   const boot=await request('/auth/bootstrap',{method:'POST',body:{token:vars.SETUP_TOKEN,displayName:'Harbour CS owner'}})
   assert.equal(boot.status,303,await boot.clone().text())
   const cookie=boot.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
