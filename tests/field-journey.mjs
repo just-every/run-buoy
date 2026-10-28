@@ -52,13 +52,26 @@ export async function fieldJourney({call,json,request,cookie,member,account,sign
  const natives=(await json(await call('/state'))).accounts,noticeTotal=natives.reduce((sum,a)=>sum+a.noticeDays,0)
  assert.equal(a.values.rollup,noticeTotal);assert.equal(a.values.average,noticeTotal/natives.length);assert.equal(a.values.count,natives.length)
  assert.match(a.explanations.rollup,/Portfolio sum\(noticeDays\)/)
- const stale=a.revision
- await save('field-0',{...values(0),seats_used:30},'License meter export row 88')
+ const stale=a.revision,actor=`person:${(await json(await call('/state'))).operator.id}`,source='License meter export row 88'
+ await save('field-0',{...values(0),seats_used:30},source)
  state=await read();a=state.accounts.find(a=>a.id==='field-0');assert.equal(a.values.utilization,.75);assert.equal(a.values.conditional,75)
- const h=state.history.filter(h=>h.accountId==='field-0')
- for(const key of ['seats_used','utilization','conditional']){const entry=h.find(h=>h.key===key&&h.source==='License meter export row 88');assert.ok(entry);assert.match(entry.actor,/^person:/);assert.ok(Date.parse(entry.recordedAt))}
- assert.deepEqual([h.find(h=>h.key==='seats_used'&&h.source==='License meter export row 88').oldValue,h.find(h=>h.key==='seats_used'&&h.source==='License meter export row 88').newValue],[20,30])
+ const history=state.history.filter(h=>h.accountId==='field-0'&&h.source===source).sort((a,b)=>a.key.localeCompare(b.key))
+ assert.deepEqual(history.map(({accountId,key,oldValue,newValue,actor,source})=>({accountId,key,oldValue,newValue,actor,source})),[
+  {accountId:'field-0',key:'conditional',oldValue:50,newValue:75,actor,source},
+  {accountId:'field-0',key:'seats_used',oldValue:20,newValue:30,actor,source},
+  {accountId:'field-0',key:'utilization',oldValue:.5,newValue:.75,actor,source},
+ ],'ACCOUNT-004 persisted history reconciles every input and dependent formula change exactly once')
+ for(const entry of history){
+  assert.match(entry.actor,/^person:/)
+  assert.match(entry.recordedAt,/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+  const recorded=Date.parse(entry.recordedAt)
+  assert.ok(Number.isFinite(recorded),'ACCOUNT-004 history records a valid UTC instant')
+  assert.equal(new Date(recorded).toISOString(),entry.recordedAt)
+ }
+ assert.equal(new Set(history.map(entry=>entry.recordedAt)).size,1,'ACCOUNT-004 one saved change records one instant')
+ assert.deepEqual(await read(),state,'ACCOUNT-004 a fresh public read retains the complete saved history')
  assert.equal((await call('/accounts/field-0/fields','PUT',{revision:stale,values:values(0),source:'stale'})).status,409)
+ assert.deepEqual(await read(),state,'ACCOUNT-004 a stale write changes no values, revisions or history')
  for(const invalid of [{...values(0),plan:'Unknown'},{...values(0),start:'2026-02-30'},{...values(0),active:'true'},{...values(0),contract:{currency:'ABC',amountMinor:4}},{...values(0),utilization:.8},{...values(0),modules:['Billing','Billing']},{...values(0),seats_used:'20'},{...values(0),contract:{currency:'USD',amountMinor:-1}}]){
   const current=(await read()).accounts.find(a=>a.id==='field-0')
   assert.equal((await call('/accounts/field-0/fields','PUT',{revision:current.revision,values:invalid,source:'invalid'})).status,400)
@@ -86,8 +99,9 @@ export async function fieldJourney({call,json,request,cookie,member,account,sign
  a=(await read()).accounts.find(a=>a.id==='field-0');assert.equal(a.values.native,18)
  assert.ok((await read()).history.some(h=>h.accountId==='field-0'&&h.key==='native'&&h.newValue===18&&h.source==='Calculated from current account inputs'))
  const memberRead=await json(await call('/fields','GET',undefined,{cookie:member}));assert.deepEqual(memberRead,await read())
- const adminResponse=await request('/auth/invite',{method:'POST',cookie,body:{email:'fields-admin@example.test',displayName:'Field admin',role:'admin'}});assert.equal(adminResponse.status,202)
- const admin=await signIn('fields-admin@example.test')
+ const adminAddress=['synthetic-buoy-2','example.test'].join('@')
+ const adminResponse=await request('/auth/invite',{method:'POST',cookie,body:{email:adminAddress,displayName:'Field admin',role:'admin'}});assert.equal(adminResponse.status,202)
+ const admin=await signIn(adminAddress)
  assert.equal((await call('/fields','POST',{key:'admin_note',label:'Admin note',type:'text'},{cookie:admin})).status,201)
  assert.equal((await call('/fields/preview','POST',{key:'admin_preview',label:'Admin calculation',type:'formula',formula:'noticeDays + 1'},{cookie:admin})).status,200)
  assert.equal((await request('/app/fields',{cookie})).status,200)
