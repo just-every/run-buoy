@@ -8,6 +8,7 @@ import {inputImage} from '../scorecards/inputs'
 import {recalculateScorecards} from '../scorecards'
 import {LIVE,FROM,portalGrant as grant} from './authority'
 import {portalFiles,portalFilesApi} from './files'
+import {updateSharedPlan} from './edits'
 
 // Every read and atomic write uses the same live authority predicate.
 export async function portalState(db:D1Database,actor:Actor,grantId:string){
@@ -63,6 +64,9 @@ portalApi.get('/api/buoy/portal/:id',async c=>c.json(await portalState(c.env.DB,
 portalApi.post('/api/buoy/portal/:id/action',async c=>{
  const actor=c.get('actor'),db=c.env.DB,{row,fence}=await grant(db,actor,c.req.param('id')),input=await jsonBody(c.req.raw)
  insist(input.revision===row.revision,'Access changed. Reload before continuing.',409)
+ if(input.action==='update-plan'){
+  const result=await updateSharedPlan(db,actor,{row,fence},input);await recalculateScorecards(db);return c.json(result,201)
+ }
  const stamp=now(),eventId=id(),statements:D1PreparedStatement[]=[fence()]
  let kind:string,body:string
  if(input.action==='confirm'){

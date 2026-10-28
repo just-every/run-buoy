@@ -1583,12 +1583,16 @@
       "sha256": "5f6ae2c0a111a1fd3847487cba7362887d4ded396c1c19a5c79c61081a1e2f39",
       "executable": false
     },
+    "src/buoy/portal/edits.ts": {
+      "sha256": "4a45e14c34bb5568b4b1b6f5338d069f48b3e0d4aec500038dd0e234d4511c48",
+      "executable": false
+    },
     "src/buoy/portal/files.ts": {
       "sha256": "044c6e5da2968762f0d7c418d365e41abd5799f1204f8540c331320e54be0abe",
       "executable": false
     },
     "src/buoy/portal/index.ts": {
-      "sha256": "ec3f28c957d79e8f059299e97b6b931b12f77cc719d9d75dd76ea55faabe65e3",
+      "sha256": "d1ec700ac8466d3d5721e89eeb60cc802277f3eab5a457413135c8fa180f9b93",
       "executable": false
     },
     "src/buoy/privacy.ts": {
@@ -2008,7 +2012,7 @@
       "executable": false
     },
     "src/buoy/ui/portal.ts": {
-      "sha256": "b04dab84d51e76b9890f2869874c62dcfaee85bd57183971f7bd9649313a4040",
+      "sha256": "28ea785d6557576b80c6d08a9179b9214825c01e9633cf9763ccce1c3697c1ec",
       "executable": false
     },
     "src/buoy/ui/privacy.ts": {
@@ -4340,7 +4344,7 @@
       "executable": false
     },
     "tests/portal-browser.mjs": {
-      "sha256": "a821ab2bf4395baf858beeed357d9b398062b79cd45cf83d899de8e8d81293e7",
+      "sha256": "642280847fa63cb3e95d00280c414e671eaaf8f9a12133eb76a97f46087959bf",
       "executable": false
     },
     "tests/portal-journey.mjs": {

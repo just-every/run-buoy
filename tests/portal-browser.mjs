@@ -22,7 +22,7 @@ export async function portalBrowser(browser,evidence){
    await page.locator('#plan-sharing-'+f.plan.id+' > summary').click();await scan(page,'PLAN-001 owner sharing '+width);await page.locator('#success-plans').screenshot({path:join(evidence,'portal-owner-sharing-'+width+'.png')})
    await context.clearCookies();await context.addCookies(cookies(recipient.cookie))
    await page.goto(app.origin+'/portal',{waitUntil:'networkidle'})
-   assert.equal(await page.getByRole('link',{name:f.plan.name,exact:true}).count(),1)
+   assert.equal(await page.getByRole('link',{name:'Customer success draft',exact:true}).count(),1)
    await scan(page,'PORTAL-001 customer home '+width);await page.screenshot({path:join(evidence,'portal-home-'+width+'.png'),fullPage:true})
    await page.goto(app.origin+'/portal/'+current.id,{waitUntil:'networkidle'})
    if(width===1440){assert.match(await page.locator('main').innerText(),/Achieved from data/);assert.match(await page.locator('main').innerText(),/Awaiting your confirmation/);assert.equal(await page.locator('nav').innerText(),'Your plans')}
