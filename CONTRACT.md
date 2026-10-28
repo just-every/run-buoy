@@ -1176,9 +1176,9 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 | `buoy.agent.data_trust_upkeep` | Data trust upkeep | AGENT-007 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |
 | `buoy.agent.plain_language_configuration` | Plain-language configuration | AGENT-008 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |
 
-**Resources.** `buoy://accounts/{id}`, `buoy://people/{id}`, `buoy://observations/{id}`, `buoy://tasks/{id}`, `buoy://plans/{id}`, `buoy://playbooks/{id}`, `buoy://runs/{id}`, `buoy://renewals/{id}`, `buoy://reports/{id}`, `buoy://reviews/{id}`, `buoy://surveys/{id}`, `buoy://connectors/{id}` and `buoy://audit/{id}`.
+**Resources.** `buoy://accounts/{id}`, `buoy://people/{id}`, `buoy://observations/{id}`, `buoy://tasks/{id}`, `buoy://plans/{id}`, `buoy://playbooks/{id}`, `buoy://runs/{id}`, `buoy://renewals/{id}`, `buoy://reports/{id}`, `buoy://reviews/{id}`, `buoy://surveys/{id}`, `buoy://connectors/{id}` `buoy://audit/{id}`, `buoy://objects/{id}`, `buoy://object-records/{id}`, `buoy://opportunities/{id}`, `buoy://segments/{id}`, `buoy://scorecards/{id}`, `buoy://signals/{id}`, `buoy://outcomes/{id}`, `buoy://experiments/{id}`, `buoy://journeys/{id}`, `buoy://campaigns/{id}`, `buoy://messages/{id}`, `buoy://meetings/{id}`, `buoy://model-drafts/{id}` and `buoy://role-definitions/{id}`.
 
-**Events.** Account, person, observation, health, signal, task, plan, playbook-run, renewal, report, review and connector changes carry the relevant resource URI; outside receipts distinguish observed provider results from human reports.
+**Events.** `account.changed`, `person.changed`, `observation.received`, `health.changed`, `signal.fired`, `task.changed`, `plan.changed`, `playbook.run.changed`, `renewal.changed`, `report.changed`, `review.changed`, `connector.changed`, `object-record.changed`, `opportunity.changed`, `segment.changed`, `scorecard.published`, `outcome.observed`, `experiment.changed`, `journey.changed`, `campaign.changed`, `message.receipt`, `meeting.changed`, `model-draft.changed` and `role-definition.changed` carry the corresponding resource URI. Message and connector receipts distinguish observed provider results from human reports.
 
 **Prompts.** Resolve account risk (AGENT-001); compare an intervention (AGENT-002); prepare a renewal (AGENT-003); find portfolio causes (AGENT-004); run scaled success (AGENT-005); follow onboarding (AGENT-006); repair data trust (AGENT-007); configure and back-test (AGENT-008).
 
@@ -1257,7 +1257,7 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 **Requirement.** The customer-success resource set includes the records behind health, commercial facts and observed outcomes.
 
 **Acceptance.**
-1. Account, person, observation, task, plan, playbook/run, renewal, report, review, survey, connector and audit templates match this section.
+1. Every resource template listed in this section is discoverable, including custom-object records, opportunities, segments, scorecards, signals, observational outcomes, experiments, outreach, meetings, model drafts and role definitions.
 2. A sourced health or revenue read links to the exact retained observation; missing inputs and unresolved monetary variance remain explicit.
 
 #### SURFACE-008 — Outcome events and specialist handoffs

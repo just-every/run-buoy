@@ -1511,7 +1511,7 @@ Agent surface · target · **missing** · From new · Cites BASE-AGENT-003
 **Requirement.** The customer-success resource set includes the records behind health, commercial facts and observed outcomes.
 
 **Acceptance.**
-1. Account, person, observation, task, plan, playbook/run, renewal, report, review, survey, connector and audit templates match this section.
+1. Every resource template listed in this section is discoverable, including custom-object records, opportunities, segments, scorecards, signals, observational outcomes, experiments, outreach, meetings, model drafts and role definitions.
 2. A sourced health or revenue read links to the exact retained observation; missing inputs and unresolved monetary variance remain explicit.
 
 **Evidence.** None.
