@@ -65,7 +65,9 @@ export async function saveReport(db:D1Database,actor:Actor,input:Record<string,u
  insist(!prior||mayEdit(source.ctx,actor,prior.created_by),'Only the author or an administrator can edit this report.',403)
  insist(!spec.segmentId||source.segments.some(s=>s.id===spec.segmentId),'Choose an existing segment.')
  insist(input.id===undefined?!prior&&input.revision===undefined:prior&&prior.revision===input.revision,'Report changed. Reload before saving.',409)
- const refs=source.rows.filter(r=>spec.rules.conditions.some(c=>['id','name'].includes(c.field)&&c.value===r.values[c.field])).map(r=>r.id)
+ // Custody references retain identity filters even after the author loses a
+ // record from their book. This internal lookup grants no read authority.
+ const refs=evaluated(source.source.value,now().slice(0,10)).filter(r=>spec.rules.conditions.some(c=>['id','name'].includes(c.field)&&c.value===r.values[c.field])).map(r=>r.account.id)
  await db.batch([roleFence(db,actor,source.ctx.access),scopeFence(db,source.ctx.scope),guard(db,'(SELECT revision FROM buoy_reports WHERE id=?) IS ?',key,prior?.revision??null),guard(db,`(${source.source.sql})=?`,source.source.raw),stmt(db,'INSERT INTO buoy_reports VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document,revision=excluded.revision',key,JSON.stringify({...spec,sharedRoles:[]}),id(),actor.id,now()),stmt(db,'DELETE FROM buoy_report_shares WHERE report_id=?',key),...spec.sharedRoles.map(role=>stmt(db,'INSERT INTO buoy_report_shares VALUES(?,?)',key,role)),stmt(db,'DELETE FROM buoy_report_accounts WHERE report_id=?',key),...refs.map(a=>stmt(db,'INSERT INTO buoy_report_accounts VALUES(?,?)',key,a)),...(effects?effects(key):[]),auditRecord(db,actor,'report.saved','report:'+key),stmt(db,'DELETE FROM buoy_assertions')])
  return {id:key}
 }

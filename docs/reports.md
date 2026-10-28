@@ -51,7 +51,9 @@ account counts and health-band reports remain available while monetary fields,
 filters and formulas are unavailable. Changing book ownership or field rights
 affects the next read and export. Withdrawing author permission also withdraws
 access to private authored definitions; an explicit current role share may still
-grant read access. Restored role assignments and report shares remain inactive.
+grant read access. An identity filter retains its erasure linkage after an account
+leaves the author’s book, including after a later definition edit. Restored role
+assignments and report shares remain inactive.
 
 This is a partial implementation of REPORT-002. Other object kinds, the complete
 prebuilt dashboard catalog beyond these two starters, historical health trends,
