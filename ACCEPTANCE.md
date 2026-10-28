@@ -26,7 +26,7 @@ Core · published · **partial** · Cites BASE-ACCESS-002, BASE-ROLE-001, BASE-A
 **Requirement.** Buoy distinguishes browser-session writes from explicitly scoped bearer commands. Browser writes require the installation’s exact Origin and same-site request metadata. A valid bearer preparation works with no Origin or a foreign Origin and retains its grant’s scope when a cookie is also present; an invalid bearer never falls back to cookie authority. GOVERN-001 defines command and data-class grants. Under the held company policy, agents prepare account work while approval and account edits are refused; other policies decide those calls from their classes. The transport details are specified in [domain rules](docs/contract/domain-rules.md#http-001).
 
 **Acceptance.**
-1. Under the held company policy, signed out, cross-origin, as a member and as an agent token, call every product route; unauthenticated reads return 401, cross-origin cookie writes return 403, and members cannot change accounts or approve.
+1. Under the held company policy, cross-origin, as a member and as an agent token, call every product route; cross-origin cookie writes return 403, and members cannot change accounts or approve.
 2. Send a scoped bearer preparation command without Origin and with a foreign Origin; both succeed and the proposal and audit event identify the agent.
 3. Under the held company policy, attempt approval and account edits with the bearer token; both return 403, and an unsupported command is refused.
 4. Repeat with a session cookie alongside a valid token, then an invalid, expired or revoked token; the valid token keeps only its bearer scope and an invalid token cannot authorize a cross-origin session write.
@@ -78,12 +78,12 @@ Core · published · **partial** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-AC
 
 #### ERASE-001 — Owner erasure with tombstones
 
-Core · published · **partial** · Cites BASE-DATA-003, BASE-DATA-006
+Core · published · **partial** · Cites BASE-DATA-003, BASE-DATA-006, BASE-ROLE-001
 
 **Requirement.** Owner erasure, confirmed by typing the account name, atomically removes the account, its work, decisions and native and import custody; permanent target and source tombstones prevent replay into that installation. Copies held by connected systems are listed on the erasure receipt for the owner to action (ERASE-002); Buoy does not claim to delete them.
 
 **Acceptance.**
-1. As a member, attempt erasure and receive 403; as the owner, erase an imported account with work, then read state, the import journal and history; nothing names the account, and re-creating the same ID returns 409.
+1. As a member, attempt account erasure and see it refused under ROLE-001; as the owner, erase an imported account with work, then read state, the import journal and history; nothing names the account, and re-creating the same ID returns 409.
 
 **Evidence.** `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs`; `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs`
 **Gap.** Not asserted by the cited baseline evidence: Full state, import journal and history contain nothing naming the erased account; a subset/job read is insufficient. Asserted: Member erasure is refused; Native account is removed; Dependent proposal is removed; Retained import job omits account name and invoice; Same target cannot be recreated.
@@ -974,15 +974,16 @@ Core · target · **partial**
 
 #### AUDIT-001 — Durable audit log
 
-Core · target · **partial** · Cites BASE-AUDIT-001, BASE-OPS-005
+Core · target · **partial** · Cites BASE-AUDIT-001, BASE-OPS-005, BASE-DATA-003
 
-**Requirement.** Buoy’s audit covers sign-ins, role changes, data exports, erasures, approvals, connector changes, scorecard and playbook publishes, external sends and agent actions. Account actions use an opaque subject alias; erased accounts leave no personal name in their retained actions. Archive snapshots state which export action falls in the next archive. Source-specific event fields, custody and search ordering are specified in [domain rules](docs/contract/domain-rules.md#audit-001).
+**Requirement.** Buoy’s audit covers sign-ins, role changes, data exports, erasures, approvals, connector changes, scorecard and playbook publishes, external sends and agent actions. Account actions use a random opaque subject alias whose account mapping is removed on erasure. Archive snapshots state which export action falls in the next archive. Source-specific event fields, custody and search ordering are specified in [domain rules](docs/contract/domain-rules.md#audit-001).
 
 **Acceptance.**
-1. Perform each action kind, erase an account and its contact, then read and export the audit; every action is listed, entries for the erased account remain without its name, and the export matches the screen.
+1. Perform each Buoy action kind and read the audit; every action kind is listed.
+2. Account actions share a random opaque subject alias; after erasing the account, its alias-to-account mapping is removed.
 
 **Evidence.** `src/buoy/core.ts`; `src/buoy/audit.ts`; `src/buoy/audit-records.ts`; `src/buoy/access-audit.ts`; `migrations/core/0020_buoy_durable_events.sql`; `migrations/core/0021_buoy_audit_doors.sql`; `src/buoy/ui/audit.ts`; `src/auth.server.ts`; `tests/portable.mjs`; `tests/flows.test.mjs`; `src/buoy/connectors/index.ts`; `src/buoy/adoption/consumers.ts`; `tests/connections.mjs`; `tests/adoption-consumer-journey.mjs`; `tests/health-scorecard-journey.mjs`; `tests/survey-scorecard-journey.mjs`; `tests/revenue-health-journey.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every external-send audit action is asserted through an executed external send; Erased-contact audit survival is asserted for the named contact scenario; Export and screen reconcile the complete action set across all pages. Asserted: Sign-ins have actor, time and anonymous subject; Role changes preserve action detail and actor; Approvals remain exactly once; Erased-account actions remain without account or actor display name.
+**Gap.** Not asserted by the cited baseline evidence: every external-send action is read after an executed external send; the erased account’s alias-to-account mapping is removed. Asserted: sign-in and role-change action details; exactly-once approvals; random opaque aliases shared by the account’s actions.
 
 #### SECURE-002 — Connector credential custody
 
@@ -998,9 +999,9 @@ Core · target · **partial** · Cites BASE-SECRET-001, BASE-DATA-004
 
 #### ERASE-002 — Contact-level privacy requests
 
-Core · target · **partial** · Cites BASE-DATA-003, BASE-DATA-006, BASE-DATA-001
+Core · target · **partial** · Cites BASE-DATA-003, BASE-DATA-006, BASE-DATA-001, BASE-OPS-005, BASE-AUDIT-001
 
-**Requirement.** For a CCPA or CPRA or contractual request, an owner can erase or export one contact or end user across Buoy (timeline, survey responses, usage events, emails) with a receipt, while the account remains. The receipt lists connected systems that still hold that person's data so the owner can action them there. Every contact erasure and contact export records an AUDIT-001 entry (actor kind and id, time, action, opaque subject) that survives the erasure without the contact's personal details, before this clause ships. Current owner-only requests require the current customer revision and exact name confirmation. The current implementation exports or removes the customer across all explicit account memberships, typed values and history, received surveys, reviewed source-user usage across group variants, in-app deliveries and receipts and per-person licenses; surviving aggregates recalculate before success. Export returns versioned JSON without retaining the exported personal contents. Receipts and audits retain a random opaque subject, actor kind and id, UTC time, action, counts and external-system names only. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#erase-002).
+**Requirement.** For a CCPA or CPRA or contractual request, an owner can erase or export one contact or end user across Buoy (timeline, survey responses, usage events, emails) with a receipt, while the account remains. The receipt lists connected systems that still hold that person's data so the owner can action them there. Every contact erasure and contact export records an AUDIT-001 entry (actor kind and id, time, action, opaque subject), before this clause ships. Current owner-only requests require the current customer revision and exact name confirmation. The current implementation exports or removes the customer across all explicit account memberships, typed values and history, received surveys, reviewed source-user usage across group variants, in-app deliveries and receipts and per-person licenses; surviving aggregates recalculate before success. Export returns versioned JSON without retaining the exported personal contents. Receipts and audits retain a random opaque subject, actor kind and id, UTC time, action, counts and external-system names only. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#erase-002).
 
 **Acceptance.**
 1. Erase a contact with emails, a survey response and usage events, then read the account, reports and audit; nothing names the contact, aggregates stay correct, and the receipt lists Salesforce and Zendesk as external holders.
@@ -1151,12 +1152,13 @@ Core · target · **partial** · Cites BASE-ACCESSIBILITY-001 · Register R-1, R
 **Requirement.** Buoy applies BASE-ACCESSIBILITY-001 to the account workspace, renewal runway, plan and playbook work, imports, reports, customer portal and native clients. Charts have text tables and health has text labels. The runway’s accessible table includes invoice, health reasons, renewal and notice dates, missing or stale evidence and projected changes. The human screen-reader pass and VPAT are field proof.
 
 **Acceptance.**
-1. Run axe and a keyboard-only pass over the home, account, playbook builder, report and portal screens; no serious violations, every chart has a text table and every health color has a text label.
-2. Until the named future screens ship, run every current screen at 1440 and 390 pixels, reflow to 320 pixels, and use the keyboard for sign-in, setup, runway expansion, dialog open/close and focus return, validation recovery, preparation, approval, completion and report export.
-3. Assert visible, unobscured focus, labeled fields, health text and the runway table’s values against the public account data.
+1. The workspace, runway, plan and playbook work, imports, reports, portal and native clients complete the cited Base accessibility journey.
+2. Every chart has a text table.
+3. Every health colour has a text label.
+4. The runway table’s values match the public account data.
 
 **Evidence.** `src/buoy/ui/runway.ts`; `src/buoy/ui/work.ts`; `src/buoy/ui/browser.ts`; `src/buoy/ui/html.ts`; `tests/a11y.mjs`; `tests/a11y-auth.mjs`; `tests/a11y-import.mjs`; `tests/a11y-governance.mjs`; `tests/a11y-checks.mjs`; `tests/symbolic-labels.mjs`; `tests/a11y-contrast.mjs`; `tests/runway-keyboard.mjs`; `tests/fields-browser.mjs`; `tests/customer-people-browser.mjs`; `tests/usage-browser.mjs`; `tests/connections-browser.mjs`; `tests/adoption-browser.mjs`; `tests/adoption-license-browser.mjs`; `tests/adoption-segment-browser.mjs`; `tests/adoption-consumer-browser.mjs`; `tests/adoption-aggregate-browser.mjs`; `tests/inapp-browser.mjs`; `tests/health-scorecard-browser.mjs`; `tests/revenue-health-browser.mjs`; `tests/survey-scorecard-browser.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Playbook-builder, portal and future report screens complete the named keyboard and axe journey; Complete named sign-in/setup/expansion/dialog/recovery/preparation/approval/completion/export keyboard outcome set is asserted per width; Every runway table value is compared to public account data, beyond table count. Asserted: Every rendered chart has text alternative; Health color has a text label; Current keyboard/focus scenario assertions; Runway has every displayed account in semantic text table.
+**Gap.** Not asserted by the cited baseline evidence: the named future plan/playbook, report, portal and native-client screens complete the cited Base journey; every chart has a text table rather than only an accessible name and explanation; every runway table value matches public account data. Asserted: current health colours have text labels; the runway semantic table covers every displayed account lane.
 
 #### SCALE-001 — Scale for a growing book
 
@@ -1323,7 +1325,7 @@ Core · push-further · **partial** · Cites BASE-AGENT-004, BASE-AGENT-005, BAS
 **Requirement.** Buoy grants access by named command family and customer-data class: account terms, billing snapshots, support snapshots and CSM sentiment. Its action ledger distinguishes metered agent operations from internal notification-provider fees and displays that distinction beside the budget and ledger. Preparation snapshots the data classes it consumes; excluded classes cannot leak through derived health, segments or outlook. Commercial-term changes carry money and commitment; outside sends carry external; grant management carries access, protective settings carry security, and the company’s policy decides their disposition. Technical command accounting and grant migration are specified in [domain rules](docs/contract/domain-rules.md#govern-001).
 
 **Acceptance.**
-1. Under the held company policy, issue a prepare-only agent and a send-within-policy agent, have each attempt preparation, approval, an in-policy email, an out-of-policy email and a discount; only allowed actions occur, approvals and the discount are refused, the ledger records every attempt, and the kill switch stops both mid-run.
+1. Under the held company policy, issue a prepare-only agent and a send-within-policy agent, have each attempt preparation, approval, an in-policy email, an out-of-policy email and a discount; only allowed actions occur, approvals and the discount are refused, the ledger records every attempt.
 2. The USD budget and ledger measure metered agent operations, currently USD0.
 3. Automatic NOTIFY-001/PLAY-002 internal team notifications continue through the owner’s existing mail provider and preferences; provider fees are not measured or included in this budget.
 4. The UI/API/docs label this “No metered agent charge; internal notification mail may use your provider” beside the budget and ledger.

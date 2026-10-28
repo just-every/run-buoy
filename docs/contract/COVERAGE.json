@@ -163,7 +163,43 @@
     {
       "file": "CONTRACT.md",
       "line": 27,
-      "text": "With both a session cookie and a bearer token, only a valid token confers bearer authority; an invalid token must never bypass the session write-origin boundary. Agent credentials reach only the read and preparation commands their scope grants (GOVERN-001). **Acceptance evidence:** Signed out, cross-origin, as a member and as an agent token, call every product route; unauthenticated reads return 401, cross-origin cookie writes return 403, and members cannot change accounts or approve. Send a scoped bearer preparation command without Origin and with a foreign Origin; both succeed and the proposal and audit event identify the agent. Attempt approval and account edits with the bearer token; both return 403, and an unsupported command is refused. Repeat with a session cookie alongside a valid token, then an invalid, expired or revoked token; the valid token keeps only its bearer scope and an invalid token cannot authorize a cross-origin session write.",
+      "text": "With both a session cookie and a bearer token, only a valid token confers bearer authority; an invalid token must never bypass the session write-origin boundary. Agent credentials reach only the read and preparation commands their scope grants (GOVERN-001). **Acceptance evidence:** ",
+      "to": "clause",
+      "ids": [
+        "HTTP-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 27,
+      "text": "Signed out, ",
+      "to": "base",
+      "ids": [
+        "BASE-ACCESS-002"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 27,
+      "text": "cross-origin, as a member and as an agent token, call every product route; ",
+      "to": "clause",
+      "ids": [
+        "HTTP-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 27,
+      "text": "unauthenticated reads return 401, ",
+      "to": "base",
+      "ids": [
+        "BASE-ACCESS-002"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 27,
+      "text": "cross-origin cookie writes return 403, and members cannot change accounts or approve. Send a scoped bearer preparation command without Origin and with a foreign Origin; both succeed and the proposal and audit event identify the agent. Attempt approval and account edits with the bearer token; both return 403, and an unsupported command is refused. Repeat with a session cookie alongside a valid token, then an invalid, expired or revoked token; the valid token keeps only its bearer scope and an invalid token cannot authorize a cross-origin session write.",
       "to": "clause",
       "ids": [
         "HTTP-001"
@@ -336,7 +372,25 @@
     {
       "file": "CONTRACT.md",
       "line": 35,
-      "text": "Owner erasure with tombstones.** Owner erasure, confirmed by typing the account name, atomically removes the account, its work, decisions and native and import custody; permanent target and source tombstones prevent replay into that installation. Copies held by connected systems are listed on the erasure receipt for the owner to action (ERASE-002); Buoy does not claim to delete them. **Acceptance evidence:** As a member, attempt erasure and receive 403; as the owner, erase an imported account with work, then read state, the import journal and history; nothing names the account, and re-creating the same ID returns 409.",
+      "text": "Owner erasure with tombstones.** Owner erasure, confirmed by typing the account name, atomically removes the account, its work, decisions and native and import custody; permanent target and source tombstones prevent replay into that installation. Copies held by connected systems are listed on the erasure receipt for the owner to action (ERASE-002); Buoy does not claim to delete them. **Acceptance evidence:** As a member, attempt erasure",
+      "to": "clause",
+      "ids": [
+        "ERASE-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 35,
+      "text": " and receive 403",
+      "to": "base",
+      "ids": [
+        "BASE-ROLE-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 35,
+      "text": "; as the owner, erase an imported account with work, then read state, the import journal and history; nothing names the account, and re-creating the same ID returns 409.",
       "to": "clause",
       "ids": [
         "ERASE-001"
@@ -2703,7 +2757,26 @@
     {
       "file": "CONTRACT.md",
       "line": 205,
-      "text": "Account actions share a random 128-bit subject alias; its account mapping is removed on erasure, while the entries retain only actor kind and id, without display names. Matching agent refusals retain a generic refusal reason after erasure. Every request authenticated by a valid scoped agent credential records receipt before dispatch as an attempt, including read commands and invalid bodies; an attempt does not claim success. Its subject is the agent id, with no body or credential retained, and successful preparations separately record their effect atomically. Search matches literal actor, action and subject substrings without regard to case; date bounds include whole UTC days, with newest entries first in pages of 50. ",
+      "text": "Account actions share a random 128-bit subject alias; its account mapping is removed on erasure, ",
+      "to": "clause",
+      "ids": [
+        "AUDIT-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 205,
+      "text": "while the entries retain only actor kind and id, without display names.",
+      "to": "base",
+      "ids": [
+        "BASE-DATA-003",
+        "BASE-OPS-005"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 205,
+      "text": " Matching agent refusals retain a generic refusal reason after erasure. Every request authenticated by a valid scoped agent credential records receipt before dispatch as an attempt, including read commands and invalid bodies; an attempt does not claim success. Its subject is the agent id, with no body or credential retained, and successful preparations separately record their effect atomically. Search matches literal actor, action and subject substrings without regard to case; date bounds include whole UTC days, with newest entries first in pages of 50. ",
       "to": "clause",
       "ids": [
         "AUDIT-001"
@@ -2719,10 +2792,21 @@
     {
       "file": "CONTRACT.md",
       "line": 205,
-      "text": "**Acceptance evidence:** Perform each action kind, erase an account and its contact, then read and export the audit; every action is listed, entries for the erased account remain without its name, and the export matches the screen.",
+      "text": "**Acceptance evidence:** Perform each action kind, erase an account and its contact, then read and export the audit; every action is listed, ",
       "to": "clause",
       "ids": [
         "AUDIT-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 205,
+      "text": "entries for the erased account remain without its name, and the export matches the screen.",
+      "to": "base",
+      "ids": [
+        "BASE-DATA-003",
+        "BASE-OPS-005",
+        "BASE-AUDIT-001"
       ]
     },
     {
@@ -2767,7 +2851,26 @@
     {
       "file": "CONTRACT.md",
       "line": 209,
-      "text": "Contact-level privacy requests.** For a CCPA or CPRA or contractual request, an owner can erase or export one contact or end user across Buoy (timeline, survey responses, usage events, emails) with a receipt, while the account remains. The receipt lists connected systems that still hold that person's data so the owner can action them there. Every contact erasure and contact export records an AUDIT-001 entry (actor kind and id, time, action, opaque subject) that survives the erasure without the contact's personal details, before this clause ships. Current owner-only requests require the current customer revision and exact name confirmation. The current implementation exports or removes the customer across all explicit account memberships, typed values and history, received surveys, reviewed source-user usage across group variants, in-app deliveries and receipts and per-person licenses; surviving aggregates recalculate before success. Export returns versioned JSON without retaining the exported personal contents. Receipts and audits retain a random opaque subject, actor kind and id, UTC time, action, counts and external-system names only. ",
+      "text": "Contact-level privacy requests.** For a CCPA or CPRA or contractual request, an owner can erase or export one contact or end user across Buoy (timeline, survey responses, usage events, emails) with a receipt, while the account remains. The receipt lists connected systems that still hold that person's data so the owner can action them there. Every contact erasure and contact export records an AUDIT-001 entry (actor kind and id, time, action, opaque subject) ",
+      "to": "clause",
+      "ids": [
+        "ERASE-002"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 209,
+      "text": "that survives the erasure without the contact's personal details",
+      "to": "base",
+      "ids": [
+        "BASE-DATA-003",
+        "BASE-OPS-005"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 209,
+      "text": ", before this clause ships. Current owner-only requests require the current customer revision and exact name confirmation. The current implementation exports or removes the customer across all explicit account memberships, typed values and history, received surveys, reviewed source-user usage across group variants, in-app deliveries and receipts and per-person licenses; surviving aggregates recalculate before success. Export returns versioned JSON without retaining the exported personal contents. Receipts and audits retain a random opaque subject, actor kind and id, UTC time, action, counts and external-system names only. ",
       "to": "clause",
       "ids": [
         "ERASE-002"
@@ -3440,7 +3543,82 @@
     {
       "file": "CONTRACT.md",
       "line": 241,
-      "text": "**Acceptance evidence:** Run axe and a keyboard-only pass over the home, account, playbook builder, report and portal screens; no serious violations, every chart has a text table and every health color has a text label. Until the named future screens ship, run every current screen at 1440 and 390 pixels, reflow to 320 pixels, and use the keyboard for sign-in, setup, runway expansion, dialog open/close and focus return, validation recovery, preparation, approval, completion and report export. Assert visible, unobscured focus, labeled fields, health text and the runway table\u2019s values against the public account data.",
+      "text": "**Acceptance evidence:** ",
+      "to": "clause",
+      "ids": [
+        "A11Y-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "Run axe and a keyboard-only pass over the home, account, playbook builder, report and portal screens; no serious violations, ",
+      "to": "base",
+      "ids": [
+        "BASE-ACCESSIBILITY-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "every chart has a text table and every health color has a text label. ",
+      "to": "clause",
+      "ids": [
+        "A11Y-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "Until the named future screens ship, run every current screen at 1440 and 390 pixels, ",
+      "to": "base",
+      "ids": [
+        "BASE-ACCESSIBILITY-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "reflow to 320 pixels, ",
+      "to": "changelog"
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "and use the keyboard for sign-in, setup, runway expansion, dialog open/close and focus return, validation recovery, preparation, approval, completion and report export. ",
+      "to": "base",
+      "ids": [
+        "BASE-ACCESSIBILITY-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "Assert visible, ",
+      "to": "base",
+      "ids": [
+        "BASE-ACCESSIBILITY-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "unobscured focus, ",
+      "to": "changelog"
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "labeled fields, ",
+      "to": "base",
+      "ids": [
+        "BASE-ACCESSIBILITY-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 241,
+      "text": "health text and the runway table\u2019s values against the public account data.",
       "to": "clause",
       "ids": [
         "A11Y-001"
@@ -4008,7 +4186,25 @@
     {
       "file": "CONTRACT.md",
       "line": 275,
-      "text": "Agent authority and action ledger.** Each agent has an owner-issued, expiring, revocable credential with named scopes (read, prepare, send within policy, update fields), a USD spend budget, rate limits and the data classes it may read. Agents may prepare anything in scope but cannot approve their own proposals; external sends follow EMAIL-002 policy and approval settings; concessions, discounts, credits, contract changes and product commitments always need a person with that approval right. Every agent read, proposal and action lands in an action ledger, and a kill switch stops all agents at once. The DONE boundary covers the original commands `renewals.list`, `playbook.prepare` and `renewal.prepare`, plus AGENT-002\u2019s explicitly granted `experiment.prepare` and `experiment.report`. The new commands require all four current data classes and inherit the same expiry, revocation, rate, zero metered charge, ledger and kill-switch guards; agents cannot approve experiments. Existing and default grants retain their original commands. `tests/outcome-journey.mjs` (experimentJourney) proves the inherited experiment authority and accounting behavior. ",
+      "text": "Agent authority and action ledger.** Each agent has an owner-issued, expiring, revocable credential with named scopes (read, prepare, send within policy, update fields), a USD spend budget, rate limits and the data classes it may read. Agents may prepare anything in scope but cannot approve their own proposals; external sends follow EMAIL-002 policy and approval settings; concessions, discounts, credits, contract changes and product commitments always need a person with that approval right. Every agent read, proposal and action lands in an action ledger, ",
+      "to": "clause",
+      "ids": [
+        "GOVERN-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 275,
+      "text": "and a kill switch stops all agents at once.",
+      "to": "base",
+      "ids": [
+        "BASE-AGENT-011"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 275,
+      "text": " The DONE boundary covers the original commands `renewals.list`, `playbook.prepare` and `renewal.prepare`, plus AGENT-002\u2019s explicitly granted `experiment.prepare` and `experiment.report`. The new commands require all four current data classes and inherit the same expiry, revocation, rate, zero metered charge, ledger and kill-switch guards; agents cannot approve experiments. Existing and default grants retain their original commands. `tests/outcome-journey.mjs` (experimentJourney) proves the inherited experiment authority and accounting behavior. ",
       "to": "clause",
       "ids": [
         "GOVERN-001"
@@ -4024,7 +4220,25 @@
     {
       "file": "CONTRACT.md",
       "line": 275,
-      "text": "**Acceptance evidence:** Issue a prepare-only agent and a send-within-policy agent, have each attempt preparation, approval, an in-policy email, an out-of-policy email and a discount; only allowed actions occur, approvals and the discount are refused, the ledger records every attempt, and the kill switch stops both mid-run. The USD budget and ledger measure metered agent operations, currently USD0. Automatic NOTIFY-001/PLAY-002 internal team notifications continue through the owner\u2019s existing mail provider and preferences; provider fees are not measured or included in this budget. The UI/API/docs label this \u201cNo metered agent charge; internal notification mail may use your provider\u201d beside the budget and ledger. Until a paid, send or update scope exists, the GOVERN-001 HTTP and browser journeys issue two different local command grants, check expiry bounds/defaults, refused invalid policies, selected-field reads without derived leaks, denied preparation with missing classes, concurrent minute exhaustion and Retry-After, owner-only settings, revocation/owner-version invalidation, and pause/resume stopping both mid-run without work. Every valid-token attempt has a distinct succeeded/refused outcome; ledger reads contain no payload or credential and show actual metered USD0. The owner form chooses the actual grant, displays the token once, then pauses/resumes/revokes it at 1440 and 390. Every message a preparation induces is the single-recipient internal approval notice, never a customer send or billing/model action.",
+      "text": "**Acceptance evidence:** Issue a prepare-only agent and a send-within-policy agent, have each attempt preparation, approval, an in-policy email, an out-of-policy email and a discount; only allowed actions occur, approvals and the discount are refused, the ledger records every attempt,",
+      "to": "clause",
+      "ids": [
+        "GOVERN-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 275,
+      "text": " and the kill switch stops both mid-run.",
+      "to": "base",
+      "ids": [
+        "BASE-AGENT-011"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 275,
+      "text": " The USD budget and ledger measure metered agent operations, currently USD0. Automatic NOTIFY-001/PLAY-002 internal team notifications continue through the owner\u2019s existing mail provider and preferences; provider fees are not measured or included in this budget. The UI/API/docs label this \u201cNo metered agent charge; internal notification mail may use your provider\u201d beside the budget and ledger. Until a paid, send or update scope exists, the GOVERN-001 HTTP and browser journeys issue two different local command grants, check expiry bounds/defaults, refused invalid policies, selected-field reads without derived leaks, denied preparation with missing classes, concurrent minute exhaustion and Retry-After, owner-only settings, revocation/owner-version invalidation, and pause/resume stopping both mid-run without work. Every valid-token attempt has a distinct succeeded/refused outcome; ledger reads contain no payload or credential and show actual metered USD0. The owner form chooses the actual grant, displays the token once, then pauses/resumes/revokes it at 1440 and 390. Every message a preparation induces is the single-recipient internal approval notice, never a customer send or billing/model action.",
       "to": "clause",
       "ids": [
         "GOVERN-001"

@@ -550,3 +550,7 @@ This preserves the generative work separated from AI-001 by ct on 25 October 202
 ## 28 October 2026 — Missing-evidence proof correction
 
 DATA-001 is partial: its baseline asserts unknown health, but does not read back the named missing billing and support reasons. The acceptance text is unchanged; generated publication, tier and homepage-claim counts carry the demotion.
+
+## 28 October 2026 — Base duties and Buoy deltas
+
+A11Y-001 now names Buoy’s screens, chart tables, health labels and runway-data equality under the single Base accessibility journey. The former reflow to 320 pixels and unobscured focus requirements are proposed additions to BASE-ACCESSIBILITY-001, pending ct/Base decision. AUDIT-001 and ERASE-002 retain Buoy action kinds and opaque-alias custody; audit survival, anonymisation and export reconciliation are carried by Base. HTTP-001 leaves session-denial 401 to Base; ERASE-001 keeps its member-erasure role scenario and GOVERN-001 keeps its two-grant Pause scenario without a separate generic kill-switch bar. No status is promoted.

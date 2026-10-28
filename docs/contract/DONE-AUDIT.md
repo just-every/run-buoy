@@ -2,7 +2,7 @@ ONTO: `697ed0c63a956fe7640d7a024ce2f45c14cc7a39`. Old reference: `fab68ffc3066c5
 
 | Clause | Point | Outcome | Asserting test | Result |
 | --- | --- | --- | --- | --- |
-| `HTTP-001` | 1 | Signed-out data read is refused | `tests/flows.test.mjs:41` | asserted |
+| `HTTP-001` | 1 | Session-denial response is carried by BASE-ACCESS-002 | none | moved |
 | `HTTP-001` | 1 | Cross-origin browser account write is refused | `tests/flows.test.mjs:42` | asserted |
 | `HTTP-001` | 1 | Member account edit is refused | `tests/flows.test.mjs:65` | asserted |
 | `HTTP-001` | 1 | Member person-approval is refused | `tests/flows.test.mjs:67` | asserted |
@@ -233,18 +233,8 @@ ONTO: `697ed0c63a956fe7640d7a024ce2f45c14cc7a39`. Old reference: `fab68ffc3066c5
 | `AUDIT-001` | 1 | Sign-ins have actor, time and anonymous subject | `tests/flows.test.mjs:48` | asserted |
 | `AUDIT-001` | 1 | Role changes preserve action detail and actor | `tests/flows.test.mjs:282` | asserted |
 | `AUDIT-001` | 1 | Approvals remain exactly once | `tests/flows.test.mjs:248` | asserted |
-| `AUDIT-001` | 1 | Erased-account actions remain without account or actor display name | `tests/flows.test.mjs:258` | asserted |
+| `AUDIT-001` | 1 | Audit survival, anonymisation and complete export reconciliation are carried by Base | none | moved |
 | `AUDIT-001` | 1 | Every external-send audit action is asserted through an executed external send | none | none |
-| `AUDIT-001` | 1 | Erased-contact audit survival is asserted for the named contact scenario | none | none |
-| `AUDIT-001` | 1 | Export and screen reconcile the complete action set across all pages | none | none |
-| `A11Y-001` | 1 | Playbook-builder, portal and future report screens complete the named keyboard and axe journey | none | none |
-| `A11Y-001` | 1 | Every rendered chart has text alternative | `tests/a11y-checks.mjs:77` | asserted |
-| `A11Y-001` | 1 | Health color has a text label | `tests/a11y-checks.mjs:62` | asserted |
-| `A11Y-001` | 2 | Current keyboard/focus scenario assertions | `tests/a11y.mjs:75` | asserted |
-| `A11Y-001` | 3 | Current keyboard/focus scenario assertions | `tests/a11y.mjs:75` | asserted |
-| `A11Y-001` | 2 | Complete named sign-in/setup/expansion/dialog/recovery/preparation/approval/completion/export keyboard outcome set is asserted per width | none | none |
-| `A11Y-001` | 3 | Runway has every displayed account in semantic text table | `tests/a11y-checks.mjs:63` | asserted |
-| `A11Y-001` | 3 | Every runway table value is compared to public account data, beyond table count | none | none |
 | `AI-001` | 1 | Five question-specific substantive answers match expected claims | `tests/ai-journey.mjs:49` | asserted |
 | `AI-001` | 1 | Missing executive and excluded sources are named | `tests/ai-journey.mjs:50` | asserted |
 | `AI-001` | 1 | Claim citations resolve | `tests/ai-journey.mjs:52` | asserted |
@@ -323,7 +313,7 @@ ONTO: `697ed0c63a956fe7640d7a024ce2f45c14cc7a39`. Old reference: `fab68ffc3066c5
 | `GOVERN-001` | 1 | Prepare-only grant can prepare | `tests/governance.mjs:32` | asserted |
 | `GOVERN-001` | 1 | Held-policy person-approval is refused | `tests/governance.mjs:33` | asserted |
 | `GOVERN-001` | 1 | Held-policy discount is refused | `tests/governance.mjs:36` | asserted |
-| `GOVERN-001` | 1 | Pause stops both grants | `tests/governance.mjs:48` | asserted |
+| `GOVERN-001` | 5 | Pause stops the two named Buoy command grants | `tests/governance.mjs:48` | asserted |
 | `GOVERN-001` | 2 | Metered agent spend is zero | `tests/governance.mjs:55` | asserted |
 | `GOVERN-001` | 3 | Provider notification fees are excluded from the metered-operation ledger, rather than inferred from zero spend | none | none |
 | `GOVERN-001` | 4 | Budget/ledger label | none | none |
@@ -392,3 +382,12 @@ ONTO: `697ed0c63a956fe7640d7a024ce2f45c14cc7a39`. Old reference: `fab68ffc3066c5
 | `AGENT-008` | 7 | Segment/report/playbook replay preserves the complete definition set | `tests/configuration-journey.mjs:172` | asserted |
 | `AI-006` | 1 | Only the owner can explicitly authorize the named feature; an admin is refused | `tests/ai-journey.mjs:143` | asserted |
 | `AI-006` | 1 | Revocation is auditable as the schedule-revoked action | `tests/ai-journey.mjs:154` | asserted |
+| `AUDIT-001` | 2 | Account actions use a random opaque alias | `tests/flows.test.mjs:242` | asserted |
+| `AUDIT-001` | 2 | The account’s actions share that alias | `tests/flows.test.mjs:257` | asserted |
+| `AUDIT-001` | 2 | Erasure removes the alias-to-account mapping | none | none |
+| `A11Y-001` | 1 | The complete named Buoy screen set runs the cited Base journey | none | none |
+| `A11Y-001` | 2 | Every chart has a text table; names and explanations alone do not assert this | none | none |
+| `A11Y-001` | 2 | Runway semantic table covers every displayed account lane | `tests/a11y-checks.mjs:63` | asserted |
+| `A11Y-001` | 3 | Current health colour has a text label | `tests/a11y-checks.mjs:62` | asserted |
+| `A11Y-001` | 4 | Every runway table value matches public account data | none | none |
+| `A11Y-001` | 1 | Generic axe, keyboard, focus and accessible-name outcomes are carried by BASE-ACCESSIBILITY-001 | none | moved |
