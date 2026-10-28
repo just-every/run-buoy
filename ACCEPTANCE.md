@@ -13,7 +13,7 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 | Later | 0 | 0 | 0 | 0 |
 | Full target | 21 | 47 | 46 | 114 |
 
-Judged from the code and tests at commit `8a45696ea4b6d47968a87c435ee579c37822cb09` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `08898229c21c31b589b993c54f9e3cf96cab9e2d` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
