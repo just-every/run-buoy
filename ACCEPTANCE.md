@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 20 | 48 | 37 | 105 |
+| Core | 21 | 47 | 37 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 20 | 48 | 46 | 114 |
+| Full target | 21 | 47 | 46 | 114 |
 
-Judged from the code and tests at commit `ef2adc28684633e5f23363dd31f3810db0123bcf` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `8a45696ea4b6d47968a87c435ee579c37822cb09` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -661,7 +661,7 @@ Core · target · **partial** · Cites BASE-ROLE-001
 
 #### PORTAL-001 — Customer collaboration portal
 
-Core · target · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-ACCESS-004, BASE-INPUT-003, BASE-DATA-001, BASE-DATA-003, BASE-PUBLIC-003
+Core · target · **done** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-ACCESS-004, BASE-INPUT-003, BASE-DATA-001, BASE-DATA-003, BASE-PUBLIC-003
 
 **Requirement.** Invited customer contacts sign in by email link (or their company SSO) to a portal scoped to their own account, where they see and update their onboarding tasks and success plan, comment, upload files and confirm outcomes. Portal users never see internal notes, health scores or other customers. RL-108 governs sharing authority; native custody and revision-bound edits are specified in [domain rules](docs/contract/domain-rules.md#portal-001).
 
@@ -669,7 +669,7 @@ Core · target · **partial** · Cites BASE-ACCESS-001, BASE-ACCESS-002, BASE-AC
 1. Invite a champion, complete a customer task and comment from the portal, then attempt to reach another account's portal URL and an internal note; the task and comment appear on the internal timeline and both cross-boundary reads are refused.
 
 **Evidence.** `tests/portal-journey.mjs` portalJourney and portalWithdrawalJourney; `tests/portal-sso.mjs` portalSsoJourney; `tests/portal-browser.mjs` portalBrowser through the plans browser suite; `tests/portal-mail-live.mjs` received invitation and isolated collaboration; `tests/portable.mjs` real archive export and restore
-**Gap.** Native reviewed sharing, onboarding-project tasks, comments, authenticated confirmations, file uploads, customer plan edits and company SSO protocol behavior are implemented. Received SendGrid invitation proof is present. RL-108 approves sharing authority. Remaining proof: the fresh native browser journey after merging current scoped plan work, and exact-candidate Verify. Real identity-provider tenant interoperability remains ROLE-002 field proof.
+**Gap.** None.
 
 #### REVIEW-001 — Business review preparation and decks
 
