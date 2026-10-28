@@ -667,6 +667,10 @@
       "sha256": "111827221eb11d3550eb617c15b770c689f5aff4a4d19f66042b66207470c46a",
       "executable": false
     },
+    "migrations/core/0081_buoy_privacy_hold_chunks.sql": {
+      "sha256": "788e761954e5a0f163eab2dbc5df13fc0944ab6ca1f61f2502292fe11f0e4f26",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
@@ -1615,12 +1619,20 @@
       "sha256": "bda07eea12a2b810b8c8e8c9df54facbab0277da6a53c5c6769c1adc069e1508",
       "executable": false
     },
+    "src/buoy/privacy/image.ts": {
+      "sha256": "dad832b51daf3d72b7623071ee9d7198bf88b43011d55dd6bef8120043a49078",
+      "executable": false
+    },
     "src/buoy/privacy/native-text.ts": {
       "sha256": "eead1e5136daadb7b9a472deefbf8f83c1fa6fdd697b71da71ccba6f2fdd8ab3",
       "executable": false
     },
     "src/buoy/privacy/replay.ts": {
       "sha256": "2e1c7df855da4875f73362760f27450404b230f0e48faf226e1a7f8ba544ca31",
+      "executable": false
+    },
+    "src/buoy/privacy/snapshot.ts": {
+      "sha256": "0dd4bc06dd59e77169da190db6150d732fc58b9279b5eaba3fe0060da403b7ce",
       "executable": false
     },
     "src/buoy/reminders.ts": {
