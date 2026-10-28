@@ -17,6 +17,9 @@ import { spawn } from 'node:child_process'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { startWorker } from './worker.mjs'
+import {chromium} from '@playwright/test'
+import {existsSync} from 'node:fs'
+import {readAudit,archiveAudit,reconcileAuditScreen} from './audit-view.mjs'
 
 const root=resolve('.'), parent=await mkdtemp(join(tmpdir(),'buoy-portable-'))
 const excluded=new Set(['node_modules','.git','.wrangler','.rer','.seed','.cache','.tanstack','exports','test-results'])
@@ -37,7 +40,7 @@ async function command(cwd,args,expected=0){
 }
 const configurationNow=Date.now()
 mock.timers.enable({apis:['Date'],now:configurationNow})
-let running,configurationClock=configurationNow
+let running,browser,configurationClock=configurationNow
 const stripe=billingSource()
 const aiSelection=[{kind:'task',line:2},{kind:'risk',line:4},{kind:'expansion',line:6}]
 const providerFetch=async request=>{
@@ -55,7 +58,7 @@ try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
  running=await startWorker({root:source,secure:true,clock:()=>configurationClock,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
- const allAudit=async()=>{const entries=[];let offset=0;do{const page=await call('/audit?offset='+offset);entries.push(...page.entries);offset=page.nextOffset}while(offset!==null);return entries}
+ const allAudit=()=>readAudit(call)
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
  const door=importClient(running.request,running.cookie), plan=await door.plan(fixture)
  const job=await door.apply(plan)
@@ -225,18 +228,38 @@ try{
  const heldBeforeArchive=await call('/customer-people/'+heldPerson.id+'/privacy/export','POST',{...heldBody,revision:(await heldCurrent()).revision})
  heldVersionsBefore=heldBeforeArchive.records.heldVersions
  privacyRequestsBefore=await call('/privacy/requests');privacyReceiptsBefore=await call('/privacy/receipts')
+ // Repeated actions deliberately share actors, subjects, details and timestamps.
+ // Independently expected tuples catch field swaps that page-wide text searches miss.
+ const auditAgent=await call('/agent-tokens','POST',{label:'synthetic-buoy-9460',requestsPerMinute:1000})
+ const unrelatedAudit=await allAudit(),expectedActions=[],fixtureClock=configurationClock
+ for(let index=0;index<54;index++){
+  configurationClock=fixtureClock+Math.floor(index/18)*1000
+  const command=['synthetic-buoy-9461 <review & approve>','synthetic-buoy-9462','synthetic-buoy-9463'][index%3]
+  const response=await running.request('/api/buoy/commands',{method:'POST',token:auditAgent.token,body:{command}})
+  assert.equal(response.status,400)
+  const actor='agent:'+auditAgent.id,occurredAt=new Date(configurationClock).toISOString()
+  expectedActions.push({actor,action:'agent.requested',subject:actor,detail:'POST commands request received; outcome not recorded.',occurredAt},
+   {actor,action:'agent.refused',subject:'command '+command,detail:'Unknown command. Agents can prepare; people approve.',occurredAt})
+ }
+ const fixtureAudit=await allAudit(),originalIds=new Set(unrelatedAudit.map(entry=>entry.id))
+ const valueOrder=(a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))
+ assert.deepEqual(fixtureAudit.filter(entry=>originalIds.has(entry.id)),unrelatedAudit,'Repeated native actions leave every unrelated audit tuple unchanged')
+ assert.deepEqual(fixtureAudit.filter(entry=>!originalIds.has(entry.id)).map(({id,...tuple})=>tuple).sort(valueOrder),expectedActions.sort(valueOrder),'All 54 native requests persist exactly their independently expected attempt and refusal tuples')
+ configurationClock=fixtureClock
+ await call('/agent-tokens/'+auditAgent.id,'DELETE',{})
+ const revokedAudit=await allAudit()
+ assert.equal((await running.request('/api/buoy/commands',{method:'POST',token:auditAgent.token,body:{command:'renewals.list'}})).status,401)
+ assert.deepEqual(await allAudit(),revokedAudit,'A revoked credential cannot add or expose an audit identity')
  const before=await call('/state'), beforeAudit=await allAudit(),sourceCallsBeforeRestore=stripe.calls.length
  assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
  assert.doesNotMatch(JSON.stringify(beforeAudit),/Retired account|erase-before-backup|example\.test|Ana Lyst|Harbour CS owner/,'AUDIT-001 erased account and people stay unnamed')
- for(let offset=0;offset<beforeAudit.length;offset+=50){
-  const screen=await (await running.request('/app/audit?offset='+offset,{cookie:running.cookie})).text(),page=beforeAudit.slice(offset,offset+50)
-  assert.equal((screen.match(/<article class="record">/g)??[]).length,page.length,'AUDIT-001 screen pages list every exported entry exactly once')
-  for(const entry of page){assert.ok(screen.includes(entry.action));assert.ok(screen.includes(entry.subject));assert.ok(screen.includes(entry.occurredAt))}
- }
+ browser=await chromium.launch({headless:true,...(existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
+ await reconcileAuditScreen(browser,running,beforeAudit,{screens:process.env.BUOY_AUDIT_SHOTS??join(root,'test-results/audit')})
  await running.close();running=null
- // The first export's own record is taken with its snapshot; the next export carries it.
- await command(source,['export','--output',join(parent,'first.rer')])
+ // Each export snapshots first, then records its own action for the next archive.
+ const firstArchive=join(parent,'first.rer')
+ await command(source,['export','--output',firstArchive])
  await command(source,['export','--output',archive])
  // Inspect the public archive format, never the live database. This independent
  // calculation proves a keyed fence, not merely a replay refusal that plain SHA
@@ -255,6 +278,16 @@ try{
   assert.ok(!archiveText.includes(JSON.stringify(transcript.transcript).slice(1,-1)),'AI-002 the full submitted transcript is absent from persisted export text')
   for(const [index,line]of transcript.lines.entries())if(transcript!==retainedTranscript||!aiSelection.some(p=>p.line===index+1))assert.ok(!archiveText.includes(line),'AI-002 unselected, discarded and account-erased source text is absent throughout the persisted export')
  }
+ const firstRows=(await readFile(firstArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assert.deepEqual(archiveAudit(firstRows),beforeAudit,'The first actual archive matches every tuple on all pre-export API and screen pages')
+ const secondAudit=archiveAudit(archiveRows),beforeIds=new Set(beforeAudit.map(entry=>entry.id))
+ assert.deepEqual(secondAudit.filter(entry=>beforeIds.has(entry.id)),beforeAudit,'The next archive preserves all original tuples without reassociation')
+ const exportActions=secondAudit.filter(entry=>!beforeIds.has(entry.id))
+ assert.equal(exportActions.length,1,'Only the preceding export action crosses the documented snapshot boundary')
+ const exportAction=exportActions[0]
+ assert.equal(exportAction.actor,'portability:direct');assert.equal(exportAction.action,'data.exported')
+ assert.match(exportAction.subject,/^archive:[0-9a-f-]+$/)
+ assert.equal(exportAction.detail,'Installation archive snapshot taken; delivery of the file is not recorded.')
  const archivedAudit=archiveRows.filter(item=>item.table==='buoy_audit').map(item=>item.row)
  for(const proposal of discardedTranscript.proposals){
   const receipts=archivedAudit.filter(row=>row.subject==='ai:'+proposal.id)
@@ -303,10 +336,12 @@ try{
  assert.equal(restoredConnection.name,'Portable Stripe source')
  assert.equal(restoredConnection.freshness,'Reconnect required','CONNECT-001 restores retain metadata without credential authority')
  assert.equal((await running.request('/api/buoy/connections/'+connection.id+'/sync',{cookie:running.cookie,method:'POST',body:{}})).status,409)
- const restored=await allAudit(), added=restored.filter(entry=>!beforeAudit.some(prior=>prior.id===entry.id))
- assert.deepEqual(restored.filter(entry=>!added.includes(entry)),beforeAudit,'AUDIT-001 archive preserves exactly the audit entries shown before export')
- assert.deepEqual(added.map(entry=>[entry.action,entry.actor.replace(/[0-9a-f-]{36}$/,'id'),entry.detail]),[['auth.signed-in','person:id','native session issued'],['data.exported','portability:direct','Installation archive snapshot taken; delivery of the file is not recorded.']],'AUDIT-001 the export is recorded, and the destination records its own bootstrap sign-in')
- assert.match(added[1].subject,/^archive:[0-9a-f-]+$/)
+ const restored=await allAudit(),archiveIds=new Set(secondAudit.map(entry=>entry.id)),added=restored.filter(entry=>!archiveIds.has(entry.id))
+ assert.deepEqual(restored.filter(entry=>archiveIds.has(entry.id)),secondAudit,'Every exported audit tuple returns unchanged through all restored API pages')
+ assert.equal(added.length,1,'The destination adds only its own bootstrap sign-in, never the second export action')
+ assert.deepEqual(added,[{id:added[0].id,actor:'person:'+after.operator.id,action:'auth.signed-in',subject:'person:'+after.operator.id,detail:'native session issued',occurredAt:new Date(configurationNow).toISOString()}])
+ await reconcileAuditScreen(browser,running,restored)
+ console.log('AUDIT-001 reconciled '+beforeAudit.length+' complete source tuples, both export snapshots and '+restored.length+' restored tuples across every API and rendered page.')
  assert.match(await (await running.request('/app/audit?action=data.exported',{cookie:running.cookie})).text(),/portability:direct/)
  assert.deepEqual((await call('/surveys')).responses,surveysBefore.responses,'Recorded survey response values, source references and immutable history restore exactly');
  assert.ok(restored.some(e=>e.action==='survey.response-recorded'),'Recorded survey audit restores');
@@ -411,4 +446,4 @@ try{
  await assertChurnzeroRestored(running,churnzeroImage)
  await running.close();running=null
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
-}finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}
+}finally{if(browser)await browser.close();if(running)await running.close();await rm(parent,{recursive:true,force:true})}
