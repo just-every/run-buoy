@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 22 | 45 | 38 | 105 |
+| Core | 23 | 44 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 22 | 45 | 47 | 114 |
+| Full target | 23 | 44 | 47 | 114 |
 
-Judged from the code and tests at commit `6dcc1abaf89dcf72393f9d38304d281d4f72c4f2` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `e89d4a74a47b5368483be8dc56a5ed6caa524db7` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -164,15 +164,15 @@ Core · target · **partial** · Cites BASE-ROLE-001
 
 #### ACCOUNT-004 — Custom fields, calculated fields and field history
 
-Core · target · **partial** · Cites BASE-INPUT-001, BASE-DATA-003
+Core · target · **done** · Cites BASE-INPUT-001, BASE-DATA-003
 
 **Requirement.** Admins add typed custom fields to accounts, users, contacts and opportunities, and calculated fields with a plain formula language (arithmetic, conditions, rollups, date differences) that previews against real accounts before saving and explains each result. Every field change keeps who, when, old and new value and source. Custom objects (ACCOUNT-006) use the same field types, formulas and history. New custom and calculated fields become typed SEGMENT-001 rule inputs before shipping. USAGE-001 carries separate contact/user definitions and values, explicit account memberships, previews against ten real accounts and customer records, calculations over the full customer-person portfolio, source-owned old/new history and typed related-person SEGMENT-001 inputs. The same person must satisfy an all-rule’s conditions for one related kind, including the currency and amount. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#account-004).
 
 **Acceptance.**
 1. Add a picklist, a currency field and a formula field "seats used ÷ seats purchased", preview it on ten accounts, save, change an input and read the field history; the formula updates, its explanation shows the inputs and the history records both changes with actor and source.
 
-**Evidence.** `src/buoy/fields/`; `src/buoy/ui/fields.ts`; `src/buoy/segments/`; `migrations/core/0030_buoy_fields.sql`; `docs/fields.md`; `tests/field-journey.mjs`; `tests/fields-browser.mjs`
-**Gap.** Not asserted by the cited baseline evidence: History records both old/new formula-result changes as well as input changes; cited body checks existence but not both full formula change tuples. Asserted: Ten-account preview is read back; Preview formula values equal independent seat division; Preview shows both formula inputs; Saving calculation produces current formula result; Changed input recalculates; History records actor, source and time; History retains old and new input values.
+**Evidence.** `tests/flows.test.mjs` — "ACCOUNT-004 typed fields, formulas, preview, history and segments", via `tests/field-journey.mjs`: typed fields; ten-account no-write preview and input explanations; saved calculations; exact persisted seats 20 to 30, utilization 0.5 to 0.75 and conditional 50 to 75 history with the current actor, source and valid UTC instant; unchanged state after stale-write refusal; typed segment inputs and erasure. `tests/fields-browser.mjs` — native typed-field, preview, calculation and history forms at 1440 and 390. `tests/flows.test.mjs` — "USAGE-001 ACCOUNT-004 SEGMENT-001 complete contact and user carrier", via `tests/customer-people-journey.mjs`, and `tests/customer-people-browser.mjs`: inherited customer field types, formulas, full-portfolio previews, source-owned history and same-person typed segments.
+**Gap.** None.
 
 #### ACCOUNT-005 — Search
 
