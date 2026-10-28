@@ -146,7 +146,9 @@ async function readinessScreens({browser,evidence,app,renewalId,api,readiness,ti
    assert.match(await panel.innerText(),/Stripe does not match/)
    for(const kind of ['departed-champion','unconfirmed-goal','billing-mismatch']){
     const citation=(await readiness()).flags.find(f=>f.kind===kind),target=new URL(citation.href,app.origin)
-    const response=await page.goto(target.href,{waitUntil:'networkidle'});assert.equal(response.status(),200)
+    const response=await app.request(target.pathname+target.search,{cookie:app.cookie});assert.equal(response.status,200);await response.text()
+    await page.goto(target.href,{waitUntil:'networkidle'})
+    assert.equal(page.url(),target.href)
     assert.equal(await page.locator(target.hash).count(),1,'Citation resolves to its visible native source')
    }
    await page.goto(url,{waitUntil:'networkidle'})
