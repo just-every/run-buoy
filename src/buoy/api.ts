@@ -98,7 +98,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
  }
  const profile=await roleAccess(c.env.DB,actor)
  if(profile.restricted){
-  if(['GET','POST'].includes(c.req.method)&&/^\/api\/buoy\/accounts\/[^/]+\/plans$/.test(c.req.path))return next()
+  if(['GET','POST'].includes(c.req.method)&&/^\/api\/buoy\/accounts\/[^/]+\/plans$/.test(c.req.path)){await next();if(c.req.method==='POST'&&c.res.ok){await recalculateScorecards(c.env.DB);await observeOutcomes(c.env.DB,actor)}return}
   if((c.req.method==='GET'&&c.req.path==='/api/buoy/reviews')||(c.req.method==='PUT'&&/^\/api\/buoy\/reviews\/[^/]+$/.test(c.req.path)))return next()
   if(c.req.path==='/api/buoy/ai'||(['/api/buoy/ai/questions','/api/buoy/ai/answers'].includes(c.req.path)&&c.req.method==='POST')||(c.req.method==='GET'&&/^\/api\/buoy\/ai\/evidence\/[^/]+\/[^/]+$/.test(c.req.path)))return next()
   if(c.req.method==='GET'&&/^\/api\/buoy\/reports(?:\/|$)/.test(c.req.path))return next()
