@@ -8,10 +8,10 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 23 | 44 | 38 | 105 |
+| Core | 24 | 43 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 23 | 44 | 47 | 114 |
+| Full target | 24 | 43 | 47 | 114 |
 
 Judged from the code and tests at commit `e89d4a74a47b5368483be8dc56a5ed6caa524db7` (28 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -78,15 +78,15 @@ Core · published · **partial** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-AC
 
 #### ERASE-001 — Owner erasure with tombstones
 
-Core · published · **partial** · Cites BASE-DATA-003, BASE-DATA-006
+Core · published · **done** · Cites BASE-DATA-003, BASE-DATA-006
 
 **Requirement.** Owner erasure, confirmed by typing the account name, atomically removes the account, its work, decisions and native and import custody; permanent target and source tombstones prevent replay into that installation. Copies held by connected systems are listed on the erasure receipt for the owner to action (ERASE-002); Buoy does not claim to delete them.
 
 **Acceptance.**
 1. As a member, attempt erasure and receive 403; as the owner, erase an imported account with work, then read state, the import journal and history; nothing names the account, and re-creating the same ID returns 409.
 
-**Evidence.** `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs`; `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Full state, import journal and history contain nothing naming the erased account; a subset/job read is insufficient. Asserted: Member erasure is refused; Native account is removed; Dependent proposal is removed; Retained import job omits account name and invoice; Same target cannot be recreated.
+**Evidence.** `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs` — IMPORT-001 ERASE-001 door undo preserves dependent work and owner erasure withdraws door custody; `tests/import-door-journey.mjs` — accountErasureJourney (complete state, job, journal, history, status and paginated audit reads; unrelated records and opaque evidence; refused member erasure and confirmation; tombstone and inert replay); `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs`
+**Gap.** None.
 
 #### RESTORE-001 — Portable installation archives
 
