@@ -655,6 +655,10 @@
       "sha256": "59bb35bdb647b1088384e5d4a52d807ba17cc9f10c962c41fde1791bafac9230",
       "executable": false
     },
+    "migrations/core/0078_buoy_portal_identity.sql": {
+      "sha256": "615373066869639f927b50a652359d7af42ab77bf98e5b546d7f3d126202f90d",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
@@ -4272,7 +4276,7 @@
       "executable": false
     },
     "tests/mail-runtime.mjs": {
-      "sha256": "08133d99d147d9e668199508b9ad2a48fb5656e7bdd284ef06a332f7129df6ee",
+      "sha256": "69859bf11c70435d502de68bbb1a401dec6445de88f79673e785df3f935f398b",
       "executable": false
     },
     "tests/migrate-journey.mjs": {
@@ -4324,11 +4328,15 @@
       "executable": false
     },
     "tests/portal-browser.mjs": {
-      "sha256": "c4c4bf9efc64ce4236256c39374c2e8feed950329b57f5dbf1b35e528458fe53",
+      "sha256": "3d5a132513fca10c9f862dee0b4bdeedfcb655c64d9dbef299bf57ae8ab4fd85",
       "executable": false
     },
     "tests/portal-journey.mjs": {
       "sha256": "3c6978df911f399bb89c40e646cfc636c816a8d58323af33bcf6addc6e25912d",
+      "executable": false
+    },
+    "tests/portal-mail-live.mjs": {
+      "sha256": "ff9be0b08e9dcfc8880e70604c7c45cd73106e5a6bc0c943e69180455e96cb15",
       "executable": false
     },
     "tests/privacy-browser.mjs": {

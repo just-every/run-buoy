@@ -3,7 +3,7 @@ import {join} from 'node:path'
 import {portalFixture} from './portal-journey.mjs'
 import {scan,submit,failures} from './a11y-checks.mjs'
 export async function portalBrowser(browser,evidence){
- for(const width of [1440]){
+ for(const width of [1440,390]){
   const f=await portalFixture(),{app,api,accountId,recipient}=f
   const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
   const cookies=cookie=>cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}})
@@ -21,6 +21,9 @@ export async function portalBrowser(browser,evidence){
    assert.ok(current)
    await page.locator('#plan-sharing-'+f.plan.id+' > summary').click();await scan(page,'PLAN-001 owner sharing '+width);await page.locator('#success-plans').screenshot({path:join(evidence,'portal-owner-sharing-'+width+'.png')})
    await context.clearCookies();await context.addCookies(cookies(recipient.cookie))
+   await page.goto(app.origin+'/portal',{waitUntil:'networkidle'})
+   assert.equal(await page.getByRole('link',{name:f.plan.name,exact:true}).count(),1)
+   await scan(page,'PORTAL-001 customer home '+width);await page.screenshot({path:join(evidence,'portal-home-'+width+'.png'),fullPage:true})
    await page.goto(app.origin+'/portal/'+current.id,{waitUntil:'networkidle'})
    if(width===1440){assert.match(await page.locator('main').innerText(),/Achieved from data/);assert.match(await page.locator('main').innerText(),/Awaiting your confirmation/);assert.equal(await page.locator('nav').innerText(),'Your plans')}
    await scan(page,'PLAN-001 customer plan '+width);await page.screenshot({path:join(evidence,'portal-plan-'+width+'.png'),fullPage:true})
@@ -29,11 +32,24 @@ export async function portalBrowser(browser,evidence){
    const confirm=page.locator('#confirm-statement');await confirm.getByLabel('Your confirmation statement').fill('The agreed result has been reached.');await submit(page,confirm.getByRole('button',{name:'Confirm outcome',exact:true}))
    if(width===1440){assert.match(await page.locator('main').innerText(),/Confirmed by customer/);assert.match(await page.locator('main').innerText(),/Completed by customer or staff/);assert.match(await page.locator('main').innerText(),/Reviewed together with the champion/);assert.equal(await page.locator('#confirm-statement').count(),0)}
    await scan(page,'PLAN-001 customer completed '+width);await page.screenshot({path:join(evidence,'portal-completed-'+width+'.png'),fullPage:true})
+   const records=(await api('/accounts/'+accountId+'/activity?source=customer-portal')).records
+   assert.ok(records.some(record=>record.kind==='customer-comment'&&record.reference==='Reviewed together with the champion.'))
+   assert.ok(records.some(record=>record.kind==='customer-task-completed'))
+   for(const path of ['/portal/'+f.otherShared.id,'/app/accounts/'+accountId+'?activityKind=success-plan']){
+    const denied=await page.goto(app.origin+path,{waitUntil:'networkidle'});assert.equal(denied.status(),403)
+    assert.doesNotMatch(await page.locator('main').innerText(),/Other private plan|Confirmed recurring contract|synthetic-buoy-1901/)
+   }
+   await context.clearCookies();await context.addCookies(cookies(app.cookie))
+   await page.goto(app.origin+'/app/accounts/'+accountId+'#activity',{waitUntil:'networkidle'})
+   assert.match(await page.locator('main').innerText(),/Reviewed together with the champion/)
+   await scan(page,'PORTAL-001 staff timeline '+width);await page.screenshot({path:join(evidence,'portal-timeline-'+width+'.png'),fullPage:true})
+   await context.clearCookies();await context.addCookies(cookies(recipient.cookie))
+   await page.goto(app.origin+'/portal/'+current.id,{waitUntil:'networkidle'})
    const live=(await api('/accounts/'+accountId+'/portal-sharing')).grants.find(g=>g.id===current.id);await api('/accounts/'+accountId+'/portal-sharing/'+live.id,'DELETE',{revision:live.revision})
    const stopped=await page.reload({waitUntil:'networkidle'});if(width===1440){assert.equal(stopped.status(),403);assert.match(await page.locator('main').innerText(),/access has stopped/)}
    await scan(page,'PLAN-001 stopped access '+width);await page.screenshot({path:join(evidence,'portal-stopped-'+width+'.png'),fullPage:true})
   }finally{await context.close();await app.close()}
  }
  assert.deepEqual(failures,[],'Customer portal keeps native accessibility')
- console.log('PLAN-001 native sharing, customer completion, comment, authenticated confirmation and revoked access asserted at 1440.')
+ console.log('PORTAL-001 native sharing, home, customer completion, comment, authenticated confirmation, staff timeline, refused private reads and revoked access at 1440 and 390.')
 }

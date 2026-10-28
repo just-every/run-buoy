@@ -58,7 +58,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   }},
   outboundService: async request => {
    outbound.push(request.url)
-   if(providerFetch&&['api.stripe.com','api.anthropic.com','api.openai.com'].includes(new URL(request.url).hostname))return providerFetch(request)
+   if(providerFetch&&['api.sendgrid.com','api.stripe.com','api.anthropic.com','api.openai.com'].includes(new URL(request.url).hostname))return providerFetch(request)
    assert.equal(request.url, 'https://api.resend.com/emails')
    mails.push(await request.json())
    return Response.json(mailStatus === 200 ? {id:`provider-receipt-${mails.length}`} : {error:'test provider failure'}, {status:mailStatus})
