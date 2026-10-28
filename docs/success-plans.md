@@ -1,6 +1,8 @@
 # Success plans and customer confirmation
 
-Open an account and its **Success plans** section. Create the champion as a customer contact on that account first. A current owner or admin selects the staff owner and customer owner, names the plan and records up to twenty objectives. The account and plan revisions fence every edit; a concurrent change requires reloading and reviewing the current record.
+Open an account and its **Success plans** section. Create the champion as a customer contact on that account first. A current owner, admin or permitted account author selects the staff owner and customer owner, names the plan and records up to twenty objectives. The account and plan revisions fence every edit; a concurrent change requires reloading and reviewing the current record.
+
+Delegated authors need current read and edit permission for this account and full commercial-field permission because plan prose may contain commercial detail. Retained review reads and commentary edits repeat those checks; restored assignments stay inert.
 
 Each objective has a unique id, business objective, UTC due date and kind. A metric objective names an available numeric source metric, finite target and `at-least` or `at-most` comparison. Both bounds are inclusive. Use the **Available source metrics** disclosure to find a key. Usage, received survey and native custom metrics use the same current evidence as the health scorecard. Missing evidence stays unavailable. Metric corrections can return a previously achieved objective to in progress.
 
