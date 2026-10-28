@@ -447,9 +447,10 @@
       ]
     },
     "API-001": {
-      "how": "kept",
+      "how": "split",
       "to": [
-        "API-001"
+        "API-001",
+        "API-002"
       ]
     },
     "MIGRATE-001": {

@@ -1,4 +1,4 @@
-Old reference: `fab68ffc3066c5f4852bc4cf9c158e3fb9c8f8c3`.
+ONTO: `697ed0c63a956fe7640d7a024ce2f45c14cc7a39`. Old reference: `fab68ffc3066c5f4852bc4cf9c158e3fb9c8f8c3`.
 
 | Clause | Point | Outcome | Asserting test | Result |
 | --- | --- | --- | --- | --- |
@@ -388,3 +388,5 @@ Old reference: `fab68ffc3066c5f4852bc4cf9c158e3fb9c8f8c3`.
 | `AGENT-008` | 6 | Missing account-week count equals exact independently expected 107 | `tests/configuration-journey.mjs:151` | asserted |
 | `AGENT-008` | 7 | Scorecard replay keeps one native version | `tests/configuration-journey.mjs:155` | asserted |
 | `AGENT-008` | 7 | Segment/report/playbook replay preserves the complete definition set | `tests/configuration-journey.mjs:172` | asserted |
+| `AI-006` | 1 | Only the owner can explicitly authorize the named feature; an admin is refused | `tests/ai-journey.mjs:143` | asserted |
+| `AI-006` | 1 | Revocation is auditable as the schedule-revoked action | `tests/ai-journey.mjs:154` | asserted |

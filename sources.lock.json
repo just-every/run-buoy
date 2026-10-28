@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "fed4c355dd9e884678693ff06388cf861e9b9f2155745d1cc2bce4b0d7d1c461",
+      "sha256": "8d37d15754e94ee9e2698cda033c1ff9b0953c48c3169a00a53947e72ab61f8e",
       "executable": false
     },
     "AGENTS.md": {
@@ -96,7 +96,7 @@
       "executable": false
     },
     "CHANGELOG.md": {
-      "sha256": "6b9aab04b595ab32038b1a1bf9c123bd849f9d6df3bc5b17e7bbb095f83d29c1",
+      "sha256": "33510c00bbec535993f318b1c3a021c97d4b4d7d38aa297c71e63f4ad89d00dd",
       "executable": false
     },
     "COMMANDS.md": {
@@ -108,7 +108,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "6e1fba58f8e721d6eb827c6afae3f3740206feba27c6d2ec94db8c7821bfd284",
+      "sha256": "7507014ca6c21985bb3bab1fd23311f419f2674e054a6b346d6c9e79ed9b3f9b",
       "executable": false
     },
     "DEMO.md": {
@@ -164,19 +164,19 @@
       "executable": false
     },
     "docs/contract/COVERAGE.json": {
-      "sha256": "0d664696564931bd642e082e4606370b059720470a3d1822f172549866cb624a",
+      "sha256": "62329093bab1e1a0dd1bfb35d76f39256be8956b724c0f6993d19e6b41977599",
       "executable": false
     },
     "docs/contract/domain-rules.md": {
-      "sha256": "e4f39d803092f4fb9b823f0a095338ba61f6ad85220890a724aea10390db8f9f",
+      "sha256": "5339fe33a31e7b7c4822b871ffeb5fe580a574f3e22314d486d6cfa741333e1f",
       "executable": false
     },
     "docs/contract/DONE-AUDIT.md": {
-      "sha256": "0b0c3ae6c75ffd8fde18b36a463c86a41aca6d80093b23436fe283609d7ce0e8",
+      "sha256": "a86cb4b5c947101e9934ee25e195bf0bca9ec33e19586002121246c1e8315911",
       "executable": false
     },
     "docs/contract/ID-MAP.json": {
-      "sha256": "26504e64b9277a51d466e062aedc0bc620a2d157784167f5e6e812c3c93b4055",
+      "sha256": "376262900d1222c17bf331705e16bac2bc700daf95c04cf4d610d476afeb6fb7",
       "executable": false
     },
     "docs/experiments.md": {
@@ -812,7 +812,7 @@
       "executable": false
     },
     "RULINGS.md": {
-      "sha256": "12375b69c6d038e0e2d8f877e78a913dc23f496b96174422b9e3b2a41afade2e",
+      "sha256": "073ca3aee9010471c547030cb9c7cd8aad39ee867e16633f7e9e69915a1ba0df",
       "executable": false
     },
     "RUN-LOCALLY.md": {

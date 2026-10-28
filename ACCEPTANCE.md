@@ -8,10 +8,10 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 20 | 46 | 39 | 105 |
+| Core | 20 | 47 | 39 | 106 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 20 | 46 | 48 | 114 |
+| Full target | 20 | 47 | 48 | 115 |
 
 Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -920,7 +920,7 @@ Core · target · **partial** · Cites BASE-ROLE-001 · Rules D-2
 
 Core · target · **partial** · Cites BASE-ROLE-001, BASE-AGENT-005
 
-**Requirement.** Staff roles are owner, admin, CS manager, CSM, three read-only profiles (sales; support; finance and executive) and scoped agent. Each has a record scope (all accounts, team, own book or a segment) and field-level rules for commercial fields (ARR, MRR, price, discount, contract value and forecast). The role matrix below defines human entitlements; agent calls additionally carry computed classes decided by company policy. Admins can define custom roles from the same permission rows, each with its own record scope and field rules, and grant named approval rights (concessions up to a USD limit, renewal outcomes) to individual people. Customer portal users are a separate class (PORTAL-001), and agents are further bound by GOVERN-001. Custom-object records (ACCOUNT-006) take the record scope of the account or relationship they look up to, and custom fields marked commercial take the commercial-field rules.  Segment-scoped roles consume SEGMENT-001 membership and inherit in/out-of-segment access acceptance before shipping. Custom-role definitions restore as inert configuration; destination identities, scope, limits and named approval rights activate only after a current destination owner/admin reviews the intended local person and grants those rights (RL-107).
+**Requirement.** Staff roles are owner, admin, CS manager, CSM, three read-only profiles (sales; support; finance and executive) and scoped agent. Each has a record scope (all accounts, team, own book or a segment) and field-level rules for commercial fields (ARR, MRR, price, discount, contract value and forecast). The role matrix below defines human entitlements; agent calls additionally carry computed classes decided by company policy. Admins can define custom roles from the same permission rows, each with its own record scope and field rules, and grant named approval rights (concessions up to a USD limit, renewal outcomes) to individual people. Customer portal users are a separate class (PORTAL-001), and agents are further bound by GOVERN-001. Custom-object records (ACCOUNT-006) take the record scope of the account or relationship they look up to, and custom fields marked commercial take the commercial-field rules.  Segment-scoped roles consume SEGMENT-001 membership and inherit in/out-of-segment access acceptance before shipping. “Own book” is the accounts a person owns; “team” is the accounts owned by the people a manager manages; “if granted” means a named approval right the owner or an admin gave that person. Custom-role definitions restore as inert configuration; destination identities, scope, limits and named approval rights activate only after a current destination owner/admin reviews the intended local person and grants those rights (RL-107).
 
 | Permission | Owner | Admin | CS manager | CSM | Read-only: sales | Read-only: support | Read-only: finance and executive | Agent |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1012,17 +1012,35 @@ Core · target · **partial** · Cites BASE-DATA-003, BASE-DATA-006, BASE-DATA-0
 
 Core · target · **partial** · Cites BASE-ROLE-001, BASE-INPUT-001, BASE-OPS-003, BASE-AUDIT-001
 
-**Requirement.** A documented, versioned REST API (OpenAPI) with scoped tokens covers accounts, contacts, users, events, metrics, tasks, plans, opportunities, timeline entries and custom-object definitions and records (ACCOUNT-006, with bulk upsert by external ID), with pagination, idempotency keys and rate limits. Outbound signed webhooks fire on health changes, signals, playbook steps, renewal changes and survey responses, with retries and a delivery log. Zapier, Make and Crank use the same API.
+**Requirement.** A documented, versioned REST API (OpenAPI) with scoped tokens covers accounts, contacts, users, events, metrics, tasks, plans, opportunities, timeline entries and custom-object definitions and records (ACCOUNT-006, with bulk upsert by external ID), with pagination, idempotency keys and rate limits. Outbound signed webhooks fire on health changes, signals, playbook steps, renewal changes and survey responses, with retries and a delivery log. Zapier, Make and Crank use the same API. API-002 defines its credentials. Version 1 events enter USAGE-001 with message-ID deduplication and reviewed source user and group attribution; unmapped events wait in review and cannot attach outside the credential’s account scope. Before any webhook ships, its destination checks, signing-secret custody, payload data classes, retry schedule, delivery log and disablement need their own ct ruling on a posted default (RL-5).
 
 **Acceptance.**
 1. With a scoped token, create and update an account and post events, replay with the same idempotency key, exceed the rate limit, and subscribe a webhook to health changes; writes happen once, the limit returns 429 with retry timing and each webhook delivery is signed and logged.
-2. Version 1 account reads and writes use owner-issued server-only tokens with explicit account IDs and operation scopes, bounded expiry and per-token UTC-minute reservations.
-3. Account writes, successful replay receipts and opaque account audits commit atomically; updates require the current revision.
-4. An identical replay returns its original account ID and revision without repeating the write.
-5. Revocation or an issuing-owner identity change ends authority; archive restoration restores no integration token, minute reservation or replay receipt.
+2. Account writes, successful replay receipts and opaque account audits commit atomically; updates require the current revision.
+3. An identical replay returns its original account ID and revision without repeating the write.
+4. Post one version 1 event for a reviewed mapped user and one for an unmapped user, replay the first, and see one observation on the right account and one event waiting in review; a credential cannot attach an event outside its account scope (RL-5).
 
 **Evidence.** `src/buoy/integration/index.ts`; `src/buoy/integration/openapi.ts`; `docs/integration-api.md`; `tests/flows.test.mjs`; `tests/integration-journey.mjs`; `tests/portable.mjs`
-**Gap.** ct approved the account foundation with riders on 26 October 2026 at 2890e26a05ac289fce7d13508efb4f3f9a59dd06. Remaining: version 1 events with reviewed user and group attribution; admin issuance bounded by the issuer's record scope and commercial-field rules, and separate read and write scopes for every remaining record kind; the native credentials screen presenting the proven owner inventory of labels, issuer, creation, last use, expiry flags and stop reasons, including named withdrawals before account erasure; contacts, users, metrics, tasks, plans, opportunities, timeline entries, and custom-object definitions and records with bulk external-ID upsert; outbound signed webhooks with retries and a delivery log after their own ruling; Zapier, Make and Crank use of this API, with OpenAPI coverage of every record kind. All-accounts grants, secret-free owner inventory and credential issuance and first-revocation audit assertions now run through integrationJourney; the native account browser mode is loaded by the settings-browser Verify suite.
+**Gap.** Remaining: version 1 events with reviewed user and group attribution; admin issuance bounded by the issuer's record scope and commercial-field rules, and separate read and write scopes for every remaining record kind; the native credentials screen presenting the proven owner inventory of labels, issuer, creation, last use, expiry flags and stop reasons, including named withdrawals before account erasure; contacts, users, metrics, tasks, plans, opportunities, timeline entries, and custom-object definitions and records with bulk external-ID upsert; outbound signed webhooks with retries and a delivery log after their own ruling; Zapier, Make and Crank use of this API, with OpenAPI coverage of every record kind. All-accounts grants, secret-free owner inventory and credential issuance and first-revocation audit assertions now run through integrationJourney; the native account browser mode is loaded by the settings-browser Verify suite.
+
+#### API-002 — Scoped credential lifecycle
+
+Core · target · **partial** · From API-001 · Cites BASE-ROLE-001, BASE-AUDIT-001
+
+**Requirement.** Version 1 record doors use server-only bearer credentials shown once and stored as hashes. Owners and admins issue and revoke within the issuer’s current ROLE-001 record scope and commercial-field rules; losing that authority ends the credential. Account scope is explicit IDs or all accounts, including later credential-created accounts. Every API-001 record kind has separate read and write scopes, with no wildcard. Credentials have 1–365-day expiry and 1–600 requests per UTC minute, with 429 and retry timing. A native owner credentials screen and erasure confirmation expose the credential lifecycle without retaining its secret (RL-5).
+
+**Acceptance.**
+1. As owner, issue an all-accounts credential, create an account with it and read it back; an explicit-ID credential is refused for an outside account.
+2. An admin issues and revokes a credential; a member is refused. Issuance and use stay within current issuer record and commercial-field authority, and loss of that authority ends access.
+3. For accounts, contacts, users, events, metrics, tasks, plans, opportunities, timeline entries and custom-object definitions and records, each read and write has its own scope; no wildcard confers access.
+4. At 1440 and 390, issue a labelled credential and see its secret once; both credentials’ inventories show label, scopes, account scope, rate limit, expiry, issuer, creation and last use, never the secret.
+5. The screen flags credentials from 14 days before expiry, shows stop reasons for revocation, expiry, issuer change and account erasure, and revokes in one action.
+6. Erasure confirmation names credentials it will withdraw; after erasure each is shown withdrawn.
+7. Issuance and first revocation each commit an AUDIT-001 entry in the same transaction; read both, and repeat revocation without another entry.
+8. Revocation or an issuing-owner identity change ends authority; archive restoration restores no integration token, minute reservation or replay receipt.
+
+**Evidence.** `src/buoy/integration/index.ts`; `src/buoy/integration/openapi.ts`; `docs/integration-api.md`; `tests/flows.test.mjs`; `tests/integration-journey.mjs`; `tests/portable.mjs`
+**Gap.** Remaining: version 1 events with reviewed user and group attribution; admin issuance bounded by the issuer's record scope and commercial-field rules, and separate read and write scopes for every remaining record kind; the native credentials screen presenting the proven owner inventory of labels, issuer, creation, last use, expiry flags and stop reasons, including named withdrawals before account erasure; contacts, users, metrics, tasks, plans, opportunities, timeline entries, and custom-object definitions and records with bulk external-ID upsert; outbound signed webhooks with retries and a delivery log after their own ruling; Zapier, Make and Crank use of this API, with OpenAPI coverage of every record kind. All-accounts grants, secret-free owner inventory and credential issuance and first-revocation audit assertions now run through integrationJourney; the native account browser mode is loaded by the settings-browser Verify suite.
 
 #### MIGRATE-001 — Gainsight CS migration
 
@@ -1052,10 +1070,16 @@ Core · target · **partial**
 
 Core · target · **partial**
 
-**Requirement.** Accounts, users, health profiles, SuccessFlows, tasks, touchpoints, segments and success plays are inputs from Totango exports and API under the same guarantees.
+**Requirement.** Accounts, users, health profiles, SuccessFlows, tasks, touchpoints, segments and success plays are inputs from Totango exports and API under the same guarantees. SuccessFlow categories retain identifiers, labels and supplied associations as metadata; labels imply no steps, triggers, conditions, ordering or automation. Genuine SuccessPlay definitions supply playbook structure and retain supplied SuccessFlow associations: source identity, available version, trigger, conditions, step identities, ordering or dependencies, timing, assignment, action configuration and references. Every supplied element is mapped explicitly or listed unmapped with its source reference and reason; missing definitions or associations are named, never inferred or silently omitted. Every migrated playbook arrives paused and inert. Import authorizes reviewed data migration only, with no send, execution or ongoing AI consent; task-producing definitions remain paused configuration (RL-6).
 
 **Acceptance.**
 1. Import a Totango sample export, reconcile 20 accounts, and confirm SuccessFlows arrive as paused playbooks with their steps mapped or listed as unmapped.
+2. Through IMPORT-001, review original source bytes and a no-write plan; reconcile definitions and elements against native paused definitions, including exact mapped values, source associations and every explicitly unmapped element.
+3. Approval binds the fingerprint; replay is idempotent and reconciliation is durable.
+4. Strict undo removes unchanged migrated definitions and refuses after edits or dependent work.
+5. Exercise relevant trigger and schedule conditions while paused: import, reconciliation and replay produce zero customer sends, operational tasks, scheduled execution or other automation effects.
+6. Reload and RESTORE-001 archive restoration preserve paused state, with zero sends, operational tasks, scheduled execution or other automation effects and no restored execution authority.
+7. At 1440 and 390, native import screens show changed review, apply, reconciliation and undo behavior.
 
 **Evidence.** `tests/migrate-journey.mjs`; `tests/totango-api-journey.mjs`
 **Gap.** Account mapping from segment CSV and documented account search API pages ships. Native users, health profiles, SuccessFlows arriving as paused playbooks with every step mapped or explicitly unmapped, tasks, touchpoints, segments, success plays and API intake for those other kinds remain. Totango flow categories have no ordered steps; no automation is inferred from a category label. A genuine SuccessPlay definition and native paused representation are still required. The original full sample-export acceptance is not met. VENDOR-SCHEMA: no genuine SuccessPlay definition artifact with documented semantics and available associations is supplied. DEFINITION-MAPPING: native paused definitions and definition reconciliation remain unbuilt; reference files are custody only and every element remains unmapped. PAUSED-INERTNESS and DEFINITION-CUSTODY: native definition trigger and schedule evaluation, durable native reconciliation, strict definition undo after edits or dependent work, reload and archive-restoration proof remain. OTHER-NATIVE-MAPPINGS and FULL-MIGRATION remain as listed above, including inherited delta, health history, privacy, audit and restore coverage.
@@ -1200,7 +1224,7 @@ Core · target · **done** · Cites BASE-SECRET-001, BASE-DATA-004, BASE-AGENT-0
 
 Core · target · **done** · Cites BASE-ROLE-001, BASE-AGENT-003
 
-**Requirement.** Free-form generated account and portfolio answers and meeting briefs cite each generated claim to the timeline entry, metric or record that supports it, identify missing sources and respect the asker’s current record and commercial-field authority. This preserves the generative work separated from AI-001 by ct on 25 October 2026. The current generated door uses permission-projected native account records, renewal fields, health bands and permitted commercial and support snapshots. Every generated claim carries exact source quotations and server-built links; a citation read rechecks current authority and refuses changed evidence. Missing connected sources remain explicit, and generated prose is labeled for human review rather than provider verification.
+**Requirement.** Free-form generated account and portfolio answers and meeting briefs cite each generated claim to the timeline entry, metric or record that supports it, identify missing sources and respect the asker’s current record and commercial-field authority. The current generated door uses permission-projected native account records, renewal fields, health bands and permitted commercial and support snapshots. Every generated claim carries exact source quotations and server-built links; a citation read rechecks current authority and refuses changed evidence. Missing connected sources remain explicit, and generated prose is labeled for human review rather than provider verification.
 
 **Acceptance.**
 1. Ask the five AI-001 scripted questions as a CSM and a read-only user; each generated claim has a working supporting-record citation, missing data is named and out-of-scope records are absent.
@@ -1212,7 +1236,7 @@ Core · target · **done** · Cites BASE-ROLE-001, BASE-AGENT-003
 
 Core · target · **done** · Cites BASE-AGENT-007, BASE-AGENT-011
 
-**Requirement.** Scheduled model work names its feature, permitted data classes, provider and cost policy, with revocable feature-specific authorization. A person’s per-request consent does not authorize a schedule. Agent schedule changes carry standard and security, adding sensitive for regulated records or external for outside disclosure; the company’s policy decides those calls. Changed model or cost policy invalidates the schedule’s exact authorization; restored archives confer none.
+**Requirement.** Scheduled model work names its feature, permitted data classes, provider and cost policy, with explicit owner authorization for that feature and auditable revocation before subsequent requests. A person’s per-request consent does not authorize a schedule. Agent schedule changes carry standard and security, adding sensitive for regulated records or external for outside disclosure; the company’s policy decides those calls. Changed model or cost policy invalidates the schedule’s exact authorization; restored archives confer none.
 
 **Acceptance.**
 1. With no standing authorization, scheduled work makes no model request; explicitly authorize a named schedule, revoke it and prove later work sends nothing.
