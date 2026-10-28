@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { assertOutcomeRows, assertOutcomeCsv } from './outcome-checks.mjs'
 // PLAY-004: real approved playbooks, sources, human decisions and Cron through HTTP.
 export async function outcomeJourney({call,json,request,cookie,member,account,scheduled}) {
  const accounts=Array.from({length:80},(_,i)=>({...account(`outcome-${String(i).padStart(3,'0')}`),name:`Outcome Customer ${i+1}`}))
@@ -25,15 +26,22 @@ export async function outcomeJourney({call,json,request,cookie,member,account,sc
  assert.deepEqual(r.comparison.map(a=>a.accountId).sort(),accounts.slice(40).map(a=>a.id))
  await json(await call(`/tasks/${taskIds[0]}/complete`,'POST',{outcome:'Review conducted',evidence:'Meeting minutes confirmed'}))
  assert.equal((await report()).rate,0,'PLAY-004 finishing a task never invents a recovery outcome')
- const healthy=async a=>{const current=(await json(await call('/state'))).accounts.find(x=>x.id===a.id);await json(await call('/accounts/'+a.id,'PUT',{...a,revision:current.revision,billing:{...a.billing,allocatedMinor:a.billing.totalMinor-a.billing.creditsMinor},support:{...a.support,urgentTickets:0}}))}
+ const recovered=new Map()
+ const healthy=async a=>{const current=(await json(await call('/state'))).accounts.find(x=>x.id===a.id);const saved=await json(await call('/accounts/'+a.id,'PUT',{...a,revision:current.revision,billing:{...a.billing,allocatedMinor:a.billing.totalMinor-a.billing.creditsMinor},support:{...a.support,urgentTickets:0}}));recovered.set(a.id,saved.revision)}
  for(const a of accounts.slice(0,20))await healthy(a)
  for(const a of accounts.slice(40,45))await healthy(a)
  r=await report();assert.equal(r.rate,0.5);assert.equal(r.comparisonRate,0.125)
  assert.equal(r.enrolled.filter(a=>a.status==='reached').length,20);assert.equal(r.comparison.filter(a=>a.status==='reached').length,5)
- for(const a of r.enrolled.filter(a=>a.reachedAt)){assert.ok(a.reachedAt>=r.startedAt&&a.reachedAt<=r.deadline);assert.match(a.evidence,/Healthy evidence at account revision/);assert.equal(a.elapsedHours,(Date.parse(a.reachedAt)-Date.parse(r.startedAt))/3600000)}
+ for(const a of [...r.enrolled,...r.comparison].filter(a=>a.reachedAt)){assert.ok(a.reachedAt>=r.startedAt&&a.reachedAt<=r.deadline);assert.match(a.evidence,/Healthy evidence at account revision/);assert.equal(a.elapsedHours,(Date.parse(a.reachedAt)-Date.parse(r.startedAt))/3600000)}
  assert.equal(r.meanHours,r.enrolled.filter(a=>a.reachedAt).reduce((sum,a)=>sum+a.elapsedHours,0)/20)
+ assert.equal(r.comparisonMeanHours,r.comparison.filter(a=>a.reachedAt).reduce((sum,a)=>sum+(Date.parse(a.reachedAt)-Date.parse(r.startedAt))/3600000,0)/5)
+ const expected=accounts.map((a,index)=>{
+  const cohort=index<40?'enrolled':'comparison',reachedAt=r[cohort].find(row=>row.accountId===a.id).reachedAt
+  return {cohort,accountId:a.id,name:a.name,status:recovered.has(a.id)?'reached':'observing',reachedAt,elapsedHours:reachedAt?(Date.parse(reachedAt)-Date.parse(r.startedAt))/3600000:null,evidence:recovered.has(a.id)?`Healthy evidence at account revision ${recovered.get(a.id)}: Current billing and support snapshots show no defined risk signal.`:null}
+ })
+ assertOutcomeRows(r,expected)
  const first=JSON.stringify(r.enrolled.find(a=>a.reachedAt));await scheduled('0 * * * *',Date.now());assert.equal(JSON.stringify((await report()).enrolled.find(a=>a.reachedAt)),first,'PLAY-004 observations never overwrite a reached outcome')
- const csv=await call(`/outcomes/${id}/report.csv`);assert.match(csv.headers.get('content-type'),/csv/);const lines=(await csv.text()).split('\r\n').filter(Boolean);assert.equal(lines.length,81);assert.equal(lines.filter(l=>l.startsWith('"enrolled"')).length,40);assert.equal(lines.filter(l=>l.includes('"reached"')).length,25)
+ const csv=await call(`/outcomes/${id}/report.csv`);assert.match(csv.headers.get('content-type'),/csv/);assertOutcomeCsv(await csv.text(),expected,r)
  const memberRead=await json(await call(`/outcomes/${id}/report`,'GET',undefined,{cookie:member}));assert.deepEqual(memberRead,r,'PLAY-004 reads keep the existing account policy')
  assert.equal((await call('/outcomes','POST',{...input,operationKey:'already-healthy',taskIds:[taskIds[0]]})).status,400,'PLAY-004 outcome must be unsatisfied at baseline')
  const segment=(await json(await call('/segments'))).segments.find(s=>s.id===segmentId)

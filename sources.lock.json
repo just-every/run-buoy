@@ -4291,12 +4291,16 @@
       "sha256": "c8c966be1228bf518218067c9c566adfed006ef4c3465199773f9da7084be628",
       "executable": false
     },
+    "tests/outcome-checks.mjs": {
+      "sha256": "950697e928783ae3fc72ab245c1bdb6ac8fd59e11e553e3626e1eb386bee5e7f",
+      "executable": false
+    },
     "tests/outcome-journey.mjs": {
-      "sha256": "e65b984d6b37287ecb2841934bc67a1fb2e505b161c44d75d55362cf000366cc",
+      "sha256": "0f2489dc7cbb870431c5d686c6b072f355520677cb27182b32c452960cb1ebb2",
       "executable": false
     },
     "tests/outcomes.mjs": {
-      "sha256": "eae60dc92d1b95203918c0481d749ab12746e03ead7b892cf6cbccfb2b6bc8d0",
+      "sha256": "cc720ca55c573fb4a62bef29ef66fd12cbfcbef0deceb7122afe0a768345eb66",
       "executable": false
     },
     "tests/plan-browser.mjs": {
