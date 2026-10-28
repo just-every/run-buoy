@@ -74,6 +74,7 @@ export function docsPages(): Array<{ path: string; html: string }> {
       : guide.source
     const article = markdown.parse(source, { async: false })
     const navigation = guides.map(item => `<a href="${path(item.slug)}"${item.slug === guide.slug ? ' aria-current="page"' : ''}>${escape(item.title)}</a>`).join('')
+      + '<a href="/docs/hosting">Hosting</a>'
     const toc = contents.map(item => `<a href="#${item.id}">${escape(item.title)}</a>`).join('')
     const previous = guides[index - 1], next = guides[index + 1]
     const pager = `<nav class="docs-pager" aria-label="Guide pages">${previous ? `<a href="${path(previous.slug)}"><span>← Previous</span>${escape(previous.title)}</a>` : '<span></span>'}${next ? `<a href="${path(next.slug)}"><span>Next →</span>${escape(next.title)}</a>` : ''}</nav>`
