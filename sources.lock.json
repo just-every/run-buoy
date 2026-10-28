@@ -4160,7 +4160,7 @@
       "executable": false
     },
     "tests/configuration-browser.mjs": {
-      "sha256": "1aaa7c798ce79f44fd32c8146caab7856c9d5c030847b10a388af2fb654140c7",
+      "sha256": "32faa56c6ec80743fbd0f761c2390e5394b64b6098723a39890e2e2e0a60c781",
       "executable": false
     },
     "tests/configuration-journey.mjs": {
@@ -4188,7 +4188,7 @@
       "executable": false
     },
     "tests/dashboard-journey.mjs": {
-      "sha256": "8eff19f4ee86bf93adf91aefe493414e85be255143aaa88bcfe8eee2c239fb56",
+      "sha256": "f29a671c513b1fe84d93bf429b102330b54c6406da0cfe82fd572e5ec7b9adca",
       "executable": false
     },
     "tests/email-link.mjs": {
@@ -4287,6 +4287,10 @@
       "sha256": "19e8f89a9214764e2c12375187ebbd44fb02fd82be565811fbe2318247270ad3",
       "executable": false
     },
+    "tests/native-keyboard.mjs": {
+      "sha256": "580496f50299ebf0f777fa1c045ad0254397580ffa31300f5f4d0f5585717cdd",
+      "executable": false
+    },
     "tests/notifications.mjs": {
       "sha256": "c8c966be1228bf518218067c9c566adfed006ef4c3465199773f9da7084be628",
       "executable": false
@@ -4320,7 +4324,7 @@
       "executable": false
     },
     "tests/play-browser.mjs": {
-      "sha256": "e6aa6a457fe35935f8a5d4a19e75f2fba30521fd79184112f72c403fd917967c",
+      "sha256": "21b48a3849c90d711add0a36a8e692b77f2d9804fa0333bb8d66d09781a17105",
       "executable": false
     },
     "tests/play-fixture.mjs": {
@@ -4336,7 +4340,7 @@
       "executable": false
     },
     "tests/portal-browser.mjs": {
-      "sha256": "c483f5128abf3b979aee1c864e0f12bf6e20de1eea6a7495b468d228857b5628",
+      "sha256": "68bdd9324d2647d0c18738cc21779c94b643e459ee6779551aff76961e475775",
       "executable": false
     },
     "tests/portal-journey.mjs": {
@@ -4380,7 +4384,7 @@
       "executable": false
     },
     "tests/report-builder-keyboard.mjs": {
-      "sha256": "f8718dc71805d72a05f3ca91680f72e2d0a216d5d26d66c7d02ce4a9c35aba2e",
+      "sha256": "efd917df22526e782a3f40a826786d7116a90a4df80cd0db9465b6acb2214199",
       "executable": false
     },
     "tests/reporting-browser.mjs": {

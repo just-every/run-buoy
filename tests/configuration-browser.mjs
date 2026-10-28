@@ -12,8 +12,7 @@ try{
  try{
   await context.addCookies(app.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return {name,value:rest.join('='),url:app.origin}}))
   const page=await context.newPage(),proof=async label=>{
-   await scan(page,'Configuration '+label)
-   for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await page.screenshot({path:join(evidence,label+'-'+width+'.png'),fullPage:true})}
+   for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await scan(page,'Configuration '+label+' '+width);await page.screenshot({path:join(evidence,label+'-'+width+'.png'),fullPage:true})}
    await page.setViewportSize({width:1440,height:1000})
   }
   await page.goto(app.origin+'/app/ai',{waitUntil:'networkidle'});await page.getByRole('link',{name:'Describe and back-test a configuration',exact:true}).click()

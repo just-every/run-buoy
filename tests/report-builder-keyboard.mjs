@@ -3,24 +3,7 @@ import {readFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {focused,openForms,scan,submit,type} from './a11y-checks.mjs'
 
-async function open(page,panel){
- if(!await panel.evaluate(element=>element.open)){
-  await focused(page,panel.locator(':scope > summary'),'Report disclosure keyboard focus')
-  await page.keyboard.press('Enter')
- }
- assert.ok(await panel.evaluate(element=>element.open),'Keyboard opens the report controls')
-}
-
-async function choose(page,field,value){
- await focused(page,field,'Report choice keyboard focus')
- const options=await field.locator('option').evaluateAll(nodes=>nodes.map(node=>node.value))
- const index=options.indexOf(value)
- assert.ok(index>=0,'The desired report choice is offered')
- await page.keyboard.press('Home')
- for(let i=0;i<index;i++)await page.keyboard.press('ArrowDown')
- await page.keyboard.press('Tab')
- assert.equal(await field.inputValue(),value,'Real keyboard events select the report choice')
-}
+import {show as open,choose} from './native-keyboard.mjs'
 
 // Parse the actual attachment independently of the application's CSV writer.
 function csvRows(text){
@@ -76,6 +59,7 @@ export async function reportBuilderKeyboard({page,app,width,evidence,spec,expect
  let form=page.locator('#report-create')
  await type(page,form.getByLabel('Report name',{exact:true}),name)
  for(const [label,value]of [['Group by','ownerId'],['Measure','revenue.arrMinor'],['Aggregation','sum'],['Segment',''],['Display','bar']])await choose(page,form.getByRole('combobox',{name:label,exact:true}),value)
+ assert.equal(await form.getByLabel('Filter rules JSON',{exact:true}).count(),1,await form.ariaSnapshot())
  await type(page,form.getByLabel('Filter rules JSON',{exact:true}),'{ invalid JSON')
  await type(page,form.getByLabel('Calculated column formula (optional)',{exact:true}),'')
  await type(page,form.getByLabel('Viewer role IDs, comma separated (optional)',{exact:true}),'finance')
