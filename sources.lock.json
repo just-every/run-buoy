@@ -4512,11 +4512,11 @@
       "executable": false
     },
     "src/site/docs.css": {
-      "sha256": "f3dcb7ecb7fe0e571d9f095e2a0913c630c4d34b45138836daedcbb36587193e",
+      "sha256": "87c3667ca7aa0a45d15b4ae4e8f7fb6db5cef71c680d756e8f25a8612648346c",
       "executable": false
     },
     "src/site/docs.ts": {
-      "sha256": "39e9be950aeb2addf1aad31c09c723bd6d186420807ff82352c358ecf2256df1",
+      "sha256": "2c89cadcde0008f6ffad5d01dfc2a0dc5398780a5b1bb0773039bc246bfe8d30",
       "executable": false
     },
     "src/site/head.ts": {
