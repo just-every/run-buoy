@@ -302,6 +302,11 @@
     "fixtures": {
       "module": "tests/agent-door-fixtures.mjs"
     },
-    "journey": "tests/agent-door-journey.mjs"
+    "journey": "tests/agent-door-journey.mjs",
+    "replayAdmission": {
+      "prepare": [
+        "playbook"
+      ]
+    }
   }
 }
