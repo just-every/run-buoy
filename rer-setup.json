@@ -57,7 +57,7 @@
       "label": "Setup token",
       "kind": "secret",
       "required": true,
-      "ownerVisible": true,
+      "ownerVisible": false,
       "generate": "hex",
       "group": "owner"
     },
@@ -216,11 +216,17 @@
     },
     {
       "type": "owner-claim",
-      "mode": "setup-token",
+      "mode": "signed",
+      "path": "/auth/owner-claim",
       "emailField": "OWNER_EMAIL",
       "tokenField": "SETUP_TOKEN"
     }
   ],
+  "business": {
+    "settings": 1,
+    "values": ["display_name"],
+    "team": {"roles": {"admin": "admin", "member": "member"}}
+  },
   "dependencies": [
     {
       "interface": "oidc-provider@1",

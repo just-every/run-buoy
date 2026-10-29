@@ -1,0 +1,307 @@
+{
+  "schema": "rer-agent-surface/1",
+  "seed": "buoy",
+  "specialist": "customer success operator",
+  "description": "Native preparation subset: account reads, inert work and experiment drafts, retained reports and a read-only witness. This declaration does not claim the complete target customer-success registry or seeded week.",
+  "capabilities": [
+    "tools",
+    "policy",
+    "pause",
+    "audit",
+    "idempotency"
+  ],
+  "tools": [
+    {
+      "name": "buoy.renewals.list",
+      "scope": "renewals.list",
+      "readOnly": true,
+      "classes": [
+        "standard"
+      ],
+      "clauses": [
+        "AGENT-003",
+        "RENEW-001",
+        "SURFACE-001"
+      ]
+    },
+    {
+      "name": "buoy.playbook.prepare",
+      "scope": "playbook.prepare",
+      "readOnly": false,
+      "classes": [
+        "standard"
+      ],
+      "clauses": [
+        "PLAY-001",
+        "AGENT-001",
+        "SURFACE-002"
+      ]
+    },
+    {
+      "name": "buoy.renewal.prepare",
+      "scope": "renewal.prepare",
+      "readOnly": false,
+      "classes": [
+        "standard"
+      ],
+      "clauses": [
+        "RENEW-001",
+        "AGENT-003",
+        "SURFACE-003"
+      ]
+    },
+    {
+      "name": "buoy.experiment.prepare",
+      "scope": "experiment.prepare",
+      "readOnly": false,
+      "classes": [
+        "standard"
+      ],
+      "clauses": [
+        "AGENT-002",
+        "SURFACE-001",
+        "SURFACE-002"
+      ]
+    },
+    {
+      "name": "buoy.experiment.report",
+      "scope": "experiment.report",
+      "readOnly": true,
+      "classes": [
+        "standard"
+      ],
+      "clauses": [
+        "AGENT-002",
+        "SURFACE-001"
+      ]
+    },
+    {
+      "name": "buoy.workspace.snapshot",
+      "scope": "renewals.list",
+      "readOnly": true,
+      "classes": [
+        "standard"
+      ],
+      "clauses": [
+        "AUDIT-001",
+        "GOVERN-001",
+        "SURFACE-001"
+      ]
+    }
+  ],
+  "notTools": [
+    {
+      "clauses": [
+        "HTTP-001"
+      ],
+      "reason": "installation"
+    },
+    {
+      "clauses": [
+        "DATA-001",
+        "IMPORT-001"
+      ],
+      "reason": "import-door"
+    },
+    {
+      "clauses": [
+        "RESTORE-001",
+        "SCALE-001",
+        "BOUNDARY-001",
+        "BOUNDARY-002",
+        "BOUNDARY-003",
+        "BOUNDARY-004",
+        "BOUNDARY-005"
+      ],
+      "reason": "installation"
+    },
+    {
+      "clauses": [
+        "SITE-001",
+        "STYLE-001",
+        "A11Y-001"
+      ],
+      "reason": "screen"
+    },
+    {
+      "clauses": [
+        "MOBILE-001"
+      ],
+      "reason": "device"
+    }
+  ],
+  "resources": [],
+  "journey": [
+    {
+      "id": "accounts",
+      "tool": "buoy.renewals.list",
+      "args": {},
+      "expect": [
+        {
+          "class": "standard",
+          "facts": {
+            "measure": 1
+          }
+        }
+      ],
+      "inject": {
+        "classes": [
+          "external",
+          "money"
+        ],
+        "confirmExternal": true
+      }
+    },
+    {
+      "id": "playbook",
+      "tool": "buoy.playbook.prepare",
+      "args": {
+        "accountId": {
+          "$fixture": "account",
+          "pointer": "/id"
+        },
+        "payload": {
+          "$fixture": "playbook",
+          "pointer": ""
+        },
+        "expected_revision": {
+          "$fixture": "account",
+          "pointer": "/revision"
+        }
+      },
+      "expect": [
+        {
+          "class": "standard",
+          "facts": {
+            "measure": 1
+          }
+        }
+      ],
+      "inject": {
+        "classes": [
+          "external",
+          "money"
+        ],
+        "confirmExternal": true
+      }
+    },
+    {
+      "id": "renewal",
+      "tool": "buoy.renewal.prepare",
+      "args": {
+        "accountId": {
+          "$fixture": "account",
+          "pointer": "/id"
+        },
+        "payload": {
+          "$fixture": "renewal",
+          "pointer": ""
+        },
+        "expected_revision": {
+          "$fixture": "account",
+          "pointer": "/revision"
+        }
+      },
+      "expect": [
+        {
+          "class": "standard",
+          "facts": {
+            "measure": 1
+          }
+        }
+      ],
+      "inject": {
+        "classes": [
+          "external",
+          "money"
+        ],
+        "confirmExternal": true
+      }
+    },
+    {
+      "id": "experiment",
+      "tool": "buoy.experiment.prepare",
+      "args": {
+        "$fixture": "experiment",
+        "pointer": ""
+      },
+      "expect": [
+        {
+          "class": "standard",
+          "facts": {
+            "measure": 1
+          }
+        }
+      ],
+      "inject": {
+        "classes": [
+          "external",
+          "money"
+        ],
+        "confirmExternal": true
+      }
+    },
+    {
+      "id": "experiment-report",
+      "tool": "buoy.experiment.report",
+      "args": {
+        "id": {
+          "$from": "experiment",
+          "pointer": "/id"
+        }
+      },
+      "expect": [
+        {
+          "class": "standard",
+          "facts": {
+            "measure": 1
+          }
+        }
+      ],
+      "inject": {
+        "classes": [
+          "external",
+          "money"
+        ],
+        "confirmExternal": true
+      }
+    },
+    {
+      "id": "snapshot",
+      "tool": "buoy.workspace.snapshot",
+      "args": {},
+      "expect": [
+        {
+          "class": "standard",
+          "facts": {
+            "measure": 1
+          }
+        }
+      ],
+      "inject": {
+        "classes": [
+          "external",
+          "money"
+        ],
+        "confirmExternal": true
+      }
+    }
+  ],
+  "witness": {
+    "tool": "buoy.workspace.snapshot",
+    "args": {}
+  },
+  "verification": {
+    "owner": {
+      "initializer": "tests/agent-door-owner.mjs",
+      "bindings": {
+        "AUTH_ORIGIN": "appOrigin",
+        "SESSION_SECRET": "sessionSecret"
+      }
+    },
+    "fixtures": {
+      "module": "tests/agent-door-fixtures.mjs"
+    },
+    "journey": "tests/agent-door-journey.mjs"
+  }
+}

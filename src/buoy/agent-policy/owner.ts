@@ -15,6 +15,7 @@ export async function setAgentSettings(db: D1Database, actor: Actor, input: Reco
  insist(Object.keys(input).length === 1 && typeof input.disabled === 'boolean', 'Set disabled to true or false.')
  await db.batch<Record<string, unknown>>([authority(db, actor, true), guard(db, "EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND role='owner' AND status='active')", actor.id),
   stmt(db, 'UPDATE buoy_agent_settings SET disabled=? WHERE singleton=1 AND disabled<>?', Number(input.disabled), Number(input.disabled)),
-  auditIfChanged(db, actor, 'agent.access-changed', 'installation:agents', input.disabled ? 'Agent access disabled.' : 'Agent access enabled.'), stmt(db, 'DELETE FROM buoy_assertions')])
+  auditIfChanged(db, actor, 'agent.access-changed', 'installation:agents', input.disabled ? 'Agent access disabled.' : 'Agent access enabled.'),
+  stmt(db, 'INSERT INTO agent_door_state(id,local_paused) VALUES(1,?) ON CONFLICT(id) DO UPDATE SET local_paused=excluded.local_paused',Number(input.disabled)),stmt(db, 'DELETE FROM buoy_assertions')])
  return {disabled: input.disabled}
 }

@@ -250,10 +250,8 @@ buoyApi.get('/api/buoy/commands', c => c.json({commands: c.get('actor').agentPol
 const PREPARATION: Record<string, string[]> = {'playbook.prepare': ['title', 'dueDate'], 'renewal.prepare': ['outcome', 'reason', 'evidence']}
 buoyApi.post('/api/buoy/commands', async c => {
  const body = await jsonBody(c.req.raw), actor = c.get('actor'), db = c.env.DB
- if (actor.kind === 'agent' && COMMANDS.includes(body.command as AgentCommand)) {
-  actor.agentRequest!.command = body.command as AgentCommand
-  requireCommand(actor.agentPolicy!, body.command as AgentCommand)
- }
+ // Agent credentials reach this verb only through the shared MCP transport.
+ insist(actor.kind==='person','Agent calls use the shared door.',403)
  if(body.command==='experiment.prepare')return c.json(await proposeExperiment(db,actor,object(body.input)),201)
  if(body.command==='experiment.report'){if(actor.kind==='person')requirePerson(actor);return c.json(await experimentReport(db,text(object(body.input).id,'Experiment',100)))}
  if (body.command === 'renewals.list') {

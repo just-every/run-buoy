@@ -6,6 +6,8 @@ import {generateRenewals} from './buoy/renewals'
 import {recalculateScorecards} from './buoy/scorecards'
 import { scheduledConnections } from './buoy/connectors/sync'
 import { importDoorResponse } from './buoy/imports/door'
+import { agentDoorResponse } from './buoy/door'
+import { legacyCommands } from './buoy/door/legacy'
 import { scheduledSegments } from './buoy/segments'
 import { withDemo } from './modules/demo/index.mjs'
 import { seedDemo } from './demo'
@@ -41,6 +43,10 @@ export default withDemo({
   async fetch(request, env, execution) {
     const asset = await staticAssetResponse(request, env)
     if (asset) return asset
+    const agents = await agentDoorResponse(request, env)
+    if (agents) return rejectedResponse(request, agents)
+    const legacy = await legacyCommands(request, env)
+    if (legacy) return rejectedResponse(request, legacy)
     const door = await importDoorResponse(request, env)
     if (door) {
       if(!['GET','HEAD'].includes(request.method)&&door.ok)await recalculateScorecards(env.DB)

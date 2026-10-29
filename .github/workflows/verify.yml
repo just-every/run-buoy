@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [plans, permissions, http, volume, records, reporting-browser, records-browser, workspace-browser, hierarchy-browser, adoption, adoption-consumers, adoption-aggregates, health, browser, accessibility-browser, settings-browser, intake-browser, ai-browser, archive]
+        suite: [agent-door, plans, permissions, http, volume, records, reporting-browser, records-browser, workspace-browser, hierarchy-browser, adoption, adoption-consumers, adoption-aggregates, health, browser, accessibility-browser, settings-browser, intake-browser, ai-browser, archive]
     env:
       BUOY_VERIFY_SUITE: ${{ matrix.suite }}
       CI: 'true'

@@ -52,7 +52,7 @@ export async function proposeExperiment(db:D1Database,actor:Actor,input:Record<s
  insist(pairs.length===Number(input.pairs)*2,'Not enough comparable accounts. Exact segment, baseline health, native ARR currency and customer tenure matches are required.',409)
  const experimentId=id(),revision=id(),at=now(),document={name:text(input.name,'Experiment name',100),segmentId,segmentName:segment.name,tenureField,pairs:Number(input.pairs),windowDays:Number(input.windowDays),successMetric:input.successMetric,intervention:input.intervention,eligibleCount:candidates.length,excludedCount:excluded.length,unmatchedCount:candidates.length-excluded.length-pairs.length}
  await db.batch([authority(db,actor,actor.kind==='person',actor.kind==='agent'?'experiment.prepare':undefined),fence(db,image),
- stmt(db,"INSERT INTO buoy_experiments(id,operation_key,request,document,revision,status,proposed_at,prepared_by) VALUES(?,?,?,?,?,'proposed',?,?)",experimentId,operationKey,request,JSON.stringify(document),revision,at,actor.kind+':'+actor.id),
+ stmt(db,"INSERT INTO buoy_experiments(id,operation_key,request,document,revision,status,proposed_at,prepared_by) VALUES(?,?,?,?,?,'proposed',?,?)",experimentId,operationKey,request,JSON.stringify(document),revision,at,actor.door?`agent:${actor.door.agentId}:${actor.door.label} [person:${actor.id}]`:actor.kind+':'+actor.id),
  ...pairs.map(p=>stmt(db,'INSERT INTO buoy_experiment_accounts(experiment_id,account_id,pair_index,cohort,baseline) VALUES(?,?,?,?,?)',experimentId,p.accountId,p.pairIndex,p.cohort,JSON.stringify(p.baseline))),
  auditRecord(db,actor,'experiment.proposed','experiment:'+experimentId),stmt(db,'DELETE FROM buoy_assertions')])
  return experimentReport(db,experimentId)
