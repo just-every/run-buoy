@@ -179,19 +179,25 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
   })
   await t.test('BOUNDARY-004 agent commercial changes are refused with their reason and recorded; mail is single-recipient team mail',async()=>{
    const agent=await json(await call('/agent-tokens','POST',{label:'Discount probe'}),201), as={cookie:undefined,token:agent.token}
-   const before=(await json(await call('/state'))).accounts.find(a=>a.id==='harbour')
+   const stateBefore=await json(await call('/state')),ownerId=stateBefore.operator.id,before=stateBefore.accounts.find(a=>a.id==='harbour')
    const attempts=[
-    [await call('/commands','POST',{command:'renewal.prepare',input:{accountId:'harbour',payload:{outcome:'renewed',reason:'Offer 20% off to close',evidence:'Agent draft',discountPercent:20}}},as),403,'account harbour',/^Agents cannot set discountPercent\. A preparation carries only outcome, reason, evidence; prices, discounts and other commercial terms change only by a person/],
+    [await call('/commands','POST',{command:'renewal.prepare',input:{accountId:'harbour',payload:{outcome:'renewed',reason:'Offer 20% off to close',evidence:'Agent draft',discountPercent:20}}},as),403,`agent:${agent.id}`,null],
     [await call('/commands','POST',{command:'renewal.discount',input:{accountId:'harbour',percent:20}},as),400,'command renewal.discount',/^Unknown command\. Agents can prepare; people approve\.$/],
     [await call('/accounts/harbour','PUT',{...account(),renewalDate:'2028-03-31',revision:before.revision},as),403,'PUT /api/buoy/accounts/harbour',/^Agents can only use the preparation commands\.$/]]
-   for(const [response,status,,reason] of attempts){assert.equal(response.status,status);assert.match((await response.json()).error,reason)}
+   for(const [response,status,,reason] of attempts){assert.equal(response.status,status);const body=await response.json();if(reason)assert.match(body.error,reason);else assert.equal(body.code,'invalid_arguments')}
    const after=(await json(await call('/state'))).accounts.find(a=>a.id==='harbour')
    assert.equal(after.revision,before.revision,'no term changed');assert.ok(!(await json(await call('/state'))).proposals.some(p=>p.payload.reason==='Offer 20% off to close'))
    assert.equal((await call('/audit','GET',undefined,{cookie:member})).status,403)
-   const recorded=(await json(await call('/audit'))).entries.filter(e=>e.actor===`agent:${agent.id}`&&e.action==='agent.refused')
+   const dualActor=`agent:${agent.id} for person:${ownerId}`
+   const recorded=(await json(await call('/audit'))).entries.filter(e=>[dualActor,`agent:${agent.id}`].includes(e.actor)&&e.action==='agent.refused')
    assert.equal((await json(await call('/audit?actor='+agent.id+'&action=agent.requested'))).entries.length,3,'GOVERN-001 AUDIT-001 every authenticated request, including another route, records its attempt separately from refusal');
-   assert.deepEqual(recorded.map(e=>e.action),['agent.refused','agent.refused','agent.refused']);for(const e of recorded)assert.equal(e.actor,`agent:${agent.id}`,'AUDIT-001 retains the agent id without its display name')
-   for(const [,,subject,reason] of attempts){const entry=recorded.find(e=>e.subject===subject);assert.ok(entry,`${subject} is recorded`);assert.match(entry.detail,reason);assert.ok(Date.parse(entry.occurredAt))}
+   assert.deepEqual(recorded.map(e=>e.action),['agent.refused','agent.refused','agent.refused'])
+   assert.equal(recorded.filter(e=>e.actor===dualActor).length,1,'The MCP refusal records the preparing agent and current native sponsor')
+   assert.equal(recorded.filter(e=>e.actor===`agent:${agent.id}`).length,2,'Unknown commands and other API routes retain native refusal attribution')
+   for(const [,,subject,reason] of attempts){const entry=recorded.find(e=>e.subject===subject);assert.ok(entry,`${subject} is recorded`);if(reason){assert.equal(entry.actor,`agent:${agent.id}`);assert.match(entry.detail,reason)}else{assert.equal(entry.actor,dualActor);assert.match(entry.detail,/^renewal\.prepare:/)}assert.ok(Date.parse(entry.occurredAt))}
+   const doorAudit=await json(await request('/agents/api/audit?agent='+agent.id,{cookie}))
+   assert.equal(doorAudit.rows.length,1,'The rejected preparation reaches the shared policy audit exactly once')
+   assert.deepEqual(doorAudit.rows.map(row=>({tool:row.tool,code:row.code,outcome:row.outcome,sponsorId:row.sponsor.id,agentId:row.agent.id})),[{tool:'buoy.renewal.prepare',code:'invalid_arguments',outcome:'refused',sponsorId:ownerId,agentId:agent.id}])
    await json(await call(`/agent-tokens/${agent.id}`,'DELETE'))
    // NOTIFY-001 adds internal notices. Every message still has one team recipient;
    // sign-in mail still contains its ordinary confirmation door.
@@ -234,6 +240,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.match(created.subject,/^[0-9a-f]{32}$/)
    const subject=created.subject, read=async()=>(await json(await call('/audit?subject='+subject))).entries
    const agent=await json(await call('/agent-tokens','POST',{label:'Joan Example assistant'}),201), as={cookie:undefined,token:agent.token}
+   const ownerId=(await json(await call('/state'))).operator.id
    const prepared=await json(await call('/commands','POST',{command:'renewal.prepare',input:{accountId:privateId,payload:{outcome:'renewed',reason:'Confirmed renewal',evidence:'Signed renewal order R-18'}}},as),201)
    await json(await call(`/proposals/${prepared.id}/approve`,'POST',{}))
    await json(await call(`/proposals/${prepared.id}/approve`,'POST',{}))
@@ -246,7 +253,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    await json(await call(path,'DELETE',{confirmation:name}))
    const retained=await read()
    assert.deepEqual(retained.map(e=>e.action).sort(),['account.created','account.erased','agent.refused','renewal.approved','renewal.prepared'])
-   for(const entry of retained){assert.match(entry.actor,/^(person|agent):[0-9a-f-]+$/);assert.ok(Date.parse(entry.occurredAt));assert.equal(entry.subject,subject)}
+   for(const entry of retained){assert.equal(entry.actor,entry.action==='renewal.prepared'?`agent:${agent.id} for person:${ownerId}`:entry.action==='agent.refused'?`agent:${agent.id}`:`person:${ownerId}`);assert.ok(Date.parse(entry.occurredAt));assert.equal(entry.subject,subject)}
    assert.doesNotMatch(JSON.stringify(retained),/Joan|joan|example.test|Harbour CS owner/)
    assert.deepEqual((await json(await call('/audit?actor='+agent.id))).entries.filter(e=>e.action==='agent.refused'),retained.filter(e=>e.action==='agent.refused'))
    assert.ok(!(await json(await call('/state'))).accounts.some(a=>a.id===privateId))
