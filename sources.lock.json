@@ -1036,7 +1036,7 @@
       "executable": false
     },
     "scripts/verify-app.mjs": {
-      "sha256": "d74e44350d122e665a9e4b9b9a9d022c9fbf99c4bfb2b90247d60f5c4100f1d3",
+      "sha256": "4483b92e463052d4d84f1cdaecc0e134e7f8014554a8106939fe336a910eac51",
       "executable": false
     },
     "sdk/inapp.mjs": {
