@@ -115,7 +115,7 @@ export async function afterStep(context) {
 }
 
 export default async function nativeJourney(context) {
- const state = await personApi(context)('/state'), fixtureIds = new Set(state.accounts.filter(row => row.id.startsWith('door-')).map(row => row.id))
+ const call=personApi(context),state = await call('/state'), fixtureIds = new Set(state.accounts.filter(row => row.id.startsWith('door-')).map(row => row.id))
  assert.ok(fixtureIds.size >= 4, 'Conformance used real native customer records')
  const prepared = state.proposals.filter(row => fixtureIds.has(row.accountId))
  assert.ok(prepared.some(row => row.kind === 'playbook' && row.preparedBy.startsWith('agent:')))
@@ -123,4 +123,19 @@ export default async function nativeJourney(context) {
  assert.ok(prepared.every(row => row.status === 'prepared' && row.approvedBy === null))
  assert.ok(!state.tasks.some(row => fixtureIds.has(row.accountId)), 'Policy review does not stand in for native approval')
  assert.ok(!state.decisions.some(row => fixtureIds.has(row.accountId)), 'Agent preparation never becomes a confirmed renewal')
+ const local=await call('/agent-tokens','POST',{label:'Native renewal reader',scopes:['renewals.list'],dataClasses:['account']},201)
+ try {
+  const response=await context.request(new URL('/mcp',context.origin).href,{method:'POST',headers:{Origin:context.origin,Authorization:'Bearer '+local.token,'Content-Type':'application/json','MCP-Protocol-Version':'2025-11-25','Mcp-Method':'tools/call','Mcp-Name':'buoy.workspace.snapshot'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'buoy.workspace.snapshot',arguments:{}}})})
+  assert.equal(response.status,403,'An existing local read grant cannot acquire the new Business witness scope')
+  assert.equal((await response.json()).error?.data?.code,'insufficient_scope')
+  let after=null;const rows=[]
+  for(;;){
+   const query=new URLSearchParams({agent:local.id,...(after?{after}:{})})
+   const audit=await context.request(new URL('/agents/api/audit?'+query,context.origin).href,{headers:{Origin:context.origin,Cookie:context.cookie}})
+   assert.equal(audit.status,200);const page=await audit.json();assert.equal(page.differs_from_policy,0);rows.push(...page.rows)
+   if(!page.cursor||page.cursor===after)break;after=page.cursor
+  }
+  assert.deepEqual(rows.map(row=>({code:row.code,agent:row.agent.id,sponsor:row.sponsor.id})),[{code:'insufficient_scope',agent:local.id,sponsor:state.operator.id}],'The narrow local grant refusal retains truthful native identity in the shared audit')
+  assert.deepEqual((await call('/state')).proposals,state.proposals,'A refused witness call creates no native work')
+ }finally{await call('/agent-tokens/'+local.id,'DELETE')}
 }

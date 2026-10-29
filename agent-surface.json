@@ -77,7 +77,7 @@
     },
     {
       "name": "buoy.workspace.snapshot",
-      "scope": "renewals.list",
+      "scope": "workspace.snapshot",
       "readOnly": true,
       "classes": [
         "standard"

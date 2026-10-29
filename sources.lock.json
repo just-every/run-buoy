@@ -88,7 +88,7 @@
       "executable": false
     },
     "agent-surface.json": {
-      "sha256": "4de684b1041d7dc219a19449726d9a882e7c3bff39b2e3925706fb5be5cc05be",
+      "sha256": "16289a44dba214fb505ccb28f6feda1fdbd32ef030990b5133ab8593b3616dbd",
       "executable": false
     },
     "AGENTS.md": {
@@ -140,7 +140,7 @@
       "executable": false
     },
     "docs/agent-door.md": {
-      "sha256": "3031221484c1764fc02777090c6ee03953beb997a85efd89a132328b615bd25b",
+      "sha256": "8bef1537362449f94344290d474bb151665dbdb1627eff57507c176d8d4cd932",
       "executable": false
     },
     "docs/agents.md": {
@@ -1416,7 +1416,7 @@
       "executable": false
     },
     "src/buoy/door/reads.ts": {
-      "sha256": "49380a469557b2504ecb9d01214839a2c980f9cbb4596b3051eb9d9d5ee37e20",
+      "sha256": "218d5cc00e3fc53ab6d458856a4d52452aca74d44e172643c2be35f035528306",
       "executable": false
     },
     "src/buoy/door/schema.ts": {
@@ -4532,7 +4532,7 @@
       "executable": false
     },
     "tests/agent-door-journey.mjs": {
-      "sha256": "7d686e78379679173fe53035c8145d765f1c37d08b69db5e3fd7b8e070dd3e12",
+      "sha256": "f87b7a0c747cc5a04f38d6d8f498ae600bef3ec7b40bf7b7e73f1a2fe33c23d0",
       "executable": false
     },
     "tests/agent-door-owner.mjs": {

@@ -28,7 +28,7 @@ export function readTools(env:Bindings):ToolDefinition[]{return [
  },
  {
   name:'buoy.workspace.snapshot',title:'Inspect preparation state',description:'Read native account revisions and preparation identities and statuses. This read never approves, schedules, sends or changes work.',
-  scope:'renewals.list',readOnly:true,classes:['standard'],clauses:['AUDIT-001','GOVERN-001','SURFACE-001'],
+  scope:'workspace.snapshot',readOnly:true,classes:['standard'],clauses:['AUDIT-001','GOVERN-001','SURFACE-001'],
   inputSchema:objectSchema({}),outputSchema:objectSchema({
    accounts:{type:'array',items:objectSchema({id:identifier,revision:string},['id','revision'])},
    proposals:{type:'array',items:objectSchema({id:identifier,accountId:identifier,kind:{type:'string'},status:{type:'string'},preparedBy:{type:'string'}},['id','accountId','kind','status','preparedBy'])},
@@ -39,7 +39,7 @@ export function readTools(env:Bindings):ToolDefinition[]{return [
    const {access,person}=await nativeActor(env,ctx,'renewals.list')
    const accounts=(await renewalAccounts(env,ctx)).map(row=>({id:row.id,revision:String(row.revision)}))
    const visible=new Set(accounts.map(row=>row.id))
-   const proposals=(await env.DB.prepare('SELECT id,account_id AS accountId,kind,status,prepared_by AS preparedBy FROM buoy_proposals ORDER BY id').all<{id:string;accountId:string;kind:string;status:string;preparedBy:string}>()).results.filter(row=>visible.has(row.accountId))
+   const proposals=access.restricted?[]:(await env.DB.prepare('SELECT id,account_id AS accountId,kind,status,prepared_by AS preparedBy FROM buoy_proposals ORDER BY id').all<{id:string;accountId:string;kind:string;status:string;preparedBy:string}>()).results.filter(row=>visible.has(row.accountId))
    const experiments=!access.restricted&&['owner','admin'].includes(person.role)?(await env.DB.prepare('SELECT id,revision,status,prepared_by AS preparedBy FROM buoy_experiments ORDER BY id').all()).results:[]
    return {result:{accounts,proposals,experiments}}
   }),

@@ -41,7 +41,7 @@ or confirmation cannot change classification.
 | `buoy.renewal.prepare` | `renewal.prepare` | Prepare an inert renewal-outcome proposal | RENEW-001, AGENT-003, SURFACE-003 |
 | `buoy.experiment.prepare` | `experiment.prepare` | Prepare exact matched cohorts for an optional additional check-in | AGENT-002, SURFACE-001, SURFACE-002 |
 | `buoy.experiment.report` | `experiment.report` | Read the retained native experiment report | AGENT-002, SURFACE-001 |
-| `buoy.workspace.snapshot` | `renewals.list` | Read visible account revisions and proposal/experiment identities, statuses and preparers | AUDIT-001, GOVERN-001, SURFACE-001 |
+| `buoy.workspace.snapshot` | `workspace.snapshot` | Read visible account revisions and proposal/experiment identities, statuses and preparers | AUDIT-001, GOVERN-001, SURFACE-001 |
 
 Clause metadata identifies the native slice a tool uses. It does not establish
 completion of an umbrella clause. Preparation creates no approved task,
@@ -121,3 +121,8 @@ Buoy’s account/contact custody and erasure boundaries. No agent erasure or
 privacy tool is enabled by this adoption; broader custody proof remains owed.
 Installation-bound door policy, grants, saved calls and approvals are excluded
 from portable transfers, while audit evidence remains retained.
+
+The preparation-state witness has its own `workspace.snapshot` Business scope.
+Existing local credentials retain their original five command grants and cannot
+use that witness. Assigned native profiles receive no proposal or experiment
+metadata beyond their existing scoped account projection.
