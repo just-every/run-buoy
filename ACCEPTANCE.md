@@ -9,9 +9,9 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Core | 26 | 41 | 38 | 105 |
-| Agent surface | 0 | 22 | 0 | 22 |
+| Agent surface | 0 | 19 | 3 | 22 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 26 | 63 | 38 | 127 |
+| Full target | 26 | 60 | 41 | 127 |
 
 Judged from the code and tests at commit `e89d4a74a47b5368483be8dc56a5ed6caa524db7` (28 October 2026). IMPORT-001 proof is at `18d87e4bd5433b97d01db3684e7fa0b6342cf18a`; the submitted candidate is Git commit `HEAD`, reported with its exact Verify SHA. SEGMENT-001 completion is judged from the replayed code and assertions at commit `fe205ed93d622ae73722ce23b3b5b9a61144fe55` (28 October 2026); all other current main judgments are retained. Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -1705,7 +1705,7 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-005, BASE
 
 #### SURFACE-005 — Irreversible and regulated customer data
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE-DATA-006
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-006, BASE-DATA-006
 
 **Requirement.** Erasure and identity-merge tools account for retained holds and distinguish regulated personal data from ordinary commercial fields.
 
@@ -1713,7 +1713,7 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE
 1. An irreversible account/person erasure or identity merge carries destructive with the item count and the product’s actual hold outcome.
 2. A read or disclosure including regulated identity or bank records carries sensitive with record count and kind; excluding those fields leaves the class absent.
 
-**Evidence.** Source/declaration: `agent-surface.json`; `docs/agent-door.md`
+**Evidence.** None.
 **Gap.** No destructive or regulated-data operation is declared. Irreversible erasure/merge hold outcomes and selected regulated-data sensitive classification remain owed. Ordinary commercial evidence in the current subset is not treated as regulated identity or bank data.
 
 #### SURFACE-006 — Provider setup and running automation
@@ -1732,7 +1732,7 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE
 
 #### SURFACE-007 — Source-linked customer resources
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-003
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-003
 
 **Requirement.** The customer-success resource set includes the records behind health, commercial facts and observed outcomes.
 
@@ -1740,12 +1740,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-003
 1. Every resource template listed in this section is discoverable, including custom-object records, opportunities, segments, scorecards, signals, observational outcomes, experiments, outreach, meetings, model drafts and role definitions.
 2. A sourced health or revenue read links to the exact retained observation; missing inputs and unresolved monetary variance remain explicit.
 
-**Evidence.** Declaration: `agent-surface.json`; `docs/agent-door.md`
+**Evidence.** None.
 **Gap.** Resources are undeclared and refused with capability_not_declared. All target templates, scoped resource reads, exact retained observation links and resource read-back proof remain owed. Tool-returned account evidence is not a resource implementation.
 
 #### SURFACE-008 — Outcome events and specialist handoffs
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-010
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-010
 
 **Requirement.** Buoy’s events keep evidence changes distinct from proposals, manual reports and observed provider outcomes.
 
@@ -1754,7 +1754,7 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-010
 2. A signed renewal handoff and an external provider result retain their source identifiers; replay yields the same outcome rather than a second commercial action.
 3. An unverified human report cannot become a provider execution, delivered alert or verified risk resolution.
 
-**Evidence.** Declaration: `agent-surface.json`; `docs/agent-door.md`
+**Evidence.** None.
 **Gap.** Events and subscriptions are undeclared and refused with capability_not_declared. Retained native audit is not an MCP change feed. Source-to-health/risk events, replay-safe specialist handoffs and provider/customer outcome distinctions through that feed remain owed.
 
 #### SURFACE-009 — A seeded week through MCP
