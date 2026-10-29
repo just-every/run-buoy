@@ -36,7 +36,11 @@ export async function legacyCommands(request:Request,env:Bindings):Promise<Respo
   const value=await response.json() as {result?:{tools?:Array<{name:string}>;structuredContent?:unknown;isError?:boolean;_meta?:Record<string,unknown>;resultType?:string};error?:{data?:{code?:string}}}
   const code=(value.result?._meta?.['com.runeditrun/error'] as {code?:string}|undefined)?.code??value.error?.data?.code
   const status=response.status>=400?response.status:value.result?.isError||value.error?code==='rate_limited'?429:code==='unauthenticated'?401:code==='idempotency_conflict'||code==='revision_conflict'||code==='native_conflict'?409:403:value.result?.resultType==='input_required'?202:200
-  if(status>=400)return reply({code:code??'unauthenticated',...value},status)
+  if(status>=400){
+   const refused=reply({code:code??'unauthenticated',...value},status)
+   for(const name of ['retry-after','www-authenticate']){const value=response.headers.get(name);if(value)refused.headers.set(name,value)}
+   return refused
+  }
   if(request.method==='GET'){
    const bearer=request.headers.get('authorization')?.match(/^Bearer ([a-f0-9]{64})$/)?.[1]
    const grant=bearer?await env.DB.prepare('SELECT scopes FROM buoy_agent_tokens WHERE token_hash=?').bind(await digest(bearer)).first<{scopes:string}>():null

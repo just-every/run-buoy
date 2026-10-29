@@ -1400,7 +1400,7 @@
       "executable": false
     },
     "src/buoy/door/legacy.ts": {
-      "sha256": "45c2c9f73df11a989626419885b60ca0901fefe76b1f3f9529d72ae85eb73e9c",
+      "sha256": "a0ecab4533045aac72505867578d7ad79e2f8c016c0e8c7afc2a704f27f359af",
       "executable": false
     },
     "src/buoy/door/native.ts": {
