@@ -1,6 +1,54 @@
 # Agents
 
-Give an assistant a credential to list renewals and prepare proposals. People approve the work and renewal decisions in Buoy. No model provider is required by the app.
+Give an assistant a credential to list renewals and prepare proposals. People approve the work and renewal decisions in Buoy. These reads and preparations require no model provider.
+
+## Connect through MCP
+
+Use the installation's `/mcp` endpoint. It serves the five existing native agent
+operations and a read-only preparation-state snapshot. Business credentials
+identify a sponsoring native person and an agent; existing local credentials
+retain their issuing-owner, command and data-class limits. Neither credential
+grants more native authority than the sponsor currently holds.
+
+| Tool | Scope | Class | Clause metadata |
+| --- | --- | --- | --- |
+| `buoy.renewals.list` | `renewals.list` | standard | AGENT-003, RENEW-001, SURFACE-001 |
+| `buoy.playbook.prepare` | `playbook.prepare` | standard | PLAY-001, AGENT-001, SURFACE-002 |
+| `buoy.renewal.prepare` | `renewal.prepare` | standard | RENEW-001, AGENT-003, SURFACE-003 |
+| `buoy.experiment.prepare` | `experiment.prepare` | standard | AGENT-002, SURFACE-001, SURFACE-002 |
+| `buoy.experiment.report` | `experiment.report` | standard | AGENT-002, SURFACE-001 |
+| `buoy.workspace.snapshot` | `renewals.list` | standard | AUDIT-001, GOVERN-001, SURFACE-001 |
+
+Each call computes `standard` with `{"measure":1}` for one internal operation.
+The reads expose retained evidence; preparations save inert drafts. They create
+no approved task, confirmed renewal or measured outcome, and grant no provider
+execution. Commercial facts in these records do not make them regulated
+identity or bank data. Agent-supplied class or confirmation flags cannot widen
+the operation.
+
+The owner opens `/agents` to answer the company policy before using any tool.
+When Business manages the installation, it supplies that policy through the
+signed Business door. A fresh unanswered policy exposes no tools and refuses
+calls with `policy_unset`. One company policy governs both MCP and the existing
+command endpoint below; issuing a local credential does not bypass it.
+
+If the policy permits autonomous standard work, these operations run. If it
+requires standard review, they run and appear in the review feed. Native
+proposal approval remains a separate person action in either case. Local or
+Business Pause stops agent calls. Review supplies no native undo for these
+tools.
+
+For mutating MCP calls, supply a unique `idempotency_key` and reuse it only for
+the same request. Replay returns the saved result. Playbook and renewal
+preparations can bind the account's exact opaque string `expected_revision`;
+changed evidence refuses a stale call. Experiment preparation additionally
+requires its native `operationKey`.
+
+The declared capabilities are tools, policy, pause, audit and idempotency.
+Resources, prompts, events and subscriptions are undeclared and return
+`capability_not_declared` when called. This is a preparation subset of the
+contracted customer-success surface. See the [native door guide](/docs/agent-door)
+for transport limits, source versions and the remaining contract gaps.
 
 ## Create a credential
 
@@ -18,7 +66,7 @@ Save the returned `id`, `token` and `expiresAt` privately. Buoy stores only the 
 
 Send agent requests to the installed app’s origin, with `Authorization: Bearer <credential>`. Send JSON with `Content-Type: application/json`. Never put a credential in a URL or a log.
 
-`GET /api/buoy/commands` lists only the grant’s commands. The default names are `renewals.list`, `playbook.prepare` and `renewal.prepare`. Explicit API grants can also select `experiment.prepare` and `experiment.report`; see [matched retention experiments](https://github.com/just-every/run-buoy/blob/main/docs/experiments.md). These new commands require all four current data classes and never grant approval. Existing credentials and default grants retain their original commands. Data classes are `account`, `billing`, `support` and `sentiment`. Send the following bodies with `POST /api/buoy/commands`.
+`GET /api/buoy/commands` lists only the grant’s commands. The default names are `renewals.list`, `playbook.prepare` and `renewal.prepare`. Explicit API grants can also select `experiment.prepare` and `experiment.report`; see [matched retention experiments](https://github.com/just-every/run-buoy/blob/main/docs/experiments.md). These new commands require all four current data classes and never grant approval. Existing credentials and default grants retain their original commands. Data classes are `account`, `billing`, `support` and `sentiment`. This compatibility endpoint dispatches through the same registry and company policy as MCP. Send the following bodies with `POST /api/buoy/commands`.
 
 ### List renewal accounts
 
@@ -76,7 +124,12 @@ Replace the illustrative account and evidence with confirmed records. Outcomes a
 
 A native owner or admin opens the account, checks the proposal’s retained evidence, then approves in the app. Assigned CS managers can review current team renewal outcomes, and explicitly granted CSMs can review their own book through the scoped renewal review page; scoped custom profiles follow their declared renewal and commercial rules. A changed account revision refuses stale approval. Review and prepare again from current evidence when needed.
 
-The agent credential can access only `/api/buoy/commands`. It cannot approve, complete tasks, edit accounts, import records, erase accounts or manage credentials, even when its issuing owner could do those things. It cannot change commercial terms either: a preparation carries only the fields shown above, so a price, discount, credit or term change is refused.
+The local agent credential can use its granted native operations through
+`/api/buoy/commands` or `/mcp`. It cannot approve, complete tasks, edit accounts,
+import records, erase accounts or manage credentials, even when its issuing
+owner could do those things. It cannot change commercial terms either: a
+preparation carries only the fields shown above, so a price, discount, credit or
+term change is refused.
 
 Every refused agent request (another route, an unknown command or an extra preparation field) returns its reason and is recorded. An owner or admin reads the record with `GET /api/buoy/audit`: each `agent.refused` entry names the credential, the time, the subject (an account ID, command or route) and the reason.
 
@@ -88,7 +141,12 @@ See the repository’s [command reference](https://github.com/just-every/run-buo
 
 ## Rate limits, ledger and pause
 
-Every authenticated request consumes one atomic reservation in its UTC epoch minute, including malformed or forbidden requests. The owner chooses 1–10,000 requests per minute (60 by default); excess requests return 429 and `Retry-After` seconds to the next minute. Requests do not carry over.
+Every authenticated local command request consumes one atomic reservation in
+its UTC epoch minute, including malformed or forbidden requests. The owner
+chooses 1–10,000 requests per minute (60 by default); excess requests return 429
+and `Retry-After` seconds to the next minute. Requests do not carry over. MCP
+also applies its declared transport limit, native local-credential limits and
+the company policy; one limit cannot override another.
 
 The Audit screen shows current grants and the latest 100 durable attempt/outcome/refusal entries. The ledger stores enum commands, token IDs, time, result and actual metered USD cost, without a credential or request payload. The existing audit retains its subject/reason semantics. `GET /api/buoy/agents` returns the same owner-only policy and ledger.
 
@@ -96,7 +154,7 @@ The Audit screen shows current grants and the latest 100 durable attempt/outcome
 
 ## Metered USD budget
 
-No metered agent charge; internal notification mail may use your provider. Today's local commands record USD0 in metered agent operations, including with a zero budget. Automatic NOTIFY-001/PLAY-002 internal team notices retain the owner's provider and recipient preferences; provider fees are not measured or included in this budget. This budget does not authorize a customer send, model call or field/commercial change. Every future paid, send or update scope inherits GOVERN-001 reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before shipping (EMAIL-001/002/003, JOURNEY-001 and AI-001/002/003).
+No metered agent charge; internal notification mail may use your provider. Today's native tools and local commands incur USD0 in metered agent operations, including with a zero budget. These tools expose no paid provider action, and the shared door does not enforce provider-spend caps. Automatic NOTIFY-001/PLAY-002 internal team notices retain the owner's provider and recipient preferences; provider fees are not measured or included in this budget. This budget does not authorize a customer send, model call or field/commercial change. Every future paid, send or update scope inherits GOVERN-001 reservation-before-effect USD budget, data-class, rate and kill-switch acceptance before shipping (EMAIL-001/002/003, JOURNEY-001 and AI-001/002/003).
 
 Existing internal mail also enforces the human recipient's current ROLE-001
 profile. An assigned recipient gets only an in-scope account name, generic update

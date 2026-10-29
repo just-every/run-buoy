@@ -1,4 +1,4 @@
-import { mailWorker } from './mail-runtime.mjs'
+import { mailWorker, commandBody, authorizeAgentFixture } from './mail-runtime.mjs'
 import assert from 'node:assert/strict'
 import { spawn, execFileSync } from 'node:child_process'
 import { createServer } from 'node:net'
@@ -21,7 +21,7 @@ export async function startWorker(options = {}) {
  execFileSync(process.execPath, [...base,'d1','migrations','apply','DB','--local','--persist-to',directory,...config], {cwd:root,stdio:'pipe',env:{...process.env,CI:'true',WRANGLER_SEND_METRICS:'false'}})
  const child = spawn(process.execPath,[...base,'dev',...config,'--inspector-port','0',...(options.testScheduled?['--test-scheduled']:[]),'--local','--persist-to',directory,'--ip','127.0.0.1','--port',String(port),'--env-file',join(directory,'local.env')], {cwd:root,stdio:['ignore','pipe','pipe'],env:{...process.env,WRANGLER_SEND_METRICS:'false',CLOUDFLARE_INCLUDE_PROCESS_ENV:'false',CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV:'true'}})
  let output = ''; for (const stream of [child.stdout,child.stderr]) stream.on('data', b => {output += b})
- const request = (path, {method='GET',body,cookie,token,headers={}}={}) => fetch(origin+path,{method,redirect:'manual',headers:{origin,...(body === undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers},...(body === undefined?{}:{body:JSON.stringify(body)})})
+ const request = (path, {method='GET',body,cookie,token,headers={}}={}) => {body=commandBody(path,method,body,headers);return fetch(origin+path,{method,redirect:'manual',headers:{origin,...(body === undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers},...(body === undefined?{}:{body:JSON.stringify(body)})})}
  async function close() { child.kill('SIGTERM'); await new Promise(resolve => child.exitCode !== null ? resolve() : child.once('exit',resolve)); if (!options.keep) await rm(directory,{recursive:true,force:true}) }
  try {
   let ready=false
@@ -31,6 +31,7 @@ export async function startWorker(options = {}) {
   assert.equal(boot.status,303)
   const cookie=boot.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
   assert.ok(cookie)
+  await authorizeAgentFixture(request, cookie)
   await fetch(origin+'/setup',{method:'POST',redirect:'manual',headers:{origin,cookie,'content-type':'application/x-www-form-urlencoded'},body:'confirm=yes'})
   return {origin,directory,request,cookie,close,...(options.testScheduled?{scheduled:async(cron='0 * * * *')=>request('/__scheduled?'+new URLSearchParams({cron}))}:{})}
  } catch(error) {await close(); throw error}

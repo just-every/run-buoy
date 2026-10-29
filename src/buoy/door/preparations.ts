@@ -1,6 +1,7 @@
 import type {Bindings} from '../../auth.server'
 import type {ToolContext,ToolDefinition} from '../../modules/agent-door/index.ts'
 import {prepare} from '../work'
+import {flushNotifications} from '../notify-mail'
 import {nativeActor,nativeCall} from './native'
 import {visibleAccount} from './reads'
 import {identifier,objectSchema,proposalOutput,string} from './schema'
@@ -25,6 +26,7 @@ export function preparationTools(env:Bindings):ToolDefinition[]{return (['playbo
    const {actor}=await nativeActor(env,ctx,command,true)
    await current(args,ctx)
    const result=await prepare(env.DB,actor,{accountId:args.accountId,kind,payload:args.payload})
+   await flushNotifications(env)
    return {result}
   }),
  } satisfies ToolDefinition

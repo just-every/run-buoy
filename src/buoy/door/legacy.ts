@@ -1,6 +1,7 @@
 import type {Bindings} from '../../auth.server'
-import {jsonBody} from '../access'
+import {actorFor,digest,jsonBody} from '../access'
 import {COMMANDS} from '../agent-policy/policy'
+import {beginRequest,checkRequest,finishRequest,refuseRequest} from '../agent-policy/requests'
 import {Problem} from '../core'
 import {buoyDoor} from './index'
 import {finalizeLocalDoorResponse} from './credentials'
@@ -13,7 +14,7 @@ export async function legacyCommands(request:Request,env:Bindings):Promise<Respo
  try{
   const body=request.method==='POST'?await jsonBody(request):{}
   const command=String(body.command??'')
-  if(request.method==='POST'&&!COMMANDS.includes(command as typeof COMMANDS[number]))return reply({code:'tool_not_found'},400)
+  if(request.method==='POST'&&!COMMANDS.includes(command as typeof COMMANDS[number]))await refusedInput(request,env,`command ${command}`,'Unknown command. Agents can prepare; people approve.',400)
   const input=body.input&&typeof body.input==='object'&&!Array.isArray(body.input)?body.input as Record<string,unknown>:{}
   const params=request.method==='GET'?{}:{name:`buoy.${command}`,arguments:{...input,
    ...(body.idempotency_key!==undefined?{idempotency_key:body.idempotency_key}:request.headers.has('idempotency-key')?{idempotency_key:request.headers.get('idempotency-key')}:{}),
@@ -32,10 +33,29 @@ export async function legacyCommands(request:Request,env:Bindings):Promise<Respo
   const code=(value.result?._meta?.['com.runeditrun/error'] as {code?:string}|undefined)?.code??value.error?.data?.code
   const status=response.status>=400?response.status:value.result?.isError||value.error?code==='rate_limited'?429:code==='unauthenticated'?401:code==='idempotency_conflict'||code==='revision_conflict'||code==='native_conflict'?409:403:value.result?.resultType==='input_required'?202:200
   if(status>=400)return reply({code:code??'unauthenticated',...value},status)
-  if(request.method==='GET')return reply({commands:value.result?.tools?.map(tool=>tool.name.slice('buoy.'.length)).filter(name=>COMMANDS.includes(name as typeof COMMANDS[number])),approval:'Company policy governs every call; native business approval remains a person’s act.'})
+  if(request.method==='GET'){
+   const bearer=request.headers.get('authorization')?.match(/^Bearer ([a-f0-9]{64})$/)?.[1]
+   const grant=bearer?await env.DB.prepare('SELECT scopes FROM buoy_agent_tokens WHERE token_hash=?').bind(await digest(bearer)).first<{scopes:string}>():null
+   return reply({commands:grant?JSON.parse(grant.scopes):value.result?.tools?.map(tool=>tool.name.slice('buoy.'.length)).filter(name=>COMMANDS.includes(name as typeof COMMANDS[number])),approval:'Company policy governs every call; native business approval remains a person’s act.'})
+  }
   return reply(status===202?value.result:value.result?.structuredContent??{},status===200&&['playbook.prepare','renewal.prepare','experiment.prepare'].includes(command)?201:status)
  }catch(error){
-  if(error instanceof Problem)return reply({code:'invalid_arguments',error:error.message},error.status)
+  if(error instanceof Problem){
+   if(!request.headers.get('authorization')?.match(/^Bearer ([a-f0-9]{64})$/))return reply({code:'unauthenticated'},401)
+   if(!['Unknown command. Agents can prepare; people approve.'].includes(error.message)){
+    try{await refusedInput(request,env,'commands',error.message,error.status)}catch(refusal){if(refusal instanceof Problem)return reply({code:'invalid_arguments',error:refusal.message},refusal.status);throw refusal}
+   }
+   return reply({code:'invalid_arguments',error:error.message},error.status)
+  }
   throw error
  }
+}
+
+/** Malformed legacy input retains native refusal accounting and never dispatches. */
+async function refusedInput(request:Request,env:Bindings,subject:string,message:string,status:number):Promise<never>{
+ const actor=await actorFor(request,env),reservation=await beginRequest(env.DB,actor,request)
+ let outcome=status
+ try{await checkRequest(env.DB,actor,reservation,request);return await refuseRequest(env.DB,actor,subject,message,status)}
+ catch(error){outcome=error instanceof Problem?error.status:500;throw error}
+ finally{await finishRequest(env.DB,actor,outcome)}
 }

@@ -4,8 +4,26 @@ import { createRequire } from 'node:module'
 import { realpath, readFile, readdir, mkdtemp, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 import {execFileSync} from 'node:child_process'
+import { CATALOGUE } from '../src/modules/agent-door/policy/catalogue.ts'
+
+/** The client supplies the public replay key; production never invents one. */
+export function commandBody(path, method, body, headers = {}) {
+ if (path !== '/api/buoy/commands' || method !== 'POST' || !body || Array.isArray(body) || typeof body !== 'object'
+  || !['playbook.prepare', 'renewal.prepare', 'experiment.prepare'].includes(body.command)
+  || body.idempotency_key !== undefined || new Headers(headers).has('idempotency-key')) return body
+ return { ...body, idempotency_key: body.command === 'experiment.prepare' && typeof body.input?.operationKey === 'string' ? body.input.operationKey : randomUUID() }
+}
+
+/** Legacy native journeys explicitly authorize their agent fixture's work. */
+export async function authorizeAgentFixture(request, cookie) {
+ const response = await request('/agents/api/policy', { method: 'PUT', cookie, body: { document: {
+  schema: 'rer-agent-policy/1', catalogue: CATALOGUE, rules: [{ id: 'native-fixture-work', class: '*', do: 'autonomous' }], spend: { none: true },
+ } } })
+ assert.equal(response.status, 200, await response.clone().text())
+ await response.json()
+}
 
 export async function mailWorker({ root = process.cwd(), bindings = () => ({}), completeSetup = true, secure = true, providerFetch, clock, persistenceDirectory, keepPersistence = false } = {}) {
  const require = createRequire(await realpath(join(root, 'node_modules/wrangler/package.json')))
@@ -74,10 +92,11 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   for(const file of (persistenceDirectory?[]:await readdir(join(root,'migrations/core'))).filter(file=>file.endsWith('.sql')).sort()) {
    for(const sql of splitSql(await readFile(join(root,'migrations/core',file),'utf8'))) await db.prepare(sql).run()
   }
-  const request=async(path,{method='GET',body,cookie,token,headers={}}={})=>{const response=await mf.dispatchFetch(origin+path,{method,redirect:'manual',headers:{origin,...(clock===undefined?{}:{'x-buoy-test-time':String(clockValue())}),...(body===undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});responses.add(response);return response}
+  const request=async(path,{method='GET',body,cookie,token,headers={}}={})=>{body=commandBody(path,method,body,headers);const response=await mf.dispatchFetch(origin+path,{method,redirect:'manual',headers:{origin,...(clock===undefined?{}:{'x-buoy-test-time':String(clockValue())}),...(body===undefined?{}:{'content-type':'application/json'}),...(cookie?{cookie}:{}),...(token?{authorization:`Bearer ${token}`} : {}),...headers},...(body===undefined?{}:{body:JSON.stringify(body)})});responses.add(response);return response}
   const boot=await request('/auth/bootstrap',{method:'POST',body:{token:vars.SETUP_TOKEN,displayName:'Harbour CS owner'}})
   assert.equal(boot.status,303,await boot.clone().text())
   const cookie=boot.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
+  await authorizeAgentFixture(request, cookie)
   if (completeSetup) await mf.dispatchFetch(origin+'/setup',{method:'POST',redirect:'manual',headers:{origin,cookie,'content-type':'application/x-www-form-urlencoded'},body:'confirm=yes'})
   async function signIn(email) {
    assert.equal((await request('/auth/magic-link',{method:'POST',body:{email}})).status,202)

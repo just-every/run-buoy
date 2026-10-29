@@ -284,9 +284,14 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.equal((await call('/commands','POST',{command:'renewal.<script>alert(1)</script>'},as)).status,400)
    const read=async()=>(await json(await call('/audit?actor='+agent.id+'&action=agent.requested'))).entries
    const attempts=await read();assert.equal(attempts.length,4)
-   for(const row of attempts){assert.equal(row.actor,`agent:${agent.id}`);assert.equal(row.subject,`agent:${agent.id}`);assert.ok(Date.parse(row.occurredAt));assert.match(row.detail,/^(GET|POST) commands request received; outcome not recorded\.$/)}
-   assert.equal(attempts.filter(row=>row.detail.startsWith('GET')).length,1)
-   assert.equal(attempts.filter(row=>row.detail.startsWith('POST')).length,3)
+   const ownerId=(await json(await call('/state'))).operator.id
+   const nativeAttempts=attempts.filter(row=>row.actor===`agent:${agent.id}`),doorAttempts=attempts.filter(row=>row.actor===`agent:${agent.id} for person:${ownerId}`)
+   assert.equal(nativeAttempts.length,2,'Malformed and unknown legacy commands retain their native refusal attribution')
+   assert.equal(doorAttempts.length,2,'Successful MCP list and read attempts retain both agent and sponsoring person')
+   for(const row of attempts){assert.equal(row.subject,`agent:${agent.id}`);assert.ok(Date.parse(row.occurredAt));assert.match(row.detail,/outcome not recorded/)}
+   for(const row of nativeAttempts)assert.match(row.detail,/^POST commands request received/)
+   assert.equal(doorAttempts.filter(row=>row.detail.startsWith('commands.read:')).length,1)
+   assert.equal(doorAttempts.filter(row=>row.detail.startsWith('renewals.list:')).length,1)
    assert.doesNotMatch(JSON.stringify(attempts),/Portfolio|Bearer|Harbour/)
    const page=await (await request('/app/audit?actor='+agent.id,{cookie})).text()
    assert.match(page,/&lt;script&gt;alert/);assert.doesNotMatch(page,/<script>alert/)

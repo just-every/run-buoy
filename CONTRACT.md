@@ -1255,6 +1255,46 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every call.
 
+**Current native subset.** `agent-surface.json` declares six tools over the five
+native agent-admissible operations and a read-only preparation-state witness.
+The mounted runtime comes from Base `114ef7a61f080da053af783c5fbe06f625d692cc`,
+with CLI `@runeditrun/rer` 0.2.88. Its capabilities are tools, policy, pause,
+audit and idempotency. Resources, prompts, events and subscriptions are
+undeclared and refused with `capability_not_declared`; their full requirements
+below remain owed. The canonical Base clauses above are preserved in full.
+
+| Installed tool | Scope | Computed class and facts | Clause metadata |
+| --- | --- | --- | --- |
+| `buoy.renewals.list` | `renewals.list` | standard, measure 1 | AGENT-003, RENEW-001, SURFACE-001 |
+| `buoy.playbook.prepare` | `playbook.prepare` | standard, measure 1 | PLAY-001, AGENT-001, SURFACE-002 |
+| `buoy.renewal.prepare` | `renewal.prepare` | standard, measure 1 | RENEW-001, AGENT-003, SURFACE-003 |
+| `buoy.experiment.prepare` | `experiment.prepare` | standard, measure 1 | AGENT-002, SURFACE-001, SURFACE-002 |
+| `buoy.experiment.report` | `experiment.report` | standard, measure 1 | AGENT-002, SURFACE-001 |
+| `buoy.workspace.snapshot` | `renewals.list` | standard, measure 1 | AUDIT-001, GOVERN-001, SURFACE-001 |
+
+These tools use current native sponsor authority and preserve agent attribution.
+Local credential command/data-class grants only narrow that authority. The same
+company-policy pipeline also governs the former local bearer command endpoint;
+neither credential minting nor that endpoint supplies an alternate policy.
+The signed Business owner binding uses the native owner claim and setup lifecycle.
+Account preparation preserves opaque string revisions and shared idempotency;
+experiment preparation additionally retains its native operation key.
+
+All six operations read retained evidence or prepare inert internal records.
+Their current account and commercial fields are not treated as regulated
+identity or bank data. No tool approves work, confirms a renewal, enrolls an
+intervention, changes terms, calls a model/billing/connector/customer-send
+provider, or supplies native undo. Standard review in a held company policy
+does not substitute for the separate native person approval. No metered agent
+charge or provider-spend enforcement is established by these tools; existing
+internal notification mail remains a separate native flow with provider fees.
+
+The following registry, resource, event, prompt and handoff descriptions remain
+the **complete target**, rather than an assertion that this subset implements
+them. Unsupported Core jobs retain their original requirements and gaps; they
+are not added to the non-tool exceptions. A manifest, fixture or source adapter
+alone is not a passing conformance or field receipt.
+
 **How Buoy computes each class.**
 
 - **standard:** reversible internal records, drafts, reports, scores, tasks and schedule definitions; facts name item counts and accounts.
@@ -1307,7 +1347,7 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 | `buoy.health.csm_sentiment_and_manual_measures` | CSM sentiment and manual measures | HEALTH-002 | standard (+ live) | not implemented as MCP |
 | `buoy.signal.risk_and_opportunity_alerts` | Risk and opportunity alerts | SIGNAL-001 | standard (+ live) | not implemented as MCP |
 | `buoy.segment.segments_tiers_and_lifecycle_stages` | Segments, tiers and lifecycle stages | SEGMENT-001 | standard (+ live) | not implemented as MCP |
-| `buoy.play.automated_playbooks` | Automated playbooks | PLAY-001 | standard or external (+ live) | playbook.prepare |
+| `buoy.play.automated_playbooks` | Automated playbooks | PLAY-001 | standard or external (+ live) | buoy.playbook.prepare: inert proposal slice only |
 | `buoy.play.tasks_reminders_and_escalation` | Tasks, reminders and escalation | PLAY-002 | standard or external (+ live) | not implemented as MCP |
 | `buoy.play.automation_run_history_and_failure_alerts` | Automation run history and failure alerts | PLAY-003 | standard or external (+ live) | not implemented as MCP |
 | `buoy.play.outcome_tracking_for_playbooks` | Outcome tracking for playbooks | PLAY-004 | standard or external (+ live) | not implemented as MCP |
@@ -1326,7 +1366,7 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 | `buoy.chat.slack_microsoft_teams_and_nook_alerts_and_actions` | Slack, Microsoft Teams and Nook alerts and actions | CHAT-001 | standard or external (+ live) | not implemented as MCP |
 | `buoy.survey.nps_and_csat_relationship_surveys` | NPS and CSAT relationship surveys | SURVEY-001 | standard or external (+ live) | not implemented as MCP |
 | `buoy.notify.in_app_notifications_and_digests` | In-app notifications and digests | NOTIFY-001 | standard | not implemented as MCP |
-| `buoy.renew.renewal_pipeline` | Renewal pipeline | RENEW-001 | standard or commitment (+ money or external) | renewal.prepare |
+| `buoy.renew.renewal_pipeline` | Renewal pipeline | RENEW-001 | standard or commitment (+ money or external) | buoy.renewals.list; buoy.renewal.prepare: read and inert proposal slice only |
 | `buoy.renew.expansion_pipeline_and_cs_qualified_leads` | Expansion pipeline and CS-qualified leads | RENEW-002 | standard or commitment (+ money or external) | not implemented as MCP |
 | `buoy.renew.crm_renewal_opportunity_sync` | CRM renewal opportunity sync | RENEW-003 | standard or commitment (+ money or external) | not implemented as MCP |
 | `buoy.renew.renewal_forecast` | Renewal forecast | RENEW-004 | standard or commitment (+ money or external) | not implemented as MCP |
@@ -1353,9 +1393,9 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every 
 | `buoy.ai.owner_selected_models_and_data_controls` | Owner-selected models and data controls | AI-004 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |
 | `buoy.ai.cited_generative_answers` | Cited generative answers | AI-005 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |
 | `buoy.ai.feature_specific_consent_for_scheduled_model_work` | Feature-specific consent for scheduled model work | AI-006 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |
-| `buoy.govern.agent_authority_and_action_ledger` | Agent authority and action ledger | GOVERN-001 | access · security | named local command grants |
+| `buoy.govern.agent_authority_and_action_ledger` | Agent authority and action ledger | GOVERN-001 | access · security | local grants and shared company-policy pipeline; no MCP grant-management tool |
 | `buoy.agent.verified_risk_resolution` | Verified risk resolution | AGENT-001 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |
-| `buoy.agent.retention_interventions_measured_against_comparable_accounts` | Retention interventions measured against comparable accounts | AGENT-002 | standard or external (+ sensitive or commitment or money or live) | experiment.prepare; experiment.report |
+| `buoy.agent.retention_interventions_measured_against_comparable_accounts` | Retention interventions measured against comparable accounts | AGENT-002 | standard or external (+ sensitive or commitment or money or live) | buoy.experiment.prepare; buoy.experiment.report: preparation/report slice only |
 | `buoy.agent.evidence_backed_renewal_readiness` | Evidence-backed renewal readiness | AGENT-003 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |
 | `buoy.agent.portfolio_wide_causes_of_risk` | Portfolio-wide causes of risk | AGENT-004 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |
 | `buoy.agent.scaled_tier_digital_csm` | Scaled-tier digital CSM | AGENT-005 | standard or external (+ sensitive or commitment or money or live) | not implemented as MCP |

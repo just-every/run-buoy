@@ -112,7 +112,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "9d8d599f2720cde3819bc227d257ba93fc83e015e9b40eef6a19715bec9abdb6",
+      "sha256": "0dbb69143a5aaa937c6f107f1eca019a3e767c188360e015ad221b8a923096eb",
       "executable": false
     },
     "DEMO.md": {
@@ -144,7 +144,7 @@
       "executable": false
     },
     "docs/agents.md": {
-      "sha256": "a151361ab14d7718e7048b574cfc2bc2d4681c04184c0f6197958b56de3bb06b",
+      "sha256": "669443466e4f8009bdb8a569327c87d4c15e28d3169df1d269d21277e9ed698d",
       "executable": false
     },
     "docs/ai-schedules.md": {
@@ -1400,7 +1400,7 @@
       "executable": false
     },
     "src/buoy/door/legacy.ts": {
-      "sha256": "5022e0d813c0d1689d1e57f5a4ebb97c779a960779d22b4a9609439c2aefca19",
+      "sha256": "dd3f62ccedc6dbe4969f7adbc598bcba7de30447c1ad6b7ac2882742f0caf4c1",
       "executable": false
     },
     "src/buoy/door/native.ts": {
@@ -1412,7 +1412,7 @@
       "executable": false
     },
     "src/buoy/door/preparations.ts": {
-      "sha256": "08bb133b35c334e54d17bf5bd594e5ab7dc16cfe6111c459c9c18c69c9aba9bd",
+      "sha256": "d31c291902823e83e70e80ddb432946398419a13144a3560cbf33d05221adebf",
       "executable": false
     },
     "src/buoy/door/reads.ts": {
@@ -4684,7 +4684,7 @@
       "executable": false
     },
     "tests/flows.test.mjs": {
-      "sha256": "3b54fc9ab800742e49c12522f6c29124cb7d6af669533b8cdb937fcafc588bce",
+      "sha256": "8898bbc3f9a96629e8fb60ed48477c5e1d0212c4f91db5c63be70fde3f37b20c",
       "executable": false
     },
     "tests/forecast-journey.mjs": {
@@ -4756,7 +4756,7 @@
       "executable": false
     },
     "tests/mail-runtime.mjs": {
-      "sha256": "08133d99d147d9e668199508b9ad2a48fb5656e7bdd284ef06a332f7129df6ee",
+      "sha256": "230d8ed6838d2ce31bfd22dde19ad06d39a5278e9ee99a1b0afecb257bebf5be",
       "executable": false
     },
     "tests/migrate-journey.mjs": {
@@ -4996,7 +4996,7 @@
       "executable": false
     },
     "tests/worker.mjs": {
-      "sha256": "c195c43791997f9f1ae6040abe676b0f094e243c1577dca239f833a97b6ddef2",
+      "sha256": "d866333b62bb1262cdfab91cfe12516b7f36d19886d3d2a0a3adb4d9de6b8ffb",
       "executable": false
     },
     "tests/workspace-browser.mjs": {
