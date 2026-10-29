@@ -1188,7 +1188,7 @@
       "executable": false
     },
     "src/buoy/activity.ts": {
-      "sha256": "4910e7e601c1abe345a49fa8b0c463bbffe66282095b6b1935a3e54d4b977b07",
+      "sha256": "f5dcf90350849ee2c6e173d861510f038fbc79cedab992be935d99c01408c612",
       "executable": false
     },
     "src/buoy/adoption/consumers-alerts.ts": {
@@ -2236,7 +2236,7 @@
       "executable": false
     },
     "src/buoy/work.ts": {
-      "sha256": "1045dfd369482d8c7ebebda0f118a0a0ae157bffe5f298d3e4cb174d6eef8695",
+      "sha256": "c26e0426a4cf4e478e8de0146be1a942656e8401b10d04419ca7762e35341a12",
       "executable": false
     },
     "src/buoy/workspace.ts": {
@@ -4532,7 +4532,7 @@
       "executable": false
     },
     "tests/agent-door-journey.mjs": {
-      "sha256": "a6e2c4e1fb605b1b38e571b1fd970f25bf576cdc6f31dec8cb5dfe8cc60b3f3f",
+      "sha256": "7d686e78379679173fe53035c8145d765f1c37d08b69db5e3fd7b8e070dd3e12",
       "executable": false
     },
     "tests/agent-door-owner.mjs": {

@@ -43,6 +43,10 @@ async function proposalEvidence(call, context, state, prior) {
  assert.deepEqual(state.decisions, prior.decisions, 'Preparation does not confirm commercial outcomes')
  const audit = await call('/audit?' + new URLSearchParams({action: `${proposal.kind}.prepared`}))
  assert.ok(audit.entries.some(row => row.actor === `agent:${agentId} for person:${state.operator.id}`), 'Native audit preserves both opaque actor identities')
+ const activity=await call(`/accounts/${encodeURIComponent(args.accountId)}/activity`)
+ assert.ok(activity.records.some(row=>row.id==='proposal:'+result.id && row.reference.includes(proposal.preparedBy)),'Native timeline names the preparing agent and sponsoring person')
+ const notices=await call('/notifications')
+ assert.ok(notices.items.some(row=>row.accountId===args.accountId && row.type==='approval' && row.body.includes('for '+state.operator.displayName)),'Internal approval notices carry the same agent-for-person attribution')
  // Compare through the person's public action, with the same inputs and source
  // revision. Both drafts stay inert; their preparers remain distinct.
  const peer = await call('/proposals', 'POST', {accountId: args.accountId, kind: proposal.kind, payload: args.payload}, 201)

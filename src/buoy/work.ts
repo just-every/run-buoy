@@ -40,7 +40,8 @@ export async function prepare(db: D1Database, actor: Actor, input: Record<string
  await commit(db, actor, accountId, `${kind}.prepared`, [
   ...(image?[fence(db,image)]:[]),hierarchyApprovalFence(db,hierarchy),
   guard(db, 'EXISTS(SELECT 1 FROM buoy_accounts WHERE id=? AND revision=?)', accountId, current.revision),
-  stmt(db, "INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,?,?,?,?,'prepared',?,?)", proposalId, accountId, kind, current.revision, JSON.stringify({...current,...(connectedBilling?{connectedBilling}: {})}), JSON.stringify(normalized), actor.door?`agent:${actor.door.agentId}:${actor.door.label} [person:${actor.id}]`:`${actor.kind}:${actor.id}:${actor.displayName}`, at)])
+  stmt(db, "INSERT INTO buoy_proposals(id,account_id,kind,account_revision,snapshot,payload,status,prepared_by,prepared_at) VALUES(?,?,?,?,?,?,'prepared',?,?)", proposalId, accountId, kind, current.revision, JSON.stringify({...current,...(connectedBilling?{connectedBilling}: {})}), JSON.stringify(normalized), actor.door?`agent:${actor.door.agentId}:${actor.door.label} [person:${actor.id}]`:`${actor.kind}:${actor.id}:${actor.displayName}`, at),
+  ...(actor.door?[stmt(db,"UPDATE buoy_inbox SET body=body||? WHERE source=?",` Prepared by ${actor.door.label}.`,'proposal:'+proposalId)]:[])])
  return {id: proposalId, accountId, kind, payload: normalized, status: 'prepared'}
 }
 export async function approve(db: D1Database, actor: Actor, proposalId: string) {
