@@ -24,11 +24,23 @@ const suites={
  'intake-browser':['test:usage-browser','test:adoption-browser','test:inapp-browser','test:boundary'],
  archive:['test:portable'],
 }
-const selected=process.env.BUOY_VERIFY_SUITE??'all'
-if(selected!=='all'&&!Object.hasOwn(suites,selected))throw new Error('Unknown Buoy verification suite.')
-const tests=selected==='all'?Object.values(suites).flat():suites[selected]
-for(const command of ['build','build:site','typecheck',...tests]){
- const child=spawnSync(process.platform==='win32'?'pnpm.cmd':'pnpm',['run',command],{stdio:'inherit',env:process.env,shell:process.platform==='win32'})
+// The released planner keeps every existing Buoy partition. Only one shard
+// needs rer's additional hosted-output and hydration checks.
+export async function verificationPlan() {
+ return {push:Object.entries(suites).map(([name,tests])=>({
+  name,browser:!['records','volume','adoption','adoption-consumers','adoption-aggregates'].includes(name),
+  hosted:name==='http',commands:tests.map(test=>`pnpm run ${test}`),
+ })),nightly:[]}
+}
+export function run(command,env=process.env) {
+ console.log(`> ${command}`)
+ const child=spawnSync('/bin/bash',['-euo','pipefail','-c',command],{stdio:'inherit',env})
  if(child.error)throw child.error
  if(child.status!==0)process.exit(child.status??1)
+}
+if(process.argv[1]===import.meta.filename){
+ const selected=process.env.SEED_VERIFY_SHARD??process.env.BUOY_VERIFY_SUITE??'all'
+ if(selected!=='all'&&!Object.hasOwn(suites,selected))throw new Error('Unknown Buoy verification suite.')
+ const tests=selected==='all'?Object.values(suites).flat():suites[selected]
+ for(const command of ['build','build:site','typecheck',...tests])run(`pnpm run ${command}`)
 }

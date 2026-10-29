@@ -178,9 +178,6 @@ body:has(> header.bar) > .bar nav a { color: var(--buoy-ink); font-size: 18px; f
 body:has(> header.bar) h1 { font-weight: var(--buoy-heading-weight); letter-spacing: var(--buoy-heading-tracking); word-spacing: var(--buoy-heading-word-space); line-height: 1.02; }
 body:has(> header.bar) .intro h1 { font-size: 66px; }
 body:has(> header.bar) .sub { color: var(--buoy-body); }
-body:has(> header.bar) .step { background: var(--buoy-card); border-color: var(--buoy-line); border-radius: 20px; box-shadow: var(--buoy-card-shadow); backdrop-filter: none; }
-body:has(> header.bar) .num { background: var(--buoy-ink); color: #fff; font-weight: 800; box-shadow: 0 0 0 4px var(--buoy-plum-soft); }
-body:has(> header.bar) .step h2 { font-weight: 800; letter-spacing: -0.03em; word-spacing: 0.1em; }
 body:has(> header.bar) .code { background: var(--buoy-code); color: var(--buoy-code-text); border-radius: 14px; box-shadow: 0 22px 40px -26px rgba(20, 12, 60, 0.6); }
 body:has(> header.bar) .code pre { font-size: 15.5px; }
 body:has(> header.bar) .copy { border-color: rgba(234, 214, 247, 0.45); color: #f1e6fa; }

@@ -77,7 +77,7 @@ async function checkGuides(origin, documents) {
   assert.ok(sources.length, 'Owner guides have canonical Markdown sources')
   const guides = sources.map(file => ({ file, path: file === 'index.md' ? '/docs' : `/docs/${file.slice(0, -3)}` }))
   const emitted = ['/docs', ...(await readdir('dist/site/docs')).filter(file => file.endsWith('.html')).map(file => `/docs/${file.slice(0, -5)}`)]
-  assert.deepEqual(emitted.sort(), guides.map(guide => guide.path).sort(), 'Every owner guide is emitted exactly once')
+  assert.deepEqual(emitted.sort(), [...guides.map(guide => guide.path), '/docs/hosting'].sort(), 'Every owner guide and the declaration-derived hosting guide is emitted exactly once')
   const browser = await chromium.launch({ headless: true, ...(process.env.BUOY_CHROMIUM_PATH ? { executablePath: process.env.BUOY_CHROMIUM_PATH } : {}), args: ['--no-sandbox', '--use-mock-keychain', '--password-store=basic'] })
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   try {

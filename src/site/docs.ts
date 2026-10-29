@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import { Marked } from 'marked'
-import run from './run.json'
+import { run } from './run'
+import { startLine } from '../base/run-site'
 import { siteHeader, siteFooter } from './chrome'
 import { siteHead } from './head'
 import chrome from './chrome.css?raw'
@@ -67,13 +68,18 @@ export function docsPages(): Array<{ path: string; html: string }> {
         },
       },
     })
-    const article = markdown.parse(guide.source, { async: false })
+    const source = guide.slug === 'getting-started'
+      ? guide.source.replace(/^curl -fsSL https:\/\/runeditrun\.com\/install\.sh \| sh -s -- dev \S+$/gm, startLine(run))
+        .replace(/npx -y @runeditrun\/rer dev [\w./-]+/g, run.clone)
+      : guide.source
+    const article = markdown.parse(source, { async: false })
     const navigation = guides.map(item => `<a href="${path(item.slug)}"${item.slug === guide.slug ? ' aria-current="page"' : ''}>${escape(item.title)}</a>`).join('')
+      + '<a href="/docs/hosting">Hosting</a>'
     const toc = contents.map(item => `<a href="#${item.id}">${escape(item.title)}</a>`).join('')
     const previous = guides[index - 1], next = guides[index + 1]
     const pager = `<nav class="docs-pager" aria-label="Guide pages">${previous ? `<a href="${path(previous.slug)}"><span>← Previous</span>${escape(previous.title)}</a>` : '<span></span>'}${next ? `<a href="${path(next.slug)}"><span>Next →</span>${escape(next.title)}</a>` : ''}</nav>`
     const html = siteHead({ title: guide.slug ? `${guide.title} · Buoy docs` : 'Buoy docs', description: guide.description, path: path(guide.slug), style: chrome + styles })
-      + `<body class="docs-page buoy-paper"><a class="docs-skip" href="#guide">Skip to guide</a>${siteHeader('docs')}`
+      + `<body class="docs-page buoy-paper${guide.slug === 'getting-started' ? ' getting-started' : ''}"><a class="docs-skip" href="#guide">Skip to guide</a>${siteHeader('docs')}`
       + `<div class="docs-layout"><aside class="docs-sidebar"><p class="docs-eyebrow">Owner guides</p><nav class="docs-guides" aria-label="Documentation">${navigation}</nav>${contents.length ? `<nav class="docs-toc" aria-label="On this page"><p class="docs-eyebrow">On this page</p>${toc}</nav>` : ''}</aside>`
       + `<main id="guide" class="docs-main" tabindex="-1"><article class="docs-article">${article}</article>${pager}<p class="docs-source"><a href="${escape(run.repository)}/blob/main/docs/${guide.file}">Read this guide in the repository</a></p></main></div>`
       + `${siteFooter()}</body></html>`

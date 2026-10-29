@@ -24,6 +24,7 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - run: npm install --global pnpm@10.12.4
+      - run: pnpm config set store-dir "$RUNNER_TEMP/pnpm-store"
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec rer deploy --site
         env:

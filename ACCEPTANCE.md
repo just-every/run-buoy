@@ -9,9 +9,9 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Core | 26 | 41 | 38 | 105 |
-| Agent surface | 0 | 22 | 0 | 22 |
+| Agent surface | 0 | 0 | 22 | 22 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 26 | 63 | 38 | 127 |
+| Full target | 26 | 41 | 60 | 127 |
 
 Judged from the code and tests at commit `e89d4a74a47b5368483be8dc56a5ed6caa524db7` (28 October 2026). IMPORT-001 proof is at `18d87e4bd5433b97d01db3684e7fa0b6342cf18a`; the submitted candidate is Git commit `HEAD`, reported with its exact Verify SHA. SEGMENT-001 completion is judged from the replayed code and assertions at commit `fe205ed93d622ae73722ce23b3b5b9a61144fe55` (28 October 2026); all other current main judgments are retained. Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
@@ -1426,7 +1426,7 @@ Core · push-further · **partial** · Cites BASE-AGENT-002, BASE-AGENT-006, BAS
 
 #### BASE-AGENT-001 — One MCP door per seed
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Every seed, hosted or self-hosted, serves one remote MCP endpoint at `/mcp` over Streamable HTTP. It speaks the current revision (2026-07-28) and accepts 2025-11-25 clients through the twelve-month deprecation window. It implements `server / discover`, tools, resources and prompts. Lists are deterministic and carry `ttlMs` and `cacheScope: "private"`. Roots, Sampling and Logging are not served.
 
@@ -1438,12 +1438,12 @@ Agent surface · target · **partial**
 5. A foreign Origin returns 403, and a header and body method mismatch returns `HeaderMismatch`.
 6. An oversized body returns 413 with no effect.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** CORE transport is proved. Resources and prompts are undeclared and refused; the full canonical surface remains partial.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-002 — The seed's jobs are tools, through the UI's own actions
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Each Core job a person does in the product is a tool. Where one is not, the Agent surface says why: it runs on a device, it is a person's interactive screen, it belongs to a connector or the import door, or it is an installation fact. Risk is never the reason: a risky job is a tool with its class (BASE-AGENT-006). Tools are named `<seed>.<area>.<verb>` and declare input and output schemas and truthful annotations. Each calls the same server action as the UI, so validation and authorization are written once, and the seed's embedded agents use the same registry. A business refusal returns `isError` with the seed's stable error code.
 
@@ -1455,12 +1455,12 @@ Agent surface · target · **partial**
 5. The UI action and its tool, on the same fixture, give the same record state and the same audit event type.
 6. The seed's embedded agents appear in the audit as calls to the same tools.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** Six tools cover the five native agent-admissible operations and a state witness. The broader customer-success registry remains unimplemented as MCP.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-003 — Records are resources
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Each primary record type has a URI template, and tools return `resource_link`s to the records they touch. A read returns exactly the fields the caller's role sees in the UI. File bytes count against any byte budget on the grant. A record the caller cannot open reads as not found, identical to a missing id. Text from customers, imports or files carries an untrusted marker in `_meta`.
 
@@ -1472,12 +1472,12 @@ Agent surface · target · **partial**
 5. Bytes over budget return `budget_exhausted` and no partial content.
 6. Customer-sourced text carries the untrusted marker.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** UNDECLARED family: resources. Empty catalogues and typed refusals are proved; native resource readers and custody remain owed.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-004 — Business identity and short-lived, audience-bound tokens
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** The door is an OAuth 2.1 resource server. Its RFC 9728 metadata names the authorization servers this installation trusts. That is the paired Business when Business provisioned it, verified with the owner-claim trust the installation already holds for its import door; otherwise it is the seed's own sign-in. Access tokens are RFC 9068 JWTs with `aud` set to the seed's canonical MCP URI, `sub` the sponsoring person, `act` the agent (RFC 8693) with its specialist, scopes per tool family, and a lifetime of 15 minutes or less (5 by default). The policy scopes rules on the sponsor, agent and specialist the token names. The consent behind the tokens can last longer and is revocable. Tokens travel only in the Authorization header, and there is no passthrough.
 
@@ -1490,12 +1490,12 @@ Agent surface · target · **partial**
 6. Revoking consent in the seed or in Business refuses the next call within 60 seconds.
 7. After unpairing, Business tokens are refused and the seed's own sign-in still works.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** Signed owner binding, scoped admission, expiry and consent checks pass for the main sponsor. Additional native principal and allow-list exclusion cases remain separate proof.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-005 — An agent acts as a person in a role, never more
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Every call is authorized as the sponsoring person's current role and access (BASE-ACCESS-004), intersected with the grant's resources, actions and budget. A grant only narrows. No call widens the calling agent's own authority. A call that would widen its own grant or its sponsor's role, or change the company policy or Pause, is refused with `self_escalation`, whatever the policy says; narrowing its own grant is allowed. Other access and security changes are ordinary actions in the access and security classes. An agent never acts after its sponsor is suspended. Anything an agent reads (records, files, emails, imports, other seeds' results) is data and cannot change its scope, its targets or a call's class.
 
@@ -1506,12 +1506,12 @@ Agent surface · target · **partial**
 4. Calls that widen the agent's own grant or its sponsor's role, or change the policy or Pause, return `self_escalation` and change nothing, even under a policy with every class autonomous; dropping a scope from its own grant runs.
 5. An injection fixture yields no out-of-grant call and no change of class: record text asking for a wider action, or claiming that a recipient is internal.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** Native sponsorship and existing grants govern this preparation slice. No access/security mutation is registered; wider native-grant and escalation journeys remain owed.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-006 — Every action declares its risk class
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Classes come from the fleet list in RISK-POLICY.md: standard, external, money, commitment, accounts, gated, access, security, destructive, sensitive and live. In the registry, each tool declares the classes it can carry and a server-side classifier that decides them per call from the arguments, current records and, for gated, the provider's answer. The classifier also supplies each class's facts: the measure (items, recipients, amount and currency, people or records), the counterparty (internal, known, new or public), the direction for access, the provider and step for gated, and the data kind for sensitive. A classifier never reads a flag, label or claim supplied by the agent or by record text. A seed cannot add a class; it proposes one for the fleet list.
 
@@ -1523,12 +1523,12 @@ Agent surface · target · **partial**
 5. No tool in `tools / list` declares a class outside the fleet list, and `rer check` fails on one.
 6. A refused call's audit row still records its computed classes.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** Current native reads and inert preparations declare standard with server facts. Commercial, external, access, regulated-data and live-action adapters are not registered.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-007 — The company's policy decides, at one chokepoint
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Every agent door calls one decision function: MCP, the integration API with agent tokens, and the seed's embedded agents. It evaluates the call's classes against the company's policy, as above. The seed ships no dispositions and fills no gap with one: agent access opens only under a complete policy that setup has asked for (RISK-POLICY.md), and before then every agent call returns `policy_unset` with the setup link and changes nothing. *Autonomous* runs the call. *Review* runs it and adds it to the review feed. *Approval* saves a pending action with server-computed facts and returns `input_required`, with a URL-mode elicitation to the seed's approval page and a pending handle. Each person the rule names approves the exact saved revision in a signed-in browser, and changed inputs need a new approval. The retried call returns the result and a receipt. A rejection returns `approval_rejected`, and a lapse past the wait the rule sets returns `approval_expired`. *Blocked* returns `policy_blocked`, naming the class, rule and revision.
 
@@ -1542,12 +1542,12 @@ Agent surface · target · **partial**
 7. A policy change applies to the next call within 60 seconds, and the audit cites the new revision.
 8. A policy document with a bad signature or another Business's id is rejected, and the door keeps the last valid revision.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** The declared CORE policy, refusal, review and replay path passes. Broader class holds and ownerNativeApi scenarios are not claimed.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-008 — Truthful attribution
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Every agent act is recorded and shown as `"<agent> for <person>"`, and mail and messages an agent sends outside name it that way as their sender. An approval, a review mark, a confirmation (a warning dialog, a typed-field confirmation, a delivery confirmation), a decision or a signature attributed to a person comes only from that person's signed-in session. When an agent does the equivalent act, the record names the agent, and the act carries its own class; a binding decision or a signature is commitment. Agent doors ignore arguments that stand for a person's confirmation. No tool solves a bot check, or enters a person's own password or 2FA code at an outside service. A provider step that demands a person goes to a person, whatever the policy says; the gated class marks such steps before they run.
 
@@ -1560,12 +1560,12 @@ Agent surface · target · **partial**
 6. Activity and exports at 1440 and 390 show `"<agent> for <person>"` for every agent act.
 7. Mail an agent sends to an outside address names `"<agent> for <person>"` as its sender.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** Agent-for-person preparation and native audit attribution pass. Native Undo, wider person-held business approvals and remaining job parity are not claimed.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-009 — Every agent action is audited with its class and decision
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Extending BASE-OPS-005, each call that reads private data or changes anything records the agent client, name and specialist, and the run or task id (`traceparent` when sent); the sponsoring person, the grant, the tool and the targets; the classes and their facts, and the policy revision and rule; the decision (autonomous, review, approval, blocked, unset or self_escalation) and the outcome (done, refused, pending or failed); the approval or review id and person, and the idempotency key. For a period, the seed's Agents page shows actions by class and decision with the notable ones, the review feed (Mark reviewed, Flag, and Undo where reversible), pending approvals, steps waiting for a person and setup questions. Business shows the same across seeds.
 
@@ -1578,12 +1578,12 @@ Agent surface · target · **partial**
 6. Removing the agent keeps its rows and its name.
 7. The Agents page works at 1440 and 390 with no serious or critical axe findings.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** Declared CORE audit checks pass with differs_from_policy zero. Retained door artifact/client erasure mapping and the remaining native jobs still need integrated custody proof.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-010 — Agents can follow changes
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** The seed emits a typed event for every record change and for every approval, review and policy decision. Each event carries a stable id, a type, the record URI, the actor (a person, or an agent acting for a person) and a time. Events never carry secrets or more than the subscriber may read. Agents can read events three ways: `subscriptions / listen`, an `events.list` tool with a cursor, and signed webhooks from Base `integrations` using the same ids. Every channel delivers at least once and filters by access at delivery.
 
@@ -1595,12 +1595,12 @@ Agent surface · target · **partial**
 5. A failed webhook is visible and replays without duplicate effects.
 6. `approval.pending`, `approval.decided`, `review.flagged` and `policy.adopted` carry the class and decision and nothing the subscriber may not read.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** UNDECLARED families: events and subscriptions. Typed refusal is proved; retained events, fanout and specialist handoffs are not claimed.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-011 — Limits are policy, and Pause stops everything
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Business limits are rules in the company's policy: per-call and per-day thresholds on any class's measure, such as money moved, outside recipients or items destroyed; spend caps on provider cost (models, SMS, email) per seed, specialist or agent, which setup asks with the classes; "no cap" is an answer. Tools with provider cost declare an estimate before they run, and an exhausted cap returns `budget_exhausted` before any partial effect. The seed's capacity limits (request rate, body and byte sizes) protect the installation: they bound rate and size, never daily business volume, are documented and are not policy. A grant carries budgets only when the person granting it sets them. A **Pause agents** control in the seed, and Pause all agents in Business when paired, refuses every agent token within 60 seconds until a person resumes; browser sessions and devices keep working.
 
@@ -1613,12 +1613,12 @@ Agent surface · target · **partial**
 6. Pause and Pause all agents each stop the next call within 60 seconds, and resume restores access.
 7. An agent token cannot resume.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** Native rates and Business/local Pause pass for the current synchronous tools. mailEdges, resourceRefresh, timedLifecycle, dualHost and queuedLifecycle remain unscoped; spend is none.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-012 — Writes are idempotent and conflict-safe
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** Every mutating tool requires an idempotency key and takes an optional expected revision. The same key with the same arguments returns the first outcome for at least 24 hours; the same key with different arguments returns `idempotency_conflict`; a stale revision returns `revision_conflict` with the current revision. Long work returns a job handle and a status tool, with no dependence on the Tasks extension.
 
@@ -1629,12 +1629,12 @@ Agent surface · target · **partial**
 4. A stale revision returns a conflict naming the current revision.
 5. A job handle used by another person's token reads as not found.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** Native replay, changed-argument conflict and stale opaque revision refusals pass. Queued continuation, provider uncertainty and remaining native mutation journeys are not claimed.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 #### BASE-AGENT-013 — Manifest, docs and the conformance journey
 
-Agent surface · target · **partial**
+Agent surface · target · **missing**
 
 **Requirement.** `server / discover` instructions and an on-site `/docs/agents` page are generated from the action registry. The page lists tools by job, with each tool's classes, the test that adds each computed class, its scopes, resource templates, event types, capacity limits and error codes, and the specialist role. `prompts / list` carries the specialist's jobs. Base ships the conformance journey, a harness that `rer verify` runs against `rer dev` and seeds run in CI. It is an MCP client; a signed-in test person takes a person's steps (setup answers, approvals, review marks, resume) through the URLs the door returns, and the same browser leg runs the UI-parity actions and the page checks at 1440 and 390. It runs every acceptance point of BASE-AGENT-001 to 012 and of the seed's SURFACE clauses under two company policies: *all autonomous* (`*`), and *held* (standard review, every other class the seed declares approval, which the test person grants), plus the single-class variants a point names. A point that names no disposition passes under both.
 
@@ -1645,14 +1645,14 @@ Agent surface · target · **partial**
 4. Every acceptance point runs under both policies, every decision matches the policy in force, and under all autonomous no call waits for a person or is refused by policy.
 5. A stranger agent given only the seed URL completes the specialist journey through MCP.
 
-**Evidence.** `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json` on 013cdd2e22159d9cf83d8a6465f546d1e07a2a10 (2026-10-29): rer 0.2.88, 566/566 BASE-AGENT points, native journey passed; build, site build and typecheck passed
-**Gap.** The normal installed CLI proves the declared CORE journey. Resources, prompts, events and subscriptions are undeclared; the full SURFACE-009 week and outside MCP-client receipts remain owed.
+**Evidence.** None.
+**Gap.** Not yet judged through this seed's own doors.
 
 ### Agent surface
 
 #### SURFACE-001 — Complete customer-success registry
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-013
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-013
 
 **Requirement.** Buoy’s registry covers the Core jobs and exceptions in this table. Existing local bearer commands are an interim slice, not an MCP completion claim.
 
@@ -1660,12 +1660,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-002, BASE
 1. The published registry and documentation map every Core clause to the tool or non-tool reason in this table, including custom objects, incumbent migrations, commercial work and native-device exceptions.
 2. An account task created through its native action and its MCP tool has equal account, owner, evidence and event type on the same fixture.
 
-**Evidence.** Source/declaration: `agent-surface.json`; `src/buoy/door/`; `docs/agent-door.md`
-**Gap.** Six native tools cover five agent-admissible operations plus a read-only witness. The full Core-job registry and complete native action parity remain owed; unsupported jobs are not non-tool exceptions. Source presence is not a passing conformance receipt.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 #### SURFACE-002 — Internal work and outside exposure
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE-AGENT-007
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-006, BASE-AGENT-007
 
 **Requirement.** Buoy classifies customer-record work by the visibility it creates, including already-shared plans.
 
@@ -1673,12 +1673,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE
 1. An internal reversible task or draft carries standard with item and account facts.
 2. A message, connector writeback or plan change newly visible to a customer carries external with exact recipients and known/new/public counterparty; the equivalent internal-only edit does not.
 
-**Evidence.** Source/declaration: `src/buoy/door/preparations.ts`; `src/buoy/door/experiments.ts`; `agent-surface.json`
-**Gap.** Current reads and inert drafts compute standard with measure 1. External messages, writeback and changes to externally shared plans lack MCP adapters and exact exposure/recipient classification proof.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 #### SURFACE-003 — Commercial facts and binding decisions
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008
 
 **Requirement.** Renewal and concession tools distinguish a pricing change from a binding decision and preserve source authority.
 
@@ -1687,12 +1687,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE
 2. A binding renewal outcome, commercial offer or plan sign-off carries commitment with its exact version and counterparty; a draft alone remains standard.
 3. Company policy decides both classes when one call changes price and commits terms; BILLING-003 continues to show outstanding source variance.
 
-**Evidence.** Source/declaration: `src/buoy/door/preparations.ts`; `agent-surface.json`
-**Gap.** Renewal preparation is an inert standard draft. Money and commitment execution/classification, binding sign-off and unchanged-variance proof through the full commercial journey remain owed; native person approval is not granted to agents.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 #### SURFACE-004 — Customer access and protective settings
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-005, BASE-AGENT-006
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-005, BASE-AGENT-006
 
 **Requirement.** Account ownership and sharing use Buoy’s current scopes; connector and identity settings have distinct protective facts.
 
@@ -1700,12 +1700,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-005, BASE
 1. A changed CSM, role, portal share or grant carries access with the people and widening/narrowing direction.
 2. A credential rotation, identity-enforcement change or model-data protection change carries security with its setting.
 
-**Evidence.** Source/declaration: `src/buoy/door/native.ts`; `src/buoy/door/credentials.ts`
-**Gap.** Current sponsor and local grants constrain the subset. No MCP ownership, role, sharing, grant, credential, identity-enforcement or model-protection mutation is declared; access/security facts and complete native parity remain unproved.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 #### SURFACE-005 — Irreversible and regulated customer data
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE-DATA-006
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-006, BASE-DATA-006
 
 **Requirement.** Erasure and identity-merge tools account for retained holds and distinguish regulated personal data from ordinary commercial fields.
 
@@ -1713,12 +1713,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE
 1. An irreversible account/person erasure or identity merge carries destructive with the item count and the product’s actual hold outcome.
 2. A read or disclosure including regulated identity or bank records carries sensitive with record count and kind; excluding those fields leaves the class absent.
 
-**Evidence.** Source/declaration: `agent-surface.json`; `docs/agent-door.md`
-**Gap.** No destructive or regulated-data operation is declared. Irreversible erasure/merge hold outcomes and selected regulated-data sensitive classification remain owed. Ordinary commercial evidence in the current subset is not treated as regulated identity or bank data.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 #### SURFACE-006 — Provider setup and running automation
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE-AGENT-008
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-006, BASE-AGENT-008
 
 **Requirement.** Buoy identifies provider-owned setup steps and the running services a tool changes.
 
@@ -1727,12 +1727,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-006, BASE
 2. A provider consent, hosted checkout or identity-verification step carries gated with the provider and exact person-held step, including when the provider reports it during a call.
 3. Changing an enabled playbook, connector, health or outreach schedule carries live with the service and version; saving an inert draft alone does not.
 
-**Evidence.** Source/declaration: `agent-surface.json`; `src/buoy/door/`
-**Gap.** Current tools read retained evidence and prepare local records. Provider account creation, person-held provider setup and running-automation changes have no declared MCP adapter or accounts/gated/live journey; inert preparation proves none of them.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 #### SURFACE-007 — Source-linked customer resources
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-003
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-003
 
 **Requirement.** The customer-success resource set includes the records behind health, commercial facts and observed outcomes.
 
@@ -1740,12 +1740,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-003
 1. Every resource template listed in this section is discoverable, including custom-object records, opportunities, segments, scorecards, signals, observational outcomes, experiments, outreach, meetings, model drafts and role definitions.
 2. A sourced health or revenue read links to the exact retained observation; missing inputs and unresolved monetary variance remain explicit.
 
-**Evidence.** Declaration: `agent-surface.json`; `docs/agent-door.md`
-**Gap.** Resources are undeclared and refused with capability_not_declared. All target templates, scoped resource reads, exact retained observation links and resource read-back proof remain owed. Tool-returned account evidence is not a resource implementation.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 #### SURFACE-008 — Outcome events and specialist handoffs
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-010
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-010
 
 **Requirement.** Buoy’s events keep evidence changes distinct from proposals, manual reports and observed provider outcomes.
 
@@ -1754,12 +1754,12 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-010
 2. A signed renewal handoff and an external provider result retain their source identifiers; replay yields the same outcome rather than a second commercial action.
 3. An unverified human report cannot become a provider execution, delivered alert or verified risk resolution.
 
-**Evidence.** Declaration: `agent-surface.json`; `docs/agent-door.md`
-**Gap.** Events and subscriptions are undeclared and refused with capability_not_declared. Retained native audit is not an MCP change feed. Source-to-health/risk events, replay-safe specialist handoffs and provider/customer outcome distinctions through that feed remain owed.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 #### SURFACE-009 — A seeded week through MCP
 
-Agent surface · target · **partial** · From new · Cites BASE-AGENT-013 · Register R-7, R-8, R-9, R-10
+Agent surface · target · **missing** · From new · Cites BASE-AGENT-013 · Register R-7, R-8, R-9, R-10
 
 **Requirement.** A stranger customer-success specialist works a seeded week from the installation URL under all-autonomous and held company policies, with the provider and customer steps represented by their official-schema fakes.
 
@@ -1769,8 +1769,8 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-013 · Re
 3. An unchanged source mismatch remains quantified after explained review, the customer’s own confirmation remains distinct from the specialist’s act, and a risk closes only on its required recovered usage and customer evidence.
 4. Run both policy journeys with native action parity and observable account, task, revenue and outcome end states at 1440 and 390.
 
-**Evidence.** Harness declaration: `tests/agent-door-fixtures.mjs`; `tests/agent-door-journey.mjs`; `agent-surface.json`
-**Gap.** Fresh native fixtures cover retained evidence, inert proposals and experiment preparation/reporting. No passing run is claimed by these files. The joined CRM/billing/support/usage week, three-owner remedy, actual customer-confirmed recovery, commercial follow-through, both-policy end states at 1440/390 and R-7 through R-10 client receipts remain owed.
+**Evidence.** None.
+**Gap.** MCP registry, server classifiers and the two-policy specialist conformance journey are not implemented.
 
 ## Later
 
