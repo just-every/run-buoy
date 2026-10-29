@@ -1661,7 +1661,7 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-002, BASE
 2. An account task created through its native action and its MCP tool has equal account, owner, evidence and event type on the same fixture.
 
 **Evidence.** Source/declaration: `agent-surface.json`; `src/buoy/door/`; `docs/agent-door.md`
-**Gap.** Six native tools cover five agent-admissible operations plus a read-only witness. The full Core-job registry and complete native action parity remain owed; unsupported jobs are not non-tool exceptions. Source presence is not a passing conformance receipt.
+**Gap.** Six native tools cover five agent-admissible operations plus a read-only witness. The full Core-job registry and complete native action parity remain owed; unsupported jobs are not non-tool exceptions. The declared CORE conformance passes 588/588; it does not prove complete native parity.
 
 #### SURFACE-002 — Internal work and outside exposure
 
@@ -1770,7 +1770,7 @@ Agent surface · target · **partial** · From new · Cites BASE-AGENT-013 · Re
 4. Run both policy journeys with native action parity and observable account, task, revenue and outcome end states at 1440 and 390.
 
 **Evidence.** Harness declaration: `tests/agent-door-fixtures.mjs`; `tests/agent-door-journey.mjs`; `agent-surface.json`
-**Gap.** Fresh native fixtures cover retained evidence, inert proposals and experiment preparation/reporting. No passing run is claimed by these files. The joined CRM/billing/support/usage week, three-owner remedy, actual customer-confirmed recovery, commercial follow-through, both-policy end states at 1440/390 and R-7 through R-10 client receipts remain owed.
+**Gap.** Fresh native fixtures cover retained evidence, inert proposals and experiment preparation/reporting. The declared CORE journey passes 588/588; it does not prove the complete seeded week. The joined CRM/billing/support/usage week, three-owner remedy, actual customer-confirmed recovery, commercial follow-through, both-policy end states at 1440/390 and R-7 through R-10 client receipts remain owed.
 
 ## Later
 
