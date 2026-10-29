@@ -45,6 +45,7 @@ export async function dashboardJourney({browser,evidence}={}){
   for(const n of [0,1]){const a=await api('/accounts','POST',{id:'synthetic-buoy-'+(9300+n),name:'Precision customer '+n,renewalDate:end,noticeDays:30,renewalEvidence:'Precision terms',billing:null,support:null});await api('/accounts/'+a.id+'/contract','POST',{revision:(await api('/state')).accounts.find(r=>r.id===a.id).revision,contract:{currency:'USD',contractStart:on.slice(0,4)+'-01-01',contractEnd:end,lines:[{product:'Exact precision contract',quantity:1,amountMinor:Number.MAX_SAFE_INTEGER,frequency:'annual',entitlements:'One seat'}],source:{reference:'Precision signed order '+n,confirmedOn:on}}})}
   const precision=await api('/reports','POST',{spec:{...spec,name:'Exact report range',rules:{match:'all',conditions:[{field:'name',op:'contains',value:'Precision customer'}]},groupBy:'revenue.currency'}}),range=await api('/reports/'+precision.id);assert.equal(range.result.count,2);assert.equal(range.result.groups[0].value,null);assert.match(range.result.groups[0].reason,/exact native minor-unit range/)
   await starterDashboards({app,api,request,browser,evidence,csm,peer,finance,on,end})
+  await assignedAuthor({app,api,request,invite,browser,evidence,on,end})
   if(browser)assert.deepEqual(failures,[])
   console.log('REPORT-002 saved at-risk native ARR reports, live segment and current book scopes, missing and currency groups, formulas, dashboard role sharing, independent CSV parity, explicit readonly authority, stale edit/origin/privacy fences passed'+(browser?' at native 1440/390 with keyboard export, refusal recovery, axe and 320 reflow.':'.'))
  }finally{await app.close()}
@@ -168,4 +169,94 @@ function csvCells(text){
  assert.equal(quoted,false,'Downloaded CSV quotes are balanced')
  if(value||row.length){row.push(value);rows.push(row)}
  return rows
+}
+
+
+// Explicit author assignments exercise the same native builder as administrators.
+async function assignedAuthor({app,api,request,invite,browser,evidence,on,end}){
+ const author=await invite(9600,'csm'),peer=await invite(9601,'csm'),viewer=await invite(9602,'finance')
+ const permissions={read:'own-shared',reports:'author',export:'own-reports',commercialRead:'own'}
+ const role=await api('/roles/definitions','POST',{revision:(await api('/roles')).revision,name:'Scoped report author',permissions,scope:{kind:'all'},commercial:'full'})
+ const assign=async(person,extra={})=>api('/roles/assignments','PUT',{revision:(await api('/roles')).revision,personId:person.id,roleId:role.id,...extra})
+ await assign(author);await assign(peer)
+ const ids=[0,1,2].map(i=>'synthetic-buoy-'+(9610+i))
+ for(const [i,amount]of [42000,18000,75000].entries()){
+  await api('/accounts','POST',{id:ids[i],name:'Author account '+i,renewalDate:end,noticeDays:30,renewalEvidence:'Reviewed author terms',billing:null,support:null})
+  await api('/accounts/'+ids[i]+'/owner','PUT',{ownerId:i===2?peer.id:author.id})
+  await api('/accounts/'+ids[i]+'/contract','POST',{revision:(await api('/state')).accounts.find(a=>a.id===ids[i]).revision,contract:{currency:'USD',contractStart:on.slice(0,4)+'-01-01',contractEnd:end,lines:[{product:'Author seats',quantity:1,amountMinor:amount,frequency:'annual',entitlements:'Reviewed seats'}],source:{reference:'Author signed order '+i,confirmedOn:on}}})
+ }
+ const spec={name:'Scoped author ARR',object:'account',rules:{match:'all',conditions:[{field:'name',op:'contains',value:'Author account'}]},segmentId:null,groupBy:'ownerId',measure:'revenue.arrMinor',operation:'sum',formula:null,chart:'bar',sharedRoles:[role.id,'finance']}
+ const before=await api('/reports')
+ for(const other of [{...spec,object:'contact'},{...spec,groupBy:'support.reference'},{...spec,formula:'custom.report_health * 2'}])assert.equal((await request('/reports','POST',{spec:other},author.cookie)).status,400)
+ assert.deepEqual(await api('/reports'),before,'Unpermitted objects and fields leave definitions unchanged')
+ const saved=await api('/reports','POST',{spec},author.cookie)
+ const run=async(as)=>api('/reports/'+saved.id,'GET',undefined,as)
+ const check=async(as,group,count,value)=>{
+  const data=await run(as);assert.equal(data.result.count,count);assert.deepEqual(data.result.groups.map(g=>[g.group,g.count,g.value]),[[group,count,value]])
+  assert.deepEqual(csvCells(await(await request('/reports/'+saved.id+'/export.csv','GET',undefined,as)).text()).slice(1),[[spec.name,as===author.cookie?'Report colleague 9600':as===peer.cookie?'Report colleague 9601':'Report colleague 9600','USD',String(count),'0',String(value),'native minor units','revenue.arrMinor']])
+  return data
+ }
+ await check(author.cookie,author.id,2,60000);await check(peer.cookie,peer.id,1,75000)
+ const all=await run(viewer.cookie);assert.equal(all.result.count,3);assert.equal(all.result.groups.reduce((n,g)=>n+g.value,0),135000)
+ const dashboard=await api('/dashboards','POST',{name:'Author current book',sharedRoles:[role.id,'finance'],reportIds:[saved.id]},author.cookie)
+ let inventory=await api('/reports','GET',undefined,author.cookie);assert.equal(inventory.canManage,true);assert.equal(inventory.reports.find(r=>r.id===saved.id).canEdit,true);assert.ok(inventory.dashboards.some(d=>d.id===dashboard.id))
+ const peerView=await run(peer.cookie);assert.equal(peerView.canEdit,false)
+ const prior=await run(author.cookie)
+ assert.equal((await request('/reports','POST',{id:saved.id,revision:prior.revision,spec:{...spec,name:'Peer overwrite'}},peer.cookie)).status,403)
+ const d=(await api('/reports')).dashboards.find(d=>d.id===dashboard.id)
+ assert.equal((await request('/dashboards','POST',{id:d.id,revision:d.revision,name:'Peer overwrite',sharedRoles:[],reportIds:[saved.id]},peer.cookie)).status,403)
+ assert.deepEqual(await run(author.cookie),prior,'A shared definition grants no edit authority to another author')
+ const privateStarter=await api('/dashboards','POST',{presetId:'csm-book-size',segmentId:null},author.cookie)
+ assert.equal((await api('/reports/'+privateStarter.reportId,'GET',undefined,author.cookie)).result.count,2)
+ assert.equal((await request('/reports/'+privateStarter.reportId,'GET',undefined,peer.cookie)).status,403)
+ if(browser)for(const width of [1440,390]){
+  const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
+  try{
+   await context.addCookies(author.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}))
+   const page=await context.newPage();await page.goto(app.origin+'/app/reports?dashboard='+dashboard.id,{waitUntil:'networkidle'})
+   if(width===1440){
+    const result=page.locator('#report-result-'+saved.id);assert.deepEqual(await result.locator('tbody tr').evaluateAll(rows=>rows.map(row=>[...row.cells].map(cell=>cell.textContent.trim()))),[['Report colleague 9600','USD','2','0','60000']])
+    assert.equal(await result.locator('meter').evaluate(el=>el.value),60000)
+    const download=page.waitForEvent('download');await result.getByRole('link',{name:'Export '+spec.name+' to CSV',exact:true}).click();const artifact=await download;assert.equal(await artifact.failure(),null);assert.equal(csvCells(await readFile(await artifact.path(),'utf8'))[1][5],'60000')
+    await page.locator('#report-create-panel > summary').click();const form=page.locator('#report-create');await form.getByLabel('Report name',{exact:true}).fill('Native assigned author count');await form.getByLabel('Aggregation',{exact:true}).selectOption('count');await form.locator('textarea[name=rules]').fill('{ invalid');await submit(page,form.getByRole('button',{name:'Save report',exact:true}));assert.equal(await page.getByRole('alert').count(),1);assert.equal(await page.locator('#report-create').getByLabel('Report name',{exact:true}).inputValue(),'Native assigned author count');await page.locator('#report-create textarea[name=rules]').fill(JSON.stringify(spec.rules));await submit(page,page.locator('#report-create').getByRole('button',{name:'Save report',exact:true}));assert.equal(await page.getByRole('alert').count(),0)
+    const reportId=new URL(page.url()).searchParams.get('report'),edit=page.locator('#report-edit-panel-'+reportId);await edit.locator('summary').click();const formEdit=page.locator('#report-edit-'+reportId),editor=formEdit.locator('textarea[name=spec]');await editor.fill(JSON.stringify({...JSON.parse(await editor.inputValue()),name:'Native assigned author revised'}));await submit(page,formEdit.getByRole('button',{name:'Save report changes',exact:true}));assert.equal(await page.getByRole('alert').count(),0);assert.equal((await api('/reports/'+reportId,'GET',undefined,author.cookie)).spec.name,'Native assigned author revised')
+    await scan(page,'Assigned report author')
+   }
+   await page.screenshot({path:join(evidence,'reports-assigned-author-'+width+'.png'),fullPage:true})
+   await page.goto(app.origin+'/app/reports?report='+saved.id,{waitUntil:'networkidle'})
+  }finally{await context.close()}
+  const view=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:true})
+  try{
+   await view.addCookies(peer.cookie.split('; ').map(pair=>{const[name,...rest]=pair.split('=');return{name,value:rest.join('='),url:app.origin}}));const page=await view.newPage();await page.goto(app.origin+'/app/reports?report='+saved.id,{waitUntil:'networkidle'})
+   if(width===1440){assert.equal(await page.locator('#report-edit-panel-'+saved.id).count(),0);assert.match(await page.locator('#report-result-'+saved.id).innerText(),/75000/)}
+   await page.screenshot({path:join(evidence,'reports-shared-author-'+width+'.png'),fullPage:true})
+  }finally{await view.close()}
+ }
+ const personal=await api('/reports','POST',{spec:{...spec,name:'Private identity-filtered author report',rules:{match:'all',conditions:[{field:'id',op:'eq',value:ids[0]}]},sharedRoles:[]}},author.cookie)
+ await api('/accounts/'+ids[0]+'/owner','PUT',{ownerId:peer.id});await check(author.cookie,author.id,1,18000);await check(peer.cookie,peer.id,2,117000)
+ const moved=await api('/reports/'+personal.id,'GET',undefined,author.cookie);assert.equal(moved.result.count,0)
+ await api('/reports','POST',{id:personal.id,revision:moved.revision,spec:{...moved.spec,name:'Edited after book transfer'}},author.cookie)
+ await api('/accounts/'+ids[0],'DELETE',{confirmation:'Author account 0'})
+ assert.equal((await request('/reports/'+personal.id,'GET',undefined,author.cookie)).status,404,'A transfer and definition edit cannot detach identity-filter custody from erasure')
+ assert.equal((await request('/accounts','POST',{id:ids[0],name:'Author account 0',renewalDate:end,noticeDays:30,renewalEvidence:'Erased author replay',billing:null,support:null})).status,409)
+ await check(peer.cookie,peer.id,1,75000)
+ await assign(author,{commercial:'band'})
+ assert.equal((await request('/reports/'+saved.id,'GET',undefined,author.cookie)).status,403)
+ assert.equal((await request('/reports/'+saved.id+'/export.csv','GET',undefined,author.cookie)).status,403)
+ inventory=await api('/reports','GET',undefined,author.cookie);assert.ok(!Object.hasOwn(inventory.catalog,'revenue.arrMinor'));assert.ok(!inventory.reports.some(r=>r.id===saved.id))
+ const count=await api('/reports','POST',{spec:{...spec,name:'Noncommercial count',operation:'count',measure:'count',sharedRoles:[]}},author.cookie)
+ const counted=await api('/reports/'+count.id,'GET',undefined,author.cookie);assert.deepEqual(counted.result.groups.map(g=>[g.count,g.value]),[[1,1]]);assert.ok(!JSON.stringify(counted).includes('18000'))
+ const denied=await api('/reports')
+ assert.equal((await request('/reports','POST',{spec},author.cookie)).status,400)
+ assert.deepEqual(await api('/reports'),denied,'Unavailable commercial fields cannot be authored')
+ await api('/roles/definitions','POST',{revision:(await api('/roles')).revision,id:role.id,name:'Scoped report author',permissions:{...permissions,reports:'none'},scope:{kind:'all'},commercial:'full'})
+ const revokedBefore=await api('/reports')
+ assert.equal((await api('/reports','GET',undefined,author.cookie)).canManage,false)
+ assert.equal((await request('/reports/'+count.id,'GET',undefined,author.cookie)).status,403)
+ assert.equal((await request('/reports','POST',{spec},author.cookie)).status,403)
+ assert.equal((await request('/dashboards','POST',{presetId:'portfolio-health',segmentId:null},author.cookie)).status,403)
+ assert.deepEqual(await api('/reports'),revokedBefore,'Revoked author requests leave all saved definitions unchanged')
+ await api('/roles/assignments/'+peer.id,'DELETE',{revision:(await api('/roles')).revision})
+ assert.equal((await request('/reports/'+saved.id,'GET',undefined,peer.cookie)).status,403)
+ console.log('REPORT-002 explicitly assigned authors build and edit their own definitions; role viewers retain independent current books, field withdrawals and author revocations refuse unchanged writes and exports.')
 }

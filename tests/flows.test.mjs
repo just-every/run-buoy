@@ -208,6 +208,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const last=await json(await call('/audit?'+filters+'&offset='+first.nextOffset))
    assert.equal(last.entries.length,2);assert.equal(last.nextOffset,null)
    assert.equal(new Set([...first.entries,...last.entries].map(e=>e.id)).size,52)
+   assert.deepEqual([...first.entries,...last.entries].map(({actor,action,subject,detail})=>({actor,action,subject,detail})).sort((a,b)=>a.subject.localeCompare(b.subject)),Array.from({length:52},(_,i)=>({actor:'agent:'+agent.id,action:'agent.refused',subject:'command audit-probe-'+String(i).padStart(2,'0'),detail:'Unknown command. Agents can prepare; people approve.'})),'Every expected refusal tuple is present, with its own actor, subject and detail')
    assert.deepEqual([...first.entries,...last.entries].map(e=>e.occurredAt),[...first.entries,...last.entries].map(e=>e.occurredAt).sort().reverse())
    assert.equal((await json(await call('/audit?'+filters.replace('action=AGENT.REFUSED','action=missing')))).entries.length,0)
    assert.equal((await json(await call('/audit?actor='+encodeURIComponent(agent.id)+'&subject=%25'))).entries.length,0,'percent is literal, not a wildcard')

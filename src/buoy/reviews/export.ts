@@ -1,7 +1,9 @@
-import {PDFDocument,StandardFonts,PDFName,PDFString,rgb} from 'pdf-lib'
+import {PDFDocument,PDFName,PDFString,rgb} from 'pdf-lib'
+import fontkit from '@pdf-lib/fontkit'
+import fontDataUrl from './fonts/DejaVuSans.ttf?inline'
 import pptxgen from 'pptxgenjs'
 import {insist} from '../core'
-import type {ReviewDocument,ReviewSlide} from './index'
+import type {ReviewDocument} from './index'
 const chunks=<T>(items:T[],n:number)=>Array.from({length:Math.ceil(items.length/n)},(_,i)=>items.slice(i*n,(i+1)*n))
 export async function exportPowerPoint(doc:ReviewDocument,origin:string){
  const deck=new pptxgen();deck.layout='LAYOUT_WIDE';deck.author='Buoy';deck.subject=doc.interpretation;deck.title=doc.name
@@ -15,12 +17,38 @@ export async function exportPowerPoint(doc:ReviewDocument,origin:string){
  return await deck.write({outputType:'uint8array',compression:true}) as Uint8Array
 }
 export async function exportPdf(doc:ReviewDocument,origin:string){
- const pdf=await PDFDocument.create(),font=await pdf.embedFont(StandardFonts.Helvetica);pdf.setTitle(doc.name);pdf.setAuthor('Buoy')
- const safe=(text:string)=>{try{font.encodeText(text);return text}catch{insist(false,'This PDF font cannot represent a character in this deck. PowerPoint preserves Unicode; edit the text or use PowerPoint.')}}
+ const pdf=await PDFDocument.create();pdf.registerFontkit(fontkit)
+ const bytes=Uint8Array.from(atob(fontDataUrl.slice(fontDataUrl.indexOf(',')+1)),c=>c.charCodeAt(0))
+ const font=await pdf.embedFont(bytes,{subset:true,features:{liga:false}}),coverage=new Set(font.getCharacterSet())
+ pdf.setTitle(doc.name);pdf.setAuthor('Buoy')
+ const safe=(text:string)=>{
+  for(const character of text){
+   if(/\s/u.test(character))continue
+   const code=character.codePointAt(0)!
+   insist(coverage.has(code)&&/[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Common}\p{Script=Inherited}]/u.test(character),'The PDF supports Latin, Greek and Cyrillic text and the bundled DejaVu Sans symbols. Unsupported character U+'+code.toString(16).toUpperCase()+'. Use PowerPoint for other scripts.')
+  }
+  return text
+ }
+ const graphemes=new Intl.Segmenter(undefined,{granularity:'grapheme'})
+ const wrap=(value:string,size:number)=>{
+  const lines:string[]=[]
+  for(const paragraph of safe(value).replace(/\r\n?|[\u2028\u2029]/g,'\n').replace(/\t/g,'    ').split('\n')){
+   let current=''
+   for(const word of paragraph.match(/\S+[^\S\n]*|[^\S\n]+/gu)??[]){
+    if(current&&font.widthOfTextAtSize(current+word.trimEnd(),size)>770){lines.push(current.trimEnd());current=''}
+    for(const {segment}of graphemes.segment(word)){
+     if(current&&font.widthOfTextAtSize(current+segment,size)>770){lines.push(current.trimEnd());current=''}
+     current+=segment
+    }
+   }
+   lines.push(current.trimEnd())
+  }
+  return lines
+ }
  for(const source of doc.slides){
   let page=pdf.addPage([842,595]),y=560,annotations:ReturnType<typeof pdf.context.register>[]=[]
   const footer=()=>{page.drawText('Captured '+doc.capturedAt+' | '+doc.start+' through '+doc.end+' UTC',{x:32,y:20,size:8,font});if(annotations.length)page.node.set(PDFName.of('Annots'),pdf.context.obj(annotations))}
-  const line=(value:string,size=11,href?:string)=>{const words=safe(value).replace(/\r/g,'').split(/\s+/),lines:string[]=[];let current='';for(const word of words){for(const part of word.match(/.{1,90}/g)??['']){if(font.widthOfTextAtSize((current?current+' ':'')+part,size)>770){lines.push(current);current=part}else current+=(current?' ':'')+part}}if(current)lines.push(current);for(const text of lines){if(y<size+45){footer();page=pdf.addPage([842,595]);annotations=[];y=560}page.drawText(text,{x:32,y,size,font,color:href?rgb(0,.25,.4):rgb(0,0,0)});if(href)annotations.push(pdf.context.register(pdf.context.obj({Type:'Annot',Subtype:'Link',Rect:[32,y-2,810,y+size],Border:[0,0,0],A:{Type:'Action',S:'URI',URI:PDFString.of(new URL(href,origin).href)}})));y-=size+5}}
+  const line=(value:string,size=11,href?:string)=>{for(const text of wrap(value,size)){if(y<size+45){footer();page=pdf.addPage([842,595]);annotations=[];y=560}page.drawText(text,{x:32,y,size,font,color:href?rgb(0,.25,.4):rgb(0,0,0)});if(href)annotations.push(pdf.context.register(pdf.context.obj({Type:'Annot',Subtype:'Link',Rect:[32,y-2,32+font.widthOfTextAtSize(text,size),y+size],Border:[0,0,0],A:{Type:'Action',S:'URI',URI:PDFString.of(new URL(href,origin).href)}})));y-=size+5}}
   line(source.title,19);line(source.commentary);y-=8
   for(const fact of source.facts){line(fact.label+': '+fact.value,12);line('Source: '+fact.source,9,fact.href);y-=8}
   line(doc.interpretation,9);footer()

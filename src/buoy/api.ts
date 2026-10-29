@@ -101,7 +101,7 @@ buoyApi.use('/api/buoy/*', async (c, next) => {
   if(['GET','POST'].includes(c.req.method)&&/^\/api\/buoy\/accounts\/[^/]+\/plans$/.test(c.req.path)){await next();if(c.req.method==='POST'&&c.res.ok){await recalculateScorecards(c.env.DB);await observeOutcomes(c.env.DB,actor)}return}
   if((c.req.method==='GET'&&c.req.path==='/api/buoy/reviews')||(c.req.method==='PUT'&&/^\/api\/buoy\/reviews\/[^/]+$/.test(c.req.path)))return next()
   if(c.req.path==='/api/buoy/ai'||(['/api/buoy/ai/questions','/api/buoy/ai/answers'].includes(c.req.path)&&c.req.method==='POST')||(c.req.method==='GET'&&/^\/api\/buoy\/ai\/evidence\/[^/]+\/[^/]+$/.test(c.req.path)))return next()
-  if(c.req.method==='GET'&&/^\/api\/buoy\/reports(?:\/|$)/.test(c.req.path))return next()
+  if(c.req.method==='GET'&&/^\/api\/buoy\/reports(?:\/|$)/.test(c.req.path)||c.req.method==='POST'&&['/api/buoy/reports','/api/buoy/dashboards'].includes(c.req.path))return next()
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/renewals/forecast')return c.json(await forecastState(c.env.DB,actor,new URL(c.req.url).searchParams))
   if(c.req.method==='POST'&&/^\/api\/buoy\/renewals\/[^/]+\/forecast-override$/.test(c.req.path)){const result=await overrideForecast(c.env.DB,actor,decodeURIComponent(c.req.path.split('/').at(-2)!),await jsonBody(c.req.raw));await refreshAccountConsumers(c.env,actor);return c.json(result)}
   if(c.req.method==='GET'&&c.req.path==='/api/buoy/renewals/approvals')return c.json(await scopedRenewalApprovals(c.env.DB,actor,profile))
