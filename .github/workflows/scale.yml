@@ -39,6 +39,7 @@ jobs:
           node-version: '22.20.0'
           package-manager-cache: false
       - run: npm install --global pnpm@10.12.4
+      - run: pnpm config set store-dir "$RUNNER_TEMP/pnpm-store"
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - name: Full-volume public-door journey

@@ -60,15 +60,15 @@
       "executable": false
     },
     ".github/workflows/run-demo.yml": {
-      "sha256": "41365ec7c002e9451166313b085f9e64ed2e3ea002c27f3d5ead845bc9c302b2",
+      "sha256": "cd478e5acaa5b7ecac7c8d93069a928886b59bc48e72c495700e42aa3c1b5232",
       "executable": false
     },
     ".github/workflows/run-site.yml": {
-      "sha256": "504f86c66dc096cb91470d6b095c861c61daa6018c699d87b3acc76c7974ce96",
+      "sha256": "d3a80ce01ac7cdbfacad23f5e11e3a000945cd8bcdeaa80a638022c5c8239f41",
       "executable": false
     },
     ".github/workflows/scale.yml": {
-      "sha256": "95326208812fd9e797898c8f68fa433a55bcfdf5d193948957f042324c6c9417",
+      "sha256": "e749c19a359595df7391fde532089c1060d42b03371b6d2305b968bfab8f1fca",
       "executable": false
     },
     ".github/workflows/verify-nightly.yml": {
@@ -96,7 +96,7 @@
       "executable": false
     },
     "base-copies.json": {
-      "sha256": "5bb2bb1b50fd12564abd735aa5b5b57e33f75aab6e5e5d24faa5a312c4ac4092",
+      "sha256": "f8041a102c8874b634ac37003c788df983a594fdb053e9a69d0d599e9140f064",
       "executable": false
     },
     "CHANGELOG.md": {
@@ -963,6 +963,10 @@
       "sha256": "20c76c63ddfbac3ebaf668f79df3bbd74735e01594d050909d98a10098b51e3d",
       "executable": false
     },
+    "scripts/edition-authoring/copy-namespaces.mjs": {
+      "sha256": "2e7f2bcd34c575e9b7ac72ee41f5e676fd6ac22ab27d5b64a313326fd9b42ed9",
+      "executable": false
+    },
     "scripts/edition-authoring/edition-migrations.mjs": {
       "sha256": "7e9837c9a373cf7f394a575230c9f386a289786a15cc9685e4f11911e9a84e88",
       "executable": false
@@ -1171,6 +1175,10 @@
       "sha256": "91f57c5f80c40ca21576629278fc991b8032918ae96d17301c3433c9f2387347",
       "executable": false
     },
+    "scripts/edition-authoring/vendor/babel-parser/babel-parser/types.mjs": {
+      "sha256": "7220719c4d56a39b2b63d28ebe4131f2b59e55c7de96533cd4b1dcdc3a2e02d0",
+      "executable": false
+    },
     "scripts/edition-authoring/vendor/babel-parser/babel-parser/util/class-scope.mjs": {
       "sha256": "4ad4eff3aabb23b6834aee30370b3f1691d5278d9befb882ba3228593db9a5a2",
       "executable": false
@@ -1201,6 +1209,14 @@
     },
     "scripts/edition-authoring/vendor/babel-parser/babel-parser/util/whitespace.mjs": {
       "sha256": "4598e97a1f0d4a5918d8ad1227d526b491d502ba964236f38d85bac1ff08e59a",
+      "executable": false
+    },
+    "scripts/edition-authoring/vendor/babel-parser/LICENSE": {
+      "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76",
+      "executable": false
+    },
+    "scripts/edition-authoring/vendor/babel-parser/README.md": {
+      "sha256": "e7ee8625baac8ac14c2d458dd719de1551317ba8b640614bfcadd6dc4b6af857",
       "executable": false
     },
     "scripts/edition-authoring/vendor/yaml/compose/compose-collection.mjs": {
@@ -1295,6 +1311,10 @@
       "sha256": "ac6be7be5716e70422ca9992d3942f336ff4fc986b45a37f196fadc196963cd8",
       "executable": false
     },
+    "scripts/edition-authoring/vendor/yaml/LICENSE": {
+      "sha256": "5bba27375d93e9119f76c1015f7672cf9ad5f70952296e0842fb2243d6376869",
+      "executable": false
+    },
     "scripts/edition-authoring/vendor/yaml/log.mjs": {
       "sha256": "2e7d7edee783c901f36a8f986d126f15f33ac504fe17d4655e6846869d07b9e4",
       "executable": false
@@ -1369,6 +1389,10 @@
     },
     "scripts/edition-authoring/vendor/yaml/public-api.mjs": {
       "sha256": "40c785a329b688abfb41aa02cff16a12e30bf187957860f889b23461e7c92121",
+      "executable": false
+    },
+    "scripts/edition-authoring/vendor/yaml/README.md": {
+      "sha256": "7d1979439cb82d413f9e97c6c0cfd0ca3027e662e2ce574fddc7ec7860363d01",
       "executable": false
     },
     "scripts/edition-authoring/vendor/yaml/schema/common/map.mjs": {
@@ -1485,6 +1509,10 @@
     },
     "scripts/edition-authoring/vendor/yaml/stringify/stringifyString.mjs": {
       "sha256": "c6510e7e90fff12258d72d910a9992675392a72025732dc6b767871e7e33326f",
+      "executable": false
+    },
+    "scripts/edition-authoring/vendor/yaml/util.mjs": {
+      "sha256": "365dc12f67de4e3a8d31ceb6f86986879d745e4d65fa3e6f3b6df577ef0ca667",
       "executable": false
     },
     "scripts/edition-authoring/vendor/yaml/visit.mjs": {

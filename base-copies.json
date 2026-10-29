@@ -13,7 +13,16 @@
       },
       "originFiles": [
         "export/run-demo.yml"
-      ]
+      ],
+      "adapted": {
+        ".github/workflows/run-demo.yml": "114ef7a61f080da053af783c5fbe06f625d692cc"
+      },
+      "acknowledged": {
+        ".github/workflows/run-demo.yml": {
+          "sha256": "cd478e5acaa5b7ecac7c8d93069a928886b59bc48e72c495700e42aa3c1b5232",
+          "mode": "100644"
+        }
+      }
     },
     {
       "path": ".github/workflows/verify-nightly.yml",
@@ -29,7 +38,7 @@
         "export/verify-nightly.yml"
       ],
       "adapted": {
-        ".github/workflows/verify-nightly.yml": "f96363bf919ea3e7ed1837daba6894810a50e4a6"
+        ".github/workflows/verify-nightly.yml": "114ef7a61f080da053af783c5fbe06f625d692cc"
       },
       "acknowledged": {
         ".github/workflows/verify-nightly.yml": {
@@ -52,7 +61,7 @@
         "export/verify.yml"
       ],
       "adapted": {
-        ".github/workflows/verify.yml": "f96363bf919ea3e7ed1837daba6894810a50e4a6"
+        ".github/workflows/verify.yml": "114ef7a61f080da053af783c5fbe06f625d692cc"
       },
       "acknowledged": {
         ".github/workflows/verify.yml": {
@@ -725,6 +734,20 @@
       },
       "originFiles": [
         "edition-authoring/copy-checkout.mjs"
+      ]
+    },
+    {
+      "path": "scripts/edition-authoring/copy-namespaces.mjs",
+      "originPath": "edition-authoring/copy-namespaces.mjs",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/edition-authoring/copy-namespaces.mjs": "2e7f2bcd34c575e9b7ac72ee41f5e676fd6ac22ab27d5b64a313326fd9b42ed9"
+      },
+      "modes": {
+        "scripts/edition-authoring/copy-namespaces.mjs": "100644"
+      },
+      "originFiles": [
+        "edition-authoring/copy-namespaces.mjs"
       ]
     },
     {
@@ -1456,6 +1479,20 @@
       ]
     },
     {
+      "path": "scripts/edition-authoring/vendor/babel-parser/babel-parser/types.mjs",
+      "originPath": "edition-authoring/vendor/babel-parser/babel-parser/types.mjs",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/edition-authoring/vendor/babel-parser/babel-parser/types.mjs": "7220719c4d56a39b2b63d28ebe4131f2b59e55c7de96533cd4b1dcdc3a2e02d0"
+      },
+      "modes": {
+        "scripts/edition-authoring/vendor/babel-parser/babel-parser/types.mjs": "100644"
+      },
+      "originFiles": [
+        "edition-authoring/vendor/babel-parser/babel-parser/types.mjs"
+      ]
+    },
+    {
       "path": "scripts/edition-authoring/vendor/babel-parser/babel-parser/util/class-scope.mjs",
       "originPath": "edition-authoring/vendor/babel-parser/babel-parser/util/class-scope.mjs",
       "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
@@ -1565,6 +1602,34 @@
       },
       "originFiles": [
         "edition-authoring/vendor/babel-parser/babel-parser/util/whitespace.mjs"
+      ]
+    },
+    {
+      "path": "scripts/edition-authoring/vendor/babel-parser/LICENSE",
+      "originPath": "edition-authoring/vendor/babel-parser/LICENSE",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/edition-authoring/vendor/babel-parser/LICENSE": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76"
+      },
+      "modes": {
+        "scripts/edition-authoring/vendor/babel-parser/LICENSE": "100644"
+      },
+      "originFiles": [
+        "edition-authoring/vendor/babel-parser/LICENSE"
+      ]
+    },
+    {
+      "path": "scripts/edition-authoring/vendor/babel-parser/README.md",
+      "originPath": "edition-authoring/vendor/babel-parser/README.md",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/edition-authoring/vendor/babel-parser/README.md": "e7ee8625baac8ac14c2d458dd719de1551317ba8b640614bfcadd6dc4b6af857"
+      },
+      "modes": {
+        "scripts/edition-authoring/vendor/babel-parser/README.md": "100644"
+      },
+      "originFiles": [
+        "edition-authoring/vendor/babel-parser/README.md"
       ]
     },
     {
@@ -1890,6 +1955,20 @@
       ]
     },
     {
+      "path": "scripts/edition-authoring/vendor/yaml/LICENSE",
+      "originPath": "edition-authoring/vendor/yaml/LICENSE",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/edition-authoring/vendor/yaml/LICENSE": "5bba27375d93e9119f76c1015f7672cf9ad5f70952296e0842fb2243d6376869"
+      },
+      "modes": {
+        "scripts/edition-authoring/vendor/yaml/LICENSE": "100644"
+      },
+      "originFiles": [
+        "edition-authoring/vendor/yaml/LICENSE"
+      ]
+    },
+    {
       "path": "scripts/edition-authoring/vendor/yaml/log.mjs",
       "originPath": "edition-authoring/vendor/yaml/log.mjs",
       "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
@@ -2153,6 +2232,20 @@
       },
       "originFiles": [
         "edition-authoring/vendor/yaml/public-api.mjs"
+      ]
+    },
+    {
+      "path": "scripts/edition-authoring/vendor/yaml/README.md",
+      "originPath": "edition-authoring/vendor/yaml/README.md",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/edition-authoring/vendor/yaml/README.md": "7d1979439cb82d413f9e97c6c0cfd0ca3027e662e2ce574fddc7ec7860363d01"
+      },
+      "modes": {
+        "scripts/edition-authoring/vendor/yaml/README.md": "100644"
+      },
+      "originFiles": [
+        "edition-authoring/vendor/yaml/README.md"
       ]
     },
     {
@@ -2562,6 +2655,20 @@
       ]
     },
     {
+      "path": "scripts/edition-authoring/vendor/yaml/util.mjs",
+      "originPath": "edition-authoring/vendor/yaml/util.mjs",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/edition-authoring/vendor/yaml/util.mjs": "365dc12f67de4e3a8d31ceb6f86986879d745e4d65fa3e6f3b6df577ef0ca667"
+      },
+      "modes": {
+        "scripts/edition-authoring/vendor/yaml/util.mjs": "100644"
+      },
+      "originFiles": [
+        "edition-authoring/vendor/yaml/util.mjs"
+      ]
+    },
+    {
       "path": "scripts/edition-authoring/vendor/yaml/visit.mjs",
       "originPath": "edition-authoring/vendor/yaml/visit.mjs",
       "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
@@ -2604,6 +2711,20 @@
       ]
     },
     {
+      "path": "scripts/install-chromium-deps.py",
+      "originPath": "export/install-chromium-deps.py",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/install-chromium-deps.py": "d3027108ad8e08ceeddb0ed477d967b1207e40bb6bf5ae941854c534c2cf4004"
+      },
+      "modes": {
+        "scripts/install-chromium-deps.py": "100644"
+      },
+      "originFiles": [
+        "export/install-chromium-deps.py"
+      ]
+    },
+    {
       "path": "scripts/installer/seed.mjs",
       "originPath": "foundation/template/scripts/installer/seed.mjs",
       "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
@@ -2643,6 +2764,62 @@
       },
       "originFiles": [
         "foundation/template/scripts/operations-config.mjs"
+      ]
+    },
+    {
+      "path": "scripts/verify-ci.mjs",
+      "originPath": "export/verify-ci.mjs",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/verify-ci.mjs": "cf1ceb8773ed276f82245fb8fb4c4bdc95bff40ecc0e8ca8ac9e776978b17340"
+      },
+      "modes": {
+        "scripts/verify-ci.mjs": "100644"
+      },
+      "originFiles": [
+        "export/verify-ci.mjs"
+      ]
+    },
+    {
+      "path": "scripts/verify-evidence.mjs",
+      "originPath": "export/verify-evidence.mjs",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/verify-evidence.mjs": "9224f772d6a17f043448694eca3c149df83070417b995a2840497e36a9ad0100"
+      },
+      "modes": {
+        "scripts/verify-evidence.mjs": "100644"
+      },
+      "originFiles": [
+        "export/verify-evidence.mjs"
+      ]
+    },
+    {
+      "path": "scripts/verify-light.mjs",
+      "originPath": "export/verify-light.mjs",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/verify-light.mjs": "f9b126130837144e43a65d10d370d602b63daad2be7ff66c93178d461a7521d9"
+      },
+      "modes": {
+        "scripts/verify-light.mjs": "100644"
+      },
+      "originFiles": [
+        "export/verify-light.mjs"
+      ]
+    },
+    {
+      "path": "scripts/verify-plan.mjs",
+      "originPath": "export/verify-plan.mjs",
+      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
+      "files": {
+        "scripts/verify-plan.mjs": "45fe2ab9c5cbc72d0186bf77fab32c985605caae6ecee50676dd618612c3e78f"
+      },
+      "modes": {
+        "scripts/verify-plan.mjs": "100644"
+      },
+      "originFiles": [
+        "export/verify-plan.mjs"
       ]
     },
     {
@@ -4934,174 +5111,6 @@
       },
       "originFiles": [
         "export/VERIFY-WORKFLOW.md"
-      ]
-    },
-    {
-      "path": "scripts/verify-ci.mjs",
-      "originPath": "export/verify-ci.mjs",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/verify-ci.mjs": "cf1ceb8773ed276f82245fb8fb4c4bdc95bff40ecc0e8ca8ac9e776978b17340"
-      },
-      "modes": {
-        "scripts/verify-ci.mjs": "100644"
-      },
-      "originFiles": [
-        "export/verify-ci.mjs"
-      ]
-    },
-    {
-      "path": "scripts/install-chromium-deps.py",
-      "originPath": "export/install-chromium-deps.py",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/install-chromium-deps.py": "d3027108ad8e08ceeddb0ed477d967b1207e40bb6bf5ae941854c534c2cf4004"
-      },
-      "modes": {
-        "scripts/install-chromium-deps.py": "100644"
-      },
-      "originFiles": [
-        "export/install-chromium-deps.py"
-      ]
-    },
-    {
-      "path": "scripts/verify-plan.mjs",
-      "originPath": "export/verify-plan.mjs",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/verify-plan.mjs": "45fe2ab9c5cbc72d0186bf77fab32c985605caae6ecee50676dd618612c3e78f"
-      },
-      "modes": {
-        "scripts/verify-plan.mjs": "100644"
-      },
-      "originFiles": [
-        "export/verify-plan.mjs"
-      ]
-    },
-    {
-      "path": "scripts/verify-light.mjs",
-      "originPath": "export/verify-light.mjs",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/verify-light.mjs": "f9b126130837144e43a65d10d370d602b63daad2be7ff66c93178d461a7521d9"
-      },
-      "modes": {
-        "scripts/verify-light.mjs": "100644"
-      },
-      "originFiles": [
-        "export/verify-light.mjs"
-      ]
-    },
-    {
-      "path": "scripts/verify-evidence.mjs",
-      "originPath": "export/verify-evidence.mjs",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/verify-evidence.mjs": "9224f772d6a17f043448694eca3c149df83070417b995a2840497e36a9ad0100"
-      },
-      "modes": {
-        "scripts/verify-evidence.mjs": "100644"
-      },
-      "originFiles": [
-        "export/verify-evidence.mjs"
-      ]
-    },
-    {
-      "path": "scripts/edition-authoring/copy-namespaces.mjs",
-      "originPath": "edition-authoring/copy-namespaces.mjs",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/edition-authoring/copy-namespaces.mjs": "2e7f2bcd34c575e9b7ac72ee41f5e676fd6ac22ab27d5b64a313326fd9b42ed9"
-      },
-      "modes": {
-        "scripts/edition-authoring/copy-namespaces.mjs": "100644"
-      },
-      "originFiles": [
-        "edition-authoring/copy-namespaces.mjs"
-      ]
-    },
-    {
-      "path": "scripts/edition-authoring/vendor/babel-parser/LICENSE",
-      "originPath": "edition-authoring/vendor/babel-parser/LICENSE",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/edition-authoring/vendor/babel-parser/LICENSE": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76"
-      },
-      "modes": {
-        "scripts/edition-authoring/vendor/babel-parser/LICENSE": "100644"
-      },
-      "originFiles": [
-        "edition-authoring/vendor/babel-parser/LICENSE"
-      ]
-    },
-    {
-      "path": "scripts/edition-authoring/vendor/babel-parser/README.md",
-      "originPath": "edition-authoring/vendor/babel-parser/README.md",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/edition-authoring/vendor/babel-parser/README.md": "e7ee8625baac8ac14c2d458dd719de1551317ba8b640614bfcadd6dc4b6af857"
-      },
-      "modes": {
-        "scripts/edition-authoring/vendor/babel-parser/README.md": "100644"
-      },
-      "originFiles": [
-        "edition-authoring/vendor/babel-parser/README.md"
-      ]
-    },
-    {
-      "path": "scripts/edition-authoring/vendor/babel-parser/babel-parser/types.mjs",
-      "originPath": "edition-authoring/vendor/babel-parser/babel-parser/types.mjs",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/edition-authoring/vendor/babel-parser/babel-parser/types.mjs": "7220719c4d56a39b2b63d28ebe4131f2b59e55c7de96533cd4b1dcdc3a2e02d0"
-      },
-      "modes": {
-        "scripts/edition-authoring/vendor/babel-parser/babel-parser/types.mjs": "100644"
-      },
-      "originFiles": [
-        "edition-authoring/vendor/babel-parser/babel-parser/types.mjs"
-      ]
-    },
-    {
-      "path": "scripts/edition-authoring/vendor/yaml/LICENSE",
-      "originPath": "edition-authoring/vendor/yaml/LICENSE",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/edition-authoring/vendor/yaml/LICENSE": "5bba27375d93e9119f76c1015f7672cf9ad5f70952296e0842fb2243d6376869"
-      },
-      "modes": {
-        "scripts/edition-authoring/vendor/yaml/LICENSE": "100644"
-      },
-      "originFiles": [
-        "edition-authoring/vendor/yaml/LICENSE"
-      ]
-    },
-    {
-      "path": "scripts/edition-authoring/vendor/yaml/README.md",
-      "originPath": "edition-authoring/vendor/yaml/README.md",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/edition-authoring/vendor/yaml/README.md": "7d1979439cb82d413f9e97c6c0cfd0ca3027e662e2ce574fddc7ec7860363d01"
-      },
-      "modes": {
-        "scripts/edition-authoring/vendor/yaml/README.md": "100644"
-      },
-      "originFiles": [
-        "edition-authoring/vendor/yaml/README.md"
-      ]
-    },
-    {
-      "path": "scripts/edition-authoring/vendor/yaml/util.mjs",
-      "originPath": "edition-authoring/vendor/yaml/util.mjs",
-      "revision": "114ef7a61f080da053af783c5fbe06f625d692cc",
-      "files": {
-        "scripts/edition-authoring/vendor/yaml/util.mjs": "365dc12f67de4e3a8d31ceb6f86986879d745e4d65fa3e6f3b6df577ef0ca667"
-      },
-      "modes": {
-        "scripts/edition-authoring/vendor/yaml/util.mjs": "100644"
-      },
-      "originFiles": [
-        "edition-authoring/vendor/yaml/util.mjs"
       ]
     }
   ]
