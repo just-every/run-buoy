@@ -62,7 +62,13 @@ instant was not recorded show `createdAt: null`. `expiringSoon` flags active
 credentials in their final 14 days. `stoppedReason` is `revocation`, `expiry`,
 `issuer_change` or `account_erasure`; active credentials return null. Account
 erasure removes the erased ID from named grants while preserving the stop reason.
-This owner-only inventory is the backend for the still-unbuilt native screen.
+Open **Audit** to review the owner-only **Integration credentials** panel. It
+shows every credential, including expired and stopped credentials, with readable
+operation and account scopes, rate limits, issuer, creation, last use, expiry
+warnings and stop reasons. Unknown creation times display as Unknown rather than
+an inferred date. Named grants withdrawn before account erasure remain labelled
+Revoked by owner; grants withdrawn by erasure show Account erased, and the erased
+account ID is removed. Administrators and other staff cannot read this inventory.
 
 Revoke with a same-origin owner-session `DELETE /api/buoy/v1/tokens/{id}`.
 Integration tokens, rate reservations and replay receipts are excluded from
@@ -71,7 +77,7 @@ product data and opaque audit history retain their normal custody.
 
 CT approved the account foundation with riders on 26 October 2026. Owner-only
 issuance remains the interim; admin authority bounded by current record and
-commercial-field rules, the native credential screen, event attribution, the
+commercial-field rules, event attribution, the
 remaining record kinds and outbound webhooks are unfinished. Webhook transport
 requires its own CT ruling before shipping. API-001 remains PARTIAL.
 

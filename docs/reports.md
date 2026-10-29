@@ -13,6 +13,16 @@ membership filters the cohort before calculations, grouping, charting and CSV.
 The CSV uses the same calculation as the screen and guards text cells against
 spreadsheet formula interpretation. A bar chart always includes a text table.
 
+Use **Start from a dashboard** to explicitly choose **Current portfolio health
+distribution** or **Current CSM book size**, then choose all permitted accounts
+or a current segment. **Create private starter** saves one private dashboard and
+its editable account-count report. Health distribution groups by the current
+health band, including unknown; book size groups by the current assigned CSM,
+including unassigned accounts. Empty cohorts produce an empty chart, table and
+CSV rather than invented groups. Both starters reevaluate membership, ownership
+and source evidence on each read. They describe current evidence, not historical
+trends or predictions. No role share, schedule or outbound delivery is created.
+
 Dashboards collect saved reports. Explicit role sharing applies separately to the
 dashboard and its reports. Sharing a definition grants no account or commercial
 permission. Assigned profiles receive only their current permitted account
@@ -27,8 +37,10 @@ and explicitly share them again. An identity-specific saved filter follows the
 account's erasure custody; a general report reevaluates the remaining accounts.
 
 This is a partial implementation of REPORT-002. Other object kinds, the complete
-prebuilt dashboard catalog, historical health trends, engagement/onboarding
-measures and scheduled email/Slack delivery remain required. Creating a report
-never sends anything. Report publishing currently uses the conservative
-owner/admin-only default pending policy approval; explicit role sharing never
-broadens the viewer's existing field/record authority.
+prebuilt dashboard catalog beyond these two starters, historical health trends,
+engagement and onboarding measures, delegated authorship and scheduled email or
+Slack delivery remain required. Creating a report never sends anything. RL-105
+requires explicitly assigned author rights under ROLE-001; only owners and
+administrators can publish through today's implemented door. Explicit role
+sharing never broadens the viewer's existing field or record authority. Delivery
+stays disabled until its own delivery clause and approved destinations ship.
