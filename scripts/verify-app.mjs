@@ -27,7 +27,7 @@ const suites={
 // needs rer's additional hosted-output and hydration checks.
 export async function verificationPlan() {
  return {push:Object.entries(suites).map(([name,tests])=>({
-  name,browser:!['records','volume','adoption','health','adoption-consumers','adoption-aggregates'].includes(name),
+  name,browser:!['records','volume','adoption','adoption-consumers','adoption-aggregates'].includes(name),
   hosted:name==='http',commands:tests.map(test=>`pnpm run ${test}`),
  })),nightly:[]}
 }

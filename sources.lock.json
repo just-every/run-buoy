@@ -1556,7 +1556,7 @@
       "executable": false
     },
     "scripts/verify-app.mjs": {
-      "sha256": "48c50c33005a132815c08cb7ceec074da64da2ed5bfb12455c6cad4eb36ef1d9",
+      "sha256": "d337e78aba07e7d106742cd16e3bd1cddbf63ec96056cd0934f7d47e04449fa3",
       "executable": false
     },
     "scripts/verify-ci.mjs": {
