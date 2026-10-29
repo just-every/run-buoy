@@ -8,12 +8,12 @@ The primary journey: move the incumbent book in, join customer evidence, explain
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 20 | 47 | 38 | 105 |
+| Core | 26 | 41 | 38 | 105 |
 | Agent surface | 0 | 0 | 9 | 9 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 20 | 47 | 47 | 114 |
+| Full target | 26 | 41 | 47 | 114 |
 
-Judged from the code and tests at commit `d9924f9b235fc39886838b2c7ad1f1d52bcd5c1a` (27 October 2026). Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
+Judged from the code and tests at commit `e89d4a74a47b5368483be8dc56a5ed6caa524db7` (28 October 2026). IMPORT-001 proof is at `18d87e4bd5433b97d01db3684e7fa0b6342cf18a`; the submitted candidate is Git commit `HEAD`, reported with its exact Verify SHA. SEGMENT-001 completion is judged from the replayed code and assertions at commit `fe205ed93d622ae73722ce23b3b5b9a61144fe55` (28 October 2026); all other current main judgments are retained. Field proof register: 11 rows; 0 passed, 0 failed, 11 not run.
 
 ## Core
 
@@ -61,7 +61,7 @@ Core · published · **done** · Cites BASE-AGENT-007, BASE-AGENT-008, BASE-AGEN
 
 #### IMPORT-001 — Reviewed move-in custody
 
-Core · published · **partial** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-ACCESS-004
+Core · published · **done** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-ACCESS-004
 
 **Requirement.** Every import, including each incumbent migration in MIGRATE-001 to MIGRATE-005, runs through the single Base import door: original-byte upload, no-write plan, the exact reviewed fingerprint, idempotent apply, native reconciliation and a journal with strict undo that survives restart. Business imports require an enabled door and a signed action-bound grant; self-hosted installs start disabled. Revoked signing keys stay revoked. The import page alone permits same-origin static scripts and connections; its mutations require the current owner session and exact Origin. The current format is a JSON account snapshot (up to 50 records and 256 KB); unsupported records are reported, credential removals are disclosed, imported accounts are inert, and installation archives remain separate. A later snapshot uses explicit catch-up; absent source records are retained with that explanation, never deleted. Undo refuses accounts edited since import or with dependent work. Erasure withdraws original bytes and door snapshots together with native rows and the portable restore checkpoint. Transport details are specified in [domain rules](docs/contract/domain-rules.md).
 
@@ -73,20 +73,20 @@ Core · published · **partial** · Cites BASE-DATA-001, BASE-INPUT-003, BASE-AC
 5. Claim with and without the provisioning flag, disable and revisit the owner path, and re-enable after key revocation; only the provisioning opt-in opens initially, an explicit disable stays closed and revoked keys stay revoked.
 6. Erase an imported account and read its public job/journal plus door reconciliation; retained source values disappear, the journal inventories door custody, reconciliation returns snapshot withdrawn, and native replay is refused.
 
-**Evidence.** `src/buoy/imports/door.ts`; `src/buoy/imports/index.ts`; `src/buoy/imports/targets.ts`; `public/import-door.js`; `tests/flows.test.mjs`; `tests/import-door-journey.mjs`; `tests/portable.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every anonymous/member/cross-origin mutation and disabled Business grant is asserted in the complete actor matrix; Native replay is refused after erasure for every named source-custody path. Asserted: Planning leaves native records unchanged; Wrong reviewed fingerprint is refused; Apply reaches completed state; Replay returns original job; Reconciliation reads present native record; Undo removes imported native account; Native edit refuses undo; Dependent work refuses undo; Revoked-session mutation is refused; Owner undo works with Business disabled; Revoked Business key stays refused; Explicit disable stays disabled on later owner path; Revoked keys remain retained; Re-enable does not revive revoked key; Only provisioning opt-in opens initially across both claim variants; Erased import source name is absent from retained job; Erased import source invoice reference is absent from retained job; Reconciliation reports withdrawal; Same target cannot be recreated; Journal inventories door custody.
+**Evidence.** `tests/import-door-journey.mjs` — importDoorJourney, invoked by the HTTP-001 IMPORT-001 operator and Business door authority journey in `tests/flows.test.mjs`: (1) original-byte upload and unchanged native planning; (2) wrong fingerprint refusal, exact reviewed apply, same-job replay, native reconciliation and undo; (3) native edit and dependent-work undo refusals; (4) every native action under anonymous, member, revoked-session and cross-origin conditions, all eight disabled and revoked Business actions, action-bound grants and unchanged public reads; (5) both provisioning variants, durable disable and permanent key revocation; (6) importErasure in `tests/import-door-erasure.mjs`, complete retained job and journal reads, upload and snapshot withdrawal, catch-up and Business archive replay refusal. `tests/portable.mjs` — real installation archive journey, restarted custody and restored native source replay refusal. `tests/a11y-import.mjs` — importJourney, owner review, apply, reconciliation and undo at 1440 and 390 through the shipped page.
+**Gap.** None.
 
 #### ERASE-001 — Owner erasure with tombstones
 
-Core · published · **partial** · Cites BASE-DATA-003, BASE-DATA-006
+Core · published · **done** · Cites BASE-DATA-003, BASE-DATA-006
 
 **Requirement.** Owner erasure, confirmed by typing the account name, atomically removes the account, its work, decisions and native and import custody; permanent target and source tombstones prevent replay into that installation. Copies held by connected systems are listed on the erasure receipt for the owner to action (ERASE-002); Buoy does not claim to delete them.
 
 **Acceptance.**
 1. As a member, attempt erasure and receive 403; as the owner, erase an imported account with work, then read state, the import journal and history; nothing names the account, and re-creating the same ID returns 409.
 
-**Evidence.** `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs`; `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Full state, import journal and history contain nothing naming the erased account; a subset/job read is insufficient. Asserted: Member erasure is refused; Native account is removed; Dependent proposal is removed; Retained import job omits account name and invoice; Same target cannot be recreated.
+**Evidence.** `src/buoy/imports/index.ts`; `src/buoy/api.ts`; `tests/flows.test.mjs` — IMPORT-001 ERASE-001 door undo preserves dependent work and owner erasure withdraws door custody; `tests/import-door-journey.mjs` — accountErasureJourney (complete state, job, journal, history, status and paginated audit reads; unrelated records and opaque evidence; refused member erasure and confirmation; tombstone and inert replay); `tests/portable.mjs`; `migrations/core/0044_buoy_scorecard_source_custody.sql`; `tests/scorecard-custody-journey.mjs`
+**Gap.** None.
 
 #### RESTORE-001 — Portable installation archives
 
@@ -102,15 +102,15 @@ Core · published · **partial** · Cites BASE-DATA-001, BASE-BACKUP-001, BASE-S
 
 #### SITE-001 — Public run site
 
-Core · published · **partial** · Cites BASE-PUBLIC-001
+Core · published · **done** · Cites BASE-PUBLIC-001
 
 **Requirement.** The static run site contains the product homepage, `/run`, Markdown owner guides and a 404. It reads no installation data and links only public routes. Installed `/` keeps the shared Lobby. Run-site deployment stays gated off until its release gate.
 
 **Acceptance.**
 1. Build with `rer build --site` and crawl the output through Cloudflare's static-asset server; the homepage reaches `/run` and `/docs`, every guide renders and unknown paths return the 404.
 
-**Evidence.** `src/site/run.json`; `docs/`; `tests/site.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every owner-guide body renders its content; linked-resource HTTP 200 checks do not assert rendered guide content. Asserted: Homepage reaches run instructions; Homepage reaches docs navigation; Guides are traversed as linked resources; Unknown path returns 404.
+**Evidence.** `tests/site.mjs` — Run-site journey: Cloudflare static-asset crawl reaches the homepage, run instructions and docs, checks public links and fragments, and returns 404 for an unknown path; Owner-guide content: every emitted Markdown article has its own visible headings, paragraphs, list items, commands, inline code and links at 1440 pixels. Release captures cover every guide at 1440 and 390 pixels.
+**Gap.** None.
 
 #### STYLE-001 — One theme at every width
 
@@ -164,15 +164,15 @@ Core · target · **partial** · Cites BASE-ROLE-001
 
 #### ACCOUNT-004 — Custom fields, calculated fields and field history
 
-Core · target · **partial** · Cites BASE-INPUT-001, BASE-DATA-003
+Core · target · **done** · Cites BASE-INPUT-001, BASE-DATA-003
 
 **Requirement.** Admins add typed custom fields to accounts, users, contacts and opportunities, and calculated fields with a plain formula language (arithmetic, conditions, rollups, date differences) that previews against real accounts before saving and explains each result. Every field change keeps who, when, old and new value and source. Custom objects (ACCOUNT-006) use the same field types, formulas and history. New custom and calculated fields become typed SEGMENT-001 rule inputs before shipping. USAGE-001 carries separate contact/user definitions and values, explicit account memberships, previews against ten real accounts and customer records, calculations over the full customer-person portfolio, source-owned old/new history and typed related-person SEGMENT-001 inputs. The same person must satisfy an all-rule’s conditions for one related kind, including the currency and amount. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#account-004).
 
 **Acceptance.**
 1. Add a picklist, a currency field and a formula field "seats used ÷ seats purchased", preview it on ten accounts, save, change an input and read the field history; the formula updates, its explanation shows the inputs and the history records both changes with actor and source.
 
-**Evidence.** `src/buoy/fields/`; `src/buoy/ui/fields.ts`; `src/buoy/segments/`; `migrations/core/0030_buoy_fields.sql`; `docs/fields.md`; `tests/field-journey.mjs`; `tests/fields-browser.mjs`
-**Gap.** Not asserted by the cited baseline evidence: History records both old/new formula-result changes as well as input changes; cited body checks existence but not both full formula change tuples. Asserted: Ten-account preview is read back; Preview formula values equal independent seat division; Preview shows both formula inputs; Saving calculation produces current formula result; Changed input recalculates; History records actor, source and time; History retains old and new input values.
+**Evidence.** `tests/flows.test.mjs` — "ACCOUNT-004 typed fields, formulas, preview, history and segments", via `tests/field-journey.mjs`: typed fields; ten-account no-write preview and input explanations; saved calculations; exact persisted seats 20 to 30, utilization 0.5 to 0.75 and conditional 50 to 75 history with the current actor, source and valid UTC instant; unchanged state after stale-write refusal; typed segment inputs and erasure. `tests/fields-browser.mjs` — native typed-field, preview, calculation and history forms at 1440 and 390. `tests/flows.test.mjs` — "USAGE-001 ACCOUNT-004 SEGMENT-001 complete contact and user carrier", via `tests/customer-people-journey.mjs`, and `tests/customer-people-browser.mjs`: inherited customer field types, formulas, full-portfolio previews, source-owned history and same-person typed segments.
+**Gap.** None.
 
 #### ACCOUNT-005 — Search
 
@@ -567,7 +567,7 @@ Core · target · **partial**
 
 #### SEGMENT-001 — Segments, tiers and lifecycle stages
 
-Core · target · **partial**
+Core · target · **done**
 
 **Requirement.** Dynamic segments defined by rules over any field, metric or relationship update automatically and record entry and exit times; static lists are also available. Accounts carry an owner/admin-defined service tier (seeded with, for example, high-touch, scaled and digital) and a lifecycle stage (onboarding, adoption, expansion, renewal or churned) set by rule or by hand. Segments drive scorecard weights, playbooks, journeys, permissions and reports. Today's complete boundary is the existing account, renewal, native billing/support snapshot, health band/evidence, sentiment, CSM, territory and task-count fields, ACCOUNT-004 custom/calculated fields on accounts and USAGE-001 customer contacts/users, static lists, segment-filtered account reports and CSV, and TEAM-001 assignment rules. Related customer fields use people.contact and people.user paths with their existing typed representation; all conditions for one related kind must be satisfied by the same person, including currency and amount, while any-rules need one matching related condition. Customer value or explicit membership changes reevaluate these rules before a successful write returns. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#segment-001).
 
@@ -577,8 +577,8 @@ Core · target · **partial**
 3. Define a custom service tier, use it in rules and manual classification, refuse removal while used and refuse a member tier-list edit.
 4. Exercise static lists, typed all/any/missing rules, manual and rule tier/stage with precedence and clearing, imports, sentiment/expiry and TEAM-001 segment allocation, member reads and mutation refusal, erasure, and the real management/approval/report forms at 1440 and 390.
 
-**Evidence.** `src/buoy/segments/rules.ts`; `src/buoy/segments/snapshot.ts`; `src/buoy/segments/index.ts`; `src/buoy/ui/segments.ts`; `src/buoy/team-plan.ts`; `src/buoy/work.ts`; `migrations/core/0025_buoy_segments.sql`; `migrations/core/0027_buoy_tiers.sql`; `docs/segments.md`; `tests/segment-journey.mjs`; `tests/flows.test.mjs`; `tests/segments.mjs`; `src/buoy/people/model.ts`; `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`
-**Gap.** Not asserted by the cited baseline evidence: CSV membership and count reconcile across every row; the cited assertions match one account name rather than the complete result. Asserted: Initial entry has timestamp and correct account; Exactly one approved task is created; Inclusive threshold exits and is timestamped; Different currencies do not mix; Reentry has a new distinct proposal; Report has exact selected account and risk count; CSV includes selected account; Reads and Cron do not duplicate entries; Stale account revision refuses approval; Stale configuration refuses approval; Exited-entry approval is refused after exit; Used custom tier cannot be removed; Member cannot edit tier list; Custom tier is returned after manual classification; Static-list membership; Typed any rules; Missing rules; Manual tier/stage clearing; Import membership refresh; Sentiment expiry membership; Team allocation from segment; Erasure removes membership; Member mutation is refused; Native form end states at 1440; Native form end states at 390.
+**Evidence.** `src/buoy/segments/rules.ts`; `src/buoy/segments/snapshot.ts`; `src/buoy/segments/index.ts`; `src/buoy/ui/segments.ts`; `src/buoy/team-plan.ts`; `src/buoy/work.ts`; `migrations/core/0025_buoy_segments.sql`; `migrations/core/0027_buoy_tiers.sql`; `docs/segments.md`; `tests/segment-journey.mjs`; `tests/flows.test.mjs`; `tests/segments.mjs`; `src/buoy/people/model.ts`; `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`; Acceptance 1–4: `tests/flows.test.mjs` — SEGMENT-001 rules, classification, intervals, proposals, reports and erasure, invoking segmentJourney in `tests/segment-journey.mjs` (complete report and CSV rows, timestamps, entry approval, replay, tier policy, imports and erasure). Acceptance 4 native forms: `tests/segments.mjs` — real create, edit, classification, entry approval, team forms and report end states at 1440 and 390. Related typed inputs: `tests/flows.test.mjs` — USAGE-001 ACCOUNT-004 SEGMENT-001 complete contact and user carrier, invoking `tests/customer-people-journey.mjs`; `tests/customer-people-browser.mjs`.
+**Gap.** None.
 
 ### Lifecycle work
 
@@ -681,8 +681,8 @@ Core · target · **partial** · Cites BASE-ROLE-001, BASE-DATA-003, BASE-DATA-0
 1. Generate a QBR deck for an account with 90 days of data, edit a slide, export to PPTX, PDF and Google Slides and log the meeting; figures match the account's reports and the follow-up tasks appear on the timeline.
 2. An authorized account CSM prepares and exports a deck within current field/export rights; customer disclosure or provider upload binds exact current-version human review, or the company’s external and commitment policy for an agent call. Linked-person decks follow erasure and holds; each internal follow-up uses its named current command authority (RL-106).
 
-**Evidence.** `src/buoy/reviews/`; `src/buoy/ui/reviews.ts`; `src/buoy/activity.ts`; `migrations/core/0062_buoy_reviews.sql`; `migrations/core/0063_buoy_review_holds.sql`; `docs/reviews.md`; `tests/review-journey.mjs`; `tests/record-browser.mjs`; `tests/record-portability.mjs`; `tests/portable.mjs`
-**Gap.** Direct Google Slides export needs an authorized Google product connection. Connected-source completeness, historical adoption/support review windows and a Unicode PDF font remain. Supplied ruling is adopted without a status change; delegated/complete acceptance and proof remain required.
+**Evidence.** `src/buoy/reviews/`; `src/buoy/ui/reviews.ts`; `src/buoy/activity.ts`; `migrations/core/0062_buoy_reviews.sql`; `migrations/core/0063_buoy_review_holds.sql`; `docs/reviews.md`; `tests/review-journey.mjs` reviewJourney — native source-linked decks, local Unicode exports and meeting follow-ups; `tests/record-browser.mjs` reviews — native downloads at 1440 and 390; `tests/record-portability.mjs`; `tests/portable.mjs`
+**Gap.** Local Unicode PDF export is proved for the documented Latin, Greek and Cyrillic coverage, including rendered glyphs, measured wrapping, multipage text and source links. Direct Google Slides export still needs the Buoy redirect URI, Slides and Drive scopes and test user authorized in the Google console. Connected-source completeness and historical adoption and support review windows remain. RL-106 is adopted: delegated CSM account, field and export authority, customer disclosure, provider upload and complete linked-person custody retain ROLE-001, ERASE-002 and SECURE-002 prerequisites and proof. Local exports establish neither customer delivery nor provider upload; each internal follow-up retains its current named command authority. No status change.
 
 ### Communication
 
@@ -911,8 +911,8 @@ Core · target · **partial** · Cites BASE-ROLE-001 · Rules D-2
 1. Build a report of at-risk ARR by CSM, add it to a dashboard, schedule it weekly to Slack and export it; the scheduled post and CSV match the on-screen figures and a read-only viewer can open but not edit the dashboard.
 2. An assigned non-admin author builds within permitted objects/accounts/fields; a role-shared viewer receives the definition and only currently authorized computed rows and export fields. Restored shares remain inactive until local authorization; scheduled results use each recipient’s current scope and consent (RL-105).
 
-**Evidence.** `src/buoy/reports/`; `src/buoy/ui/reports.ts`; `migrations/core/0061_buoy_reports.sql`; `docs/reports.md`; `tests/dashboard-journey.mjs`; `tests/record-browser.mjs`
-**Gap.** Other object kinds, the full prebuilt dashboard catalog and historical trend/engagement/onboarding measures, and scheduled email/Slack parity remain. Supplied ruling is adopted without a status change; delegated/complete acceptance and proof remain required.
+**Evidence.** `tests/dashboard-journey.mjs` — dashboardJourney, starterDashboards and assignedAuthor, via REPORT-002 saved report calculations and scoped dashboard sharing in `tests/flows.test.mjs`: private health distribution and CSM book-size starters; independent complete HTTP, chart, table and parsed CSV groups after current membership, ownership and health-source changes, empty cohorts, assigned native-account authorship, private ownership, independent author and viewer scopes, field withdrawal, author revocation, explicit share withdrawal and erasure replay refusal. `tests/record-browser.mjs` — dashboards, native author create and edit forms, invalid-input recovery and captures at 1440 and 390. `tests/roles-browser.mjs` — native custom author permission configuration. `tests/record-portability.mjs` and `tests/portable.mjs` — restored definitions retain inactive shares. `src/buoy/reports/presets.ts`; `docs/reports.md`.
+**Gap.** Other object kinds, the rest of the prebuilt dashboard catalog beyond current portfolio health distribution and CSM book size, historical health trends, engagement and onboarding measures, delegated fields beyond the native account allowlist and scheduled email or Slack parity remain. RL-105 assigned authorship now supports native account definitions within current record and field scope; only creators and native administrators edit their definitions. Existing staff profiles gain no author rights automatically. Definition shares never widen current record or commercial rights and remain inactive after restore. The scheduled-Slack destination ASK remains unanswered; delivery stays disabled until a delivery clause with approved destinations ships. Every existing account, ct, Base, device and gate-loop hold and prerequisite remains unchanged.
 
 ### Team, roles and administration
 
@@ -969,8 +969,8 @@ Core · target · **partial**
 **Acceptance.**
 1. Assign 300 accounts by rule across four CSMs with capacity targets, then reassign one CSM's book; counts respect targets, every open task and plan moves and each account shows the handover note.
 
-**Evidence.** `src/buoy/team.ts`; `src/buoy/team-plan.ts`; `src/buoy/tasks.ts`; `src/buoy/ui/team.ts`; `src/buoy/ui/team-actions.ts`; `src/buoy/ui/account.ts`; `migrations/core/0024_buoy_teams.sql`; `docs/books.md`; `tests/team-journey.mjs`; `tests/flows.test.mjs`; `tests/teams.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every open plan moves with the book; the cited team journey covers tasks but no plan fixture. Asserted: Three hundred accounts are previewed; Four CSMs receive seventy-five accounts each; Recorded owner counts match capacity allocation; All open tasks move; Each moved account has actor/time/handover note.
+**Evidence.** `tests/flows.test.mjs` (TEAM-001 300-account rules, capacity, book handover, open work, notes and rebalance), via `tests/team-journey.mjs` teamJourney: 300 accounts across four CSMs, 76-draft review across the 75-account outgoing book, populated milestone and task-link preservation, frozen outcome cohort reconciliation, stale draft content, staff owner, customer owner, creation and sharing refusal with no partial movement, unrelated and customer-owned content preservation, capacity and handover notes; `tests/teams.mjs` native team forms, reviewed draft list and end states at 1440 and 390; `tests/plan-journey.mjs` planCustodyJourney retains manual draft handover and erasure proof.
+**Gap.** Shared or customer-visible plan handover and journey handover remain unimplemented by the reviewed bulk door. ROLE-001 retains scoped manager and CSM authority, including the current account and field authorization duty under RL-102 for plan work and retained reviews. PLAN-001 and its existing held prerequisites remain unchanged.
 
 #### AUDIT-001 — Durable audit log
 
@@ -981,8 +981,8 @@ Core · target · **partial** · Cites BASE-AUDIT-001, BASE-OPS-005
 **Acceptance.**
 1. Perform each action kind, erase an account and its contact, then read and export the audit; every action is listed, entries for the erased account remain without its name, and the export matches the screen.
 
-**Evidence.** `src/buoy/core.ts`; `src/buoy/audit.ts`; `src/buoy/audit-records.ts`; `src/buoy/access-audit.ts`; `migrations/core/0020_buoy_durable_events.sql`; `migrations/core/0021_buoy_audit_doors.sql`; `src/buoy/ui/audit.ts`; `src/auth.server.ts`; `tests/portable.mjs`; `tests/flows.test.mjs`; `src/buoy/connectors/index.ts`; `src/buoy/adoption/consumers.ts`; `tests/connections.mjs`; `tests/adoption-consumer-journey.mjs`; `tests/health-scorecard-journey.mjs`; `tests/survey-scorecard-journey.mjs`; `tests/revenue-health-journey.mjs`
-**Gap.** Not asserted by the cited baseline evidence: Every external-send audit action is asserted through an executed external send; Erased-contact audit survival is asserted for the named contact scenario; Export and screen reconcile the complete action set across all pages. Asserted: Sign-ins have actor, time and anonymous subject; Role changes preserve action detail and actor; Approvals remain exactly once; Erased-account actions remain without account or actor display name.
+**Evidence.** `src/buoy/core.ts`; `src/buoy/audit.ts`; `src/buoy/audit-records.ts`; `src/buoy/access-audit.ts`; `migrations/core/0020_buoy_durable_events.sql`; `migrations/core/0021_buoy_audit_doors.sql`; `src/buoy/ui/audit.ts`; `src/auth.server.ts`; `tests/portable.mjs` (AUDIT-001 archive journey: complete source and restored tuples, actual export snapshots); `tests/audit-view.mjs` (all-page record reconciliation); `tests/flows.test.mjs` (AUDIT-001 admins search recorded actions with inclusive UTC dates and stable pages); `src/buoy/connectors/index.ts`; `src/buoy/adoption/consumers.ts`; `tests/connections.mjs`; `tests/adoption-consumer-journey.mjs`; `tests/health-scorecard-journey.mjs`; `tests/survey-scorecard-journey.mjs`; `tests/revenue-health-journey.mjs`
+**Gap.** Not asserted by the cited baseline evidence: Every external-send audit action is asserted through an executed external send; Erased-contact audit survival is asserted for the named contact scenario. Executed external sends retain the EMAIL-002, EMAIL-003 and JOURNEY-001 verified-domain, received DKIM and DMARC, complaint-event and delivery-door holds. The complete named contact scenario retains connected Salesforce and Zendesk discovery and the ROLE-001 privacy-role hold. Asserted: Sign-ins have actor, time and anonymous subject; Role changes preserve action detail and actor; Approvals remain exactly once; Erased-account actions remain without account or actor display name; Every complete identity, actor, action, opaque subject, detail and recorded-time tuple reconciles across all API and rendered screen pages and actual exported archive rows, including 54 native requests with repeated values, unchanged unrelated entries, the export-snapshot boundary and the distinct destination bootstrap action after real restoration.
 
 #### SECURE-002 — Connector credential custody
 
@@ -1021,8 +1021,8 @@ Core · target · **partial** · Cites BASE-ROLE-001, BASE-INPUT-001, BASE-OPS-0
 4. An identical replay returns its original account ID and revision without repeating the write.
 5. Revocation or an issuing-owner identity change ends authority; archive restoration restores no integration token, minute reservation or replay receipt.
 
-**Evidence.** `src/buoy/integration/index.ts`; `src/buoy/integration/openapi.ts`; `docs/integration-api.md`; `tests/flows.test.mjs`; `tests/integration-journey.mjs`; `tests/portable.mjs`
-**Gap.** ct approved the account foundation with riders on 26 October 2026 at 2890e26a05ac289fce7d13508efb4f3f9a59dd06. Remaining: version 1 events with reviewed user and group attribution; admin issuance bounded by the issuer's record scope and commercial-field rules, and separate read and write scopes for every remaining record kind; the native credentials screen presenting the proven owner inventory of labels, issuer, creation, last use, expiry flags and stop reasons, including named withdrawals before account erasure; contacts, users, metrics, tasks, plans, opportunities, timeline entries, and custom-object definitions and records with bulk external-ID upsert; outbound signed webhooks with retries and a delivery log after their own ruling; Zapier, Make and Crank use of this API, with OpenAPI coverage of every record kind. All-accounts grants, secret-free owner inventory and credential issuance and first-revocation audit assertions now run through integrationJourney; the native account browser mode is loaded by the settings-browser Verify suite.
+**Evidence.** `src/buoy/integration/index.ts`; `src/buoy/integration/openapi.ts`; `docs/integration-api.md`; `tests/flows.test.mjs`; `tests/integration-journey.mjs` — integrationJourney and inventoryBrowser; `src/buoy/ui/integration.ts`; `tests/portable.mjs`
+**Gap.** ct approved the account foundation with riders on 26 October 2026 at 2890e26a05ac289fce7d13508efb4f3f9a59dd06. Remaining: version 1 events with reviewed user and group attribution; admin issuance bounded by the issuer's record scope and commercial-field rules, and separate read and write scopes for every remaining record kind; contacts, users, metrics, tasks, plans, opportunities, timeline entries, and custom-object definitions and records with bulk external-ID upsert; outbound signed webhooks with retries and a delivery log after their own ruling; Zapier, Make and Crank use of this API, with OpenAPI coverage of every record kind. All-accounts grants, secret-free owner inventory and credential issuance and first-revocation audit assertions now run through integrationJourney; the native account and owner inventory browser journeys are loaded by the settings-browser Verify suite. The owner-only Audit panel reconciles every credential label, operation and account scope, rate, issuer, creation and last use, expiry warning and stop reason, including unknown legacy creation times and withdrawals before account erasure, in `tests/integration-journey.mjs` inventoryBrowser. Custom-object records and bulk upsert still depend on ACCOUNT-006: no AWS or Salesforce account or authentic Gainsight export is held for its required S3, Salesforce and Gainsight acceptance.
 
 #### MIGRATE-001 — Gainsight CS migration
 
@@ -1278,7 +1278,7 @@ Core · target · **partial**
 
 #### BOUNDARY-005 — Certifications are the deployment's
 
-Core · target · **partial** · Cites BASE-INSTALL-001, BASE-DATA-004 · Register R-6
+Core · target · **done** · Cites BASE-INSTALL-001, BASE-DATA-004 · Register R-6
 
 **Requirement.** SOC 2 or similar attestations cover the buyer's deployment and are prepared with Evidence or their auditor; a provider's network, terms and data-processing agreements still apply to each connector. The providers guide (`docs/providers.md`) lists every provider an installation can talk to, with what each receives and returns and the terms and data-processing agreement that govern it. The guide also describes incoming Segment observations under USAGE-001 and INAPP-001's buyer-operated authenticated product relay: the relay requests content from Buoy and sends view/completion/dismissal receipts back. It is not a third-party provider or an outbound Buoy provider call; neither incoming observations nor stored receipts claim provider verification, hosted delivery or legal acceptance. Technical calculations, custody and dependency rules are specified in [domain rules](docs/contract/domain-rules.md#boundary-005).
 
@@ -1287,8 +1287,8 @@ Core · target · **partial** · Cites BASE-INSTALL-001, BASE-DATA-004 · Regist
 2. The site check derives current connector provider origins (Stripe and Totango account search), the mail providers the installation accepts and the OpenID presets from code, with Cloudflare and Segment explicitly named, then requires a section in the built guide for each, with when it is used, what it sends and receives, and a link to its terms.
 3. The buyer-operated in-app relay has its own When/Sends/Receives/Terms guide section describing server-only authenticated requests, exact reviewed source/user/group mapping, campaign content and view/completion/dismissal receipts, buyer and source external copies and deployment responsibilities; it is not a third-party provider and has no fabricated provider terms or outbound Buoy call.
 
-**Evidence.** `docs/providers.md`; `src/site/docs.ts`; `tests/site.mjs`
-**Gap.** Not asserted by the cited baseline evidence: The buyer-operated in-app relay has independently asserted exact mapping/content/three receipt kinds/external-custody sections; Relay has no fabricated third-party provider terms or outbound Buoy call. Asserted: Every derived provider has a guide section; When/Sends/Receives/Terms are present; Provider terms have real links; Derived connector, mail and identity origins all have guide sections; Each section includes data flow fields.
+**Evidence.** `tests/site.mjs` — Run-site journey: code-derived connector, model, mail and OpenID provider inventory has data-flow sections and real terms links; Buyer-operated relay guide: independently checks server authentication, exact reviewed mapping, campaign content, all three receipt kinds, external copies, deployment responsibility and no fabricated provider or outbound call. `docs/providers.md`; `src/site/docs.ts`.
+**Gap.** None.
 
 ### Push further: agents that carry the job
 

@@ -17,6 +17,9 @@ import { spawn } from 'node:child_process'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { startWorker } from './worker.mjs'
+import {chromium} from '@playwright/test'
+import {existsSync} from 'node:fs'
+import {readAudit,archiveAudit,reconcileAuditScreen} from './audit-view.mjs'
 
 const root=resolve('.'), parent=await mkdtemp(join(tmpdir(),'buoy-portable-'))
 const excluded=new Set(['node_modules','.git','.wrangler','.rer','.seed','.cache','.tanstack','exports','test-results'])
@@ -35,9 +38,9 @@ async function command(cwd,args,expected=0){
  const safe=output.replace(/RER_OPEN[^\n]*/g,'RER_OPEN [private]').replace(/token=[^\s"&<>]+/g,'token=[private]')
  if(expected===0)assert.equal(code,0,safe.slice(-3000));else assert.notEqual(code,0,'Restore should refuse this destination or archive')
 }
-const configurationNow=Date.now()
+const wallNow=Date.now.bind(Date),configurationNow=Date.now()
 mock.timers.enable({apis:['Date'],now:configurationNow})
-let running,configurationClock=configurationNow
+let running,browser,configurationClock=configurationNow
 const stripe=billingSource()
 const aiSelection=[{kind:'task',line:2},{kind:'risk',line:4},{kind:'expansion',line:6}]
 const providerFetch=async request=>{
@@ -55,7 +58,7 @@ try{
  const source=await copy('source'),destination=await copy('destination'),broken=await copy('damaged'), archive=join(parent,'buoy.rer')
  running=await startWorker({root:source,secure:true,clock:()=>configurationClock,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(source,'.wrangler/state'),keepPersistence:true})
  const call=async(path,method='GET',body)=>{const response=await running.request('/api/buoy'+path,{method,body,cookie:running.cookie});assert.ok(response.ok,await response.clone().text());return response.json()}
- const allAudit=async()=>{const entries=[];let offset=0;do{const page=await call('/audit?offset='+offset);entries.push(...page.entries);offset=page.nextOffset}while(offset!==null);return entries}
+ const allAudit=()=>readAudit(call)
  const fixture=JSON.parse(await readFile(join(root,'fixtures/move-in/accounts-synthetic.json'),'utf8'))
  const door=importClient(running.request,running.cookie), plan=await door.plan(fixture)
  const job=await door.apply(plan)
@@ -80,7 +83,8 @@ try{
  assert.equal((await running.request('/api/buoy/accounts/'+accountId,{method:'PUT',body:{},token:token.token})).status,403)
  assert.equal((await running.request('/api/buoy/commands',{method:'POST',body:{command:'renewals.list'},token:token.token})).status,200)
  const erased={...fixture.accounts[0],id:'erase-before-backup',name:'Retired account'}
- await call('/accounts','POST',erased)
+ const erasedImport=await door.plan({accounts:[...fixture.accounts,erased]},true)
+ const erasedJob=await door.apply(erasedImport)
  await call('/accounts/erase-before-backup','DELETE',{confirmation:'Retired account'})
  assert.equal((await running.request('/auth/invite',{method:'POST',cookie:running.cookie,body:{email:'analyst@example.test',displayName:'Ana Lyst',role:'member'}})).status,202)
  const analyst=(await (await running.request('/auth/operators',{cookie:running.cookie})).json()).find(p=>p.email==='analyst@example.test')
@@ -163,12 +167,17 @@ try{
  const configurationHistory=await seedConfigurationPortability(call,value=>{configurationClock=value??configurationNow},configurationNow)
  const planChampion=await call('/customer-people','POST',{kind:'contact',name:'synthetic-buoy-1940',accountIds:[accountId],source:'synthetic-buoy-1941'});
  const successPlan=await call('/accounts/'+accountId+'/plans','POST',{accountRevision:(await call('/state')).accounts.find(a=>a.id===accountId).revision,name:'Portable internal success plan',taskIds:[planTask.id],milestones:[{id:'renewed',title:'Approved renewal evidence',objectiveId:'usage',outcomeId:planOutcome.id}],staffOwnerId:(await call('/state')).operator.id,customerOwnerId:planChampion.id,objectives:[{id:'usage',title:'Observed product use',kind:'metric',field:'adoption.current.eventCount',target:1,direction:'at-least',dueOn:'2027-03-01'},{id:'customer',title:'Actual customer confirmation required',kind:'customer-statement',dueOn:'2027-03-01'}]});
- await call('/portal-invitations','POST',{email:'portable-champion@example.test',displayName:'Portable champion'});
- const portalCookie=await running.signIn('portable-champion@example.test');
- const portableGrant=await call('/accounts/'+accountId+'/portal-sharing','POST',{planId:successPlan.id,planRevision:successPlan.revision,email:'portable-champion@example.test',days:30,taskIds:[planTask.id]});
+ await call('/portal-invitations','POST',{email:['portable-champion','example.test'].join('@'),displayName:'Portable champion'});
+ const portalCookie=await running.signIn(['portable-champion','example.test'].join('@'));
+ const portableGrant=await call('/accounts/'+accountId+'/portal-sharing','POST',{planId:successPlan.id,planRevision:successPlan.revision,email:['portable-champion','example.test'].join('@'),days:30,taskIds:[planTask.id]});
  const portalRead=await running.request('/api/buoy/portal/'+portableGrant.id,{cookie:portalCookie});assert.equal(portalRead.status,200);
  const portalRevision=(await portalRead.json()).revision;
  const portalConfirmed=await running.request('/api/buoy/portal/'+portableGrant.id+'/action',{cookie:portalCookie,method:'POST',body:{action:'confirm',revision:portalRevision,objectiveId:'customer',statement:'synthetic-buoy-1965'}});assert.equal(portalConfirmed.status,201);
+ const portableAuthorEmail=['synthetic-buoy-1997','example.test'].join('@');
+ assert.equal((await running.request('/auth/invite',{method:'POST',cookie:running.cookie,body:{email:portableAuthorEmail,displayName:'Synthetic portable plan author',role:'member'}})).status,202);
+ const portableAuthorCookie=await running.signIn(portableAuthorEmail),portableAuthor=(await (await running.request('/auth/operators',{cookie:running.cookie})).json()).find(p=>p.email===portableAuthorEmail);
+ await call('/roles/assignments','PUT',{revision:(await call('/roles')).revision,personId:portableAuthor.id,roleId:'cs-manager'});
+ assert.equal((await running.request('/api/buoy/accounts/'+accountId+'/plans',{cookie:portableAuthorCookie})).status,200,'The source author has explicit plan read authority before export');
  const successPlansBefore=await call('/accounts/'+accountId+'/plans');
  assert.equal(successPlansBefore.plans[0].objectives[1].status,'achieved');
  assert.equal(successPlansBefore.plans.find(p=>p.id===successPlan.id).objectives[0].status,'achieved');
@@ -219,18 +228,39 @@ try{
  const heldBeforeArchive=await call('/customer-people/'+heldPerson.id+'/privacy/export','POST',{...heldBody,revision:(await heldCurrent()).revision})
  heldVersionsBefore=heldBeforeArchive.records.heldVersions
  privacyRequestsBefore=await call('/privacy/requests');privacyReceiptsBefore=await call('/privacy/receipts')
+ // Repeated actions deliberately share actors, subjects, details and timestamps.
+ // Independently expected tuples catch field swaps that page-wide text searches miss.
+ const auditAgent=await call('/agent-tokens','POST',{label:'synthetic-buoy-9460',requestsPerMinute:1000})
+ const unrelatedAudit=await allAudit(),expectedActions=[],fixtureClock=configurationClock
+ for(let index=0;index<54;index++){
+  configurationClock=fixtureClock+Math.floor(index/18)*1000
+  const command=['synthetic-buoy-9461 <review & approve>','synthetic-buoy-9462','synthetic-buoy-9463'][index%3]
+  const response=await running.request('/api/buoy/commands',{method:'POST',token:auditAgent.token,body:{command}})
+  assert.equal(response.status,400)
+  const actor='agent:'+auditAgent.id,occurredAt=new Date(configurationClock).toISOString()
+  expectedActions.push({actor,action:'agent.requested',subject:actor,detail:'POST commands request received; outcome not recorded.',occurredAt},
+   {actor,action:'agent.refused',subject:'command '+command,detail:'Unknown command. Agents can prepare; people approve.',occurredAt})
+ }
+ const fixtureAudit=await allAudit(),originalIds=new Set(unrelatedAudit.map(entry=>entry.id))
+ const valueOrder=(a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))
+ assert.deepEqual(fixtureAudit.filter(entry=>originalIds.has(entry.id)),unrelatedAudit,'Repeated native actions leave every unrelated audit tuple unchanged')
+ assert.deepEqual(fixtureAudit.filter(entry=>!originalIds.has(entry.id)).map(({id,...tuple})=>tuple).sort(valueOrder),expectedActions.sort(valueOrder),'All 54 native requests persist exactly their independently expected attempt and refusal tuples')
+ configurationClock=fixtureClock
+ await call('/agent-tokens/'+auditAgent.id,'DELETE',{})
+ const revokedAudit=await allAudit()
+ assert.equal((await running.request('/api/buoy/commands',{method:'POST',token:auditAgent.token,body:{command:'renewals.list'}})).status,401)
+ assert.deepEqual(await allAudit(),revokedAudit,'A revoked credential cannot add or expose an audit identity')
  const before=await call('/state'), beforeAudit=await allAudit(),sourceCallsBeforeRestore=stripe.calls.length
  assert.ok(before.accounts.find(a=>a.id===accountId).health.adoptionMeasures.some(m=>m.ruleId===portableAggregate.id&&m.matched&&m.health),'ADOPT-001 aggregate health is effective before archive export')
  for(const kind of ['auth.signed-in','auth.invited','auth.role-changed','account.created','account.erased','renewal.prepared','renewal.approved','agent.requested','agent.refused'])assert.ok(beforeAudit.some(entry=>entry.action===kind),`AUDIT-001 archive source records ${kind}`)
  assert.doesNotMatch(JSON.stringify(beforeAudit),/Retired account|erase-before-backup|example\.test|Ana Lyst|Harbour CS owner/,'AUDIT-001 erased account and people stay unnamed')
- for(let offset=0;offset<beforeAudit.length;offset+=50){
-  const screen=await (await running.request('/app/audit?offset='+offset,{cookie:running.cookie})).text(),page=beforeAudit.slice(offset,offset+50)
-  assert.equal((screen.match(/<article class="record">/g)??[]).length,page.length,'AUDIT-001 screen pages list every exported entry exactly once')
-  for(const entry of page){assert.ok(screen.includes(entry.action));assert.ok(screen.includes(entry.subject));assert.ok(screen.includes(entry.occurredAt))}
- }
+ browser=await chromium.launch({headless:true,...(existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
+ await reconcileAuditScreen(browser,running,beforeAudit,{screens:process.env.BUOY_AUDIT_SHOTS??join(root,'test-results/audit')})
+ console.log('AUDIT-001 reconciled '+beforeAudit.length+' complete source tuples across every API and rendered page.')
  await running.close();running=null
- // The first export's own record is taken with its snapshot; the next export carries it.
- await command(source,['export','--output',join(parent,'first.rer')])
+ // Each export snapshots first, then records its own action for the next archive.
+ const firstArchive=join(parent,'first.rer')
+ await command(source,['export','--output',firstArchive])
  await command(source,['export','--output',archive])
  // Inspect the public archive format, never the live database. This independent
  // calculation proves a keyed fence, not merely a replay refusal that plain SHA
@@ -249,6 +279,16 @@ try{
   assert.ok(!archiveText.includes(JSON.stringify(transcript.transcript).slice(1,-1)),'AI-002 the full submitted transcript is absent from persisted export text')
   for(const [index,line]of transcript.lines.entries())if(transcript!==retainedTranscript||!aiSelection.some(p=>p.line===index+1))assert.ok(!archiveText.includes(line),'AI-002 unselected, discarded and account-erased source text is absent throughout the persisted export')
  }
+ const firstRows=(await readFile(firstArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
+ assert.deepEqual(archiveAudit(firstRows),beforeAudit,'The first actual archive matches every tuple on all pre-export API and screen pages')
+ const secondAudit=archiveAudit(archiveRows),beforeIds=new Set(beforeAudit.map(entry=>entry.id))
+ assert.deepEqual(secondAudit.filter(entry=>beforeIds.has(entry.id)),beforeAudit,'The next archive preserves all original tuples without reassociation')
+ const exportActions=secondAudit.filter(entry=>!beforeIds.has(entry.id))
+ assert.equal(exportActions.length,1,'Only the preceding export action crosses the documented snapshot boundary')
+ const exportAction=exportActions[0]
+ assert.equal(exportAction.actor,'portability:direct');assert.equal(exportAction.action,'data.exported')
+ assert.match(exportAction.subject,/^archive:[0-9a-f-]+$/)
+ assert.equal(exportAction.detail,'Installation archive snapshot taken; delivery of the file is not recorded.')
  const archivedAudit=archiveRows.filter(item=>item.table==='buoy_audit').map(item=>item.row)
  for(const proposal of discardedTranscript.proposals){
   const receipts=archivedAudit.filter(row=>row.subject==='ai:'+proposal.id)
@@ -261,6 +301,7 @@ try{
  for(const transcript of [retainedTranscript,discardedTranscript,erasedTranscript])for(const line of transcript.lines)assert.ok(!JSON.stringify(archivedAudit).includes(line),'AI-002 audit custody contains no transcript source text')
  assert.ok(!archiveRows.some(item=>['buoy_report_shares','buoy_dashboard_shares','buoy_playbook_credentials','buoy_playbook_intake_limits'].includes(item.table)),'PLAY-001 webhook credentials and rate reservations are excluded from the real archive');
  assert.ok(!archiveRows.some(item=>['buoy_integration_tokens','buoy_integration_minutes','buoy_integration_receipts'].includes(item.table)),'API-001 integration authority and replay state are excluded from the actual archive');
+ assert.ok(!archiveRows.some(item=>item.table==='buoy_role_assignments'),'Restored plan assignments never carry executable staff authority');
  assert.ok(!archiveRows.some(item=>['buoy_portal_grants','buoy_portal_recipients'].includes(item.table)),'Customer access never enters the real archive');
  assert.ok(archiveRows.some(item=>item.table==='buoy_plan_confirmations'&&item.row.plan_id===successPlan.id),'Authenticated customer evidence survives without restoring authority');
  assertBillingArchiveRows(archiveRows,billingImage);
@@ -278,8 +319,9 @@ try{
  const bytes=await readFile(archive);bytes[Math.floor(bytes.length/2)]^=1
  const damaged=join(parent,'damaged.rer');await writeFile(damaged,bytes)
  await command(broken,['import','--input',damaged,'--yes'],1)
+ const bootstrapStarted=wallNow()
  running=await startWorker({root:destination,secure:true,clock:()=>configurationNow,bindings:()=>({AI_ANTHROPIC_API_KEY:'synthetic-buoy-8340'}),providerFetch,persistenceDirectory:join(destination,'.wrangler/state'),keepPersistence:true})
- const after=await call('/state')
+ const bootstrapFinished=wallNow(),after=await call('/state')
  assert.deepEqual((await call('/ai/proposals')).proposals.sort((a,b)=>a.id.localeCompare(b.id)),aiProposalsBefore.toSorted((a,b)=>a.id.localeCompare(b.id)),'AI-002 only the retained exact source selections return after restore')
  assert.deepEqual((await call('/reviews?id='+capturedPlanReview.id)).selected,capturedPlanReviewBefore,'Captured plan review and source facts restore exactly');
  const restoredPlans=await call('/accounts/'+accountId+'/plans');assert.deepEqual({...restoredPlans,sharing:null},{...successPlansBefore,sharing:null},'PLAN-001 definitions, customer confirmation, task links and milestone evidence restore exactly');
@@ -296,10 +338,15 @@ try{
  assert.equal(restoredConnection.name,'Portable Stripe source')
  assert.equal(restoredConnection.freshness,'Reconnect required','CONNECT-001 restores retain metadata without credential authority')
  assert.equal((await running.request('/api/buoy/connections/'+connection.id+'/sync',{cookie:running.cookie,method:'POST',body:{}})).status,409)
- const restored=await allAudit(), added=restored.filter(entry=>!beforeAudit.some(prior=>prior.id===entry.id))
- assert.deepEqual(restored.filter(entry=>!added.includes(entry)),beforeAudit,'AUDIT-001 archive preserves exactly the audit entries shown before export')
- assert.deepEqual(added.map(entry=>[entry.action,entry.actor.replace(/[0-9a-f-]{36}$/,'id'),entry.detail]),[['auth.signed-in','person:id','native session issued'],['data.exported','portability:direct','Installation archive snapshot taken; delivery of the file is not recorded.']],'AUDIT-001 the export is recorded, and the destination records its own bootstrap sign-in')
- assert.match(added[1].subject,/^archive:[0-9a-f-]+$/)
+ const restored=await allAudit(),archiveIds=new Set(secondAudit.map(entry=>entry.id)),added=restored.filter(entry=>!archiveIds.has(entry.id))
+ assert.deepEqual(restored.filter(entry=>archiveIds.has(entry.id)),secondAudit,'Every exported audit tuple returns unchanged through all restored API pages')
+ assert.equal(added.length,1,'The destination adds only its own bootstrap sign-in, never the second export action')
+ const {occurredAt:bootstrapTime,...bootstrap}=added[0]
+ assert.deepEqual(bootstrap,{id:added[0].id,actor:'person:'+after.operator.id,action:'auth.signed-in',subject:'person:'+after.operator.id,detail:'native session issued'})
+ // Native sign-in triggers use SQLite's clock, independently of the JS fixture clock.
+ assert.ok(Date.parse(bootstrapTime)>=bootstrapStarted&&Date.parse(bootstrapTime)<=bootstrapFinished,'The destination bootstrap records its actual sign-in instant')
+ await reconcileAuditScreen(browser,running,restored)
+ console.log('AUDIT-001 reconciled '+beforeAudit.length+' complete source tuples, both export snapshots and '+restored.length+' restored tuples across every API and rendered page.')
  assert.match(await (await running.request('/app/audit?action=data.exported',{cookie:running.cookie})).text(),/portability:direct/)
  assert.deepEqual((await call('/surveys')).responses,surveysBefore.responses,'Recorded survey response values, source references and immutable history restore exactly');
  assert.ok(restored.some(e=>e.action==='survey.response-recorded'),'Recorded survey audit restores');
@@ -350,6 +397,14 @@ try{
  assert.equal((await privacyIntake(freshUsage.secret)).status,409,'ERASE-002 restored digest custody refuses erased source replay with fresh authority');
  await call('/usage/credentials/'+freshUsage.credential.id,'DELETE',{});
  assert.equal((await running.request('/api/buoy/accounts',{method:'POST',body:erased,cookie:running.cookie})).status,409,'restored erasure tombstone prevents recreation')
+ const restoredDoor=importClient(running.request,running.cookie)
+ const replayUpload=await restoredDoor.upload({accounts:[erased]})
+ const replay=await restoredDoor.send('plan',{uploadId:replayUpload})
+ assert.equal(replay.status,409,await replay.clone().text())
+ assert.equal((await replay.json()).error,'source_erased','IMPORT-001 restored source custody refuses a fresh native import')
+ assert.equal((await restoredDoor.send('reconcile',{planId:erasedImport.planId})).status,410,'IMPORT-001 restored reviewed snapshot stays withdrawn')
+ const retainedErasedJob=await call('/imports/'+erasedJob.id)
+ assert.ok(!JSON.stringify(retainedErasedJob).includes(erased.name),'IMPORT-001 restored job retains no erased source name')
  const inappAfter=await call('/inapp');
  assert.deepEqual(inappAfter,{...inappBefore,credentials:[]},'INAPP-001 campaigns portable, hash/credential table excluded');
  assert.deepEqual(await call('/customer-people/'+usagePerson.id+'/timeline'),inappTimeline,'INAPP-001 user receipts and provenance survive archive restore');
@@ -366,6 +421,11 @@ try{
  const restoredAi=(await call('/ai')).settings
  await call('/ai/settings','PUT',{...restoredAi,enabled:true,classes:[],budgetMinor:100,requestMinor:100,requestsPerMinute:100,noTraining:true,termsReference:'synthetic-buoy-8524'})
  assert.deepEqual(await assertConfigurationBacktest(call,configurationHistory),configurationBacktestBefore,'A fresh scorecard draft selects the same latest historical result and exact missing history after real restoration')
+ assert.equal((await running.request('/api/buoy/accounts/'+accountId+'/plans',{cookie:portableAuthorCookie})).status,401,'The old author session cannot read a restored plan');
+ assert.equal((await running.request('/auth/invite',{method:'POST',cookie:running.cookie,body:{email:portableAuthorEmail,displayName:'Synthetic portable plan author',role:'member'}})).status,202);
+ const destinationAuthorCookie=await running.signIn(portableAuthorEmail);
+ assert.equal((await running.request('/api/buoy/accounts/'+accountId+'/plans',{cookie:destinationAuthorCookie})).status,403,'A fresh identity with the same mailbox inherits no archived plan rights');
+ assert.equal((await running.request('/api/buoy/reviews?id='+capturedPlanReview.id,{cookie:destinationAuthorCookie})).status,403,'Retained review content also requires fresh local authorization');
  await running.close();running=null
  const restoredArchive=join(parent,'restored.rer');await command(destination,['export','--output',restoredArchive])
  const restoredRows=(await readFile(restoredArchive,'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(record=>record.kind==='part').flatMap(part=>part.items).filter(item=>item.kind==='row')
@@ -391,4 +451,4 @@ try{
  await assertChurnzeroRestored(running,churnzeroImage)
  await running.close();running=null
  console.log('AUDIT-001 archive journey passed: audit entries match the screen and restore exactly; HTTP data, approvals and import custody survive; credentials excluded; populated and damaged restores refused; fresh owner can continue.')
-}finally{if(running)await running.close();await rm(parent,{recursive:true,force:true})}
+}finally{if(browser)await browser.close();if(running)await running.close();await rm(parent,{recursive:true,force:true})}

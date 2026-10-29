@@ -1,12 +1,100 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { startWorker } from './worker.mjs'
-import { importClient } from './import-door-client.mjs'
+import { importClient, importChunks } from './import-door-client.mjs'
+import { importAuthority } from './import-door-authority.mjs'
+import { importErasure } from './import-door-erasure.mjs'
+
+// One public-door journey covers the destructive path and complete retained reads.
+export async function accountErasureJourney({request,cookie,member,account}) {
+ const call=(path,method='GET',body,extra={})=>request('/api/buoy'+path,{method,body,cookie,...extra})
+ const json=async(response,status=200)=>{assert.equal(response.status,status,await response.clone().text());return response.json()}
+ const door=importClient(request,cookie)
+ const erased={...account('synthetic-buoy-918001'),name:'synthetic-buoy-918002',renewalEvidence:'synthetic-buoy-918003',
+  billing:{...account().billing,reference:'synthetic-buoy-918004'},support:{...account().support,reference:'synthetic-buoy-918005'}}
+ const kept={...account('synthetic-buoy-918011'),name:'synthetic-buoy-918012',renewalEvidence:'synthetic-buoy-918013',
+  billing:{...account().billing,reference:'synthetic-buoy-918014'},support:{...account().support,reference:'synthetic-buoy-918015'}}
+ const sourceMarkers=[erased.id,erased.name,erased.renewalEvidence,erased.billing.reference,erased.support.reference]
+ const workMarkers=['synthetic-buoy-918006','synthetic-buoy-918007','synthetic-buoy-918008','synthetic-buoy-918009','synthetic-buoy-918010']
+ const plan=await door.plan({accounts:[erased,kept]}), job=await door.apply(plan)
+ assert.equal((await door.json('reconcile',{planId:plan.planId})).counts.present,2)
+ const audit=async()=>{
+  const pages=[];let offset=0
+  do {const page=await json(await call('/audit?offset='+offset));pages.push(page);offset=page.nextOffset} while(offset!==null)
+  return pages
+ }
+ const work=async(accountId,title,reason,evidence,outcome,completionEvidence)=>{
+  const proposal=await json(await call('/proposals','POST',{accountId,kind:'playbook',payload:{title,dueDate:'2027-01-31'}}),201)
+  await json(await call(`/proposals/${proposal.id}/approve`,'POST',{}))
+  const task=(await json(await call('/state'))).tasks.find(row=>row.proposalId===proposal.id)
+  await json(await call(`/tasks/${task.id}/complete`,'POST',{outcome,evidence:completionEvidence}))
+  const decision=await json(await call('/proposals','POST',{accountId,kind:'renewal',payload:{outcome:'renewed',reason,evidence}}),201)
+  await json(await call(`/proposals/${decision.id}/approve`,'POST',{}))
+ }
+ await work(kept.id,'synthetic-buoy-918016','synthetic-buoy-918017','synthetic-buoy-918018','synthetic-buoy-918019','synthetic-buoy-918020')
+ const priorAuditIds=new Set((await audit()).flatMap(page=>page.entries).map(entry=>entry.id))
+ await work(erased.id,...workMarkers)
+ const read=async()=>({
+  state:await json(await call('/state')),
+  job:await json(await call(`/imports/${job.id}`)),
+  journal:await json(await call('/imports')),
+  history:await json(await request('/api/operator/import-history',{cookie})),
+  status:await door.json('status',{planId:plan.planId}),
+  audit:await audit(),
+ })
+ const before=await read()
+ for(const marker of sourceMarkers){
+  assert.ok(JSON.stringify(before.state).includes(marker),`Seeded state contains ${marker}`)
+ }
+ assert.equal(before.job.id,job.id);assert.equal(before.job.total,2);assert.equal(before.job.erasedRecords,0)
+ for(const marker of workMarkers)assert.ok(JSON.stringify(before.state).includes(marker),`Seeded work contains ${marker}`)
+ for(const key of ['proposals','tasks','decisions'])assert.ok(before.state[key].some(row=>row.accountId===erased.id),`${key} is populated before erasure`)
+ assert.ok(before.history.history.some(row=>row.jobId===job.id),'The inspected history contains the imported job')
+ const evidence=before.audit.flatMap(page=>page.entries).filter(entry=>!priorAuditIds.has(entry.id))
+ assert.deepEqual(evidence.map(entry=>entry.action).sort(),['playbook.approved','playbook.completed','playbook.prepared','renewal.approved','renewal.prepared'])
+ const subject=evidence[0].subject
+ for(const entry of evidence){assert.equal(entry.subject,subject);assert.match(entry.subject,/^[0-9a-f]{32}$/);assert.match(entry.actor,/^person:[0-9a-f-]+$/);assert.ok(Number.isFinite(Date.parse(entry.occurredAt)))}
+ assert.equal((await door.send('undo',{planId:plan.planId})).status,409,'Dependent work refuses undo')
+ const refused=await read()
+ assert.deepEqual(refused.state,before.state,'Refused undo preserves every native record and work item')
+ assert.deepEqual(refused.audit,before.audit,'Refused undo adds no product effect')
+ assert.equal((await call('/accounts/'+erased.id,'DELETE',{confirmation:erased.name},{cookie:member})).status,403)
+ assert.deepEqual(await read(),refused,'Member erasure changes no data or custody')
+ assert.equal((await call('/accounts/'+erased.id,'DELETE',{confirmation:kept.name})).status,400)
+ assert.deepEqual(await read(),refused,'A wrong name confirmation changes nothing')
+ const receipt=await json(await call('/accounts/'+erased.id,'DELETE',{confirmation:erased.name}))
+ assert.equal(receipt.state,'erased');assert.ok(receipt.erasedRecords>0)
+ const after=await read()
+ for(const [doorName,body] of Object.entries(after))for(const marker of [...sourceMarkers,...workMarkers]){
+  assert.ok(!JSON.stringify(body).includes(marker),`${doorName} retains no ${marker}`)
+ }
+ for(const key of ['accounts','proposals','tasks','decisions']){
+  assert.deepEqual(after.state[key],before.state[key].filter(row=>(key==='accounts'?row.id:row.accountId)!==erased.id),`Erasure preserves every unrelated ${key} row`)
+ }
+ assert.equal(after.job.id,job.id)
+ assert.equal(after.job.total,2);assert.equal(after.job.erasedRecords,1,'The populated two-record job tombstones only the erased account')
+ const journal=after.journal.erasures.find(entry=>entry.receiptId===receipt.id)
+ assert.ok(journal,'The complete journal retains the opaque receipt')
+ assert.ok(journal.stores.some(store=>store.store==='ik_door_plan_chunks'),'The journal inventories withdrawn door custody')
+ const retained=after.audit.flatMap(page=>page.entries)
+ for(const entry of evidence)assert.deepEqual(retained.find(row=>row.id===entry.id),entry,'Earlier opaque work evidence survives')
+ const erasedAudit=retained.filter(entry=>entry.action==='account.erased'&&entry.subject===subject)
+ assert.equal(erasedAudit.length,1);assert.equal(erasedAudit[0].actor,`person:${before.state.operator.id}`)
+ assert.equal((await call('/accounts','POST',erased)).status,409,'A permanent target tombstone refuses recreation')
+ const withdrawn=await door.send('reconcile',{planId:plan.planId});assert.equal(withdrawn.status,410)
+ assert.ok(!JSON.stringify(await withdrawn.json()).includes(erased.name))
+ const replay=await door.json('apply',{planId:plan.planId,reviewedFingerprint:plan.fingerprint})
+ assert.equal(replay.job.id,job.id,'Replay returns its original job without restoring an erased record')
+ assert.equal(replay.job.state,after.job.state,'A refused reversal cannot resume forward application')
+ assert.deepEqual(await read(),after,'Recreation refusal, withdrawn reconciliation and replay preserve the erased state')
+}
+
 export async function importDoorJourney() {
  const keys=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify'])
  const jwk=await crypto.subtle.exportKey('jwk',keys.publicKey), issuer='https://business.example.test', installationId='buoy-test-installation'
  const bindings=on=>origin=>({RER_IMPORT_DOOR:on,RER_OWNER_CLAIM_ISSUER:issuer,RER_OWNER_CLAIM_INSTALLATION_ID:installationId,RER_OWNER_CLAIM_APP_ORIGIN:origin,RER_OWNER_CLAIM_PUBLIC_KEYS:JSON.stringify({test:jwk})})
  const value=id=>({id,name:'Imported Harbour',renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Signed order form',billing:null,support:null})
+ const ownerEmail=['owner','example.test'].join('@'), memberEmail=['colleague','example.test'].join('@')
  for(const provisioned of [false,true]) {
   const app=await startWorker({bindings:bindings(provisioned?'on':'off')})
   try {
@@ -15,24 +103,37 @@ export async function importDoorJourney() {
    assert.equal((await settings()).enabled,provisioned,'IMPORT-001 first owner claim enables Business only with RER_IMPORT_DOOR=on')
    const grant=async(action,extra={})=>{
     const now=Math.floor(Date.now()/1000), encode=v=>Buffer.from(JSON.stringify(v)).toString('base64url')
-    const head=encode({alg:'ES256',typ:'rer-import-grant+jwt',kid:'test'}), payload=encode({v:1,iss:issuer,aud:origin,installationId,email:'owner@example.test',jti:randomUUID(),iat:now,exp:now+240,action,namespace:'buoy-account-json-v1',maxBytes:256000,maxChunks:10,maxRecords:50,...extra}), input=head+'.'+payload
+    const head=encode({alg:'ES256',typ:'rer-import-grant+jwt',kid:'test'}), payload=encode({v:1,iss:issuer,aud:origin,installationId,email:ownerEmail,jti:randomUUID(),iat:now,exp:now+240,action,namespace:'buoy-account-json-v1',maxBytes:256000,maxChunks:10,maxRecords:50,...extra}), input=head+'.'+payload
     return input+'.'+Buffer.from(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},keys.privateKey,Buffer.from(input))).toString('base64url')
    }
    const business=async(action,body,extra={})=> request('/api/rer/import/'+action,{method:'POST',body,token:await grant(action,extra)})
    const input={accounts:[value('door-native')]}, before=await (await request('/api/buoy/state',{cookie})).json()
    assert.equal((await door.send('uploads',{}, {cookie:undefined})).status,401)
    assert.equal((await door.send('uploads',{}, {headers:{origin:'https://foreign.invalid'}})).status,403)
-   await request('/auth/invite',{method:'POST',cookie,body:{email:'colleague@example.test',displayName:'Colleague',role:'member'}})
-   const member=await app.signIn('colleague@example.test')
+   await request('/auth/invite',{method:'POST',cookie,body:{email:memberEmail,displayName:'Colleague',role:'member'}})
+   const member=await app.signIn(memberEmail)
    assert.equal((await door.send('uploads',{}, {cookie:member})).status,401)
    assert.equal((await request('/app/imports',{cookie:member})).status,403)
    assert.equal((await business('status',{})).status,provisioned?400:404,'IMPORT-001 disabled grants stay closed')
-   const plan=await door.plan(input)
-   assert.deepEqual((await (await request('/api/buoy/state',{cookie})).json()).accounts,before.accounts,'IMPORT-001 planning writes no native records')
-   const secondCookie=await app.signIn('owner@example.test'), session=await (await request('/auth/session',{cookie:secondCookie})).json()
+   const secondCookie=await app.signIn(ownerEmail), session=await (await request('/auth/session',{cookie:secondCookie})).json()
    assert.equal((await request('/auth/session/revoke',{method:'POST',cookie,body:{sessionId:session.id}})).status,204)
+   const authority=importAuthority({request,cookie,door,member,revoked:secondCookie})
+   const chunk=importChunks(input)[0]
+   await authority.owner('uploads',chunk)
+   const upload=await door.json('uploads',chunk)
+   assert.equal((await door.json('uploads',{uploadId:upload.uploadId})).complete,true)
+   await authority.owner('plan',{uploadId:upload.uploadId})
+   const plan=await door.planUpload(upload.uploadId)
+   assert.deepEqual((await (await request('/api/buoy/state',{cookie})).json()).accounts,before.accounts,'IMPORT-001 planning writes no native records')
    assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:plan.fingerprint},{cookie:secondCookie})).status,401,'IMPORT-001 revoked session cannot mutate a reviewed plan')
+   await authority.owner('apply',{planId:plan.planId,reviewedFingerprint:plan.fingerprint},plan)
+   const reviewed=await authority.snapshot(plan)
+   assert.equal((await door.send('apply',{planId:plan.planId,reviewedFingerprint:'0'.repeat(64)})).status,403)
+   assert.deepEqual(await authority.snapshot(plan),reviewed,'A wrong fingerprint changes no native or retained state')
    const job=await door.apply(plan)
+   assert.equal((await door.apply(plan)).id,job.id,'A permitted reviewed replay returns the same durable job')
+   for(const action of ['status','reconcile','undo'])await authority.owner(action,{planId:plan.planId},plan,job)
+   assert.equal((await door.json('status',{planId:plan.planId})).job.id,job.id)
    const report=await door.json('reconcile',{planId:plan.planId});assert.equal(report.ok,true);assert.equal(report.counts.present,1)
    assert.equal((await request('/api/operator/import-history',{cookie})).status,200)
    const history=(await (await request('/api/operator/import-history',{cookie})).json()).history
@@ -40,7 +141,7 @@ export async function importDoorJourney() {
    const catchup=await door.plan({accounts:[{...value('door-native'),renewalEvidence:'Revised signed order'},...Array.from({length:49},(_,i)=>value('door-batch-'+i))]},true)
    assert.equal(catchup.differences.replacements.length,1)
    assert.equal(catchup.differences.additions.length,49)
-   const runCookie=await app.signIn('owner@example.test'), runSession=await (await request('/auth/session',{cookie:runCookie})).json()
+   const runCookie=await app.signIn(ownerEmail), runSession=await (await request('/auth/session',{cookie:runCookie})).json()
    const firstBatch=await door.json('apply',{planId:catchup.planId,reviewedFingerprint:catchup.fingerprint},{cookie:runCookie})
    assert.equal(firstBatch.job.state,'applying','IMPORT-001 largest upload is a durable multi-batch mutation')
    const paused=(await (await request('/api/buoy/state',{cookie})).json()).accounts
@@ -52,25 +153,44 @@ export async function importDoorJourney() {
    assert.equal(fullReport.ok,true);assert.equal(fullReport.counts.present,50,'IMPORT-001 largest supported upload reconciles native values')
    await door.undo(catchup)
    const update={enabled:false}
+   await authority.owner('settings',update,plan,job)
    assert.equal((await request('/api/operator/import-settings',{method:'POST',cookie,body:update})).status,200)
    await request('/auth/session',{cookie})
    assert.equal((await settings()).enabled,false,'IMPORT-001 later owner path never reopens an explicit disabled door')
    assert.equal((await door.undo(plan)).state,'undone','IMPORT-001 owner undo works while Business is disabled')
+   assert.ok(!(await (await request('/api/buoy/state',{cookie})).json()).accounts.some(row=>row.id==='door-native'),'Owner undo removes the unchanged imported account')
    await request('/api/operator/import-settings',{method:'POST',cookie,body:{enabled:true}})
    const approvedAt=new Date().toISOString()
    const businessClient=importClient((path,options)=>{
     const action=path.split('/').at(-1), body=options.body
     return business(action,body,action==='apply'?{fingerprint:body.reviewedFingerprint,approvalRecordId:'test-business-approval',approvedAt}:{})
    })
-   const businessPlan=await businessClient.plan({accounts:[value('door-business')]})
-   await businessClient.apply(businessPlan)
+   const businessInput={accounts:[value('door-business')]}, businessUpload=await businessClient.upload(businessInput)
+   const archiveBody={uploadId:businessUpload,tool:'buoy',takenAt:approvedAt}
+   const archive=await businessClient.json('archive',archiveBody)
+   assert.equal((await businessClient.json('restore-check',{archiveId:archive.archiveId})).counts.mapped,1)
+   const businessPlan=await businessClient.planUpload(businessUpload)
+   const businessJob=await businessClient.apply(businessPlan)
+   assert.equal((await businessClient.json('status',{planId:businessPlan.planId})).job.id,businessJob.id)
+   assert.equal((await businessClient.json('reconcile',{planId:businessPlan.planId})).counts.present,1)
    const mixed=(await (await request('/api/operator/import-history',{cookie})).json()).history
    assert.ok(mixed.some(entry=>entry.planId===businessPlan.planId && /approved via Business by/.test(entry.caption)),'IMPORT-001 Business and owner share honest approval history')
+   const bound=await authority.snapshot(businessPlan,businessJob)
+   assert.equal((await request('/api/rer/import/undo',{method:'POST',body:{planId:businessPlan.planId},token:await grant('status')})).status,403,'A Business status grant cannot undo an approved native import')
+   assert.deepEqual(await authority.snapshot(businessPlan,businessJob),bound,'An action-mismatched grant leaves native state and retained import custody unchanged')
    await request('/api/operator/import-settings',{method:'POST',cookie,body:{enabled:false}})
+   const businessCases=[['uploads',importChunks(businessInput)[0]],['plan',{uploadId:businessUpload}],['apply',{planId:businessPlan.planId,reviewedFingerprint:businessPlan.fingerprint}],...['status','reconcile','undo'].map(action=>[action,{planId:businessPlan.planId}]),['archive',archiveBody],['restore-check',{archiveId:archive.archiveId}]]
+   const sendBusiness=(action,body)=>business(action,body,action==='apply'?{fingerprint:body.reviewedFingerprint,approvalRecordId:'test-business-approval',approvedAt}:{})
+   await authority.business(sendBusiness,businessCases,404,businessPlan,businessJob)
    assert.equal((await door.undo(businessPlan)).state,'undone','IMPORT-001 owner can undo a Business job while Business is disabled')
+   await request('/api/operator/import-settings',{method:'POST',cookie,body:{enabled:true}})
+   await importErasure({request,cookie,door,businessClient,value,authority})
    await request('/api/operator/import-settings',{method:'POST',cookie,body:{enabled:true,revokedKids:['test']}})
    assert.deepEqual((await settings()).revokedKids,['test'])
    assert.equal((await business('status',{})).status,403,'IMPORT-001 key revocation survives re-enable')
+   await request('/api/operator/import-settings',{method:'POST',cookie,body:{enabled:true,revokedKids:[]}})
+   assert.deepEqual((await settings()).revokedKids,['test'],'IMPORT-001 a later settings update cannot remove permanent key revocation')
+   await authority.business(sendBusiness,businessCases,403,businessPlan,businessJob)
    // New plan, native edit and strict undo protection through the shared path.
    const edited=await door.plan({accounts:[value('door-edited')]}), applied=await door.apply(edited)
    const current=(await (await request('/api/buoy/state',{cookie})).json()).accounts.find(a=>a.id==='door-edited')

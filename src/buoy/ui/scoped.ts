@@ -1,3 +1,6 @@
+import {plansPanel,type PlansPage} from './plans'
+import type {State} from './types'
+import {retainedReviewsPage} from './scoped-plan-reviews'
 import {reportsPage,type ReportsPage,type ReportResult} from './reports'
 import {forecastPage,type ForecastPage} from './forecast'
 import {mutate} from './actions'
@@ -21,6 +24,21 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  let title='Accounts',status=200,body:string,error:string|undefined,fields:Fields|undefined
  let accountId='';try{if(/^\/app\/accounts\/[^/]+$/.test(path))accountId=decodeURIComponent(path.slice('/app/accounts/'.length))}catch{}
  const selected=state.accounts.find(a=>a.id===accountId)
+ if(path==='/app/reviews')return retainedReviewsPage(request,api,state)
+ if(request.method==='POST'&&selected&&(await request.clone().formData()).get('action')==='plan-save'){
+  let draft:Fields|undefined,message:string|undefined,code=200
+  try{draft=Object.fromEntries([...await request.formData()].map(([k,v])=>[k,String(v)]));const result=await mutate(api,request,path,draft,accountId);return new Response(null,{status:303,headers:{location:result.redirect??path,'cache-control':'no-store'}})}catch(caught){code=caught instanceof ApiError?caught.status:400;message=caught instanceof Error?caught.message:'Plan could not be saved.'}
+  const plans=await apiCall<PlansPage>(api,request,'/api/buoy/accounts/'+encodeURIComponent(accountId)+'/plans')
+  return shell({title:selected.name,body:scopedAccountsPage(state,accountId)+plansPanel(plans,state as unknown as State,accountId,[],draft),state,current:'/app',status:code,error:message})
+ }
+ if(request.method==='POST'&&path==='/app/reports'){
+  try{
+   if(request.headers.get('origin')!==url.origin)throw new ApiError('Submit this form from this installation.',403)
+   fields=Object.fromEntries([...await request.formData()].map(([key,value])=>[key,typeof value==='string'?value:'']))
+   const result=await mutate(api,request,path,fields)
+   if(result.redirect){const target=new URL(result.redirect,request.url);if(result.saved)target.searchParams.set('saved',path+'|'+result.saved);return new Response(null,{status:303,headers:{location:target.pathname+target.search,'cache-control':'no-store'}})}
+  }catch(caught){status=caught instanceof ApiError?caught.status:503;error=caught instanceof Error?caught.message:'The report definition could not be saved.'}
+ }
  if(request.method==='POST'&&path==='/app/forecast'){
   try{fields=Object.fromEntries([...await request.formData()].map(([key,value])=>[key,typeof value==='string'?value:'']));const result=await mutate(api,request,path,fields);if(result.redirect)return new Response(null,{status:303,headers:{location:result.redirect,'cache-control':'no-store'}})}catch(caught){status=caught instanceof ApiError?caught.status:503;error=caught instanceof Error?caught.message:'Forecast override could not be recorded.'}
  }
@@ -42,7 +60,7 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
    return new Response(null,{status:303,headers:{location:path+'?saved='+encodeURIComponent(path+'|scoped-account-edit')+'#scoped-account','cache-control':'no-store'}})
   }catch(caught){status=caught instanceof ApiError?caught.status:503;error=caught instanceof Error?caught.message:'The account could not be changed.'}
  }
- if(path==='/app/reports'&&['GET','HEAD'].includes(request.method)){title='Reports and dashboards';try{const data=await apiCall<ReportsPage>(api,request,'/api/buoy/reports'),selected=data.dashboards.find(d=>d.id===url.searchParams.get('dashboard')),ids=selected?selected.reportIds:url.searchParams.get('report')?[url.searchParams.get('report')!]:[];const results:ReportResult[]=[];for(const id of ids)results.push(await apiCall<ReportResult>(api,request,'/api/buoy/reports/'+encodeURIComponent(id)));body=reportsPage(data,results)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Reports unavailable','<p>Your current profile cannot read this report selection.</p>')}}else if(path==='/app/forecast'){title='Renewal forecast';const query=fields?.returnQuery?new URLSearchParams(fields.returnQuery):url.searchParams;try{body=forecastPage(query,await apiCall<ForecastPage>(api,request,'/api/buoy/renewals/forecast?'+query),fields)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Forecast unavailable','<p>Your current profile cannot read this selection.</p>')}}else if(path==='/app/approvals'&&(['GET','HEAD'].includes(request.method)||fields?.action==='scoped-renewal-approve')){
+ if(path==='/app/reports'){title='Reports and dashboards';try{const data=await apiCall<ReportsPage>(api,request,'/api/buoy/reports'),selected=data.dashboards.find(d=>d.id===url.searchParams.get('dashboard')),ids=selected?selected.reportIds:url.searchParams.get('report')?[url.searchParams.get('report')!]:[];const results:ReportResult[]=[];for(const id of ids)results.push(await apiCall<ReportResult>(api,request,'/api/buoy/reports/'+encodeURIComponent(id)));body=reportsPage(data,results,fields)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Reports unavailable','<p>Your current profile cannot read this report selection.</p>')}}else if(path==='/app/forecast'){title='Renewal forecast';const query=fields?.returnQuery?new URLSearchParams(fields.returnQuery):url.searchParams;try{body=forecastPage(query,await apiCall<ForecastPage>(api,request,'/api/buoy/renewals/forecast?'+query),fields)}catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Forecast unavailable','<p>Your current profile cannot read this selection.</p>')}}else if(path==='/app/approvals'&&(['GET','HEAD'].includes(request.method)||fields?.action==='scoped-renewal-approve')){
   title='Renewal reviews'
   try{body=scopedRenewalApprovalPage(await apiCall<ScopedRenewalApprovals>(api,request,'/api/buoy/renewals/approvals'),fields)}
   catch(caught){status=caught instanceof ApiError?caught.status:503;body=section('Review unavailable','<p>Your current profile cannot review renewal decisions.</p>')}
@@ -64,6 +82,9 @@ export async function scopedPage(request:Request,api:Api,state:ProjectedState){
  else if(/^\/app\/accounts\/[^/]+$/.test(path)){
   const account=state.accounts.find(a=>a.id===accountId);title=account?.name??'Account unavailable';status=account?200:404;body=scopedAccountsPage(state,accountId)
  }else{status=403;title='Access unavailable';body=section(title,'<p>This page is not available to your assigned profile.</p><p><a href="/app">Open accounts in your scope</a></p>')}
+ if(selected&&['GET','HEAD'].includes(request.method)){
+  try{const plans=await apiCall<PlansPage>(api,request,'/api/buoy/accounts/'+encodeURIComponent(accountId)+'/plans');body+=plansPanel(plans,state as unknown as State,accountId,[])}catch(caught){if(!(caught instanceof ApiError)||caught.status!==403)throw caught}
+ }
  const response=await shell({title,body,state,current:['/app/reports','/app/search','/app/workspace','/app/revenue','/app/approvals','/app/forecast'].includes(path)?path:'/app',status,error,success:path==='/app/approvals'&&url.searchParams.get('recorded')==='1'?'Renewal outcome recorded.':undefined,backToAccounts:path.startsWith('/app/accounts/')})
  return request.method==='HEAD'?new Response(null,{status:response.status,headers:response.headers}):response
 }

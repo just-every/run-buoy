@@ -15,12 +15,17 @@ Edit slide titles and commentary while retaining the original figures and source
 links. Explicitly review the current deck revision before downloading a PowerPoint
 or PDF or logging its meeting. An edit withdraws the earlier review. Local exports
 keep the source links; PowerPoint includes complete source facts in slide notes.
-The PDF's built-in font supports its standard character repertoire. If the deck
-contains an unsupported character, export gives a clear refusal; PowerPoint
-preserves Unicode. No customer message or provider upload occurs.
+The PDF embeds the self-hosted DejaVu Sans 2.37 font, distributed under its
+Bitstream Vera license (see `src/buoy/reviews/fonts/LICENSE.txt`). It supports
+Latin, Greek and Cyrillic text, including accented letters,
+plus punctuation and symbols present in that font. Lines wrap at measured
+glyph widths and continue onto additional pages, retaining source hyperlinks.
+Other scripts, CJK characters and emoji are outside this PDF coverage. A missing
+glyph or unsupported script gives a clear refusal naming its Unicode code point;
+PowerPoint remains available. No remote font request is made. No customer message or provider upload occurs.
 
 Log a held meeting with evidence and explicit follow-up task titles/due dates.
-This owner/admin action approves those internal tasks, assigns the current account
+This owner or administrator action approves those internal tasks, assigns the current account
 owner, and records the meeting and tasks on the account timeline. The submitted account revision must still match before any follow-up is approved.
 Repeating the same operation keeps one meeting and one set of tasks. A changed replay refuses.
 Source-linked decks and meetings restore with the installation. Account erasure,
@@ -30,7 +35,9 @@ deck and keeps an affected erasure request held until explicit release. Previous
 
 REVIEW-001 remains partial. Direct Google Slides export needs an authorized Google
 connection and is unavailable; a PowerPoint download is not labeled Google Slides
-export. Connected-source completeness, full historical adoption/support review
-windows and a Unicode PDF font remain unfinished. The conservative default is
-owner/admin-only local preparation, review and export, with no customer send;
-policy approval is still required before this clause can be done.
+export. Connected-source completeness, full historical adoption and support review
+windows remain unfinished. RL-106 permits the current owner and administrator
+local preparation, review and export door while delegated CSM account, field and
+export rights remain unfinished under ROLE-001. Customer disclosure, provider
+upload and broader linked-person custody retain their separate authority and
+provider prerequisites; local export establishes none of them.

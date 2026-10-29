@@ -1,5 +1,6 @@
 // TEAM-001: 300 real account records through account creation, reviewed assignment and handover doors.
 import assert from 'node:assert/strict'
+import {teamPlan,teamPlanRows,assertPlanHandover} from './team-plan-fixture.mjs'
 export async function teamJourney({call,json,request,cookie,member,signIn,account}){
  const owner=(await json(await call('/state'))).operator.id, csms=[]
  for(const [name,email] of [['Maya Chen','maya'],['Owen Reed','owen'],['Priya Shah','priya'],['Sam Brooks','sam']]){
@@ -28,6 +29,22 @@ export async function teamJourney({call,json,request,cookie,member,signIn,accoun
  open.push(await task('TEAM-001 handover customer workshop',fromId));open.push(await task('TEAM-001 handover adoption check-in',fromId))
  const other=await task('TEAM-001 executive sponsor follow-up',owner), done=await task('TEAM-001 completed kickoff',fromId)
  await json(await call(`/tasks/${done.id}/complete`,'POST',{outcome:'Kickoff completed',evidence:'Customer confirmed the workshop attendance.'}))
+ const segment=await json(await call('/segments','POST',{name:'Reviewed handover milestone cohort',mode:'static',rules:{match:'all',conditions:[]},accountIds:book.map(a=>a.id),tier:null,stage:null,playbook:null}),201)
+ const outcome=await json(await call('/outcomes','POST',{name:'Handover rollout readiness',segmentId:segment.id,kind:'healthy',windowDays:30,taskIds:[open[0].id],operationKey:'synthetic-buoy-2401'}),201)
+ const milestones=[{id:'rollout',title:'Reach the agreed healthy evidence',objectiveId:'usage',outcomeId:outcome.id}]
+ const drafts=[]
+ for(const a of book)drafts.push(await teamPlan({call,json},a.id,fromId,{name:'Rollout draft for '+a.name,...(a.id===first.id?{taskIds:open.map(t=>t.id),milestones}:{})}))
+ const firstDraft=drafts[0],boundary={customerOwnerId:firstDraft.row.customerOwnerId}
+ await teamPlan({call,json},first.id,owner,{...boundary,name:'Executive-owned success draft'})
+ const shared=await teamPlan({call,json},first.id,fromId,{...boundary,name:'Customer-reviewed success plan'})
+ const revoked=await teamPlan({call,json},first.id,fromId,{...boundary,name:'Previously shared success plan'})
+ const outside=state.accounts.find(a=>a.ownerId===csms[2])
+ await teamPlan({call,json},outside.id,fromId,{name:'Separate book success draft'})
+ const planAccounts=[...book.map(a=>a.id),outside.id],selected=new Set(drafts.map(p=>p.row.id))
+ const customerEmail=['team-plan-champion','example.test'].join('@')
+ await json(await call('/portal-invitations','POST',{email:customerEmail,displayName:'Customer rollout sponsor'}),202)
+ const customerCookie=await signIn(customerEmail)
+ const share=async p=>json(await call('/accounts/'+first.id+'/portal-sharing','POST',{planId:p.row.id,planRevision:p.row.revision,email:customerEmail,days:30,taskIds:[]} ),201)
  const input={mode:'handover',fromId,toId,note:'Maya hands the commercial book to Owen. Confirm rollout milestones and review each open risk with the customer.'}
  const refused=await json(await call('/team/preview','POST',input));assert.equal(refused.canApply,false);assert.ok(refused.diagnostics.length)
  assert.equal((await call('/team/apply','POST',{...input,fingerprint:refused.fingerprint})).status,409)
@@ -35,11 +52,72 @@ export async function teamJourney({call,json,request,cookie,member,signIn,accoun
  assert.equal((await call('/team/preview','POST',{...input,note:''})).status,400,'book handover needs a note')
  settings.capacities.find(c=>c.personId===toId).capacity=150
  await json(await call('/team/settings','PUT',settings))
+ const custody=async()=>{
+  const s=await json(await call('/state'))
+  return {accounts:s.accounts.map(a=>({id:a.id,ownerId:a.ownerId,revision:a.revision,handovers:a.handovers})),tasks:s.tasks,plans:await teamPlanRows({call,json},planAccounts)}
+ }
+ // Sharing does not rotate the account revision, so draft eligibility itself must be fenced.
+ const unsharedReview=await json(await call('/team/preview','POST',input)),beforeSharing=(await json(await call('/state'))).accounts.find(a=>a.id===first.id).revision
+ const grant=await share(shared),withdrawn=await share(revoked)
+ const grantRow=(await json(await call('/accounts/'+first.id+'/portal-sharing'))).grants.find(g=>g.id===withdrawn.id)
+ await json(await call('/accounts/'+first.id+'/portal-sharing/'+withdrawn.id,'DELETE',{revision:grantRow.revision}))
+ assert.equal((await json(await call('/state'))).accounts.find(a=>a.id===first.id).revision,beforeSharing)
+ const portalPath='/api/buoy/portal/'+grant.id,view=await json(await request(portalPath,{cookie:customerCookie}))
+ await json(await request(portalPath+'/action',{cookie:customerCookie,method:'POST',body:{revision:view.revision,action:'confirm',objectiveId:'statement',statement:'The rollout meets the agreed outcome.'}}),201)
+ await json(await request(portalPath+'/action',{cookie:customerCookie,method:'POST',body:{revision:view.revision,action:'comment',comment:'Keep this customer-owned content unchanged during handover.'}}),201)
+ const visible=await json(await request(portalPath,{cookie:customerCookie})),unmoved=await custody()
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:unsharedReview.fingerprint})).status,409,'Sharing a reviewed draft invalidates the whole handover')
+ assert.deepEqual(await custody(),unmoved,'Stale sharing review moves no accounts, tasks, plans or notes')
+ const draftReview=await json(await call('/team/preview','POST',input))
+ firstDraft.row=await firstDraft.save({id:firstDraft.row.id,revision:firstDraft.row.revision,name:'Revised rollout draft'})
+ const changedDraft=await custody()
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:draftReview.fingerprint})).status,409,'An edited draft invalidates the whole handover')
+ assert.deepEqual(await custody(),changedDraft,'Stale draft review moves no accounts, tasks, plans or notes')
+ const ownershipReview=await json(await call('/team/preview','POST',input))
+ firstDraft.row=await firstDraft.save({id:firstDraft.row.id,revision:firstDraft.row.revision,staffOwnerId:owner})
+ const changedOwner=await custody()
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:ownershipReview.fingerprint})).status,409,'Changing a draft staff owner invalidates the reviewed selection')
+ assert.deepEqual(await custody(),changedOwner,'Stale ownership review moves no accounts, tasks, plans or notes')
+ const withoutDraft=await json(await call('/team/preview','POST',input))
+ assert.ok(!withoutDraft.moves.some(m=>m.drafts.some(p=>p.id===firstDraft.row.id)),'The separately owned draft is excluded from a fresh review')
+ firstDraft.row=await firstDraft.save({id:firstDraft.row.id,revision:firstDraft.row.revision})
+ const customerReview=await json(await call('/team/preview','POST',input))
+ const newCustomerOwner=await json(await call('/customer-people','POST',{kind:'contact',name:'Replacement rollout sponsor',accountIds:[first.id],source:'synthetic-buoy-2402'}),201)
+ firstDraft.row=await firstDraft.save({id:firstDraft.row.id,revision:firstDraft.row.revision,customerOwnerId:newCustomerOwner.id})
+ const changedCustomer=await custody()
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:customerReview.fingerprint})).status,409,'Changing a draft customer owner invalidates the reviewed custody')
+ assert.deepEqual(await custody(),changedCustomer,'Stale customer review moves no accounts, tasks, plans or notes')
+ const beforeAdditional=await json(await call('/team/preview','POST',input))
+ const additional=await teamPlan({call,json},first.id,fromId,{customerOwnerId:newCustomerOwner.id,name:'Second rollout workstream',taskIds:[open[1].id],milestones})
+ drafts.push(additional);selected.add(additional.row.id)
+ const addedDraft=await custody()
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:beforeAdditional.fingerprint})).status,409,'A newly created draft invalidates the complete reviewed selection')
+ assert.deepEqual(await custody(),addedDraft,'Stale selection moves no accounts, tasks, plans or notes')
  const stale=await json(await call('/team/preview','POST',input))
  settings.rules[0].name='Commercial territory assignment';await json(await call('/team/settings','PUT',settings))
  assert.equal((await call('/team/apply','POST',{...input,fingerprint:stale.fingerprint})).status,409,'changing rules invalidates the reviewed plan')
  const reviewed=await json(await call('/team/preview','POST',input));assert.equal(reviewed.moves.length,75);assert.equal(reviewed.moves.reduce((n,m)=>n+m.openTasks,0),2)
+ const beforePlans=await teamPlanRows({call,json},planAccounts)
+ assert.equal(beforePlans.length,80)
+ assert.deepEqual(beforePlans.find(p=>p.id===firstDraft.row.id).milestones,milestones)
+ assert.deepEqual(beforePlans.find(p=>p.id===firstDraft.row.id).taskIds,open.map(t=>t.id))
+ const retainedOutcome=({enrolled,comparison,...report})=>({...report,...Object.fromEntries(Object.entries({enrolled,comparison}).map(([cohort,rows])=>[cohort,rows.map(({currentInputs,...row})=>row)]))})
+ const beforeOutcome=retainedOutcome(await json(await call('/outcomes/'+outcome.id+'/report')))
+ assert.deepEqual(beforeOutcome.enrolled.map(a=>a.accountId),[first.id])
+ assert.deepEqual(beforeOutcome.comparison.map(a=>a.accountId).sort(),book.filter(a=>a.id!==first.id).map(a=>a.id).sort())
+ assert.deepEqual(reviewed.moves.flatMap(m=>m.drafts.map(p=>({accountId:m.accountId,fromId:m.fromId,toId:m.toId,...p}))).sort((a,b)=>a.id.localeCompare(b.id)),drafts.map(p=>({accountId:p.accountId,fromId,toId,id:p.row.id,name:p.row.name,revision:p.row.revision,staffOwnerId:fromId,customerOwnerId:p.row.customerOwnerId})).sort((a,b)=>a.id.localeCompare(b.id)),'Review names every selected draft, current revision and both current owners')
+ const beforeDeniedApply=await custody()
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:reviewed.fingerprint},{cookie:member})).status,403,'A valid review grants no member authority')
+ assert.deepEqual(await custody(),beforeDeniedApply)
  await json(await call('/team/apply','POST',{...input,fingerprint:reviewed.fingerprint}))
+ const afterPlans=await teamPlanRows({call,json},planAccounts)
+ assertPlanHandover(beforePlans,afterPlans,selected,toId)
+ assert.deepEqual(retainedOutcome(await json(await call('/outcomes/'+outcome.id+'/report'))),beforeOutcome,'Handover preserves the milestone window, frozen cohorts and observed evidence')
+ assert.deepEqual(await json(await request(portalPath,{cookie:customerCookie})),visible,'Customer plan, confirmation and comments are unchanged')
+ assert.equal((await request('/api/buoy/portal/'+withdrawn.id,{cookie:customerCookie})).status,403,'Handover does not revive withdrawn customer access')
+ const afterHandover=await custody()
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:reviewed.fingerprint})).status,409,'Successful review cannot be replayed')
+ assert.deepEqual(await custody(),afterHandover)
  state=await json(await call('/state'))
  assert.equal(state.accounts.filter(a=>a.ownerId===fromId).length,0);assert.equal(state.accounts.filter(a=>a.ownerId===toId).length,150)
  for(const moved of book){const a=state.accounts.find(a=>a.id===moved.id);assert.equal(a.ownerId,toId);assert.ok(a.handovers.some(h=>h.note===input.note&&h.fromId===fromId&&h.toId===toId&&h.actorId===owner&&Date.parse(h.recordedAt)))}
@@ -51,6 +129,12 @@ export async function teamJourney({call,json,request,cookie,member,signIn,accoun
  assert.match(await (await request('/app/team',{cookie})).text(),/over target by 50/,'lowering capacity is allowed and the over-target book is visible')
  const rebalance=await json(await call('/team/preview','POST',{mode:'rebalance'}));assert.equal(rebalance.canApply,true);assert.equal(rebalance.moves.length,50);assert.ok(rebalance.moves.every(m=>m.fromId===toId&&m.toId!==toId))
  await json(await call('/team/apply','POST',{mode:'rebalance',fingerprint:rebalance.fingerprint}))
+ const afterRebalance=await teamPlanRows({call,json},planAccounts)
+ for(const p of afterPlans){
+  const move=rebalance.moves.find(m=>m.accountId===p.accountId),current=afterRebalance.find(row=>row.id===p.id)
+  if(move&&selected.has(p.id)){assert.equal(current.staffOwnerId,move.toId);assert.notEqual(current.revision,p.revision);assert.equal(current.customerOwnerId,p.customerOwnerId);assert.deepEqual(current.objectives,p.objectives)}
+  else assert.deepEqual(current,p,'Rebalance preserves unselected plans')
+ }
  const final=await json(await call('/team'));assert.equal(final.books.find(b=>b.personId===toId).assigned,100)
  assert.ok(final.teams.some(t=>t.name==='Growth CSMs'&&t.pod==='Commercial'&&t.personIds.length===4))
  // No allocation is made to a CSM at target, even if they appear first in the rule.
@@ -58,5 +142,8 @@ export async function teamJourney({call,json,request,cookie,member,signIn,accoun
  const handovers=(await json(await call('/state'))).accounts.find(a=>a.id===first.id).handovers
  assert.ok(handovers.length>=2)
  await json(await call('/accounts/'+first.id,'DELETE',{confirmation:first.name}))
+ assert.equal((await call('/accounts/'+first.id+'/plans')).status,404)
+ assert.equal((await call('/team/apply','POST',{...input,fingerprint:reviewed.fingerprint})).status,409,'Old handover cannot recreate erased account plans')
+ assert.equal((await request(portalPath,{cookie:customerCookie})).status,403)
  assert.ok(!(await json(await call('/team'))).handovers.some(h=>h.accountId===first.id),'erasure removes notes with their account')
 }

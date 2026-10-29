@@ -1,5 +1,4 @@
 import {trustJourney,trustPrivacyJourney,trustUndoJourney} from './trust-journey.mjs'
-import {planOutcomeJourney} from './plan-outcome-journey.mjs'
 import {portalJourney,portalWithdrawalJourney} from './portal-journey.mjs'
 import {integrationJourney} from './integration-journey.mjs'
 import {reviewJourney} from './review-journey.mjs'
@@ -23,6 +22,7 @@ import {customerPeopleJourney} from './customer-people-journey.mjs'
 import {usageJourney} from './usage-journey.mjs'
 import {fieldJourney} from './field-journey.mjs'
 import { importClient } from './import-door-client.mjs'
+import { accountErasureJourney } from './import-door-journey.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { outcomeJourney } from './outcome-journey.mjs'
@@ -112,18 +112,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok(!(await json(await call('/state'))).accounts.some(a=>a.id==='move-one'))
   })
   await t.test('IMPORT-001 ERASE-001 door undo preserves dependent work and owner erasure withdraws door custody',async()=>{
-   const upload={accounts:[account('move-two')]}, plan=await door.plan(upload)
-   const job=await door.apply(plan)
-   await json(await call('/proposals','POST',{accountId:'move-two',kind:'playbook',payload:{title:'Escalate support',dueDate:'2027-01-31'}}),201)
-   assert.equal((await door.send('undo',{planId:plan.planId})).status,409)
-   assert.equal((await call('/accounts/move-two','DELETE',{confirmation:'Harbour Software'},{cookie:member})).status,403)
-   await json(await call('/accounts/move-two','DELETE',{confirmation:'Harbour Software'}))
-   const state=await json(await call('/state'));assert.ok(!state.accounts.some(a=>a.id==='move-two'));assert.ok(!state.proposals.some(p=>p.accountId==='move-two'))
-   const history=await json(await call('/imports'));assert.ok(history.erasures.length)
-   const retained=JSON.stringify(await json(await call(`/imports/${job.id}`)))
-   assert.ok(!retained.includes('Harbour Software'));assert.ok(!retained.includes('INV-1042'))
-   assert.equal((await call('/accounts','POST',account('move-two'))).status,409)
-   const withdrawn=await door.send('reconcile',{planId:plan.planId});assert.equal(withdrawn.status,410)
+   await accountErasureJourney({request,cookie,member,account})
   })
   await t.test('server-rendered work screens and unknown paths',async()=>{
    for(const path of ['/app','/app/accounts/harbour','/app/imports','/app/backups']){
@@ -219,6 +208,7 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    const last=await json(await call('/audit?'+filters+'&offset='+first.nextOffset))
    assert.equal(last.entries.length,2);assert.equal(last.nextOffset,null)
    assert.equal(new Set([...first.entries,...last.entries].map(e=>e.id)).size,52)
+   assert.deepEqual([...first.entries,...last.entries].map(({actor,action,subject,detail})=>({actor,action,subject,detail})).sort((a,b)=>a.subject.localeCompare(b.subject)),Array.from({length:52},(_,i)=>({actor:'agent:'+agent.id,action:'agent.refused',subject:'command audit-probe-'+String(i).padStart(2,'0'),detail:'Unknown command. Agents can prepare; people approve.'})),'Every expected refusal tuple is present, with its own actor, subject and detail')
    assert.deepEqual([...first.entries,...last.entries].map(e=>e.occurredAt),[...first.entries,...last.entries].map(e=>e.occurredAt).sort().reverse())
    assert.equal((await json(await call('/audit?'+filters.replace('action=AGENT.REFUSED','action=missing')))).entries.length,0)
    assert.equal((await json(await call('/audit?actor='+encodeURIComponent(agent.id)+'&subject=%25'))).entries.length,0,'percent is literal, not a wildcard')
@@ -650,5 +640,3 @@ test('AGENT-007 import undo preserves dependent trust work on either account',tr
 test('PLAN-001 customer portal confirmation and isolated collaboration',portalJourney)
 
 test('PLAN-001 customer access expiry and withdrawal',portalWithdrawalJourney)
-
-test('PLAN-001 objective milestone windows and frozen comparison',planOutcomeJourney)

@@ -65,6 +65,7 @@ export async function mutate(api: Api, request: Request, path: string, fields: F
     return {redirect:path+'?review='+encodeURIComponent(result!.id),message:'Business review saved.',saved:action};
   }
   if(path==='/app/reports') {
+    if(action==='dashboard-preset'){const saved=await send<{id:string}>('/api/buoy/dashboards',{presetId:fields.presetId,segmentId:fields.segmentId||null});return {redirect:path+'?dashboard='+encodeURIComponent(saved.id),message:'Private starter dashboard created. No sharing or delivery was configured.',saved:'dashboard-preset'};}
     const parse=(value:string)=>{try{return JSON.parse(value)}catch{throw new ApiError('Enter valid report JSON.')}};
     const split=(value:string)=>(value??'').split(',').map(s=>s.trim()).filter(Boolean);
     if(action==='report-create') {const saved=await send<{id:string}>('/api/buoy/reports',{spec:{name:fields.name,object:'account',rules:parse(fields.rules),segmentId:fields.segmentId||null,groupBy:fields.groupBy,measure:fields.measure,operation:fields.operation,formula:fields.formula||null,chart:fields.chart,sharedRoles:split(fields.sharedRoles)}});return {redirect:path+'?report='+encodeURIComponent(saved.id),message:'Report saved.',saved:'report-create'};}

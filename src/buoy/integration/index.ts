@@ -10,6 +10,9 @@ import {refreshAccountConsumers} from '../account-consumers'
 import {openapi} from './openapi'
 
 type Token={id:string;token_hash:string;owner_id:string;owner_version:number;scopes:string;account_ids:string;account_scope:'explicit'|'all';requests_per_minute:number;expires_at:number}
+export interface IntegrationInventory {
+ items:{id:string;label:string;scopes:string[];accountIds:string[];accountScope:string;requestsPerMinute:number;expiresAt:number;createdAt:string|null;lastUsedAt:string|null;issuer:{id:string;displayName:string|null};stoppedReason:string|null;expiringSoon:boolean}[]
+}
 type Receipt={request_hash:string;account_id:string;revision:string;status:number}
 const prefix='/api/buoy/v1'
 const authoritySql="EXISTS(SELECT 1 FROM buoy_integration_tokens t JOIN oa_operators o ON o.id=t.owner_id WHERE t.id=? AND t.token_hash=? AND t.revoked_at IS NULL AND t.expires_at>? AND o.status='active' AND o.role='owner' AND o.version=t.owner_version AND t.scopes=? AND t.account_ids=? AND t.account_scope=?)"
@@ -57,7 +60,8 @@ integrationApi.get(prefix+'/tokens',async c=>{
  WHEN o.id IS NULL OR o.status<>'active' OR o.role<>'owner' OR o.version<>t.owner_version THEN 'issuer_change'
  WHEN t.expires_at<=? THEN 'expiry' ELSE NULL END AS stopped_reason
  FROM buoy_integration_tokens t LEFT JOIN oa_operators o ON o.id=t.owner_id ORDER BY t.created_at DESC,t.id`,Date.now()).all<{id:string;label:string;scopes:string;account_ids:string;account_scope:string;requests_per_minute:number;expires_at:number;created_at:string|null;last_used_at:string|null;revoked_at:number|null;owner_id:string;display_name:string|null;stopped_reason:string|null}>()
- return c.json({items:rows.results.map(t=>({id:t.id,label:t.label,scopes:JSON.parse(t.scopes),accountIds:JSON.parse(t.account_ids),accountScope:t.account_scope,requestsPerMinute:t.requests_per_minute,expiresAt:t.expires_at,createdAt:t.created_at,lastUsedAt:t.last_used_at,issuer:{id:t.owner_id,displayName:t.display_name},stoppedReason:t.stopped_reason,expiringSoon:t.stopped_reason===null&&t.expires_at<=Date.now()+14*86400000}))})
+ const inventory:IntegrationInventory={items:rows.results.map(t=>({id:t.id,label:t.label,scopes:JSON.parse(t.scopes),accountIds:JSON.parse(t.account_ids),accountScope:t.account_scope,requestsPerMinute:t.requests_per_minute,expiresAt:t.expires_at,createdAt:t.created_at,lastUsedAt:t.last_used_at,issuer:{id:t.owner_id,displayName:t.display_name},stoppedReason:t.stopped_reason,expiringSoon:t.stopped_reason===null&&t.expires_at<=Date.now()+14*86400000}))}
+ return c.json(inventory)
 })
 integrationApi.delete(prefix+'/tokens/:id',async c=>{
  const env=runtimeBindings(c.env),actor=await owner(c.req.raw,env),tokenId=c.req.param('id')

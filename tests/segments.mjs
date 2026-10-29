@@ -3,9 +3,10 @@ import assert from 'node:assert/strict'
 import { chromium } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 import { startWorker } from './worker.mjs'
-const app=await startWorker(),browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+import { assertSegmentReport } from './segment-journey.mjs'
+const app=await startWorker({clock:Date.parse('2026-10-28T12:00:00Z')}),browser=await chromium.launch({headless:true,...(process.env.BUOY_CHROMIUM_PATH?{executablePath:process.env.BUOY_CHROMIUM_PATH}:{}),args:['--no-sandbox','--use-mock-keychain','--password-store=basic']})
 try{
- const today=new Date().toISOString().slice(0,10)
+ const today='2026-10-28'
  const call=(path,method='GET',body)=>app.request('/api/buoy'+path,{method,body,cookie:app.cookie})
   for(const width of [1440,390]){
   const account={id:`harbour-${width}`,name:`Harbour Software ${width}`,renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Signed renewal order form section 4',billing:{observedAt:today,reference:`INV-${width}`,currency:'USD',totalMinor:6500000,creditsMinor:0,allocatedMinor:0,dueDate:today},support:{observedAt:today,reference:`SUP-${width}`,openTickets:4,urgentTickets:1}}
@@ -29,7 +30,7 @@ try{
   assert.equal(segment.members.length,1);assert.equal(segment.history.length,1)
   const report=page.locator(`#segment-${segment.id}`);assert.match(await report.innerText(),/1 members/);assert.match(await report.innerText(),/Strategic partners/)
   await report.scrollIntoViewIfNeeded();await capture('segments-report')
-  const csv=await call(`/segments/${segment.id}/report.csv`);assert.match(await csv.text(),new RegExp(account.name))
+  await assertSegmentReport({call,json:async response=>{assert.equal(response.status,200);return response.json()},id:segment.id,name:segment.name,expected:[[account.id,account.name,'at-risk','Strategic partners','renewal',segment.history[0].enteredAt,`1 urgent open support ticket(s) in SUP-${width}.`,'billing: current; support: current','Health describes recorded evidence; it is not a churn prediction or proof of causation.']]})
   await page.goto(app.origin+`/app/accounts/${account.id}`)
   const approval=page.locator(`form#approve-${segment.history[0].proposalId}`)
   await submit(approval,'Approve and create task')
