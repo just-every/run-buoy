@@ -15,14 +15,13 @@ The public website and owner guides are at [run-buoy.com](https://run-buoy.com).
 
 ## Run from a clone
 
-You need Git on macOS, Linux or Windows with WSL2. Two lines, the same as [run-buoy.com/run](https://run-buoy.com/run):
+On macOS, Linux or Windows with WSL2, run one line, the same as [run-buoy.com/run](https://run-buoy.com/run):
 
 ```sh
-curl -fsSL https://runeditrun.com/install.sh | sh
-rer dev just-every/run-buoy
+curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-buoy
 ```
 
-The first line installs rer with its own Node when you have no Node 22 or later; if it ends with a line to run, run it before the second. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` does both in one line.
+git is required; rer brings Node and pnpm. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-buoy` is the alternative.
 
 To start it again later, run `cd run-buoy && rer dev`. `rer dev` installs the pinned dependencies, selects Node 22.20.0 and pnpm 10.12.4, migrates local D1 and prepares a local owner. Open the private link it prints on this computer, confirm the owner at **Finish setup**, then open **Accounts**. No Cloudflare account or mail provider is needed locally. Keep the sign-in link private. A first run can take a few minutes; a queue wait prints its position.
 

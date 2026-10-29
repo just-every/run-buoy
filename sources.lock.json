@@ -796,7 +796,7 @@
       "executable": false
     },
     "README.md": {
-      "sha256": "8e920ffead3e66e4150ffed22b1cc54cb314e25a68b8983fcbf0d53871766a5f",
+      "sha256": "f119881f7e55f535c3cd6d309b820ee2be0b498def3c1791e20fdb53915ac6ff",
       "executable": false
     },
     "release-history/0.1.0.json": {
@@ -828,7 +828,7 @@
       "executable": false
     },
     "RUN-LOCALLY.md": {
-      "sha256": "3e9e81b3343eb8b97b6403306451f7cc9d167a92525faabbc4443c49dbaf1230",
+      "sha256": "aa62ac04e0e144820fbeb26ed3c2b3dbfdc28668e775ff4fcaac712778b4a7ba",
       "executable": false
     },
     "scripts/build-deployment-spec.mjs": {
