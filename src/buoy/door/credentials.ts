@@ -90,7 +90,9 @@ export function doorLocalCredentials(original: Bindings) {
   ])
   grant.requests = Number((reservation.results[0] as { requests: number }).requests)
   requests.set(request, entry)
-  return { sponsor: { id: grant.ownerId }, agent: { id: grant.id, name: grant.label }, clientId: grant.id, scopes: [...grant.policy.scopes] }
+  // Admission uses this request's atomic reservation, not a later request's
+  // counter. Over-limit calls have no effect scope and finalize as HTTP 429.
+  return { sponsor: { id: grant.ownerId }, agent: { id: grant.id, name: grant.label }, clientId: grant.id, scopes: grant.requests>grant.policy.requestsPerMinute?[]:[...grant.policy.scopes] }
  }
 }
 

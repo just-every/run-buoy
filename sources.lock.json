@@ -1388,7 +1388,7 @@
       "executable": false
     },
     "src/buoy/door/credentials.ts": {
-      "sha256": "5178f15ec825cb8ea7300fc54b93bf4cc0646235b58b234534d5e73433f99bdd",
+      "sha256": "ec7bd87a8c44096fc89bb362aa8f0f6a7f36ce1a058d789a074cd7adb9d911b7",
       "executable": false
     },
     "src/buoy/door/experiments.ts": {
@@ -1396,7 +1396,7 @@
       "executable": false
     },
     "src/buoy/door/index.ts": {
-      "sha256": "5b00f38531e71871827243a318161c43d3e2b20f0242ffacfb2147917fe9a14b",
+      "sha256": "075d175794d26306c1ce51fbb0e8313c21ec2a16a6679fb79d895f88a4cc46cb",
       "executable": false
     },
     "src/buoy/door/legacy.ts": {
@@ -1404,7 +1404,7 @@
       "executable": false
     },
     "src/buoy/door/native.ts": {
-      "sha256": "f734fa39a5b966aab8968f6d861571cc3891b48d9b7c71fd54d8cd8a70b06e21",
+      "sha256": "a211c9fc119d8fc6ea78bf9110cbd6294ebfc79885c03f608b8089d5a2eff1fd",
       "executable": false
     },
     "src/buoy/door/people.ts": {

@@ -17,7 +17,6 @@ export async function nativeActor(env:Bindings,ctx:ToolContext,command:AgentComm
  if(paused?.disabled)throw new ToolRefusal('agents_paused')
  const grant=ctx.consent?null:await localAgentGrant(env,ctx.agent.id)
  if(!ctx.consent && (!grant||grant.ownerId!==person.id))throw new ToolRefusal('unauthenticated')
- if(grant && grant.requests>grant.policy.requestsPerMinute)throw new ToolRefusal('rate_limited')
  if(grant)requireCommand(grant.policy,command)
  const actor:Actor={...person,kind:'agent',...(grant?{tokenId:grant.id,agentPolicy:grant.policy}:{}),door:{
   sponsorId:person.id,sponsorRole:person.role,sponsorVersion:current.version,agentId:ctx.agent.id,

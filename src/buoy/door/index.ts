@@ -18,6 +18,13 @@ export function buoyDoor(original: Bindings, name = branding.name) {
   seed: 'buoy', name, specialist: 'customer success operator', origin: env.AUTH_ORIGIN, db: env.DB,
   capabilities: ['tools', 'policy', 'pause', 'audit', 'idempotency'],
   trust: ownerClaimTrust(env), tools: buoyTools(env), people: buoyPeople(env),
+  notTools: [
+   {clauses:['HTTP-001'],reason:'installation'},
+   {clauses:['DATA-001','IMPORT-001'],reason:'import-door'},
+   {clauses:['RESTORE-001','SCALE-001','BOUNDARY-001','BOUNDARY-002','BOUNDARY-003','BOUNDARY-004','BOUNDARY-005'],reason:'installation'},
+   {clauses:['SITE-001','STYLE-001','A11Y-001'],reason:'screen'},
+   {clauses:['MOBILE-001'],reason:'device'},
+  ],
   localCredentials: doorLocalCredentials(env), currentScopes: principal => currentDoorScopes(env, principal),
  })
 }
