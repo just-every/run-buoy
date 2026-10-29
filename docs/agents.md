@@ -47,8 +47,8 @@ requires its native `operationKey`.
 The declared capabilities are tools, policy, pause, audit and idempotency.
 Resources, prompts, events and subscriptions are undeclared and return
 `capability_not_declared` when called. This is a preparation subset of the
-contracted customer-success surface. See the [native door guide](/docs/agent-door)
-for transport limits, source versions and the remaining contract gaps.
+contracted customer-success surface. The repository’s `docs/agent-door.md` guide
+describes transport limits, source versions and the remaining contract gaps.
 
 ## Create a credential
 
