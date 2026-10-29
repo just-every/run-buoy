@@ -84,7 +84,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "39b612b4e45f5af684a396aa4f08c48fd0ea2847c0a7b814835bb1204ecdf9ef",
+      "sha256": "734142f4fa3c8fcbe9922b83942961e16a71642b8baafa129e19b45b8f9674f3",
       "executable": false
     },
     "agent-surface.json": {
@@ -112,7 +112,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "0dbb69143a5aaa937c6f107f1eca019a3e767c188360e015ad221b8a923096eb",
+      "sha256": "f64b6f21db1f9412b119ac8720bcd5aae069510d4a4201be670825d3d6d575e3",
       "executable": false
     },
     "DEMO.md": {
@@ -1400,7 +1400,7 @@
       "executable": false
     },
     "src/buoy/door/legacy.ts": {
-      "sha256": "dd3f62ccedc6dbe4969f7adbc598bcba7de30447c1ad6b7ac2882742f0caf4c1",
+      "sha256": "d23e9cf60fc03c9dc55b428f03344d54695cc35a579d17b38a475753058c3b25",
       "executable": false
     },
     "src/buoy/door/native.ts": {
@@ -1412,11 +1412,11 @@
       "executable": false
     },
     "src/buoy/door/preparations.ts": {
-      "sha256": "d31c291902823e83e70e80ddb432946398419a13144a3560cbf33d05221adebf",
+      "sha256": "61ec883d37299e1b7ba82b4c94fd27a4bfd2874e8230fb83d49fe63d23206b64",
       "executable": false
     },
     "src/buoy/door/reads.ts": {
-      "sha256": "d02d7e05fd1bb46a019f5411f54c6b4c6d0fbd12d1412e8fdd8720966e4e3d8c",
+      "sha256": "30038fe454e4b45323bf12b4f613cc270d4f44144e73d20e4920be7bff626020",
       "executable": false
     },
     "src/buoy/door/schema.ts": {

@@ -11,10 +11,11 @@ export async function legacyCommands(request:Request,env:Bindings):Promise<Respo
  if(new URL(request.url).pathname!=='/api/buoy/commands'||!request.headers.has('authorization'))return null
  const reply=(body:unknown,status=200)=>Response.json(body,{status,headers:{'cache-control':'no-store'}})
  if(!['GET','POST'].includes(request.method))return reply({code:'method_not_allowed'},405)
+ let accounted=false
  try{
   const body=request.method==='POST'?await jsonBody(request):{}
   const command=String(body.command??'')
-  if(request.method==='POST'&&!COMMANDS.includes(command as typeof COMMANDS[number]))await refusedInput(request,env,`command ${command}`,'Unknown command. Agents can prepare; people approve.',400)
+  if(request.method==='POST'&&!COMMANDS.includes(command as typeof COMMANDS[number])){accounted=true;await refusedInput(request,env,`command ${command}`,'Unknown command. Agents can prepare; people approve.',400)}
   const input=body.input&&typeof body.input==='object'&&!Array.isArray(body.input)?body.input as Record<string,unknown>:{}
   const params=request.method==='GET'?{}:{name:`buoy.${command}`,arguments:{...input,
    ...(body.idempotency_key!==undefined?{idempotency_key:body.idempotency_key}:request.headers.has('idempotency-key')?{idempotency_key:request.headers.get('idempotency-key')}:{}),
@@ -42,7 +43,7 @@ export async function legacyCommands(request:Request,env:Bindings):Promise<Respo
  }catch(error){
   if(error instanceof Problem){
    if(!request.headers.get('authorization')?.match(/^Bearer ([a-f0-9]{64})$/))return reply({code:'unauthenticated'},401)
-   if(!['Unknown command. Agents can prepare; people approve.'].includes(error.message)){
+   if(!accounted){
     try{await refusedInput(request,env,'commands',error.message,error.status)}catch(refusal){if(refusal instanceof Problem)return reply({code:'invalid_arguments',error:refusal.message},refusal.status);throw refusal}
    }
    return reply({code:'invalid_arguments',error:error.message},error.status)

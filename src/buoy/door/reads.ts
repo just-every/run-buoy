@@ -2,18 +2,18 @@ import type {Bindings} from '../../auth.server'
 import {ToolRefusal,type ToolContext,type ToolDefinition} from '../../modules/agent-door/index.ts'
 import {state} from '../accounts'
 import {projectState} from '../roles/projection'
-import {projectAccounts} from '../agent-policy/policy'
+import {projectAccounts,type AgentCommand} from '../agent-policy/policy'
 import {nativeActor,nativeCall} from './native'
 import {identifier,objectSchema,string} from './schema'
 
-export async function renewalAccounts(env:Bindings,ctx:ToolContext){
- const {actor,person,access}=await nativeActor(env,ctx,'renewals.list')
+export async function renewalAccounts(env:Bindings,ctx:ToolContext,command:AgentCommand='renewals.list'){
+ const {actor,person,access}=await nativeActor(env,ctx,command)
  const raw=await state(env.DB,person)
  const accounts=access.restricted?(await projectState(env.DB,person,raw,access)).accounts:raw.accounts
  return actor.agentPolicy?projectAccounts(accounts as typeof raw.accounts,actor.agentPolicy):accounts
 }
-export async function visibleAccount(env:Bindings,ctx:ToolContext,accountId:string){
- const row=(await renewalAccounts(env,ctx)).find(row=>row.id===accountId)
+export async function visibleAccount(env:Bindings,ctx:ToolContext,accountId:string,command:AgentCommand){
+ const row=(await renewalAccounts(env,ctx,command)).find(row=>row.id===accountId)
  if(!row)throw new ToolRefusal('resource_unavailable')
  return row
 }

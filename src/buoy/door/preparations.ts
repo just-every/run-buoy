@@ -10,7 +10,7 @@ export function preparationTools(env:Bindings):ToolDefinition[]{return (['playbo
  const command=`${kind}.prepare` as const
  const current=async(args:Record<string,unknown>,ctx:ToolContext)=>{
   await nativeActor(env,ctx,command,true)
-  return visibleAccount(env,ctx,String(args.accountId))
+  return visibleAccount(env,ctx,String(args.accountId),command)
  }
  return {
   name:`buoy.${command}`,title:kind==='playbook'?'Prepare a risk playbook':'Prepare renewal evidence',
