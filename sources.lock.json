@@ -88,7 +88,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "2a27c9edb91d038134f698f5d4b198844e8197d2095a7787030ecb8bac236601",
+      "sha256": "39b612b4e45f5af684a396aa4f08c48fd0ea2847c0a7b814835bb1204ecdf9ef",
       "executable": false
     },
     "AGENTS.md": {
@@ -96,7 +96,7 @@
       "executable": false
     },
     "base-copies.json": {
-      "sha256": "4d758488c1213c09934c7b74686c77c5abb6e0800c31edc63feb496bfb6e3692",
+      "sha256": "5bb2bb1b50fd12564abd735aa5b5b57e33f75aab6e5e5d24faa5a312c4ac4092",
       "executable": false
     },
     "CHANGELOG.md": {
@@ -112,7 +112,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "105c16128770323e8b394014bf3e549b1c5e4e6c6d373724263566264f3370c0",
+      "sha256": "9d8d599f2720cde3819bc227d257ba93fc83e015e9b40eef6a19715bec9abdb6",
       "executable": false
     },
     "DEMO.md": {
@@ -156,7 +156,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "d6d5f88188ab503fc36a69a2fdb19a4bfdf345b0dce0a98bfc8c75cda5f4450c",
+      "sha256": "a9a991e995cd4de58db97e99a92ecaeee5c99545dfff8f9f157ad391c1f0b26c",
       "executable": false
     },
     "docs/communication-sentiment.md": {
@@ -672,7 +672,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "6989dea522783d4a64756c5d9a0f59b661a6e87a4151dec107a5db451ec5a9b3",
+      "sha256": "c8f38bfa0165b06260203b27c22c65fc0039b38aa1a4a6851665927bdc19d2d9",
       "executable": false
     },
     "packaging.json": {
@@ -680,7 +680,7 @@
       "executable": false
     },
     "pnpm-lock.yaml": {
-      "sha256": "c67409673be63ec144930649d2960124cdae1db83e869dd675323512987f7a91",
+      "sha256": "d182c33a5b34fd337170b9d5191dc3f0b7b0f441acb25ddf8926c9dc43f3a011",
       "executable": false
     },
     "public/apple-touch-icon.png": {
@@ -848,7 +848,7 @@
       "executable": false
     },
     "scripts/delivery/base/cli.mjs": {
-      "sha256": "5d60954f6b03216613d17ec0d19464c339ce3a8a441c7972bf3f80ceea4f7ad5",
+      "sha256": "85cd5d5fb7f9a002f5dd44ace279702834823794cbd4a24ed9f1bdb5d1ad0f23",
       "executable": false
     },
     "scripts/delivery/base/declarations.mjs": {
@@ -876,7 +876,7 @@
       "executable": false
     },
     "scripts/delivery/base/mail.mjs": {
-      "sha256": "2323205c7cbc1aea81ec85509d597df2e486abfc9443981ceaee04950db913a4",
+      "sha256": "fbe18b3678e88db8f98d760d72d39f4a94552c4685e3b8ce27e15d761ed6a981",
       "executable": false
     },
     "scripts/delivery/base/migrations.mjs": {
@@ -932,7 +932,7 @@
       "executable": false
     },
     "scripts/delivery/base/spec.mjs": {
-      "sha256": "65179ca5222485513260e8d58aaae6740ae6fe1b27065e96f0d95d197fc6d3f0",
+      "sha256": "8096a77005cfbed5c620ab52a5eb6fe77f579927c5e2a867387e9063553fbcd2",
       "executable": false
     },
     "scripts/delivery/base/sql-statements.mjs": {
@@ -944,15 +944,15 @@
       "executable": false
     },
     "scripts/edition-authoring/archive-source.mjs": {
-      "sha256": "073b0b6515e5df412065cba7ba82717a9fc35f794cfcaf4bcfd796d70320f8b5",
+      "sha256": "c59a6a97abfdf80b2874a461ba7800e8604a3141db4594a584d6a0cfedac5f46",
       "executable": false
     },
     "scripts/edition-authoring/base-acknowledgements.mjs": {
-      "sha256": "fd486d607c019f2ff162830149ef717063bcae9ba995ec7f18f14fd3f2cb4b32",
+      "sha256": "ff1fa5d6ba32b519387581eab82842c1bfff71cf053050293cf133e3be3d3f79",
       "executable": false
     },
     "scripts/edition-authoring/base-copies.mjs": {
-      "sha256": "97348449bd9a4d39d70d898963f677c184e3afdbb0a42f7ad140bb8ead96be99",
+      "sha256": "d1b005d4dd096488e7d4ddf94ada571957b29e7d2cb2859ed4e77ba4ec2882fa",
       "executable": false
     },
     "scripts/edition-authoring/cli.mjs": {
@@ -968,7 +968,7 @@
       "executable": false
     },
     "scripts/edition-authoring/files.mjs": {
-      "sha256": "0381ef09ba959116c86f64ce9bd7137a5aeff84defd3cf56315d719f6a512b40",
+      "sha256": "cd8ca780ed1f49977b183f025433227c12f844ff845b89a3a4a1d2d66f14e3e7",
       "executable": false
     },
     "scripts/edition-authoring/lock.mjs": {
@@ -980,11 +980,11 @@
       "executable": false
     },
     "scripts/edition-authoring/module-closure.mjs": {
-      "sha256": "95889883ce093f5c017cd1478107e5744fdef06ad80e36a4f8e6476d9449aff5",
+      "sha256": "fb9cf1caa9760948e256464054647671c6800937cb20e43ef5ca180ad90c4e38",
       "executable": false
     },
     "scripts/edition-authoring/module-edges.mjs": {
-      "sha256": "f89ad266463fd93ceff85749bddf5d0b3d9ef4ae830d48470e2200a23559becc",
+      "sha256": "78961972b44c158e75416629ae1149c419b0cafe2b2cb1336130bbeba2f6620a",
       "executable": false
     },
     "scripts/edition-authoring/module-resolution.mjs": {
@@ -1576,7 +1576,7 @@
       "executable": false
     },
     "src/base/contract-docs.mjs": {
-      "sha256": "59ff5f3635018233bc8caafb2718f95f5420931f370596b998e3c6d3bd94e593",
+      "sha256": "e43dc064aaedaff9309c5c52a42814784e761b82a618cf397cd91251177551e5",
       "executable": false
     },
     "src/base/contract-filter.ts": {
@@ -3504,7 +3504,7 @@
       "executable": false
     },
     "src/modules/import-kit/src/door/ADOPTING.md": {
-      "sha256": "ba357021f40b70af8635eb3a18c4244b28d5480f5522946b2b44911c5c2ca10a",
+      "sha256": "4e817164806b382efb1dbd950aee33b8810a892d37243bc8e464ab241f436525",
       "executable": false
     },
     "src/modules/import-kit/src/door/archive.ts": {
