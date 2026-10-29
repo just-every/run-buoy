@@ -105,3 +105,19 @@ templates, outside/commercial/access/provider classifications, change streams,
 specialist handoffs and the joined CRM/billing/support/usage recovery week still
 require implementation and their own proof. Native source copies and a small
 tool registry do not establish those outcomes.
+
+## Measured CORE conformance
+
+On 29 October 2026, `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json`
+with the installed rer 0.2.88 passed 566/566 BASE-AGENT points, including
+Buoy’s native specialist journey. Build, run-site build, typecheck and the
+existing native governance journey passed. The fixture proves real native
+preparation, matching, dual attribution, changed-argument replay refusal and
+stale opaque-revision refusal. This is evidence for the declared CORE slice,
+not a completion claim for the full customer-success contract.
+
+Retained door arguments, outcomes, approvals and audit are not yet mapped into
+Buoy’s account/contact custody and erasure boundaries. No agent erasure or
+privacy tool is enabled by this adoption; broader custody proof remains owed.
+Installation-bound door policy, grants, saved calls and approvals are excluded
+from portable transfers, while audit evidence remains retained.
