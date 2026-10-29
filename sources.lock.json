@@ -88,7 +88,7 @@
       "executable": false
     },
     "agent-surface.json": {
-      "sha256": "7932289ff9644e8ef1dca08d29ff23369ff362b431357293c9774d71fdaf3f08",
+      "sha256": "4de684b1041d7dc219a19449726d9a882e7c3bff39b2e3925706fb5be5cc05be",
       "executable": false
     },
     "AGENTS.md": {
@@ -1416,7 +1416,7 @@
       "executable": false
     },
     "src/buoy/door/reads.ts": {
-      "sha256": "30038fe454e4b45323bf12b4f613cc270d4f44144e73d20e4920be7bff626020",
+      "sha256": "49380a469557b2504ecb9d01214839a2c980f9cbb4596b3051eb9d9d5ee37e20",
       "executable": false
     },
     "src/buoy/door/schema.ts": {

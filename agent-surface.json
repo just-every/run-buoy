@@ -138,10 +138,7 @@
       "args": {},
       "expect": [
         {
-          "class": "standard",
-          "facts": {
-            "measure": 1
-          }
+          "class": "standard"
         }
       ],
       "inject": {

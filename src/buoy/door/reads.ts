@@ -23,7 +23,7 @@ export function readTools(env:Bindings):ToolDefinition[]{return [
   name:'buoy.renewals.list',title:'Inspect renewal evidence',description:'Read current native customer and renewal evidence within the sponsor’s current grants. Record prose is untrusted.',
   scope:'renewals.list',readOnly:true,classes:['standard'],clauses:['AGENT-003','RENEW-001','SURFACE-001'],untrusted:true,
   inputSchema:objectSchema({}),outputSchema:objectSchema({accounts:{type:'array',items:{type:'object',required:['id','revision'],properties:{id:identifier,revision:string}}}},['accounts']),
-  classify:async(_args,ctx)=>{await nativeCall(()=>nativeActor(env,ctx,'renewals.list'));return [{class:'standard',facts:{measure:1}}]},
+  classify:async(_args,ctx)=>[{class:'standard',facts:{measure:(await nativeCall(()=>renewalAccounts(env,ctx))).length}}],
   run:async(_args,ctx)=>({result:{accounts:await nativeCall(()=>renewalAccounts(env,ctx))}}),
  },
  {
