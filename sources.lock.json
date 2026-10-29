@@ -1956,7 +1956,7 @@
       "executable": false
     },
     "src/buoy/ui/account.ts": {
-      "sha256": "748319ff6e6f0e2ec6d7d4d085cf245bedcf22d61027f8dcef20727c5f53b93b",
+      "sha256": "ffad2d56ee66d0a7659422c69419de34f4193c848f2b1a8330f17fd98411a1a7",
       "executable": false
     },
     "src/buoy/ui/actions.ts": {

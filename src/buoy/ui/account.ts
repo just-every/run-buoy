@@ -59,5 +59,5 @@ export function accountPage(state: State, account: Account, values: Fields | und
   ].join('');
 
   const body = `${view.html}<div class="workbench"><div class="work-records">${section('Proposals awaiting review and approval history', proposalList, 'proposals')}${section('Approved tasks', taskList, 'tasks')}${handovers}${section('Renewal decisions', decisionList, 'decisions')}</div><div class="work-facts">${health}${evidence}</div></div><section class="actions-area" aria-labelledby="actions-heading"><h2 id="actions-heading">Work on this account</h2><div class="actions-grid">${actions}</div></section>`;
-  return { head, body, style: view.css };
+  return { head, body, style: `${view.css}\n.workbench .details-button { min-height: 44px; min-width: 44px; }` };
 }
