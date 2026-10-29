@@ -1396,11 +1396,11 @@
       "executable": false
     },
     "src/buoy/door/index.ts": {
-      "sha256": "075d175794d26306c1ce51fbb0e8313c21ec2a16a6679fb79d895f88a4cc46cb",
+      "sha256": "fbc839ff027900266b56c8b359613ae64818ba89462c4cea9116ae299fe93da7",
       "executable": false
     },
     "src/buoy/door/legacy.ts": {
-      "sha256": "d23e9cf60fc03c9dc55b428f03344d54695cc35a579d17b38a475753058c3b25",
+      "sha256": "45c2c9f73df11a989626419885b60ca0901fefe76b1f3f9529d72ae85eb73e9c",
       "executable": false
     },
     "src/buoy/door/native.ts": {

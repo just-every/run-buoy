@@ -1,4 +1,4 @@
-import type {Bindings} from '../../auth.server'
+import {runtimeBindings,type Bindings} from '../../auth.server'
 import {actorFor,digest,jsonBody} from '../access'
 import {COMMANDS} from '../agent-policy/policy'
 import {beginRequest,checkRequest,finishRequest,refuseRequest} from '../agent-policy/requests'
@@ -9,7 +9,10 @@ import {finalizeLocalDoorResponse} from './credentials'
 /** Compatibility transport only: authentication, policy and execution stay MCP. */
 export async function legacyCommands(request:Request,env:Bindings):Promise<Response|null>{
  if(new URL(request.url).pathname!=='/api/buoy/commands'||!request.headers.has('authorization'))return null
+ env=runtimeBindings(env)
  const reply=(body:unknown,status=200)=>Response.json(body,{status,headers:{'cache-control':'no-store'}})
+ const url=new URL(request.url)
+ if(url.origin!==env.AUTH_ORIGIN||request.headers.has('host')&&request.headers.get('host')!==url.host)return reply({code:'origin_refused'},403)
  if(!['GET','POST'].includes(request.method))return reply({code:'method_not_allowed'},405)
  let accounted=false
  try{

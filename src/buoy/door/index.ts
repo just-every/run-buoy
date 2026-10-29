@@ -8,7 +8,9 @@ import { buoyTools } from './tools'
 
 export function ownerClaimTrust(original: Bindings): Trust | null {
  const env = runtimeBindings(original)
- if (!env.RER_OWNER_CLAIM_PUBLIC_KEYS || !env.RER_OWNER_CLAIM_ISSUER || !env.RER_OWNER_CLAIM_INSTALLATION_ID) return null
+ const values=[env.RER_OWNER_CLAIM_PUBLIC_KEYS,env.RER_OWNER_CLAIM_ISSUER,env.RER_OWNER_CLAIM_INSTALLATION_ID]
+ if(!values.some(Boolean))return null
+ if (!env.RER_OWNER_CLAIM_PUBLIC_KEYS || !env.RER_OWNER_CLAIM_ISSUER || !env.RER_OWNER_CLAIM_INSTALLATION_ID) throw new Error('Incomplete owner-claim trust')
  return { issuer: env.RER_OWNER_CLAIM_ISSUER, installationId: env.RER_OWNER_CLAIM_INSTALLATION_ID, appOrigin: env.AUTH_ORIGIN, publicKeys: JSON.parse(env.RER_OWNER_CLAIM_PUBLIC_KEYS) }
 }
 
@@ -34,6 +36,8 @@ export async function agentDoorResponse(request: Request, original: Bindings): P
  const env = runtimeBindings(original), path = new URL(request.url).pathname
  if (['/api/rer/business-settings', '/rer-business-logo', '/rer-business.css'].includes(path)) return businessSettings(env).handle(request)
  if (!['/mcp', '/agents', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp', '/api/rer/agent-policy'].includes(path) && !path.startsWith('/agents/')) return null
+ const url=new URL(request.url)
+ if(url.origin!==env.AUTH_ORIGIN || request.headers.has('host')&&request.headers.get('host')!==url.host)return Response.json({code:'origin_refused'},{status:403})
  const name = await businessSettings(env).resolve('display_name', branding.name)
  try {
   const response = await buoyDoor(env, String(name)).handle(request)
