@@ -140,7 +140,7 @@
       "executable": false
     },
     "docs/agent-door.md": {
-      "sha256": "8bef1537362449f94344290d474bb151665dbdb1627eff57507c176d8d4cd932",
+      "sha256": "af82969a16f513f65cab6bd9777bb5bf9c83d607f11913ce8e282afd4d77ce9b",
       "executable": false
     },
     "docs/agents.md": {
@@ -1956,7 +1956,7 @@
       "executable": false
     },
     "src/buoy/ui/account.ts": {
-      "sha256": "ffad2d56ee66d0a7659422c69419de34f4193c848f2b1a8330f17fd98411a1a7",
+      "sha256": "2a57e368763146b3bd67f2fde7666a4277bd6002dd3c1624e326d5cc4f5a0f03",
       "executable": false
     },
     "src/buoy/ui/actions.ts": {

@@ -29,8 +29,8 @@ in for company policy or authorize a native action.
 
 ## Tools and native actions
 
-All six tools compute `standard` with facts `{"measure":1}`. The measure is one
-internal operation. Account and commercial evidence in this subset is not
+All six tools compute `standard`. Renewal-list facts count the visible native
+accounts; the other tools measure one internal operation. Account and commercial evidence in this subset is not
 classified as regulated identity or bank data. Agent arguments claiming a class
 or confirmation cannot change classification.
 
@@ -126,3 +126,14 @@ The preparation-state witness has its own `workspace.snapshot` Business scope.
 Existing local credentials retain their original five command grants and cannot
 use that witness. Assigned native profiles receive no proposal or experiment
 metadata beyond their existing scoped account projection.
+
+The production-Worker walkthrough used Avery Chen (owner), Blair Morgan (Business
+admin) and Casey Rivera (member), admitted through signed owner claim and real
+native invitations. Owner/admin/member calls retained their native sponsor ids
+despite identical token emails. Unknown, inactive and expired principals were
+refused; a native admin promotion alone did not make a Business editor. Named
+owner approval executed once, rejection did not execute, consent revocation
+expired queued work without changing the native proposal witness, and Pause
+refused the next call. Agents, pending/executed/rejected/expired approvals,
+blocked/unavailable states, native audit, account attribution and notifications
+were exercised at 1440px and 390px. Account evidence controls retain 44px targets.
