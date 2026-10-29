@@ -10,16 +10,15 @@ identify a sponsoring native person and an agent; existing local credentials
 retain their issuing-owner, command and data-class limits. Neither credential
 grants more native authority than the sponsor currently holds.
 
-| Tool | Scope | Class | Clause metadata |
-| --- | --- | --- | --- |
-| `buoy.renewals.list` | `renewals.list` | standard | AGENT-003, RENEW-001, SURFACE-001 |
-| `buoy.playbook.prepare` | `playbook.prepare` | standard | PLAY-001, AGENT-001, SURFACE-002 |
-| `buoy.renewal.prepare` | `renewal.prepare` | standard | RENEW-001, AGENT-003, SURFACE-003 |
-| `buoy.experiment.prepare` | `experiment.prepare` | standard | AGENT-002, SURFACE-001, SURFACE-002 |
-| `buoy.experiment.report` | `experiment.report` | standard | AGENT-002, SURFACE-001 |
-| `buoy.workspace.snapshot` | `renewals.list` | standard | AUDIT-001, GOVERN-001, SURFACE-001 |
+- `buoy.renewals.list` uses scope `renewals.list`. Class: standard. Clauses: AGENT-003, RENEW-001, SURFACE-001.
+- `buoy.playbook.prepare` uses scope `playbook.prepare`. Class: standard. Clauses: PLAY-001, AGENT-001, SURFACE-002.
+- `buoy.renewal.prepare` uses scope `renewal.prepare`. Class: standard. Clauses: RENEW-001, AGENT-003, SURFACE-003.
+- `buoy.experiment.prepare` uses scope `experiment.prepare`. Class: standard. Clauses: AGENT-002, SURFACE-001, SURFACE-002.
+- `buoy.experiment.report` uses scope `experiment.report`. Class: standard. Clauses: AGENT-002, SURFACE-001.
+- `buoy.workspace.snapshot` uses scope `workspace.snapshot`. Class: standard. Clauses: AUDIT-001, GOVERN-001, SURFACE-001.
 
-Each call computes `standard` with `{"measure":1}` for one internal operation.
+Each call computes `standard`. Renewal listing measures the visible account
+count; other operations use `{"measure":1}` for one internal operation.
 The reads expose retained evidence; preparations save inert drafts. They create
 no approved task, confirmed renewal or measured outcome, and grant no provider
 execution. Commercial facts in these records do not make them regulated
