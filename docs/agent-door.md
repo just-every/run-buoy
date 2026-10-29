@@ -55,7 +55,9 @@ provider fees.
 
 Business tokens use the installation's owner-claim trust and canonical `/mcp`
 audience. Their sponsor resolves through the signed Business-to-native-person
-binding; token email is not authority. The native owner lifecycle claims the
+binding; token email is not authority. A token whose email no longer matches
+its bound native person is refused; an email change never moves the binding.
+The native owner lifecycle claims the
 owner and completes Buoy's ordinary `/setup` form. Local opaque credentials
 continue to identify their issuing owner, current command scopes and four
 data-class grants. Both credential paths retain the agent as the effect actor
@@ -96,7 +98,8 @@ provider execution, delivery, revenue retention or customer confirmation.
 The manifest declares a native phase fixture and journey through public owner
 and agent doors. They prepare fresh source-evidenced accounts, typed tenure and
 matched cohorts and inspect retained proposals, attribution and inert outcomes.
-Their presence is not a passing conformance receipt. Canonical
+Their source presence alone is not a passing conformance receipt; the measured
+CORE receipt below covers this declared subset. Canonical
 BASE-AGENT-001 through BASE-AGENT-013 requirements remain in CONTRACT.md; omitted
 capability families retain explicit partial gaps rather than disappearing.
 
@@ -108,8 +111,10 @@ tool registry do not establish those outcomes.
 
 ## Measured CORE conformance
 
+Runtime copies are pinned to Base `2135c394939f4a737adabdc8003b0e667b31ac5a`.
+
 On 29 October 2026, `BUOY_VERIFY_SUITE=agent-door pnpm exec rer verify --json`
-with the installed rer 0.2.88 passed 566/566 BASE-AGENT points, including
+with the installed rer 0.2.91 passed 588/588 BASE-AGENT points, including
 Buoy’s native specialist journey. Build, run-site build, typecheck and the
 existing native governance journey passed. The fixture proves real native
 preparation, matching, dual attribution, changed-argument replay refusal and
@@ -127,10 +132,12 @@ Existing local credentials retain their original five command grants and cannot
 use that witness. Assigned native profiles receive no proposal or experiment
 metadata beyond their existing scoped account projection.
 
-The production-Worker walkthrough used Avery Chen (owner), Blair Morgan (Business
+The earlier production-Worker walkthrough used Avery Chen (owner), Blair Morgan (Business
 admin) and Casey Rivera (member), admitted through signed owner claim and real
 native invitations. Owner/admin/member calls retained their native sponsor ids
-despite identical token emails. Unknown, inactive and expired principals were
+through their signed native bindings. With 0.2.91, each token email must also
+match its currently bound native person; earlier identical-email admission is
+no longer supported. Unknown, inactive and expired principals were
 refused; a native admin promotion alone did not make a Business editor. Named
 owner approval executed once, rejection did not execute, consent revocation
 expired queued work without changing the native proposal witness, and Pause
