@@ -96,7 +96,7 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
   const boot=await request('/auth/bootstrap',{method:'POST',body:{token:vars.SETUP_TOKEN,displayName:'Harbour CS owner'}})
   assert.equal(boot.status,303,await boot.clone().text())
   const cookie=boot.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
-  await authorizeAgentFixture(request, cookie)
+  if (!vars.RER_OWNER_CLAIM_PUBLIC_KEYS) await authorizeAgentFixture(request, cookie)
   if (completeSetup) await mf.dispatchFetch(origin+'/setup',{method:'POST',redirect:'manual',headers:{origin,cookie,'content-type':'application/x-www-form-urlencoded'},body:'confirm=yes'})
   async function signIn(email) {
    assert.equal((await request('/auth/magic-link',{method:'POST',body:{email}})).status,202)

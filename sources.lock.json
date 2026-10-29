@@ -1016,7 +1016,7 @@
       "executable": false
     },
     "scripts/installer/local.mjs": {
-      "sha256": "be425b0777473f22c5ed29dd1c4179c584edc43b02d1ca860d40526940f1e31a",
+      "sha256": "64327ec75447d914720907b8ee654a328e316a8f38349638f03de8948bb57019",
       "executable": false
     },
     "scripts/installer/seed.mjs": {
@@ -4756,7 +4756,7 @@
       "executable": false
     },
     "tests/mail-runtime.mjs": {
-      "sha256": "230d8ed6838d2ce31bfd22dde19ad06d39a5278e9ee99a1b0afecb257bebf5be",
+      "sha256": "157a73612802ddbef6bacfb41debc2dc68f55d620df567e446d79feea61fd8cf",
       "executable": false
     },
     "tests/migrate-journey.mjs": {
