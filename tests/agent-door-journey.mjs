@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import {randomUUID} from 'node:crypto'
 import {personApi} from './agent-door-http.mjs'
 
 const before = new Map()
@@ -86,6 +87,14 @@ export async function afterStep(context) {
  const {step, args, result} = context
  if (step.tool === 'buoy.renewals.list') assert.deepEqual(result.accounts, state.accounts, 'MCP account read matches the current native owner view')
  if (['buoy.playbook.prepare', 'buoy.renewal.prepare'].includes(step.tool)) await proposalEvidence(call, context, state, prior)
+ if (step.tool==='buoy.playbook.prepare' && context.phase==='autonomous') {
+  const before=await call('/state')
+  const conflict=await context.tool(step.tool,{...args,payload:{...args.payload,title:'Different work under the original operation key'}})
+  assert.equal(conflict.result?._meta?.['com.runeditrun/error']?.code,'idempotency_conflict','Changed arguments cannot borrow a completed preparation key')
+  const stale=await context.tool(step.tool,{...args,idempotency_key:randomUUID(),expected_revision:'stale:'+args.expected_revision})
+  assert.equal(stale.result?._meta?.['com.runeditrun/error']?.code,'revision_conflict','A stale native string revision refuses before preparation')
+  assert.deepEqual((await call('/state')).proposals,before.proposals,'Conflicting replay and stale evidence create no native proposal')
+ }
  if (['buoy.experiment.prepare', 'buoy.experiment.report'].includes(step.tool)) await experimentEvidence(call, result, state.operator)
  if (step.tool === 'buoy.workspace.snapshot') {
   assert.deepEqual(byId(result.accounts), byId(accountProjection(state)))

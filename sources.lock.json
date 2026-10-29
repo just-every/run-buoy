@@ -4532,7 +4532,7 @@
       "executable": false
     },
     "tests/agent-door-journey.mjs": {
-      "sha256": "1eb3d520d728f9581c9419915a3781fab3008b884d14dd91df83faa43b6abb61",
+      "sha256": "a6e2c4e1fb605b1b38e571b1fd970f25bf576cdc6f31dec8cb5dfe8cc60b3f3f",
       "executable": false
     },
     "tests/agent-door-owner.mjs": {
