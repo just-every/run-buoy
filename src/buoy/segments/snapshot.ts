@@ -22,7 +22,8 @@ import { health, noticeDate, type Account, type Sentiment } from '../health'
 import { DEFAULT_STALENESS } from '../settings'
 import { TIERS, includes, type Segment, type Values } from './rules'
 // One SQL image fences every rule input and the previous membership intervals.
-export const SNAPSHOT = `SELECT json_object(
+// The hosted D1 limit is 32 arguments per function, so append the remaining keys with json_set.
+export const SNAPSHOT = `SELECT json_set(json_object(
  'communications',json((${COMMUNICATION_SQL})),
  'stripeBilling',json((${BILLING_EVIDENCE_SQL})),
  'hierarchyStaff',json((SELECT json_group_array(json_object('accountId',account_id,'accountExecutiveId',account_executive_id,'executiveSponsorId',executive_sponsor_id,'supportOwnerId',support_owner_id)) FROM(SELECT * FROM buoy_account_staff ORDER BY account_id))),
@@ -37,14 +38,15 @@ export const SNAPSHOT = `SELECT json_object(
  'owners',json((SELECT json_group_array(json_object('accountId',account_id,'ownerId',owner_id)) FROM (SELECT * FROM buoy_account_owners ORDER BY account_id))),
  'territories',json((SELECT json_group_array(json_object('accountId',account_id,'territory',territory)) FROM (SELECT * FROM buoy_account_territories ORDER BY account_id))),
  'sentiments',json((SELECT json_group_array(json_object('accountId',account_id,'rating',rating,'reason',reason,'recordedBy',recorded_by,'recordedAt',recorded_at,'expiresOn',expires_on)) FROM (SELECT * FROM buoy_sentiments ORDER BY recorded_at,id))),
- 'tasks',json((SELECT json_group_array(json_object('accountId',account_id,'completedAt',completed_at)) FROM (SELECT * FROM buoy_tasks ORDER BY id))),
- 'entries',json((SELECT json_group_array(json_object('id',id,'segmentId',segment_id,'accountId',account_id,'enteredAt',entered_at,'exitedAt',exited_at,'proposalId',proposal_id)) FROM (SELECT * FROM buoy_segment_entries ORDER BY entered_at,id))),
- 'adoption',json((SELECT CASE WHEN EXISTS(SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.health')=1) THEN (${CONSUMER_ADOPTION_SNAPSHOT}) ELSE (${ADOPTION_SNAPSHOT}) END)),
- 'consumers',json((${CONSUMER_SNAPSHOT})),
- 'custom',json((${FIELD_SNAPSHOT})),
- 'people',json((${PEOPLE_SNAPSHOT})),
- 'tiers',(SELECT document FROM buoy_tiers WHERE singleton=1),
- 'staleness',(SELECT value FROM buoy_settings WHERE key='staleness')
+ 'tasks',json((SELECT json_group_array(json_object('accountId',account_id,'completedAt',completed_at)) FROM (SELECT * FROM buoy_tasks ORDER BY id)))
+ ),
+ '$.entries',json((SELECT json_group_array(json_object('id',id,'segmentId',segment_id,'accountId',account_id,'enteredAt',entered_at,'exitedAt',exited_at,'proposalId',proposal_id)) FROM (SELECT * FROM buoy_segment_entries ORDER BY entered_at,id))),
+ '$.adoption',json((SELECT CASE WHEN EXISTS(SELECT 1 FROM buoy_adoption_consumers WHERE json_extract(document,'$.enabled')=1 AND json_extract(document,'$.health')=1) THEN (${CONSUMER_ADOPTION_SNAPSHOT}) ELSE (${ADOPTION_SNAPSHOT}) END)),
+ '$.consumers',json((${CONSUMER_SNAPSHOT})),
+ '$.custom',json((${FIELD_SNAPSHOT})),
+ '$.people',json((${PEOPLE_SNAPSHOT})),
+ '$.tiers',(SELECT document FROM buoy_tiers WHERE singleton=1),
+ '$.staleness',(SELECT value FROM buoy_settings WHERE key='staleness')
  ) AS snapshot`
 interface Row {id:string;document:string;revision:string;createdAt:string}
 interface Classification {accountId:string;tier:string|null;stage:string|null;tierManual:number;stageManual:number}

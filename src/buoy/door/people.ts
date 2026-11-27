@@ -13,6 +13,7 @@ export function buoyPeople(original: Bindings): PeopleAdapter {
   return person
  }
  return {
+  businessStopped: native.businessStopped,
   person: async id => staff(await native.person(id)),
   sponsor: async claims => staff(await native.sponsor(claims)),
   businessMember: async person => await staff(person) ? native.businessMember!(person) : null,

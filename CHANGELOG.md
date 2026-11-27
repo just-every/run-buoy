@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5 (2026-11-27)
+
+- The hosted demo opens its signed-in renewal runway with the sample accounts. The segment state query fits the hosted D1 function argument limit.
+- The agent door on Run Edit Run 0.2.144 authenticates before MCP version negotiation, respects Business detachment, renews signed policy, and relays new decisions within the paired Business. Migration `0081_agent_door_relay.sql` adds the relay while retaining existing native audits.
+- Installations can turn off outbound email and use `rer signin` for owner access.
+
 ## 0.1.4 (2026-11-27)
 
 Buoy 0.1.4 publishes the work since 0.1.3 on the pinned `@runeditrun/rer` 0.2.91. **Back up first** (`rer export`, or the authenticated transfer client for a hosted copy), then pull, `pnpm install --frozen-lockfile` and `rer setup` locally or `rer deploy --environment <name>` hosted: the 19 new migrations apply in filename order.

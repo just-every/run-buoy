@@ -35,7 +35,7 @@ export function buoyDoor(original: Bindings, name = branding.name) {
 export async function agentDoorResponse(request: Request, original: Bindings): Promise<Response | null> {
  const env = runtimeBindings(original), path = new URL(request.url).pathname
  if (['/api/rer/business-settings', '/rer-business-logo', '/rer-business.css'].includes(path)) return businessSettings(env).handle(request)
- if (!['/mcp', '/agents', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp', '/api/rer/agent-policy'].includes(path) && !path.startsWith('/agents/')) return null
+ if (!['/mcp', '/agents', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp', '/api/rer/agent-policy', '/api/rer/agent-decisions'].includes(path) && !path.startsWith('/agents/')) return null
  const url=new URL(request.url)
  if(url.origin!==env.AUTH_ORIGIN || request.headers.has('host')&&request.headers.get('host')!==url.host)return Response.json({code:'origin_refused'},{status:403})
  const name = await businessSettings(env).resolve('display_name', branding.name)
