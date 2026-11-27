@@ -88,7 +88,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "5873834f809ac214a116ce7762d641cbbda7786b80a050ff0de1033fa405e211",
+      "sha256": "9e88420e5634d35d715eea6ba445c841fa3f8c7712b693bb19ad04d923cd215c",
       "executable": false
     },
     "agent-surface.json": {
@@ -104,7 +104,7 @@
       "executable": false
     },
     "CHANGELOG.md": {
-      "sha256": "6b9aab04b595ab32038b1a1bf9c123bd849f9d6df3bc5b17e7bbb095f83d29c1",
+      "sha256": "c8e8aee57477ba61edb960cb7f5c897d765cc6e35c5fdd31b55e71403d2dd5c0",
       "executable": false
     },
     "COMMANDS.md": {
@@ -116,7 +116,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "4950a35f8c3c3581d6dbb457b8ad4773d544ec0b96cd1a70ead7b6523ded992a",
+      "sha256": "899d2d27a28c171b073b8fdb3bb400bf1761732ea4aa40d44f75eb38dc91651a",
       "executable": false
     },
     "DEMO.md": {
@@ -692,7 +692,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "f1de5efd5de4b703c6facb4bd12ca837eae7c011c5306300e7833988c4147bfc",
+      "sha256": "a882c71e3c040911c678c5e27d88a3b05a306b0b0fa5c69267f6588baeb63113",
       "executable": false
     },
     "packaging.json": {
@@ -832,11 +832,11 @@
       "executable": false
     },
     "RELEASE.json": {
-      "sha256": "464a0f2f16bdbe55cba9bf53a8a9da68166228591fdc2d4ec1b67178edbed273",
+      "sha256": "425129b66b5828d24cf07cf67a250afc779d56e12c40694bf91fff6a13e53964",
       "executable": false
     },
     "rer-project.json": {
-      "sha256": "71122953db246b3e3d2f9564b04e1e1709569bca51c365d3be4ad72985f43c81",
+      "sha256": "f6697ac863c37bf995e545f84b4afbc76d729a6efab631dc286752134c041de4",
       "executable": false
     },
     "rer-setup.json": {
@@ -1612,7 +1612,7 @@
       "executable": false
     },
     "seed.json": {
-      "sha256": "09cc48148ebd5f32f959f581699f1a6bc45d5ffad00e8e8f6c0e048aca4a3df2",
+      "sha256": "a3ad96da9e23a9c7a68b5063f7f96ad4f9f4282776311e79c622329b485c5339",
       "executable": false
     },
     "SOURCES.md": {
@@ -2056,7 +2056,7 @@
       "executable": false
     },
     "src/buoy/imports/door.ts": {
-      "sha256": "63c62053249d5fd3f6f6f1bd8cf4657646fda5593f25b2bae8dafda99bc526c7",
+      "sha256": "abfb4e8661740e565283229b5a51287278a39f47885e9e543eb9fc6d71e760bc",
       "executable": false
     },
     "src/buoy/imports/index.ts": {
