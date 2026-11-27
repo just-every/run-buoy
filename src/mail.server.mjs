@@ -1,7 +1,11 @@
 import { createMailSender } from './modules/mail/index.mjs'
 
+// Mail off (MAIL_PROVIDER=none): every send is refused, with no sender or key.
+const mailOff = { async send() { return { status: 'rejected', provider: 'none', providerMessageId: null, code: 'mail_off' } } }
+
 // Construct only on a send: first-owner setup never depends on mail credentials.
 export function operatorMail(env) {
+  if (env.MAIL_PROVIDER === 'none') return mailOff
   if (env.RER_DEMO === '1' || env.AUTH_LOCAL === 'true') {
     return createMailSender({ provider: 'development', mode: 'development' })
   }

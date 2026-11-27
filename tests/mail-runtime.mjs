@@ -118,6 +118,6 @@ export async function mailWorker({ root = process.cwd(), bindings = () => ({}), 
    const body=await response.text();assert.equal(response.status,200,body)
    assert.equal(JSON.parse(body).outcome,'ok')
   }
-  return {origin,directory,request,dispatch:async request=>mf.dispatchFetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()})}),cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){for(const response of responses)if(response.body&&!response.body.locked)await response.body.cancel();responses.clear();await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true})}}
+  return {origin,directory,db,request,dispatch:async request=>mf.dispatchFetch(request.url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()})}),cookie,signIn,scheduled,mails,outbound,setMailStatus(status){mailStatus=status},async close(){for(const response of responses)if(response.body&&!response.body.locked)await response.body.cancel();responses.clear();await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true})}}
  }catch(error){await mf.dispose();if(!keepPersistence)await rm(directory,{recursive:true,force:true});throw error}
 }

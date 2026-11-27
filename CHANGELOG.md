@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.4 (2026-11-27)
+
+Buoy 0.1.4 moves the pinned `@runeditrun/rer` from 0.2.91 to 0.2.143 and lets a Business run Buoy with outbound mail off. **Back up first** (`rer export`, or the authenticated transfer client for a hosted copy), then pull, `pnpm install --frozen-lockfile` and `rer setup` locally or `rer deploy --environment <name>` hosted: the 19 new migrations apply in filename order.
+
+- **Mail off.** `MAIL_PROVIDER=none` needs no sender or key and sends nothing: every send is refused as `mail_off`, sign-in email and invitations are unavailable, and reminders record that no mail provider is set up. The owner signs in with `rer signin` from the deployment checkout. `MAIL_PROVIDER` and `MAIL_FROM` are public settings with empty defaults, so a deploy that sends mail names its provider (`rer`, `resend`, `sendgrid` or `cloudflare`) with `MAIL_FROM` and `MAIL_API_KEY`. Setup offers "Turn off outbound email".
+- **The agent door.** One MCP door on the released CORE agent-door runtime, with Business settings and people, typed refusals and native audit attribution (migrations 0078–0080).
+- **Since 0.1.3:** experiments, AI answers and schedules, communications health, connection notices, monthly revenue reconciliation, a scoped account integration API with replay custody, reviewed native configuration with historical back-tests, data trust review, success-plan outcomes and a customer plan portal, reviewed ChurnZero and Totango migration custody, report and dashboard starters, and account erasure carried through archive restore.
+- Migrations: 0066_buoy_experiments.sql, 0067_buoy_ai.sql, 0068_buoy_ai_schedules.sql, 0069_buoy_communications.sql, 0070_buoy_communication_state.sql, 0071_buoy_connection_notices.sql, 0072_buoy_revenue_reconciliation.sql, 0073_buoy_integration_api.sql, 0074_buoy_integration_erasure.sql, 0075_buoy_configuration.sql, 0075_buoy_data_trust.sql, 0075_buoy_integration_account_scope.sql, 0076_buoy_migration_scorecard_custody.sql, 0076_buoy_plan_portal.sql, 0076_buoy_trust_privacy.sql, 0077_buoy_plan_outcomes.sql, 0078_business_settings.sql, 0079_business_people.sql, 0080_agent_door.sql.
+
 ## 2026-10-19
 
 - Tasks have an owner, priority and type. An owner or admin sets each account's owner (reassigning moves the previous owner's open tasks), each person's manager, away periods with a named cover, the reminder and escalation delays and the time zone for task days. An hourly Cron Trigger records a reminder before and on each due date and one escalation of an overdue task to the owner's manager, in the app under Your reminders and by email through the owner's mail provider, with the provider's reported outcome. Completing a task records an outcome reason with its evidence (PLAY-002).

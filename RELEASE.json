@@ -1,8 +1,28 @@
 {
-  "version": "0.1.3",
-  "publicReleaseNotes": "Refresh the Base delivery producer and native release metadata at rer 0.2.80. Preserve Assisted mail delivery and publish the current Buoy source as a native release bundle.",
-  "migrations": [],
+  "version": "0.1.4",
+  "publicReleaseNotes": "Buoy 0.1.4 brings the release up to Run Edit Run 0.2.143 and lets a Business run Buoy with outbound mail off: MAIL_PROVIDER=none needs no sender or key, every send is refused as mail_off, and the owner signs in with rer signin. MAIL_PROVIDER and MAIL_FROM are now public settings with empty defaults. It also carries the declared CORE agent door and the product work since 0.1.3. Migrations: 0066_buoy_experiments.sql, 0067_buoy_ai.sql, 0068_buoy_ai_schedules.sql, 0069_buoy_communications.sql, 0070_buoy_communication_state.sql, 0071_buoy_connection_notices.sql, 0072_buoy_revenue_reconciliation.sql, 0073_buoy_integration_api.sql, 0074_buoy_integration_erasure.sql, 0075_buoy_configuration.sql, 0075_buoy_data_trust.sql, 0075_buoy_integration_account_scope.sql, 0076_buoy_migration_scorecard_custody.sql, 0076_buoy_plan_portal.sql, 0076_buoy_trust_privacy.sql, 0077_buoy_plan_outcomes.sql, 0078_business_settings.sql, 0079_business_people.sql, 0080_agent_door.sql.",
+  "migrations": [
+    "migrations/core/0066_buoy_experiments.sql",
+    "migrations/core/0067_buoy_ai.sql",
+    "migrations/core/0068_buoy_ai_schedules.sql",
+    "migrations/core/0069_buoy_communications.sql",
+    "migrations/core/0070_buoy_communication_state.sql",
+    "migrations/core/0071_buoy_connection_notices.sql",
+    "migrations/core/0072_buoy_revenue_reconciliation.sql",
+    "migrations/core/0073_buoy_integration_api.sql",
+    "migrations/core/0074_buoy_integration_erasure.sql",
+    "migrations/core/0075_buoy_configuration.sql",
+    "migrations/core/0075_buoy_data_trust.sql",
+    "migrations/core/0075_buoy_integration_account_scope.sql",
+    "migrations/core/0076_buoy_migration_scorecard_custody.sql",
+    "migrations/core/0076_buoy_plan_portal.sql",
+    "migrations/core/0076_buoy_trust_privacy.sql",
+    "migrations/core/0077_buoy_plan_outcomes.sql",
+    "migrations/core/0078_business_settings.sql",
+    "migrations/core/0079_business_people.sql",
+    "migrations/core/0080_agent_door.sql"
+  ],
   "breaking": false,
-  "agentUpdateInstructions": "Upgrade from 0.1.2 without new migrations. Retain existing customer data and settings and use the exact rer 0.2.80 toolchain.",
-  "previousVersion": "0.1.2"
+  "agentUpdateInstructions": "Back up first (rer export, or the authenticated transfer client for a hosted copy) and exercise a restored copy. Update to v0.1.4, run pnpm install --frozen-lockfile, then rer setup locally or rer deploy --environment <name> hosted with the same environment: the 19 new migrations apply in filename order. @runeditrun/rer moves to 0.2.143. The default MAIL_PROVIDER in deploy.json is now empty instead of resend and MAIL_FROM is no longer a placeholder: an installation that sends mail must set MAIL_PROVIDER, MAIL_FROM and MAIL_API_KEY in its environment or input file; MAIL_PROVIDER=none turns mail off, and the owner then signs in with rer signin.",
+  "previousVersion": "0.1.3"
 }

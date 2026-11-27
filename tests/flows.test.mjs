@@ -29,6 +29,7 @@ import { outcomeJourney } from './outcome-journey.mjs'
 import { segmentJourney } from './segment-journey.mjs'
 import { teamJourney } from './team-journey.mjs'
 import { startWorker } from './worker.mjs'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 
 const today=new Date().toISOString().slice(0,10)
 const account=(id='harbour')=>({id,name:'Harbour Software',renewalDate:'2027-03-31',noticeDays:30,renewalEvidence:'Signed order form section 4, approved by customer',billing:{observedAt:today,reference:'Nectar invoice INV-1042',currency:'AUD',totalMinor:120000,creditsMinor:10000,allocatedMinor:20000,dueDate:'2026-01-01'},support:{observedAt:today,reference:'Support case CS-42',openTickets:3,urgentTickets:1}})
@@ -552,6 +553,31 @@ test('Buoy public HTTP jobs and trust boundaries',async t=>{
    assert.ok(worker.outbound.length);assert.deepEqual([...new Set(worker.outbound)],['https://api.resend.com/emails'],'the only outbound call is the sign-in mail provider')
   })
  }finally{await worker.close()}
+})
+
+test('Buoy public mail off: sends are refused and the owner signs in with a rer signin grant',async()=>{
+ const worker=await startWorker({bindings:()=>({MAIL_PROVIDER:'none',MAIL_FROM:'',MAIL_API_KEY:''})})
+ try {
+  const signin=await worker.request('/signin')
+  assert.equal(signin.status,200)
+  assert.doesNotMatch(await signin.text(),/action="\/auth\/magic-link"/)
+  const magic=await worker.request('/auth/magic-link',{method:'POST',body:{email:'owner@example.test'}})
+  assert.equal(magic.status,503,await magic.clone().text())
+  assert.equal((await magic.json()).error,'mail_unavailable')
+  // The grant rer signin writes at the Cloudflare D1 boundary.
+  const token=randomBytes(32).toString('base64url'), now=Date.now()
+  const grant=await worker.db.prepare(`INSERT INTO oa_owner_signins(id,token_hash,operator_id,operator_version,created_at,expires_at)
+   SELECT ?,?,id,version,?,? FROM oa_operators WHERE email=? AND role='owner' AND status='active'`)
+   .bind(randomUUID(),createHash('sha256').update(`owner-signin\0${token}`).digest('hex'),now,now+60_000,'owner@example.test').run()
+  assert.equal(grant.meta.changes,1)
+  assert.equal((await worker.request(`/auth/owner-signin?token=${token}`)).status,200)
+  const confirmed=await worker.request('/auth/owner-signin',{method:'POST',body:{token}})
+  assert.equal(confirmed.status,303)
+  const cookie=confirmed.headers.getSetCookie().map(x=>x.split(';')[0]).join('; ')
+  assert.equal((await worker.request('/api/buoy/state',{cookie})).status,200)
+  assert.equal((await worker.request('/auth/owner-signin',{method:'POST',body:{token}})).status,400)
+  assert.deepEqual(worker.mails,[])
+ } finally { await worker.close() }
 })
 
 test('HTTP-001 IMPORT-001 operator and Business door authority, provisioning, revocation and erasure',async()=>{
