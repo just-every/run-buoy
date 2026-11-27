@@ -532,7 +532,7 @@
   "durableObjectMigrations": [],
   "publicVariables": {
     "AUTH_ORIGIN": "",
-    "MAIL_PROVIDER": "",
+    "MAIL_PROVIDER": "resend",
     "MAIL_FROM": "",
     "MAIL_RELAY_URL": "",
     "MAIL_ACCOUNT_ID": ""
