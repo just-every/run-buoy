@@ -3672,7 +3672,7 @@
           "mode": "100644"
         },
         "src/modules/agent-door/schema/agent-door.sql": {
-          "sha256": "8543a52e3d515815e12521a965c39c7fbc405789074bea070e1e34c903c84596",
+          "sha256": "6f5c491cfea8e52c440a69695aa39120c335da83531605daa37335f20750ca9b",
           "mode": "100644"
         },
         "src/modules/agent-door/transport.ts": {

@@ -56,9 +56,9 @@ BEGIN
     OR (json_extract(NEW.row,'$.decision_id') IS NOT NULL AND NOT EXISTS(
       SELECT 1 FROM agent_door_relay WHERE decision_id=json_extract(NEW.row,'$.decision_id'))));
 END;
+-- Updating a local audit cannot create Business membership.
 CREATE TRIGGER IF NOT EXISTS agent_door_relay_audit_update AFTER UPDATE ON agent_door_audit
 WHEN EXISTS(SELECT 1 FROM agent_door_relay WHERE decision_id=NEW.id)
-  OR (json_extract(NEW.row,'$.door')='mcp' AND json_extract(NEW.row,'$.consent') IS NOT NULL)
 BEGIN
   INSERT INTO agent_door_relay(decision_id,business)
     SELECT NEW.id,business FROM (SELECT CASE WHEN json_extract(NEW.row,'$.decision_id') IS NOT NULL THEN

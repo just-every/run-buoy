@@ -100,7 +100,7 @@
       "executable": false
     },
     "base-copies.json": {
-      "sha256": "80da719decf7d4dca86de0fff534ab7e28e6b0ecdb610a38c3f8d5ec93196e11",
+      "sha256": "d9cb0a9e1cbd6b9c3874a703af73c3511a57e88dc38dcd887d42bfcaba149655",
       "executable": false
     },
     "CHANGELOG.md": {
@@ -336,7 +336,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "53da3429fe424bfacf8c52fa0345dd64b514dcffebf625b91104cd917c3686fa",
+      "sha256": "36e0907745d3e666db0c1ddf0196a7e60bc200a2d1ebab1b5f3ad8e413fdbdad",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -680,7 +680,7 @@
       "executable": false
     },
     "migrations/core/0081_agent_door_relay.sql": {
-      "sha256": "2cd0407c79f9b10ba8516dde6b31b3784b003cd55a57484f1189830dd7739f5f",
+      "sha256": "8cd6445167ef00406386f1abb70e548631b5bef4a0b12408e905277fca5bd50c",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -3152,7 +3152,7 @@
       "executable": false
     },
     "src/modules/agent-door/schema/agent-door.sql": {
-      "sha256": "8543a52e3d515815e12521a965c39c7fbc405789074bea070e1e34c903c84596",
+      "sha256": "6f5c491cfea8e52c440a69695aa39120c335da83531605daa37335f20750ca9b",
       "executable": false
     },
     "src/modules/agent-door/subscriptions.ts": {
